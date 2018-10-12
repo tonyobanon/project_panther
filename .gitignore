@@ -4,3 +4,5 @@ target/
 .project
 /bin
 /build
+.DS_Store
+.gradle/
