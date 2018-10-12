@@ -1,0 +1,10 @@
+.settings/
+src/main/resources/web
+target/
+.classpath
+.project
+/bin
+/build
+location_data/admin1CodesASCII2
+location_data/cities1000_
+location_data/languageCodes2

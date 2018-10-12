@@ -1,0 +1,39 @@
+{
+
+	"app_dependencies": [],
+
+	"custom_spi_types": {
+	},
+	
+	"platform.spi.error.locator": "com.re.paas.api.spi.ErrorSPILocator",
+	"platform.spi.cloud_environment.locator": "com.re.paas.api.spi.CloudEnvironmentSPILocator",
+	"platform.spi.template_object_model.locator": "com.re.paas.api.spi.TemplateObjectModelSPILocator",
+	"platform.spi.template_object_model_factory.locator": "com.re.paas.api.spi.TemplateObjectModelFactorySPILocator",
+	"platform.spi.event_listener.locator": "com.re.paas.api.spi.EventHandlerSPILocator",
+	"platform.spi.service.locator": "com.re.paas.api.spi.ServiceSPILocator",
+	"platform.spi.model.locator": "com.re.paas.api.spi.ModelSPILocator",
+	"platform.spi.logger.locator": "com.re.paas.api.spi.LoggerSPILocator",
+	"platform.spi.node_role.locator": "com.re.paas.api.spi.NodeRoleSPILocator",
+	"platform.spi.cluster_function.locator": "com.re.paas.api.spi.ClusterFunctionSPILocator",
+	"platform.spi.task_model.locator": "com.re.paas.api.spi.TaskModelSPILocator",
+	"platform.spi.listable.locator": "com.re.paas.api.spi.ListableSPILocator",
+	"platform.spi.ui_component.locator": "com.re.paas.api.spi.UIComponentLocator",
+	"platform.spi.functionality.locator": "com.re.paas.api.spi.FunctionalitySPILocator",
+	"platform.spi.node_registry.locator": "com.re.paas.api.spi.NodeRegistrySPILocator",
+	 
+	"platform.spi.error.delegate": "com.re.paas.internal.errors.ErrorSpiDelegate",
+	"platform.spi.cloud_environment.delegate": "com.re.paas.internal.cloud_environment.CloudEnvironmentDelegate",
+	"platform.spi.template_object_model.delegate": "com.re.paas.internal.templating.ObjectModelSpiDelegate",
+	"platform.spi.template_object_model_factory.delegate": "com.re.paas.internal.templating.ObjectModelFactorySpiDelegate",
+	"platform.spi.event_listener.delegate": "com.re.paas.internal.events.EventBus",
+	"platform.spi.service.delegate": "com.re.paas.internal.core.fusion.FusionServiceDelegate",
+	"platform.spi.model.delegate": "com.re.paas.internal.models.BaseModelDelegate",
+	"platform.spi.logger.delegate": "com.re.paas.internal.base.logging.LoggerDelegate",
+	"platform.spi.node_role.delegate": "com.re.paas.internal.clustering.NodeRoleDelegate",
+	"platform.spi.cluster_function.delegate": "com.re.paas.internal.clustering.ClusterFunctionDelegate",
+	"platform.spi.task_model.delegate": "com.re.paas.internal.tasks.impl.TaskModelDelegate",
+	"platform.spi.listable.delegate": "com.re.paas.internal.models.ListableDelegate",
+	"platform.spi.ui_component.delegate": "com.re.paas.internal.fusion.ui.UIComponentDelegate"
+	"platform.spi.functionality.delegate": "com.re.paas.internal.fusion.services.impl.FunctionalityDelegate"
+	"platform.spi.node_registry.delegate": "com.re.paas.internal.clustering.NodeRegistryDelegate"
+}

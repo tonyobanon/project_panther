@@ -1,0 +1,9 @@
+
+Role Based Architecture
+
+
+
+
+
+todo:
+When students graduate, move them to a seperate table
