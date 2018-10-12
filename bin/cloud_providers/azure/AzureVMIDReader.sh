@@ -1,1 +1,0 @@
-sudo dmidecode | grep UUID
