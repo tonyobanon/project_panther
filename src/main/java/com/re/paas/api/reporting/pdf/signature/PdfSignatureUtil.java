@@ -138,7 +138,7 @@ public final class PdfSignatureUtil {
 	 * @return
 	 */
 	private static boolean doesSignatureCoverDocument(int[] byteRange, long fileLen, COSDictionary sigDict) {
-
+ 
 		long rangeMax = byteRange[2] + (long) byteRange[3];
 
 		// multiply content length with 2 (because it is in hex in the PDF) and add 2
