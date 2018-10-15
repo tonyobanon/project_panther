@@ -37,6 +37,7 @@ import com.re.paas.api.classes.Exceptions;
 import com.re.paas.api.classes.TimeUnit;
 
 @BlockerTodo("Generate randoms ahead of time, to increase performance")
+@BlockerTodo("Also, scan for uses of SecureRandom, and do same")
 public class Utils {
 
 	private static Random random = new Random();

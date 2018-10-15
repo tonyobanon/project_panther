@@ -1,10 +1,12 @@
 package com.re.paas.internal.crypto;
 
+import java.security.interfaces.RSAPrivateKey;
+
 import com.re.paas.internal.documents.TSAClient;
 
 /**
- * This contains information required for signing documents. This implementation
- * assumes that the alias is a KeyStore.PrivateKeyEntry
+ * This contains information required for signing documents.
+ * 
  * @author Tony
  */
 public class SignContext {
@@ -12,9 +14,7 @@ public class SignContext {
 	private TSAClient tsaClient;
 
 	private String certAlias;
-
-	private String keyAlias;
-	private String keyAliasPassword;
+	private RSAPrivateKey privateKey;
 
 	public TSAClient getTsaClient() {
 		return tsaClient;
@@ -24,12 +24,8 @@ public class SignContext {
 		return certAlias;
 	}
 
-	public String getKeyAlias() {
-		return keyAlias;
-	}
-
-	public String getKeyAliasPassword() {
-		return keyAliasPassword;
+	public RSAPrivateKey getPrivateKey() {
+		return privateKey;
 	}
 
 }

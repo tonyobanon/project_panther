@@ -27,7 +27,9 @@ public class PdfDocumentSigner extends AbstractDocumentSigner implements Signatu
 	 * Signs the given PDF file.
 	 */
 
-	public void sign(PDDocument document, OutputStream output, boolean external) throws IOException {
+	public void sign(PDDocument document, OutputStream output) throws IOException {
+		
+		boolean external = true;
 		
 		int accessPermissions = getMDPPermission(document);
 		if (accessPermissions == 1) {

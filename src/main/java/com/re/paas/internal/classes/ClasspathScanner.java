@@ -1,4 +1,4 @@
-package com.re.paas.internal.spi;
+package com.re.paas.internal.classes;
 
 import java.io.File;
 import java.io.IOException;
@@ -23,13 +23,13 @@ import java.util.regex.Pattern;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
+import com.google.common.collect.Lists;
 import com.re.paas.api.app_provisioning.AppClassLoader;
 import com.re.paas.api.classes.Exceptions;
 import com.re.paas.api.logging.Logger;
 import com.re.paas.api.spi.ClassIdentityType;
 import com.re.paas.api.spi.BaseSPILocator.ShuffleStrategy;
 import com.re.paas.api.utils.Utils;
-import com.re.paas.internal.classes.AppDirectory;
 
 public class ClasspathScanner<T> {
 
@@ -60,6 +60,10 @@ public class ClasspathScanner<T> {
 		this.classType = type;
 	}
 
+	public ClasspathScanner(String nameSuffix, Class<T> type, ClassIdentityType identityType) {
+		this(Lists.newArrayList(nameSuffix), type, identityType);
+	}
+	
 	/**
 	 * This constructor should be used for classes
 	 */
@@ -78,7 +82,7 @@ public class ClasspathScanner<T> {
 	 * This constructor should be used for classes
 	 */
 	public ClasspathScanner(Class<T> type, ClassIdentityType identityType) {
-		this(null, type, identityType);
+		this((Iterable<String>)null, type, identityType);
 	}
 
 	private static boolean isExtensionSiupported(String ext) {

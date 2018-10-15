@@ -3,6 +3,9 @@ package com.re.paas.internal;
 import java.io.File;
 import java.net.InetAddress;
 import java.nio.file.Path;
+import java.security.Security;
+
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
 import com.re.paas.api.annotations.BlockerTodo;
 import com.re.paas.api.annotations.PlatformInternal;
@@ -75,6 +78,7 @@ public class AppDelegate {
 			.trust();
 		
 		System.setSecurityManager(new SecurityManagerImpl());
+		Security.addProvider(new BouncyCastleProvider());
 
 		if (!Application.IS_SAFE_MODE) {
 			

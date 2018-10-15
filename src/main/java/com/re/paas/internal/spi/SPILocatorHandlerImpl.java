@@ -22,6 +22,7 @@ import com.re.paas.api.spi.SpiDelegateHandler;
 import com.re.paas.api.spi.SpiLocatorHandler;
 import com.re.paas.api.spi.SpiTypes;
 import com.re.paas.api.utils.ClassUtils;
+import com.re.paas.internal.classes.ClasspathScanner;
 import com.re.paas.internal.errors.ApplicationError;
 
 public class SPILocatorHandlerImpl implements SpiLocatorHandler {

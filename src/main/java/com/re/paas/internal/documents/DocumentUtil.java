@@ -24,7 +24,7 @@ public class DocumentUtil {
 			try (PDDocument doc = PDDocument.load(inStream)) {
 
 				PdfDocumentSigner signing = new PdfDocumentSigner();
-				signing.sign(doc, outStream, true);
+				signing.sign(doc, outStream);
 			}
 			
 			inStream.close();
@@ -33,7 +33,6 @@ public class DocumentUtil {
 		} catch (IOException e) {
 			Exceptions.throwRuntime(e);
 		}
-
 	}
 
 }

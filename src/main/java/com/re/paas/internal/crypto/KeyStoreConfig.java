@@ -19,57 +19,61 @@ import com.re.paas.internal.classes.ResourceFile;
 public class KeyStoreConfig extends ResourceFile {
 
 	private static KeyStoreConfig instance;
-	
+
 	private boolean keyStoreEnabled;
 	private String keyStorePassword;
-	
+
 	private KeyStore keyStore;
-	
+
 	private SSLContext sslContext;
 	private SignContext signContext;
 
 	public KeyStoreConfig() {
 		super("cryptoProfile.json");
 	}
-	
+
 	public static KeyStoreConfig get() {
 		if (instance != null) {
 			return instance;
 		}
-		
+
 		instance = new KeyStoreConfig().load(KeyStoreConfig.class);
-		
-		if(instance.keyStoreEnabled()) {
+
+		if (instance.keyStoreEnabled()) {
 			instance.loadKeystore();
 		}
-		
+
 		return instance;
 	}
-	
+
+	/**
+	 * This validates the certificate used for this signing context.
+	 */
 	public void validateSignContext() {
-		
-		if(keyStore == null) {
+
+		if (keyStore == null) {
 			this.loadKeystore();
 		}
-		
-		if(signContext != null) {
+
+		if (signContext != null) {
 			validateCert(signContext.getCertAlias());
 		}
-
 	}
-	
+
+	/**
+	 * This validates the certificate used for this SSL context.
+	 */
 	public void validateSSLContext() {
 
-		if(keyStore == null) {
+		if (keyStore == null) {
 			this.loadKeystore();
 		}
-		
-		if(sslContext != null) {
+
+		if (sslContext != null) {
 			validateCert(sslContext.getCertAlias());
 		}
 	}
-	
-	
+
 	public void validateCert(String certAlias) {
 		try {
 			Certificate cert = keyStore.getCertificate(certAlias);
@@ -77,7 +81,7 @@ public class KeyStoreConfig extends ResourceFile {
 				// avoid expired certificate
 				((X509Certificate) cert).checkValidity();
 			}
-			
+
 		} catch (KeyStoreException | CertificateExpiredException | CertificateNotYetValidException e) {
 			Exceptions.throwRuntime(e);
 		}
@@ -91,15 +95,15 @@ public class KeyStoreConfig extends ResourceFile {
 			Exceptions.throwRuntime(e);
 		}
 	}
-	
+
 	public KeyStore getKeystore() {
 		return keyStore;
 	}
-	
+
 	public boolean keyStoreEnabled() {
 		return keyStoreEnabled;
 	}
-	
+
 	public String getKeyStorePassword() {
 		return keyStorePassword;
 	}
@@ -115,9 +119,9 @@ public class KeyStoreConfig extends ResourceFile {
 	public static Path getKeyStorePath() {
 		return Platform.getResourcePath().resolve("/crypto/keystore.p12");
 	}
-	
+
 	public static String getType() {
 		return "PKCS12";
 	}
-	
+
 }

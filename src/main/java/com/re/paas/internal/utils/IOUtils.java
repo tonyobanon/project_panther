@@ -40,6 +40,8 @@ public class IOUtils {
 		}
 		return count;
 	}
+	
+	
 
 	/**
 	 * Null safe close of the given {@link Closeable} suppressing any exception.
