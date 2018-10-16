@@ -78,6 +78,8 @@ public class AppDelegate {
 			.trust();
 		
 		System.setSecurityManager(new SecurityManagerImpl());
+		
+		// TODO Allow users to specify custom security provider
 		Security.addProvider(new BouncyCastleProvider());
 
 		if (!Application.IS_SAFE_MODE) {

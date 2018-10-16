@@ -4,17 +4,17 @@ import java.awt.Color;
 import java.nio.file.Path;
 import java.util.List;
 
-import com.re.paas.api.reporting.pdf.Column;
-import com.re.paas.api.reporting.pdf.Constants;
-import com.re.paas.api.reporting.pdf.Font;
-import com.re.paas.api.reporting.pdf.Image;
-import com.re.paas.api.reporting.pdf.Row;
-import com.re.paas.api.reporting.pdf.SizeSpec;
-import com.re.paas.api.reporting.pdf.Table;
-import com.re.paas.api.reporting.pdf.TableConfig;
-import com.re.paas.api.reporting.pdf.TextControl;
-import com.re.paas.api.reporting.pdf.XCoordinate;
+import com.re.paas.api.forms.Column;
+import com.re.paas.api.forms.SizeSpec;
 import com.re.paas.internal.documents.pdf.PDFBuilder;
+import com.re.paas.internal.documents.pdf.gen.Constants;
+import com.re.paas.internal.documents.pdf.gen.Font;
+import com.re.paas.internal.documents.pdf.gen.Image;
+import com.re.paas.internal.documents.pdf.gen.Row;
+import com.re.paas.internal.documents.pdf.gen.Table;
+import com.re.paas.internal.documents.pdf.gen.TableConfig;
+import com.re.paas.internal.documents.pdf.gen.TextControl;
+import com.re.paas.internal.documents.pdf.gen.XCoordinate;
 
 public class InvoiceBuilder {
 

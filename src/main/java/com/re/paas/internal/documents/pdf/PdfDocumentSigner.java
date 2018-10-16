@@ -1,5 +1,5 @@
 
-package com.re.paas.api.reporting.pdf.signature;
+package com.re.paas.internal.documents.pdf;
 
 import java.io.IOException;
 import java.io.OutputStream;

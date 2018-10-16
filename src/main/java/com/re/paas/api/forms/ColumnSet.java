@@ -3,10 +3,6 @@ package com.re.paas.api.forms;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.re.paas.api.reporting.pdf.Column;
-import com.re.paas.api.reporting.pdf.ColumnCollection;
-import com.re.paas.api.reporting.pdf.SizeSpec;
-
 public class ColumnSet extends ColumnCollection {
 
 	private List<Column> columns;

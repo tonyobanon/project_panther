@@ -1,4 +1,4 @@
-package com.re.paas.internal.documents;
+package com.re.paas.internal.documents.pdf;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -8,11 +8,12 @@ import java.nio.file.Path;
 
 import org.apache.pdfbox.pdmodel.PDDocument;
 
+import com.re.paas.api.annotations.Todo;
 import com.re.paas.api.classes.Exceptions;
-import com.re.paas.api.reporting.pdf.signature.PdfDocumentSigner;
 
-public class DocumentUtil {
+public class PdfUtil {
 
+	@Todo("Add support for visual signatures")
 	public static void signPdf(Path in, Path out) {
 
 		try {

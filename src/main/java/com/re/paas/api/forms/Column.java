@@ -1,6 +1,10 @@
-package com.re.paas.api.reporting.pdf;
+package com.re.paas.api.forms;
 
 import java.awt.geom.AffineTransform;
+
+import com.re.paas.internal.documents.pdf.gen.Image;
+import com.re.paas.internal.documents.pdf.gen.InputControl;
+import com.re.paas.internal.documents.pdf.gen.TextControl;
 
 public class Column {
 
@@ -57,7 +61,7 @@ public class Column {
 		return containerWidth;
 	}
 
-	protected Column withContainerWidth(float width) {
+	public Column withContainerWidth(float width) {
 		this.containerWidth = width;
 		this.width = ((float) (percentileWidth / 100) * containerWidth);
 		return this;

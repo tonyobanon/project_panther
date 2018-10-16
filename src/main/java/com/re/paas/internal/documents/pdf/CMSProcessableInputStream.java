@@ -1,5 +1,5 @@
 
-package com.re.paas.internal.documents;
+package com.re.paas.internal.documents.pdf;
 
 import org.bouncycastle.asn1.ASN1ObjectIdentifier;
 import org.bouncycastle.asn1.cms.CMSObjectIdentifiers;

@@ -17,7 +17,7 @@ public class SecurityManagerImpl extends SecurityManager {
 		boolean allowed = Permissions.isAllowed(perm);
 		
 		if(!allowed) {
-			throw new SecurityException();
+			throw new SecurityException("Permission was refused: " + perm.toString());
 		}
 		
 		super.checkPermission(perm);

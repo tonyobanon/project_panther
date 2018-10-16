@@ -1,8 +1,11 @@
-package com.re.paas.api.reporting.pdf;
+package com.re.paas.internal.documents.pdf.gen;
 
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedList;
+
+import com.re.paas.api.forms.Column;
+import com.re.paas.api.forms.SizeSpec;
 
 public class Row implements Iterable<Column> {
 

@@ -1,7 +1,9 @@
-package com.re.paas.api.reporting.pdf;
+package com.re.paas.internal.documents.pdf.gen;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import com.re.paas.api.forms.ColumnCollection;
 
 public class Rowset extends ColumnCollection {
 

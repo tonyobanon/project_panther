@@ -9,6 +9,7 @@ import com.re.paas.internal.security.permissions.runtime.RuntimePermissionIndexe
 
 public class Permissions {
 	
+	// For each subclass of permission, name/actions are likely to be less than 10
 	private static final int PERMISSIONS_LENGTH = 100;
 	
 	public static final int ALLOW = -1;

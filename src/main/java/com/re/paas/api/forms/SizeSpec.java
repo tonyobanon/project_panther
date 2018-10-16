@@ -1,4 +1,4 @@
-package com.re.paas.api.reporting.pdf;
+package com.re.paas.api.forms;
 
 public class SizeSpec {
 

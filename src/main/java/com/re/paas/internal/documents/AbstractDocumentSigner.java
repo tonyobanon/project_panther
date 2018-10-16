@@ -40,9 +40,11 @@ import org.bouncycastle.operator.jcajce.JcaDigestCalculatorProviderBuilder;
 import org.bouncycastle.tsp.TSPException;
 import org.bouncycastle.util.Store;
 
+import com.re.paas.api.annotations.Todo;
 import com.re.paas.api.classes.Exceptions;
 import com.re.paas.internal.crypto.KeyStoreConfig;
 import com.re.paas.internal.crypto.SignContext;
+import com.re.paas.internal.documents.pdf.PdfConstants;
 import com.re.paas.internal.utils.IOUtils;
 
 /**
@@ -151,7 +153,7 @@ public abstract class AbstractDocumentSigner implements DocumentSigner {
 		try {
 
 			
-			String alg = DocumentConstants.SIGNATURE_ENCRYPTION_ALGORITHM;
+			String alg = PdfConstants.SIGNATURE_ENCRYPTION_ALGORITHM;
 			String prov = DocumentConstants.BC_PROVIDER;
 
 			byte[] contents = IOUtils.toByteArray(in);

@@ -25,18 +25,17 @@ import org.apache.pdfbox.pdmodel.graphics.color.PDDeviceRGB;
 import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
 
 import com.re.paas.api.classes.Exceptions;
-import com.re.paas.api.reporting.pdf.Column;
-import com.re.paas.api.reporting.pdf.Constants;
-import com.re.paas.api.reporting.pdf.Image;
-import com.re.paas.api.reporting.pdf.InputControl;
-import com.re.paas.api.reporting.pdf.InputControl.Size;
-import com.re.paas.api.reporting.pdf.Row;
-import com.re.paas.api.reporting.pdf.SizeSpec;
-import com.re.paas.api.reporting.pdf.Table;
-import com.re.paas.api.reporting.pdf.TextControl;
-import com.re.paas.api.reporting.pdf.TextControl.UnderlineType;
-import com.re.paas.internal.documents.DocumentUtil;
-import com.re.paas.api.reporting.pdf.XCoordinate;
+import com.re.paas.api.forms.Column;
+import com.re.paas.api.forms.SizeSpec;
+import com.re.paas.internal.documents.pdf.gen.Constants;
+import com.re.paas.internal.documents.pdf.gen.Image;
+import com.re.paas.internal.documents.pdf.gen.InputControl;
+import com.re.paas.internal.documents.pdf.gen.Row;
+import com.re.paas.internal.documents.pdf.gen.Table;
+import com.re.paas.internal.documents.pdf.gen.TextControl;
+import com.re.paas.internal.documents.pdf.gen.XCoordinate;
+import com.re.paas.internal.documents.pdf.gen.InputControl.Size;
+import com.re.paas.internal.documents.pdf.gen.TextControl.UnderlineType;
 
 public class PDFBuilder {
 
@@ -580,7 +579,7 @@ public class PDFBuilder {
 
 			out.close();
 			
-			DocumentUtil.signPdf(unsigned, path);
+			PdfUtil.signPdf(unsigned, path);
 
 		} catch (IOException e) {
 			Exceptions.throwRuntime(e);
