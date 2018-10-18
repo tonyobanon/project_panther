@@ -8,7 +8,6 @@ import java.util.Map;
 import com.re.paas.api.annotations.BlockerBlockerTodo;
 import com.re.paas.api.annotations.PlatformInternal;
 import com.re.paas.api.app_provisioning.AppClassLoader;
-import com.re.paas.api.app_provisioning.AppProvisioner;
 import com.re.paas.api.classes.Exceptions;
 import com.re.paas.api.classes.KeyValuePair;
 import com.re.paas.api.classes.PlatformException;
@@ -18,6 +17,7 @@ import com.re.paas.api.spi.SpiDelegate;
 import com.re.paas.api.spi.SpiDelegateHandler;
 import com.re.paas.api.spi.SpiLocatorHandler;
 import com.re.paas.api.spi.SpiTypes;
+import com.re.paas.internal.app_provisioning.AppProvisioner;
 import com.re.paas.internal.errors.SpiError;
 
 public class SpiBaseImpl implements SpiBase {

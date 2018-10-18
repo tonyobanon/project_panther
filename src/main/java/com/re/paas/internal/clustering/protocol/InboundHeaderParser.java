@@ -13,7 +13,7 @@ public class InboundHeaderParser extends ChannelInboundHandlerAdapter {
 	@Override
 	public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
 
-		//len = 18 --> [0] - [17]
+		//len = 22 --> [0] - [21]
         ByteBuf in = (ByteBuf) msg;
 		
 		// For predictable performance, we need a fail-fast behavior, so we test
@@ -40,30 +40,32 @@ public class InboundHeaderParser extends ChannelInboundHandlerAdapter {
 		}
 
 		// Check end segment 1
-		if (Constants.HE1 != in.getShort(12)) {
+		if (Constants.HE1 != in.getShort(16)) {
 			ctx.fireChannelRead(in);
 			return;
 		}
 
 		// Check end segment 2
-		if (Constants.HE2 != in.getShort(14)) {
+		if (Constants.HE2 != in.getShort(18)) {
 			ctx.fireChannelRead(in);
 			return;
 		}
 
 		// Check end segment 3 
-		if (Constants.HE3 != in.getShort(16)) {
+		if (Constants.HE3 != in.getShort(20)) {
 			ctx.fireChannelRead(in);
 			return;
 		}
 
 		// At this point, we are sure this packet is a header packet
-		String remoteAddress = ctx.channel().remoteAddress().toString();
 		
-		// Update headers
-		Constants.ServerTransactionsRT.get(remoteAddress)
-				.addHeaders(in.getInt(6), in.getShort(10));
-
+		short nodeId = in.getShort(6);
+		short clientId = in.getShort(8);
+		int contentLength = in.getInt(10);
+		short functionId = in.getShort(14);
+		
+		Constants.ServerTransactionsRT[nodeId][clientId] = new TransactionContext(contentLength, functionId, nodeId, clientId);
+		
 		in.release();
 	}
 

@@ -1,8 +1,8 @@
 package com.re.paas.api.spi;
 
 import com.re.paas.api.annotations.PlatformInternal;
-import com.re.paas.api.app_provisioning.AppProvisioner;
 import com.re.paas.api.designpatterns.Singleton;
+import com.re.paas.internal.app_provisioning.AppProvisioner;
 
 @PlatformInternal
 public interface SpiBase {

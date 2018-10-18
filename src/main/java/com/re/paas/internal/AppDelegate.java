@@ -10,7 +10,6 @@ import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import com.re.paas.api.annotations.BlockerTodo;
 import com.re.paas.api.annotations.PlatformInternal;
 import com.re.paas.api.app_provisioning.AppClassLoader;
-import com.re.paas.api.app_provisioning.AppProvisioner;
 import com.re.paas.api.clustering.NodeRegistry;
 import com.re.paas.api.clustering.protocol.ClientFactory;
 import com.re.paas.api.clustering.protocol.Server;
@@ -24,6 +23,7 @@ import com.re.paas.api.spi.SpiLocatorHandler;
 import com.re.paas.api.tasks.Scheduler;
 import com.re.paas.api.threadsecurity.ThreadSecurity;
 import com.re.paas.internal.app_provisioning.AppClassLoaderImpl;
+import com.re.paas.internal.app_provisioning.AppProvisioner;
 import com.re.paas.internal.app_provisioning.AppProvisionerImpl;
 import com.re.paas.internal.clustering.ClusterConfig;
 import com.re.paas.internal.clustering.DefaultNodeRegistry;
@@ -34,6 +34,7 @@ import com.re.paas.internal.fusion.services.impl.ServerOptions;
 import com.re.paas.internal.fusion.services.impl.WebServer;
 import com.re.paas.internal.logging.DefaultLoggerFactory;
 import com.re.paas.internal.networking.AddressResolverImpl;
+import com.re.paas.internal.security.Permissions;
 import com.re.paas.internal.security.SecurityManagerImpl;
 import com.re.paas.internal.security.ThreadSecurityImpl;
 import com.re.paas.internal.spi.SPILocatorHandlerImpl;
@@ -76,6 +77,7 @@ public class AppDelegate {
 		ThreadSecurity.get()
 			.setMainThread(Thread.currentThread())
 			.trust();
+		Permissions.scanPermissions();
 		
 		System.setSecurityManager(new SecurityManagerImpl());
 		

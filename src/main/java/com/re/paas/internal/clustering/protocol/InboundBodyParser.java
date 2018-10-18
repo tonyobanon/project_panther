@@ -9,18 +9,23 @@ public class InboundBodyParser extends ChannelInboundHandlerAdapter {
 	@Override
 	public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
 
-		// len = 18 --> [0] - [17]
+		// len = 22 --> [0] - [21]
 		ByteBuf in = (ByteBuf) msg;
 	
-		String remoteAddress = ctx.channel().remoteAddress().toString();
+		short nodeId = in.readShort();
+		short clientId = in.readShort();
 		
-		// Update Body Content
-		boolean done = Constants.ServerTransactionsRT.get(remoteAddress).add(in);
+		TransactionContext transaction = Constants.ServerTransactionsRT[nodeId][clientId];
+		
+		// Update body content
+		boolean done = transaction.add(in);
 		
 		if (done) {
+
+			Constants.ServerTransactionsRT[nodeId][clientId] = null;
 			
 			//Fire the business handler
-			ctx.fireChannelRead(Constants.ServerTransactionsRT.remove(remoteAddress));
+			ctx.fireChannelRead(transaction);
 
 		} else {
 			// Do nothing, no channel handler is fired

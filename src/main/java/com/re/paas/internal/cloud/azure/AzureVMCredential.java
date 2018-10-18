@@ -2,10 +2,8 @@ package com.re.paas.internal.cloud.azure;
 
 import java.io.StringReader;
 
-import javax.json.Json;
-import javax.json.JsonObject;
-import javax.json.JsonObjectBuilder;
-
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import com.re.paas.api.cloud.CloudEnvironment;
 import com.re.paas.api.cloud.InstanceCredential;
 import com.re.paas.internal.crypto.RSAKeyPair;
@@ -48,27 +46,27 @@ public class AzureVMCredential extends InstanceCredential {
 	@Override
 	public final String toString() {
 		
-		JsonObjectBuilder builder = Json.createObjectBuilder()
-				.add("username", username)
-				.add("password", password);
+		JsonObject obj = new JsonObject();
+		
+		obj.addProperty("username", username);
+		obj.addProperty("password", password);
 		
 		if(keyPair != null){
-			builder.add("keyPair", keyPair.toString());
+			obj.addProperty("keyPair", keyPair.toString());
 		}
 
-		JsonObject o = builder.build();
-		return o.toString();
+		return obj.toString();
 	}
 
 	@Override
 	public InstanceCredential fromString(String instanceId, String stringVal) {
 		
-		JsonObject credentialObj = Json.createReader(new StringReader(stringVal)).readObject();
+		JsonObject credentialObj = new JsonParser().parse(stringVal).getAsJsonObject();
 		
-		String username = credentialObj.getString("username");
-		String password = credentialObj.getString("password");
+		String username = credentialObj.get("username").getAsString();
+		String password = credentialObj.get("password").getAsString();
 		
-		String keyPair = credentialObj.getString("keyPair");
+		String keyPair = credentialObj.get("keyPair").getAsString();
 		
 		AzureVMCredential o = new AzureVMCredential(instanceId, username, password);
 		

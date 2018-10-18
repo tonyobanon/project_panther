@@ -214,7 +214,7 @@ public class DefaultNodeRegistry implements NodeRegistry {
 		Logger.get().info("Requesting to leave the cluster ..");
 
 		NodeLeaveResult result = Client.get(getMasterNodeId()).execute(MasterFunction.CLUSTER_LEAVE,
-				new NodeLeaveRequest().setNodeId(getNodeId()), NodeLeaveResult.class).join();
+				new NodeLeaveRequest(), NodeLeaveResult.class).join();
 
 		if (!result.isSuccess()) {
 			return;

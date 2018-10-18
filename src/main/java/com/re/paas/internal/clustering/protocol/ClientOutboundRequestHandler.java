@@ -5,12 +5,11 @@ import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
-import java.net.InetAddress;
 import java.util.concurrent.CompletableFuture;
 
+import com.re.paas.api.clustering.NodeRegistry;
 import com.re.paas.api.clustering.classes.Conditional;
 import com.re.paas.api.logging.Logger;
-import com.re.paas.api.utils.ObjectUtils;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
@@ -22,15 +21,13 @@ import io.netty.channel.ChannelInboundHandlerAdapter;
 /**
  * 
  * This class instruments all outgoing connections leaving this node, to another
- * node in the cluster. This is the reference client-side implementation of
- * Odyssey TCP protocol
+ * node in the cluster.
  * 
  * @author Tony
  */
 public class ClientOutboundRequestHandler<R> extends ChannelInboundHandlerAdapter {
 
 	private Short clientId;
-	private ClientImpl client;
 
 	private Channel channel;
 
@@ -45,19 +42,16 @@ public class ClientOutboundRequestHandler<R> extends ChannelInboundHandlerAdapte
 	private final Integer requestBodyThreshold;
 
 	private final CompletableFuture<R> future;
-	private final InetAddress serverAddress;
 
 	// @DEV
 	long startTime;
 	long endTime;
 
-	protected ClientOutboundRequestHandler(ClientImpl client, Short clientId, InetAddress serverAddress,
-			Short functionId, Object requestBody, Integer requestBodyThreshold, CompletableFuture<R> future) {
+	protected ClientOutboundRequestHandler(Short clientId, Short functionId, Object requestBody,
+			Integer requestBodyThreshold, CompletableFuture<R> future) {
 
-		this.client = client;
 		this.clientId = clientId;
 
-		this.serverAddress = serverAddress;
 		this.functionId = functionId;
 		this.requestBody = requestBody;
 		this.requestBodyThreshold = requestBodyThreshold;
@@ -236,14 +230,14 @@ public class ClientOutboundRequestHandler<R> extends ChannelInboundHandlerAdapte
 
 	private void sendRequest() throws IOException {
 
-		ByteBuf buf = requestBodyThreshold == -1 ? ByteBufAllocator.DEFAULT.directBuffer()
+		ByteBuf body = requestBodyThreshold == -1 ? ByteBufAllocator.DEFAULT.directBuffer()
 				: ByteBufAllocator.DEFAULT.directBuffer(requestBodyThreshold);
 
 		// Buffer requestBody
 		ObjectOutputStream stream = new ObjectOutputStream(new OutputStream() {
 			@Override
 			public void write(int b) throws IOException {
-				buf.writeByte(b);
+				body.writeByte(b);
 			}
 		});
 
@@ -253,25 +247,23 @@ public class ClientOutboundRequestHandler<R> extends ChannelInboundHandlerAdapte
 		// close object stream
 		stream.close();
 
-		// Create frame bytes
-		ByteBuf frame = ByteBufAllocator.DEFAULT.directBuffer(4);
-		byte[] serverAddress = this.serverAddress != null ? this.serverAddress.getAddress()
-				: ObjectUtils.toByteArray(-1);
-		frame.writeBytes(Unpooled.copiedBuffer(serverAddress));
-
 		// Create header bytes
 		ByteBuf header = ByteBufAllocator.DEFAULT.directBuffer(Constants.CLIENT_PACKET_FRAME_SIZE);
+
+		Short nodeId = NodeRegistry.get().getNodeId();
+
 		header.writeBytes(Unpooled.copyShort(Constants.HS1));
 		header.writeBytes(Unpooled.copyShort(Constants.HS2));
 		header.writeBytes(Unpooled.copyShort(Constants.HS3));
+		header.writeBytes(Unpooled.copyShort(nodeId));
 		header.writeBytes(Unpooled.copyShort(getClientId()));
-		header.writeBytes(Unpooled.copyInt(buf.readableBytes()));
+		header.writeBytes(Unpooled.copyInt(body.readableBytes()));
 		header.writeBytes(Unpooled.copyShort(functionId));
 		header.writeBytes(Unpooled.copyShort(Constants.HE1));
 		header.writeBytes(Unpooled.copyShort(Constants.HE2));
 		header.writeBytes(Unpooled.copyShort(Constants.HE3));
 
 		// Write to remote host
-		IOUtils.writeAndFlush(this, frame, header, buf, Constants.CLIENT_PACKET_FRAME_SIZE);
+		IOUtils.writeAndFlush(this, header, body, Constants.CLIENT_PACKET_FRAME_SIZE, nodeId, getClientId());
 	}
 }

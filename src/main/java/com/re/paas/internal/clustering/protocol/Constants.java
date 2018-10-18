@@ -1,12 +1,13 @@
 package com.re.paas.internal.clustering.protocol;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
+import com.re.paas.api.logging.Logger;
+import com.re.paas.api.logging.LoggerFactory;
 
 public class Constants {
 	
-	public static final short CLIENT_PACKET_FRAME_SIZE = 20;
+	private static final Logger LOG = LoggerFactory.get().getLog(Constants.class);
+	
+	public static final short CLIENT_PACKET_FRAME_SIZE = 22;
 	
 	protected static final short HS1 = 32;
 	protected static final short HS2 = 19;
@@ -25,7 +26,17 @@ public class Constants {
 	// Client Channel Handlers
 	protected static final String OUTBOUND_REQUEST_HANDLER = "OUTBOUND_REQUEST_HANDLER";
 
-	// K: Remote Address, V: TransactionContexts
-	protected static final Map<String, TransactionContext> ServerTransactionsRT = Collections
-			.synchronizedMap(new HashMap<String, TransactionContext>());
+	protected static final TransactionContext[][] ServerTransactionsRT = new TransactionContext[Short.MAX_VALUE][];
+
+	
+	static {
+		
+		LOG.info("Creating data store for storing server transactions");
+		
+		for(int i = 0; i < ServerTransactionsRT.length; i++) {
+			ServerTransactionsRT[i] = new TransactionContext[Short.MAX_VALUE];
+		}
+		
+	}
+	
 }

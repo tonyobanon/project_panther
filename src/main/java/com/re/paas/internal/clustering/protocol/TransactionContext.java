@@ -1,31 +1,24 @@
 package com.re.paas.internal.clustering.protocol;
 
-import java.net.InetAddress;
-import java.net.UnknownHostException;
-
-import com.re.paas.api.classes.Exceptions;
-
 import io.netty.buffer.ByteBuf;
-import io.netty.buffer.ByteBufAllocator;
 
 public class TransactionContext {
-
-	private ByteBuf serverAddressBuf;
 	
-	private InetAddress serverAddress;
+	private final Short nodeId;
+	private final Short clientId;
 	
 	private int totalLength;
-	private short functionId;
+	private final short functionId;
 
-	private byte[] bytes;
+	private final byte[] bytes;
 	private int currentIndex;
 
-	protected TransactionContext() {
-		serverAddressBuf = ByteBufAllocator.DEFAULT.directBuffer(4);
-	}
 
-	public void addHeaders(int totalLength, short functionId) {
+	public TransactionContext(int totalLength, short functionId, short nodeId, short clientId) {
 
+		this.nodeId = nodeId;
+		this.clientId = clientId;
+		
 		this.totalLength = totalLength;
 		this.functionId = functionId;
 
@@ -51,39 +44,7 @@ public class TransactionContext {
 		
 		return true;
 	}
-	
-	public ByteBuf getServerAddressBuf() {
-		return serverAddressBuf;
-	}
 
-	public InetAddress getServerAddress() {
-		return serverAddress;
-	}
-
-	public TransactionContext setServerAddress(InetAddress serverAddress) {
-		this.serverAddress = serverAddress;
-		this.serverAddressBuf.release();
-		this.serverAddressBuf = null;
-		return this;
-	}
-	
-	public TransactionContext setServerAddress(ByteBuf serverAddress) {
-		
-		assert serverAddress.readableBytes() == 4;
-		byte[] b = new byte[4];
-		
-		for(int i = 0; i < 4; i++) {
-			b[i] = serverAddress.readByte();
-		}
-		
-		try {
-			setServerAddress(InetAddress.getByAddress(b));
-		} catch (UnknownHostException e) {
-			Exceptions.throwRuntime(e);
-		}
-		
-		return this;
-	}
 
 	public int getTotalLength() {
 		return totalLength;
@@ -97,4 +58,11 @@ public class TransactionContext {
 		return bytes;
 	}
 
+	public Short getNodeId() {
+		return nodeId;
+	}
+
+	public Short getClientId() {
+		return clientId;
+	}
 }

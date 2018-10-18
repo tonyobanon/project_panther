@@ -1,10 +1,8 @@
 package com.re.paas.internal.clustering.protocol;
 
-import java.net.InetAddress;
-
 import com.re.paas.api.classes.Exceptions;
+import com.re.paas.api.clustering.AbstractRequest;
 import com.re.paas.api.clustering.Function;
-import com.re.paas.api.clustering.protocol.AbstractNodeRequest;
 import com.re.paas.internal.clustering.Functions;
 
 import io.netty.channel.Channel;
@@ -21,30 +19,26 @@ public class InboundBusinessHandler extends ChannelInboundHandlerAdapter {
 	public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
 
 		Channel channel = ctx.channel();
-		
-		TransactionContext context = (TransactionContext) msg;
-		byte[] data = context.getBytes();
 
+		TransactionContext context = (TransactionContext) msg;
 		
 		try {
 
-			// Run function
-			
-			Object parameter = IOUtils.readObject(data);
+			Object parameter = IOUtils.readObject(context.getBytes());
 			Function function = Function.fromId(context.getFunctionId());
-			InetAddress serverAddress = context.getServerAddress();
-			
-			if (parameter instanceof AbstractNodeRequest && serverAddress != null) {
-				((AbstractNodeRequest) parameter).setRemoteAddress(serverAddress.getHostAddress());
+
+			if (parameter instanceof AbstractRequest) {
+				((AbstractRequest) parameter).setNodeId(context.getNodeId()).setClientId(context.getClientId());
 			}
 
+			// Run function
 			Functions.execute(function, parameter, channel);
-			
+
 		} catch (Exception e) {
 			channel.newFailedFuture(e);
 			Exceptions.throwRuntime(e);
 		}
-	
+
 	}
 
 }

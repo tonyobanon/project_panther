@@ -28,8 +28,8 @@ import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import javax.json.Json;
-import javax.json.JsonObject;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 
 import com.re.paas.api.annotations.BlockerTodo;
 import com.re.paas.api.classes.ClientResources.HtmlCharacterEntities;
@@ -60,7 +60,7 @@ public class Utils {
 	}
 
 	public static JsonObject getJson(InputStream in) {
-		return Json.createReader(new StringReader(getString(in))).readObject();
+		return new JsonParser().parse(Utils.getString(in)).getAsJsonObject();
 	}
 
 	public static Properties getProperties(InputStream in) {
@@ -110,32 +110,32 @@ public class Utils {
 
 	public static String[] readLines(Path p) {
 		try {
-return readLines(Files.newInputStream(p));
-	} catch (IOException e) {
-		Exceptions.throwRuntime(e);
-		return null;
-	}
+			return readLines(Files.newInputStream(p));
+		} catch (IOException e) {
+			Exceptions.throwRuntime(e);
+			return null;
+		}
 	}
 
 	public static String[] readLines(InputStream in) {
-try {
-		List<String> lines = new ArrayList<String>();
+		try {
+			List<String> lines = new ArrayList<String>();
 
-		Charset charset = Charset.forName("UTF-8");
-		BufferedReader reader = new BufferedReader(new InputStreamReader(in, charset));
-		String line = null;
-		while ((line = reader.readLine()) != null) {
-			lines.add(line);
+			Charset charset = Charset.forName("UTF-8");
+			BufferedReader reader = new BufferedReader(new InputStreamReader(in, charset));
+			String line = null;
+			while ((line = reader.readLine()) != null) {
+				lines.add(line);
+			}
+
+			in.close();
+			return lines.toArray(new String[lines.size()]);
+		} catch (IOException e) {
+			Exceptions.throwRuntime(e);
+			return null;
 		}
-
-		in.close();
-		return lines.toArray(new String[lines.size()]);
-} catch (IOException e) {
-	Exceptions.throwRuntime(e);
-	return null;
-}
 	}
-	
+
 	public static String getString(Path p) {
 		try {
 			return getString(Files.newInputStream(p));
@@ -160,18 +160,18 @@ try {
 	}
 
 	public static void saveString(String o, OutputStream out) {
-try {
-		StringReader in = new StringReader(o);
-		int c;
-		while ((c = in.read()) != -1) {
-			out.write(c);
-		}
+		try {
+			StringReader in = new StringReader(o);
+			int c;
+			while ((c = in.read()) != -1) {
+				out.write(c);
+			}
 
-		in.close();
-		out.close();
-	} catch (IOException e) {
-		Exceptions.throwRuntime(e);
-	}
+			in.close();
+			out.close();
+		} catch (IOException e) {
+			Exceptions.throwRuntime(e);
+		}
 	}
 
 	public static void saveString(String o, Path path) {
@@ -184,15 +184,15 @@ try {
 
 	public static void copyTo(InputStream in, OutputStream out) {
 		try {
-		int c;
-		while ((c = in.read()) != -1) {
-			out.write(c);
+			int c;
+			while ((c = in.read()) != -1) {
+				out.write(c);
+			}
+			in.close();
+			out.close();
+		} catch (IOException e) {
+			Exceptions.throwRuntime(e);
 		}
-		in.close();
-		out.close();
-	} catch (IOException e) {
-		Exceptions.throwRuntime(e);
-	}
 	}
 
 	public static String getArgument(String[] args, String key) {
@@ -252,6 +252,22 @@ try {
 		}
 
 		return output.toString().trim();
+	}
+
+	public static boolean isProgressive(List<Integer> list) {
+		return sum(list) == sum(indexes(list.size()));
+	}
+
+	public static int sum(List<Integer> list) {
+		return sum(list.toArray(new Integer[list.size()]));
+	}
+	
+	public static int sum(Integer[] list) {
+		int i = 0;
+		for (int e : list) {
+			i += e;
+		}
+		return i;
 	}
 
 	public static Integer[] indexes(int count) {
@@ -387,15 +403,15 @@ try {
 
 		throw new IllegalArgumentException("Unable to parse the user fragment from uri: " + uri);
 	}
-	
+
 	public static Short nextRandomShort() {
 		return (short) nextRandomInt(Short.MAX_VALUE + 1);
 	}
-	
+
 	public static int nextRandomInt() {
 		return nextRandomInt(Integer.MAX_VALUE + 1);
 	}
-	
+
 	public static int nextRandomInt(Integer exclusiveBound) {
 		return random.nextInt(exclusiveBound);
 	}
@@ -403,10 +419,10 @@ try {
 	public static Integer mergeUnsigned(short s1, short s2) {
 		return ((s1 & 0xFFFF) << 16) | (s2 & 0xFFFF);
 	}
-	
+
 	public static boolean startsWith(String key, String... entries) {
-		for(String e : entries) {
-			if(key.startsWith(e)) {
+		for (String e : entries) {
+			if (key.startsWith(e)) {
 				return true;
 			}
 		}

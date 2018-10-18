@@ -10,7 +10,6 @@ import com.re.paas.api.classes.PlatformException;
 import com.re.paas.api.clustering.NodeRegistry;
 import com.re.paas.api.clustering.classes.BaseNodeSpec;
 import com.re.paas.api.clustering.Function;
-import com.re.paas.api.clustering.protocol.AbstractNodeRequest;
 import com.re.paas.api.clustering.protocol.Client;
 import com.re.paas.api.logging.Logger;
 import com.re.paas.api.utils.Utils;
@@ -142,11 +141,6 @@ public class ClientImpl implements Client {
 		Logger.get().debug("Making request to: " + host().getHostAddress());
 
 		final CompletableFuture<R> completableFuture = new CompletableFuture<R>();
-		InetAddress serverAddress = null;
-
-		if (parameter instanceof AbstractNodeRequest) {
-			serverAddress = NodeRegistry.get().getClusteringAddress();
-		}
 
 		Short clientId = getClientId();
 		ObjectWrapper<SocketChannel> channel = new ObjectWrapper<SocketChannel>(getChannel());
@@ -164,7 +158,7 @@ public class ClientImpl implements Client {
 		//final String handlerName = Utils.mergeUnsigned(nodeId, clientId).toString();
 		final String handlerName = managed() ? clientId.toString() : Utils.newShortRandom();
 				
-		ClientOutboundRequestHandler<R> handler = new ClientOutboundRequestHandler<R>(this, clientId, serverAddress,
+		ClientOutboundRequestHandler<R> handler = new ClientOutboundRequestHandler<R>(clientId,
 				Function.getId(function), parameter, pThreshold, completableFuture);
 
 		// Add handler to channel pipeline

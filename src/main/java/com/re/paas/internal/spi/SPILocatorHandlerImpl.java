@@ -10,7 +10,6 @@ import java.util.Map.Entry;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.re.paas.api.app_provisioning.AppClassLoader;
-import com.re.paas.api.app_provisioning.AppProvisioner;
 import com.re.paas.api.classes.Exceptions;
 import com.re.paas.api.classes.KeyValuePair;
 import com.re.paas.api.classes.PlatformException;
@@ -22,6 +21,7 @@ import com.re.paas.api.spi.SpiDelegateHandler;
 import com.re.paas.api.spi.SpiLocatorHandler;
 import com.re.paas.api.spi.SpiTypes;
 import com.re.paas.api.utils.ClassUtils;
+import com.re.paas.internal.app_provisioning.AppProvisioner;
 import com.re.paas.internal.classes.ClasspathScanner;
 import com.re.paas.internal.errors.ApplicationError;
 

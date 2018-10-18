@@ -29,7 +29,7 @@ public class ClusterLeaveFunction extends AbstractClusterFunction<NodeLeaveReque
 	public NodeLeaveResult delegate(NodeLeaveRequest request) {
 
 		// validate credentials
-		Logger.get().info("Received NodeLeaveRequest from " + request.getRemoteAddress());
+		Logger.get().info("Received NodeLeaveRequest from node: " + request.getNodeId());
 
 		NodeRegistry registry = NodeRegistry.get();
 		

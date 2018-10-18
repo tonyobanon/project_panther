@@ -1,17 +1,21 @@
 package com.re.paas.internal.clustering.objectmodels;
 
+import java.net.InetAddress;
+
 import com.re.paas.api.cloud.CloudEnvironment;
+import com.re.paas.api.clustering.AbstractRequest;
 import com.re.paas.api.clustering.NodeRegistry;
 import com.re.paas.api.clustering.NodeRole;
 import com.re.paas.api.clustering.classes.ClusterCredentials;
-import com.re.paas.api.clustering.protocol.AbstractNodeRequest;
 import com.re.paas.internal.clustering.NodeRoleHelper;
 
-public class NodeJoinRequest extends AbstractNodeRequest {
+public class NodeJoinRequest extends AbstractRequest {
 
 	private static final long serialVersionUID = 1L;
 
 	private String clusterName;
+	
+	private InetAddress inboundAddress;
 	private Integer inboundPort;
 
 	private String nodeName;
@@ -25,6 +29,15 @@ public class NodeJoinRequest extends AbstractNodeRequest {
 
 	public NodeJoinRequest setClusterName(String clusterName) {
 		this.clusterName = clusterName;
+		return this;
+	}
+
+	public InetAddress getInboundAddress() {
+		return inboundAddress;
+	}
+
+	public NodeJoinRequest setInboundAddress(InetAddress inboundAddress) {
+		this.inboundAddress = inboundAddress;
 		return this;
 	}
 
@@ -69,6 +82,7 @@ public class NodeJoinRequest extends AbstractNodeRequest {
 		NodeRegistry nodeRegistry = NodeRegistry.get();
 		
 		return new NodeJoinRequest().setClusterName(nodeRegistry.clusterName())
+				.setInboundAddress(nodeRegistry.getClusteringAddress())
 				.setInboundPort(nodeRegistry.getInboundPort()).setNodeName(nodeRegistry.getName())
 				.setCredentials(CloudEnvironment.get().credentials())
 				.setRoles(NodeRoleHelper.toString(NodeRole.get().values()));

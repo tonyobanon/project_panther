@@ -1,0 +1,277 @@
+
+
+Security Manager
+SPI Delegate start
+Clustering
+Functionality
+
+Some Javax Packages are missing in Java 10
+
+Cache
+Shared Libraries
+NoSQL-like API on top of javax.sql.Connection ?
+
+Models Rewrite
+Write better Serializer for Odyssey
+
+Platform Start Plan
+
+UI
+SPI Hot Reloading
+Cluster Orchestration
+Load Balancing
+Metrics
+
+Properly setup FontCaching for PDFBox
+
+
+ServiceDelegate should work with ThreadSecurity to smartly decide which threads
+are trusted
+
+
+Make most methods in AbstractSpiDelegates to be final
+
+
+Read Configurations
+Load client assets
+
+
+The workflow for starting master:
+1. The user enters IAM credentials on CE website
+2. CE starts the master node, passing the same credentials as Instance Tags
+
+3. Pre-Install phase continues inside the node (for masters only)
+4. In Screen 1, the user enters DB credentials, the response is saved to DB_PROFILE_FILE
+5. In Screen 2, the user enters Cache credentials, the response is saved to CACHE_PROFILE_FILE
+6. In Screen 3, the user enters FileSystem credentials, the response is saved to FS_PROFILE_FILE, then call FileSystemProviderImpl.init()
+   will get notified
+7. In Screen 4, the user enters KeyStore info, used for Https, document signing, e.t.c
+
+8. In Screen 5,
+
+After these have saved, the platform is restarted
+
+8. Post-Install phase continues, here the user enters things like company information
+9. The data is saved and the user is redirected to the dashboard
+
+
+FileSystemProvider should add a prefix for paths
+
+
+
+
+The workflow for app extraction:
+1. From the marketplace, apps come as a bundled file.
+2. The platform knows how to collapse the single bundled file, into seperate files
+3. Then using the encrypted file system, we save the classes
+
+
+Note: credentials should be passed as instance tags to auto scaled slaves
+
+
+Make sure to set Thread.contextLoader (to an AppClassLoader instance) for apps, else leave it as null
+
+We assume that classes with a AppClassLoader is a third party -> SpiDelegateHandlerImpl->isInternalDelegate
+
+
+Applications should be forbidden from creating new Threads on their own,
+a method should be created for them to use as an alternative
+
+
+As a general rule, apps should be unable to extend Jvm Services, i.e no META-INF folder
+
+
+Many times, Runtime Exceptions are thrown without using Error Objects.. Fix
+
+
+In @interface EventListener, add property that indicates releveant roles
+
+
+
+
+
+NAME		  CREDENTIAL SOURCE
+
+Compute			 -
+DB			Inherit
+Caching			Init form
+File System		Inherit
+
+
+
+Font Caching
+Client Assets (Store in Memory instead)
+PDF
+Config (DB, FS, CACHE)
+
+
+
+SCREEN ATTRIBUTES
+Route based-> Fusion
+Hierarchical -> routes_mapping.json
+
+Templating -> TemplateObjectModel
+Partial Rendering -> realignite
+Pre bundled components
+
+
+Stress Test sequence
+
+
+Seggragate APIs
+Move errors and functionalities to their relevant packages
+
+
+complete Realms, fields, and functionalities
+complete FusionHelper
+
+
+In RoleModel::init(), roles to functionality mappings should be registered in
+RealmDelegate, and should be incrementally updated
+
+
+ORGANIZATION_ID: {params}.abc
+ORGANIZATION_ID: {headers}.abc
+ORGANIZATION_ID: {body}.abc.def.ghi
+
+
+Impl CacheBackedMap
+Start using delegate resource maps for everything
+
+
+Make Cloud-based config params visible in Cloud Environment:
+ Cache, Storage, ClusterRole
+
+By default, inMemory() in SpiDelegate to fetch Cloud environment
+
+Check if delegate is respecting the setting in Cloud Environment
+		
+Add Logger SpiType as autmatic dependency for all delegates
+		
+
+
+
+
+FormModel should call realm delegate for predefined form sections
+
+Decentralize FormFieldRepository
+
+
+
+CREATE TABLE
+CREATE INDEX
+Write TableModify Rule
+Modify Filter Rule
+Write more rules for the adapter
+
+TimeTrends, IModels, Model Versioning, 
+Virtual Host Configuration, KeyStoreManager
+
+
+Jdbc, Fusion
+
+Disable Assertions on Production
+
+
+Scan SPIs (i.e. Table, CloudEnvironment)
+Is Database Selected (Read Instance Meta file)?
+Is Cache Selected (Read Instance Meta file)?
+If yes, Start all SPIs, Launch Dashboard
+If no, Start only Service and UI Spis, Launch DatabaseSetup/CacheSetup, Start all SPIs, Launch Dashboard
+Call Hooks
+
+
+database_profile
+
+
+{
+ 
+}
+
+
+Migrate from Reflection to Generated Code With javax.tools.JavaCompiler
+see https://dzone.com/articles/java-reflection-but-faster
+
+
+
+Implement Service Affinity
+
+
+@ModelMethod
+Further split functionalities, roles, object, subject types
+Refractor all Delegate init() methods to look like get(this::addRealm);
+All Delegates should use the internal maps for storage
+Create StorageInterfaces and incrementally rewrite Model Methods
+Model Abstraction, see: eaa
+Improve Logging
+App dependendies(with version) declaration
+
+Realm
+Cache
+
+name, reqiresApplication, Form
+
+SPI Delegate tasks
+    init():
+    A config flag should exist to tell if a realm's form data has been stored.
+    If so, or not, do the appropriate
+     
+
+
+
+
+* Discover, * Map functionalities
+
+
+Sessions : 108, 112 Depends on Cache SPI and were commented out
+
+Find a better alternative to getCanonicalFunctionality()
+rename SPIDelegate.get to forEach, i.e init()
+Cache, Storage, Models.start(), UI, , KeyStoreManager, Payments, Reporting, Metrics,
+ClusteringError.from
+CloudEnvironment.applies()
+Errors should use RBKeys instead
+
+Deal with the issue of multiple RB keys
+
+
+Create mechanism to set default application per SpiType
+
+Add support for SockJS
+
+failureHandler
+
+.failureHandler(ctx -> {
+			if (ctx.statusCode() == HttpServletResponse.SC_NOT_FOUND) {
+				ctx.reroute("/404");
+			} else if (ctx.statusCode() == HttpServletResponse.SC_INTERNAL_SERVER_ERROR) {
+				ctx.reroute("/error");
+			} else {
+				ctx.next();
+			}
+		});
+
+
+CorsHandler
+
+// The handler adds a CSRF token to requests which mutate state. In
+// order change the state a (XSRF-TOKEN) cookie is set with a unique
+// token, that is expected to be sent back in a (X-XSRF-TOKEN) header.
+CSRFHandler
+
+// The handler prevents DDOS attacks
+
+BodyHandler
+
+
+
+Create custom font cache provider for PDF library
+
+Add TaskImages, enhance existing ones
+
+Agent Availability Schedule
+
+Probe cache=true in fusion
+
+Start Jvm with --illegal-access=permit
+

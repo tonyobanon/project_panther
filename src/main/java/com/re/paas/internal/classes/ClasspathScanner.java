@@ -59,6 +59,10 @@ public class ClasspathScanner<T> {
 		this.classIdentityType = null;
 		this.classType = type;
 	}
+	
+	public ClasspathScanner(String nameSuffix, Class<T> type) {
+		this(nameSuffix, type, ClassIdentityType.ASSIGNABLE_FROM);
+	}
 
 	public ClasspathScanner(String nameSuffix, Class<T> type, ClassIdentityType identityType) {
 		this(Lists.newArrayList(nameSuffix), type, identityType);

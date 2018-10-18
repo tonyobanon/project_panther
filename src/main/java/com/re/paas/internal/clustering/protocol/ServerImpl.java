@@ -42,6 +42,8 @@ public class ServerImpl implements Server {
 
 	@Override
 	public void start() {
+		
+		
 		try {
 			// Bind and start to accept incoming connections.
 			this.bootstrap.bind(host, port).sync().addListener(new ChannelFutureListener() {

@@ -15,20 +15,15 @@ import io.netty.channel.Channel;
 
 public class IOUtils {
 
-	public static <R> void writeAndFlush(ClientOutboundRequestHandler<R> handler, ByteBuf header, ByteBuf body, Short packetSize) {
-		writeAndFlush(handler, null, header, body, packetSize);
+	public static <R> void writeAndFlush(ClientOutboundRequestHandler<R> handler, ByteBuf body, Short packetSize, Short nodeId, Short clientId) {
+		writeAndFlush(handler, null, body, packetSize, nodeId, clientId);
 	}
 
-	public static <R> void writeAndFlush(ClientOutboundRequestHandler<R> handler, ByteBuf frame, ByteBuf header, ByteBuf body, Short packetSize) {
+	public static <R> void writeAndFlush(ClientOutboundRequestHandler<R> handler, ByteBuf header, ByteBuf body, Short packetSize, Short nodeId, Short clientId) {
 
 		Channel channel = handler.getChannel();
 		
 		assert header.readableBytes() == packetSize.intValue();
-
-		if (frame != null) {
-			// Write frame bytes
-			channel.write(frame);
-		}
 
 		// Write header bytes
 		channel.write(header);
@@ -37,11 +32,14 @@ public class IOUtils {
 
 		// content length
 		int length = body.readableBytes();
+		
+		// @nodeId + @clientId = 4
+		final int segmentOffset = 4;
 
 		// segment bytes
-		int segments = length / (packetSize/* - 4 */);
+		int segments = length / (packetSize - segmentOffset );
 
-		if (length % (packetSize/* - 4 */) > 0) {
+		if (length % (packetSize - segmentOffset ) > 0) {
 			segments += 1;
 		}
 
@@ -49,12 +47,18 @@ public class IOUtils {
 
 			// Segment N
 
-			int endIndex = (packetSize/* - 4 */) * (i + 1);
-			int currentIndex = endIndex - (packetSize/* - 4 */);
+			int endIndex = (packetSize - segmentOffset ) * (i + 1);
+			int currentIndex = endIndex - (packetSize - segmentOffset );
 
 			// Segment buffer
-			ByteBuf cb = Unpooled.directBuffer(packetSize/* - 4 */);
+			ByteBuf cb = Unpooled.directBuffer(packetSize - segmentOffset );
 
+			// write nodeId
+			cb.writeShort(nodeId);
+			
+			// write clientId
+			cb.writeShort(clientId);
+			
 			if (i <= segments - 2) {
 
 				// i is a proper segment index

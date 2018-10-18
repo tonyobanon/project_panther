@@ -12,11 +12,11 @@ import org.apache.velocity.runtime.RuntimeConstants;
 
 import com.google.common.collect.Maps;
 import com.re.paas.api.app_provisioning.AppClassLoader;
-import com.re.paas.api.app_provisioning.AppProvisioner;
 import com.re.paas.api.classes.Exceptions;
 import com.re.paas.api.templating.AbstractObjectModelSpiDelegate;
 import com.re.paas.api.templating.TemplateObjectModel;
 import com.re.paas.api.utils.ClassUtils;
+import com.re.paas.internal.app_provisioning.AppProvisioner;
 
 public class ObjectModelSpiDelegate extends AbstractObjectModelSpiDelegate {
 

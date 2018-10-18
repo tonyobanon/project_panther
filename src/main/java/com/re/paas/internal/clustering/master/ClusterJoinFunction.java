@@ -7,8 +7,8 @@ import com.re.paas.api.classes.FluentArrayList;
 import com.re.paas.api.cloud.CloudEnvironment;
 import com.re.paas.api.clustering.AbstractClusterFunction;
 import com.re.paas.api.clustering.AbstractMasterNodeRole;
-import com.re.paas.api.clustering.NodeRegistry;
 import com.re.paas.api.clustering.Function;
+import com.re.paas.api.clustering.NodeRegistry;
 import com.re.paas.api.clustering.NodeRole;
 import com.re.paas.api.clustering.classes.BaseNodeSpec;
 import com.re.paas.api.clustering.classes.ClusterCredentials;
@@ -25,7 +25,6 @@ import com.re.paas.internal.clustering.NodeRoleHelper;
 import com.re.paas.internal.clustering.objectmodels.NodeJoinRequest;
 import com.re.paas.internal.clustering.objectmodels.NodeJoinResult;
 import com.re.paas.internal.filesystems.FileSystemChangeEvent;
-import com.re.paas.internal.networking.IPAddresses;
 
 public class ClusterJoinFunction extends AbstractClusterFunction<NodeJoinRequest, NodeJoinResult> {
 
@@ -43,19 +42,19 @@ public class ClusterJoinFunction extends AbstractClusterFunction<NodeJoinRequest
 	public NodeJoinResult delegate(NodeJoinRequest request) {
 
 		// validate credentials
-		Logger.get().info("Received NodeJoinRequest from " + request.getRemoteAddress());
+		Logger.get().info("Received NodeJoinRequest from " + request.getInboundAddress());
 
 		ClusterCredentials credentials = CloudEnvironment.get().credentials();
 
 		if (!(request.getCredentials().getAccessKey().equals(credentials.getAccessKey())
 				&& request.getCredentials().getSecretKey().equals(credentials.getSecretKey()))) {
 
-			Logger.get().info("Authentication failed for node: " + request.getRemoteAddress());
+			Logger.get().info("Authentication failed for node: " + request.getInboundAddress());
 			return new NodeJoinResult().setSuccess(false).setMessage("Authentication failed");
 		}
 
 		
-		Logger.get().info("Authentication succeeded for node: " + request.getRemoteAddress());
+		Logger.get().info("Authentication succeeded for node: " + request.getInboundAddress());
 
 		
 		NodeRegistry registry = NodeRegistry.get();
@@ -64,7 +63,7 @@ public class ClusterJoinFunction extends AbstractClusterFunction<NodeJoinRequest
 		Short nodeId = master.nextNodeId();
 
 		final BaseNodeSpec newNode = new BaseNodeSpec().setId(nodeId).setName(request.getNodeName())
-				.setRemoteAddress(IPAddresses.getAddress(request.getRemoteAddress()))
+				.setRemoteAddress(request.getInboundAddress())
 				.setInboundPort(request.getInboundPort()).setState(NodeState.STARTING)
 				.setRoles(NodeRoleHelper.fromString(request.getRoles())).setJoinDate(Dates.now());
 

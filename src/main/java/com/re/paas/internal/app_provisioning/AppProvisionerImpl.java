@@ -1,7 +1,6 @@
 package com.re.paas.internal.app_provisioning;
 
 import java.io.IOException;
-import java.io.StringReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
@@ -12,14 +11,11 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.stream.Stream;
 
-import javax.json.Json;
-import javax.json.JsonArray;
-import javax.json.JsonObject;
-import javax.json.JsonValue;
-
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import com.re.paas.api.annotations.BlockerBlockerTodo;
 import com.re.paas.api.app_provisioning.AppClassLoader;
-import com.re.paas.api.app_provisioning.AppProvisioner;
 import com.re.paas.api.classes.Exceptions;
 import com.re.paas.api.classes.KeyValuePair;
 import com.re.paas.api.classes.PlatformException;
@@ -72,9 +68,9 @@ public class AppProvisionerImpl implements AppProvisioner {
 
 	private static String[] getAppDependencies(String appId) {
 
-		JsonValue v = AppProvisionerImpl.appConfig.get(appId).get(APP_DEPENDENCIES_CONFIG_KEY);
+		JsonElement v = AppProvisionerImpl.appConfig.get(appId).get(APP_DEPENDENCIES_CONFIG_KEY);
 
-		JsonArray arr = v != null ? v.asJsonArray() : null;
+		JsonArray arr = v != null ? v.getAsJsonArray(): null;
 
 		if (arr != null) {
 			String[] array = new String[arr.size()];
@@ -123,7 +119,7 @@ public class AppProvisionerImpl implements AppProvisioner {
 				config = Utils.getJson(Files.newInputStream(path.resolve("config.json")));
 			} catch (Exception e) {
 				Logger.get(AppProvisionerImpl.class).warn("Could not config.json for app: " + appId);
-				config = Json.createReader(new StringReader("{}")).readObject();
+				config = new JsonObject();
 			}
 
 			appConfig.put(appId, config);
@@ -227,7 +223,7 @@ public class AppProvisionerImpl implements AppProvisioner {
 			JsonObject config = e.getKey();
 			ClassLoader cl = e.getValue();
 
-			JsonValue v = config.get(key);
+			JsonElement v = config.get(key);
 
 			if (v != null) {
 				r = new KeyValuePair<String, ClassLoader>(v.toString(), cl);

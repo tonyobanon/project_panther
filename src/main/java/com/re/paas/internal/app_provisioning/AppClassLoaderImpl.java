@@ -16,7 +16,6 @@ import com.re.paas.api.annotations.BlockerTodo;
 import com.re.paas.api.annotations.JdkUpgradeTask;
 import com.re.paas.api.annotations.Prototype;
 import com.re.paas.api.app_provisioning.AppClassLoader;
-import com.re.paas.api.app_provisioning.AppProvisioner;
 import com.re.paas.api.classes.Exceptions;
 import com.re.paas.api.utils.ClassUtils;
 

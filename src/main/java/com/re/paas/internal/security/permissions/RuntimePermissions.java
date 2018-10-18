@@ -1,19 +1,27 @@
-package com.re.paas.internal.security.permissions.runtime;
+package com.re.paas.internal.security.permissions;
 
-import com.re.paas.api.annotations.Prototype;
 import com.re.paas.api.app_provisioning.AppClassLoader;
 import com.re.paas.api.app_provisioning.AppClassLoader.DelegationType;
 import com.re.paas.api.utils.Utils;
 import com.re.paas.internal.Platform;
+import com.re.paas.internal.security.BasePermission;
 import com.re.paas.internal.security.Permissions;
 
-@Prototype
-public class RuntimePermissionIndexes {
+public class RuntimePermissions implements BasePermission {
+	
+	@Override
+	public String permissionClass() {
+		return RuntimePermission.class.getName();
+	}
 
+	@Override
+	public Integer getBaseIndex() {
+		return 0;
+	}
 
-	public static int getIndex(String alias, String context) {
+	public Short getIndex(String name, String actions, String context) {
 
-		switch (alias) {
+		switch (name) {
 
 		case PermissionNames.CREATE_CLASS_LOADER:
 			return PermissionIndexes.CREATE_CLASS_LOADER;
@@ -93,7 +101,7 @@ public class RuntimePermissionIndexes {
 		return Permissions.ALLOW;
 	}
 
-	public static void addDefaults(Boolean[] destination) {
+	public void addDefaults(Boolean[] destination) {
 
 		destination[PermissionIndexes.CREATE_CLASS_LOADER] = false;
 		destination[PermissionIndexes.GET_CLASS_LOADER] = false;
@@ -210,5 +218,6 @@ public class RuntimePermissionIndexes {
 		public static final String USE_POLICY = "usePolicy";
 
 	}
+
 	
 }

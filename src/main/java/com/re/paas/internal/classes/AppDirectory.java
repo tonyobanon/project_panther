@@ -8,8 +8,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-import javax.json.JsonObject;
-
+import com.google.gson.JsonObject;
 import com.re.paas.api.classes.Exceptions;
 import com.re.paas.api.utils.Utils;
 import com.re.paas.internal.Application;

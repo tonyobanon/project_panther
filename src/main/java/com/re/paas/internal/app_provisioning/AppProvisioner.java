@@ -1,10 +1,10 @@
-package com.re.paas.api.app_provisioning;
+package com.re.paas.internal.app_provisioning;
 
 import java.util.Collection;
 
-import javax.json.JsonObject;
-
+import com.google.gson.JsonObject;
 import com.re.paas.api.annotations.PlatformInternal;
+import com.re.paas.api.app_provisioning.AppClassLoader;
 import com.re.paas.api.classes.KeyValuePair;
 import com.re.paas.api.designpatterns.Singleton;
 
