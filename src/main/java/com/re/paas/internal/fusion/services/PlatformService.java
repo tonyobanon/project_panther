@@ -10,7 +10,7 @@ import com.re.paas.api.fusion.server.JsonObject;
 import com.re.paas.api.fusion.server.RoutingContext;
 import com.re.paas.api.fusion.ui.AbstractUIComponentDelegate;
 import com.re.paas.api.models.classes.InstallOptions;
-import com.re.paas.internal.classes.GsonFactory;
+import com.re.paas.internal.classes.Json;
 import com.re.paas.internal.fusion.functionalities.PlatformFunctionalities;
 import com.re.paas.internal.models.PlatformModel;
 
@@ -34,7 +34,7 @@ public class PlatformService extends BaseService {
 
 			JsonObject body = context.getBodyAsJson();
 
-			InstallOptions spec = GsonFactory.getInstance().fromJson(body.getJsonObject("payload").encode(),
+			InstallOptions spec = Json.getGson().fromJson(body.getJsonObject("payload").encode(),
 					InstallOptions.class);
 
 			// Perform installation

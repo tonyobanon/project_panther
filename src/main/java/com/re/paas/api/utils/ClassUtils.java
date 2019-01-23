@@ -5,7 +5,14 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Modifier;
+import java.lang.reflect.Type;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -15,42 +22,47 @@ import com.google.common.base.Splitter;
 import com.google.common.collect.Lists;
 import com.re.paas.api.annotations.BlockerTodo;
 import com.re.paas.api.annotations.Todo;
+import com.re.paas.api.app_provisioning.AppClassLoader;
 import com.re.paas.api.classes.Exceptions;
+import com.re.paas.api.threadsecurity.ThreadSecurity;
+import com.re.paas.internal.Application;
+import com.re.paas.internal.app_provisioning.AppProvisioner;
 
 public class ClassUtils<T> {
 
 	private static final Pattern DOT_PATTERN = Pattern.compile(Pattern.quote("."));
+	private static final Pattern HASH_PATTERN = Pattern.compile(Pattern.quote("#"));
+
 	private static final String classNamePattern = "([\\p{L}_$][\\p{L}\\p{N}_$]*\\.)*[\\p{L}_$][\\p{L}\\p{N}_$]*";
 	private static final Pattern GENERIC_TYPE_PATTERN = Pattern
 			.compile("((?<=\\Q<\\E)" + classNamePattern + "(\\Q, \\E" + classNamePattern + ")*" + "(?=\\Q>\\E\\z)){1}");
 
 	public static <T> T createInstance(String name) {
-		
+
 		try {
-			
+
 			@SuppressWarnings("unchecked")
 			Class<? extends T> clazz = (Class<? extends T>) Class.forName(name);
 			T o = createInstance(clazz);
-			
-			return o ;
-			
+
+			return o;
+
 		} catch (ClassNotFoundException e) {
 			throw new RuntimeException(e);
 		}
-		
 	}
-	
+
 	public static <T> Class<? extends T> forName(String name, ClassLoader cl) {
-		
+
 		try {
 			@SuppressWarnings("unchecked")
-			Class<? extends T> o =  (Class<? extends T>) cl.loadClass(name);
+			Class<? extends T> o = (Class<? extends T>) cl.loadClass(name);
 			return o;
 		} catch (ClassNotFoundException e) {
 			throw new RuntimeException(e);
 		}
 	}
-	
+
 	@BlockerTodo("Add support for caching")
 	public static <T> T createInstance(Class<T> clazz) {
 
@@ -59,16 +71,16 @@ public class ClassUtils<T> {
 			return clazz.getDeclaredConstructor().newInstance();
 
 		} catch (InstantiationException | InvocationTargetException | NoSuchMethodException e) {
-			
+
 			Exceptions.throwRuntime(e);
 			return null;
-			
+
 		} catch (IllegalAccessException e) {
 
 			// Try again, but this time, temporarily make the no-arg constructors accessible
 
 			Constructor<?> modified = null;
-			
+
 			for (Constructor<?> c : clazz.getDeclaredConstructors()) {
 				if (c.getParameterCount() == 0) {
 					c.setAccessible(true);
@@ -78,13 +90,13 @@ public class ClassUtils<T> {
 			}
 
 			try {
-				
-				T o =  null;
-				if(modified != null) {
-					o =  clazz.getDeclaredConstructor().newInstance();
+
+				T o = null;
+				if (modified != null) {
+					o = clazz.getDeclaredConstructor().newInstance();
 					modified.setAccessible(false);
 				}
-				
+
 				return o;
 
 			} catch (Exception ex) {
@@ -109,17 +121,17 @@ public class ClassUtils<T> {
 		return classLoader.getResourceAsStream(name);
 
 	}
-
+	
 	@Todo("Add support for multi-depth generic hierarchies")
+	@BlockerTodo("Split using proper regex not ', '")
 	/**
 	 * This method does not support multi-depth generic hierarchies
-	 * */
-	public static List<Class<?>> getGenericSuperclasses(Class<?> clazz) {
-
+	 */
+	public static List<Class<?>> getGenericRefs(ClassLoader cl, Type t) {
 		List<Class<?>> result = Lists.newArrayList();
 
-		String typeName = clazz.getGenericSuperclass().getTypeName();
-
+		String typeName = t.getTypeName();
+		
 		Matcher m = GENERIC_TYPE_PATTERN.matcher(typeName);
 
 		boolean b = m.find();
@@ -129,9 +141,9 @@ public class ClassUtils<T> {
 
 			for (String o : classes.split(", ")) {
 				try {
-					result.add(clazz.getClassLoader().loadClass(o));
+					result.add(cl.loadClass(o));
 				} catch (ClassNotFoundException e) {
-					Exceptions.throwRuntime(e);
+					throw new RuntimeException(e);
 				}
 			}
 		}
@@ -141,23 +153,25 @@ public class ClassUtils<T> {
 	public static List<Field> getInheritedFields(Class<?> clazz, Class<?> abstractParent) {
 		return getInheritedFields0(clazz.getSuperclass(), abstractParent, null);
 	}
-	
-	public static List<Field> getInheritedFields(Class<?> clazz, Class<?> abstractParent, Consumer<Field> fieldConsumer) {
+
+	public static List<Field> getInheritedFields(Class<?> clazz, Class<?> abstractParent,
+			Consumer<Field> fieldConsumer) {
 		return getInheritedFields0(clazz.getSuperclass(), abstractParent, fieldConsumer);
 	}
 
-	private static List<Field> getInheritedFields0(Class<?> clazz, Class<?> abstractParent, Consumer<Field> fieldConsumer) {
+	private static List<Field> getInheritedFields0(Class<?> clazz, Class<?> abstractParent,
+			Consumer<Field> fieldConsumer) {
 
 		assert abstractParent.isAssignableFrom(clazz);
 
 		List<Field> result = Lists.newArrayList();
 
-		while (!clazz.getName().equals(abstractParent.getName()) && (clazz.getSuperclass() != null)) {
+		while (!equals(clazz, abstractParent) && (clazz.getSuperclass() != null)) {
 
 			for (Field f : clazz.getDeclaredFields()) {
-				
+
 				fieldConsumer.accept(f);
-				
+
 				int mod = f.getModifiers();
 				if (Modifier.isProtected(mod) && (!Modifier.isFinal(mod))) {
 					result.add(f);
@@ -169,7 +183,7 @@ public class ClassUtils<T> {
 
 		return result;
 	}
-	
+
 	@SuppressWarnings("unused")
 	private static Class<?> getSuperClass(Class<?> clazz) {
 
@@ -179,11 +193,196 @@ public class ClassUtils<T> {
 
 		return clazz;
 	}
-	
+
 	public static String getPackageName(String className) {
 		List<String> parts = Splitter.on(DOT_PATTERN).splitToList(className);
 		parts.remove(parts.size() - 1);
 		return Joiner.on(".").join(parts);
 	}
 
+	/**
+	 * This function generates a name that can be used to identify this class
+	 * uniquely accross the platform
+	 * 
+	 * @param clazz
+	 * @return
+	 */
+	public static String toString(Class<?> clazz) {
+
+		ClassLoader cl = clazz.getClassLoader();
+		String appId = null;
+
+		if (cl instanceof AppClassLoader) {
+			appId = ((AppClassLoader) cl).getAppId();
+		} else {
+			appId = AppProvisioner.get().defaultAppId();
+		}
+
+		return appId + "#" + clazz.getName();
+	}
+
+	/**
+	 * This function should be used by names that were generated using
+	 * {@link ClassUtils#toString(Class)}
+	 * 
+	 * @param name
+	 * @return
+	 */
+	public static <T> Class<? extends T> forName(String name) {
+
+		AppProvisioner prov = AppProvisioner.get();
+		String[] parts = HASH_PATTERN.split(name);
+
+		String appId = parts[0];
+		String className = parts[1];
+
+		ClassLoader cl = null;
+
+		if (prov.defaultAppId().equals(appId)) {
+			cl = Application.class.getClassLoader();
+		} else {
+			cl = prov.getClassloader(appId);
+		}
+
+		return forName(className, cl);
+	}
+
+	/**
+	 * This function determines whether the current thread is allowed to access the
+	 * specified class
+	 * 
+	 * @param clazz
+	 * @return
+	 */
+	public static boolean isAccessible(Class<?> clazz) {
+
+		if (ThreadSecurity.hasTrust()) {
+			return true;
+		}
+
+		AppClassLoader cl = (AppClassLoader) Thread.currentThread().getContextClassLoader();
+		return cl == clazz.getClassLoader();
+	}
+
+	/**
+	 * This function determines whether the current thread is allowed to access the
+	 * specified class
+	 * 
+	 * @param name This is the name that was returned from a call to
+	 *             {@link ClassUtils#toString(Class)}
+	 * @return
+	 */
+	public static boolean isAccessible(String name) {
+
+		if (ThreadSecurity.hasTrust()) {
+			// No need moving on, since an appId is required down the line
+			return true;
+		}
+
+		String[] parts = HASH_PATTERN.split(name);
+
+		String appId = parts[0];
+		AppClassLoader cl = (AppClassLoader) Thread.currentThread().getContextClassLoader();
+
+		return appId.equals(cl.getAppId());
+	}
+
+	/**
+	 * This implementation may change in the future
+	 * 
+	 * @param class1
+	 * @param class2
+	 * @return
+	 */
+	public static boolean equals(Class<?> class1, Class<?> class2) {
+		return class1.equals(class2);
+	}
+
+	/**
+	 * This classes attempts to reshuffle the given list, such that higher-depth
+	 * subclasses appear top in the returned list
+	 * 
+	 * @param classes
+	 * @return
+	 */
+	public static <T> List<Class<? extends T>> reshuffleByDepth(Class<T> classType, List<Class<? extends T>> classes,
+			boolean highestFirst) {
+
+		Map<Class<? extends T>, Integer> classDepths = new HashMap<>();
+
+		classes.forEach(c -> {
+			classDepths.put(c, getInheritanceDepth(0, classType, c));
+		});
+
+		LinkedList<Class<? extends T>> sortedMap = new LinkedList<>();
+
+		Comparator<? super Entry<Class<? extends T>, Integer>> comparator = highestFirst
+				? Map.Entry.comparingByValue(Comparator.reverseOrder())
+				: Map.Entry.comparingByValue();
+
+		classDepths.entrySet().stream().sorted(comparator).forEachOrdered(x -> sortedMap.add(x.getKey()));
+
+		return sortedMap;
+	}
+
+	@SuppressWarnings("unchecked")
+	public static <T> int getInheritanceDepth(int currentDepth, Class<T> classType, Class<? extends T> clazz) {
+
+		boolean isDirectChild = isDirectChild(classType, clazz);
+
+		if (isDirectChild) {
+			return currentDepth;
+		}
+
+		return getInheritanceDepth(currentDepth++, classType, (Class<? extends T>) clazz.getSuperclass());
+	}
+
+	public static <T> boolean isDirectChild(Class<T> classType, Class<? extends T> clazz) {
+
+		if (classType.isInterface()) {
+			if (Arrays.asList(clazz.getInterfaces()).contains(classType)) {
+				return true;
+			}
+		} else {
+
+			if (clazz.getSuperclass() != null && clazz.getSuperclass().equals(classType)
+					&& !clazz.getName().equals(classType.getName())) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	public static boolean isTrusted(Class<?> c) {
+		boolean isTrusted = !(c.getClassLoader() instanceof AppClassLoader);
+		return isTrusted;
+	}
+
+	/**
+	 * This consumes the class and its ancestor up until the specified super class
+	 * (exclusive)
+	 * 
+	 * @param clazz
+	 * @param superClass
+	 * @param consumer
+	 */
+	public static <T> void forEachInTree(Class<? extends T> clazz, Class<T> superClass,
+			Consumer<Class<? extends T>> consumer) {
+
+		if (!superClass.isAssignableFrom(clazz)) {
+			Exceptions.throwRuntime(superClass.getName() + " is not assignable from " + clazz.getName());
+		}
+
+		Class<?> c = clazz;
+
+		do {
+			@SuppressWarnings("unchecked")
+			Class<? extends T> cl = (Class<? extends T>) c;
+			consumer.accept(cl);
+		} while (
+					(!c.getSuperclass().equals(Object.class)) && 
+					(!c.getSuperclass().equals(superClass)) && 
+					(c = c.getSuperclass()) != null);
+
+	}
 }

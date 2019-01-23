@@ -27,6 +27,8 @@ public abstract class AbstractRealmDelegate extends SpiDelegate<Realm> {
 
 	public abstract void addRoleFunctionalities(String role, Collection<Functionality> functionalities);
 
+	public abstract void removeRoleFunctionalities(String role, Collection<Functionality> functionalities);
+
 	public abstract Collection<Functionality> getRoleFunctionalities(String role);
 
 	public Collection<String> getRoleFunctionalitiesAstring(String role) {

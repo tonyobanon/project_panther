@@ -22,8 +22,12 @@ public class DispatchEventFunction extends AbstractClusterFunction<BaseEvent, Ob
 
 	@Override
 	public Object delegate(BaseEvent t) {
-		AbstractEventDelegate.getInstance().dispatch(t, false);
-		return null;
+		try {
+			AbstractEventDelegate.getInstance().dispatch(t, false);
+			return Boolean.TRUE;
+		} catch (Exception e) {
+			return Boolean.FALSE;
+		}
 	}
 
 }

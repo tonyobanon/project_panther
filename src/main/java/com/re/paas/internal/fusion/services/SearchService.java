@@ -17,7 +17,7 @@ import com.re.paas.api.listable.ListingFilter;
 import com.re.paas.api.listable.ListingType;
 import com.re.paas.api.listable.SearchableUISpec;
 import com.re.paas.internal.classes.CursorMoveType;
-import com.re.paas.internal.classes.GsonFactory;
+import com.re.paas.internal.classes.Json;
 import com.re.paas.internal.fusion.functionalities.PlatformFunctionalities;
 import com.re.paas.internal.fusion.functionalities.SearchFunctionalities;
 import com.re.paas.internal.fusion.services.impl.FusionHelper;
@@ -44,7 +44,7 @@ public class SearchService extends BaseService {
 		Integer pageSize = body.getInteger("pageSize");
 		String order = body.getString("order");
 
-		List<ListingFilter> listingFilters = GsonFactory.getInstance()
+		List<ListingFilter> listingFilters = Json.getGson()
 				.fromJson(body.getJsonArray("listingFilters").encode(), new TypeToken<List<ListingFilter>>() {
 				}.getType());
 
@@ -129,7 +129,7 @@ public class SearchService extends BaseService {
 
 		Map<?, ?> result = SearchModel.next(userId, moveType, contextKey);
 
-		ctx.response().write(GsonFactory.getInstance().toJson(result));
+		ctx.response().write(Json.getGson().toJson(result));
 	}
 
 	@FusionEndpoint(uri = "/get-searchable-lists", method = HttpMethod.GET, 
@@ -139,7 +139,7 @@ public class SearchService extends BaseService {
 		Long userId = FusionHelper.getUserId(ctx.request());
 
 		Map<String, SearchableUISpec> result = SearchModel.getSearchableLists(userId);
-		ctx.response().write(GsonFactory.getInstance().toJson(result));
+		ctx.response().write(Json.getGson().toJson(result));
 	}
 
 }

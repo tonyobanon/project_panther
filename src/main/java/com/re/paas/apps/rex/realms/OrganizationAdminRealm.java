@@ -14,12 +14,12 @@ import com.re.paas.api.listable.QueryFilter;
 import com.re.paas.api.realms.Realm;
 import com.re.paas.api.realms.RealmApplicationSpec;
 import com.re.paas.api.sentences.ObjectType;
-import com.re.paas.api.utils.ObjectUtils;
 import com.re.paas.apps.rex.classes.spec.AgentOrganizationSpec;
 import com.re.paas.apps.rex.functionality.AgentFunctionalities;
 import com.re.paas.apps.rex.functionality.AgentOrganizationFunctionalities;
 import com.re.paas.apps.rex.models.listables.IndexedNameTypes;
 import com.re.paas.apps.rex.sentences.ObjectTypes;
+import com.re.paas.apps.shared.Functionalities;
 import com.re.paas.internal.entites.directory.AgentOrganizationAdminEntity;
 import com.re.paas.internal.entites.directory.AgentOrganizationEntity;
 import com.re.paas.internal.fusion.functionalities.UserApplicationFunctionalities;
@@ -30,6 +30,7 @@ import com.re.paas.internal.models.helpers.EntityUtils;
 import com.re.paas.internal.models.helpers.FormFieldRepository;
 import com.re.paas.internal.models.helpers.FormFieldRepository.FormField;
 import com.re.paas.internal.realms.AdminRealm;
+import com.re.paas.internal.utils.ObjectUtils;
 
 public class OrganizationAdminRealm implements Realm {
 
@@ -43,7 +44,7 @@ public class OrganizationAdminRealm implements Realm {
 
 		return ObjectUtils.toArray(
 
-				new AgentRealm().functionalities(), new Functionality[] {
+				Functionalities.forPrincipal(), new Functionality[] {
 
 						AgentFunctionalities.VIEW_AGENT_APPLICATIONS, AgentFunctionalities.REVIEW_AGENT_APPLICATION,
 

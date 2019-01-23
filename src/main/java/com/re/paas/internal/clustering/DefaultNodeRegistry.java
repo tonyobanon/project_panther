@@ -13,8 +13,6 @@ import java.util.concurrent.TimeUnit;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.re.paas.api.classes.Exceptions;
-import com.re.paas.api.classes.PlatformException;
-import com.re.paas.api.cloud.CloudEnvironment;
 import com.re.paas.api.clustering.NodeRegistry;
 import com.re.paas.api.clustering.NodeRole;
 import com.re.paas.api.clustering.classes.BaseNodeSpec;
@@ -22,14 +20,14 @@ import com.re.paas.api.clustering.master.MasterFunction;
 import com.re.paas.api.clustering.protocol.Client;
 import com.re.paas.api.clustering.protocol.Server;
 import com.re.paas.api.events.BaseEvent;
+import com.re.paas.api.infra.cloud.CloudEnvironment;
 import com.re.paas.api.logging.Logger;
-import com.re.paas.api.tasks.Scheduler;
 import com.re.paas.internal.Platform;
 import com.re.paas.internal.cloud.CloudEnvironmentAdapter;
 import com.re.paas.internal.clustering.classes.ServerStartEvent;
 import com.re.paas.internal.clustering.objectmodels.NodeLeaveRequest;
 import com.re.paas.internal.clustering.objectmodels.NodeLeaveResult;
-import com.re.paas.internal.errors.ClusteringError;
+import com.re.paas.internal.compute.Scheduler;
 
 public class DefaultNodeRegistry implements NodeRegistry {
 
@@ -136,15 +134,12 @@ public class DefaultNodeRegistry implements NodeRegistry {
 		} catch (IOException e) {
 			Exceptions.throwRuntime(e);
 		}
+		
+		CloudEnvironment env = CloudEnvironment.get();
 
 		// Set Cluster Name
+		clusterName = env.clusterName();
 
-		clusterName = ClusterConfig.getInstance().get(ClusterConfig.CLUSTER_NAME);
-
-		if (!ClusterConfig.CLUSTER_NAME_PATTERN.matcher(clusterName).matches()) {
-			Exceptions.throwRuntime(
-					PlatformException.get(ClusteringError.CLUSTER_NAME_HAS_INCORRECT_FORMAT, clusterName));
-		}
 
 		Logger.get().info("Starting node on cluster: " + clusterName);
 
@@ -153,11 +148,11 @@ public class DefaultNodeRegistry implements NodeRegistry {
 
 		// Get clustering address
 		Logger.get().info("Acquiring clustering address");
-		clusteringAddress = CloudEnvironment.get().clusteringHost();
+		clusteringAddress = env.clusteringHost();
 		Logger.get().info("Using clustering address: " + CloudEnvironment.get().clusteringHost().getHostAddress());
 
 		// Set Inbound port
-		DefaultNodeRegistry.inboundPort = ClusterConfig.getInstance().getInteger(ClusterConfig.CLUSTERING_PORT);
+		DefaultNodeRegistry.inboundPort = env.clusteringPort();
 		Logger.get().info("Using port: " + inboundPort);
 
 		autoScalingEnabled = CloudEnvironment.get().canAutoScale();
@@ -165,13 +160,13 @@ public class DefaultNodeRegistry implements NodeRegistry {
 
 		// Request for Instance/VM Id
 		Logger.get().info("Requesting for Instance Id");
-		cloudUniqueId = CloudEnvironment.get().autoScaleDelegate().getInstanceId();
+		cloudUniqueId = CloudEnvironment.get().providerDelegate().getInstanceId();
 		Logger.get().info("Using Instance Id: " + cloudUniqueId);
 
 		// Set WKA
 
-		wkaHost = CloudEnvironment.get().wkaHost();
-		wkaInboundPort = CloudEnvironment.get().wkaPort();
+		wkaHost = env.wkaHost();
+		wkaInboundPort = env.wkaPort();
 
 		Logger.get().info("Using WKA: " + wkaHost.getHostAddress() + ":" + wkaInboundPort);
 

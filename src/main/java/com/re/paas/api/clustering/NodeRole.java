@@ -3,12 +3,12 @@ package com.re.paas.api.clustering;
 import java.util.List;
 import java.util.Map;
 
-import com.re.paas.api.cloud.CloudEnvironment;
-import com.re.paas.api.cloud.Tags;
 import com.re.paas.api.clustering.events.NodeJoinEvent;
 import com.re.paas.api.clustering.events.NodeLeaveEvent;
 import com.re.paas.api.clustering.events.NodeStateChangeEvent;
 import com.re.paas.api.designpatterns.Singleton;
+import com.re.paas.api.infra.cloud.CloudEnvironment;
+import com.re.paas.api.infra.cloud.Tags;
 
 public abstract class NodeRole {
 	

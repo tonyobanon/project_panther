@@ -2,7 +2,8 @@ package com.re.paas.internal.cloud.azure;
 
 import java.util.Map;
 
-import com.re.paas.api.cloud.AutoScaleDelegate;
+import com.re.paas.api.infra.cloud.AbstractProviderHandler;
+import com.re.paas.api.threadsecurity.ThreadSecurity;
 import com.re.paas.internal.cloud.CloudEnvironmentAdapter;
 
 public class AzureEnvironment implements CloudEnvironmentAdapter {
@@ -24,8 +25,7 @@ public class AzureEnvironment implements CloudEnvironmentAdapter {
 
 	@Override
 	public Boolean canAutoScale() {
-		// TODO Auto-generated method stub
-		return null;
+		return true;
 	}
 
 	@Override
@@ -34,9 +34,12 @@ public class AzureEnvironment implements CloudEnvironmentAdapter {
 	}
 
 	@Override
-	public AutoScaleDelegate autoScaleDelegate() {
-		// TODO Auto-generated method stub
-		return null;
+	public AbstractProviderHandler providerDelegate() { 
+		
+		// Prevent unauthorized access 
+		ThreadSecurity.verify();
+		
+		return new AzureHandler();
 	}
 	
 }

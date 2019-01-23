@@ -25,7 +25,7 @@ public class RoutingContextImpl implements RoutingContext {
 	private final HttpServerRequest request;
 	private final HttpServerResponse response;
 	
-	private final Session<String, String> session;
+	private final Session<String, Object> session;
 
 	RoutingContextImpl(HttpServletRequest req, HttpServletResponse resp) {
 
@@ -107,7 +107,7 @@ public class RoutingContextImpl implements RoutingContext {
 	}
 
 	@Override
-	public Session<String, String> session() {
+	public Session<String, Object> session() {
 		return session;
 	}
 }

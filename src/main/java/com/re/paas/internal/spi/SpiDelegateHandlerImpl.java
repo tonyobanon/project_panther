@@ -1,5 +1,7 @@
 package com.re.paas.internal.spi;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -9,11 +11,13 @@ import java.util.Map.Entry;
 import java.util.function.Consumer;
 
 import com.re.paas.api.annotations.BlockerBlockerTodo;
+import com.re.paas.api.annotations.BlockerTodo;
 import com.re.paas.api.app_provisioning.AppClassLoader;
-import com.re.paas.api.cache.CacheBackedMap;
 import com.re.paas.api.classes.Exceptions;
 import com.re.paas.api.classes.KeyValuePair;
 import com.re.paas.api.designpatterns.Singleton;
+import com.re.paas.api.infra.cache.AbstractCacheAdapterDelegate;
+import com.re.paas.api.infra.cache.CacheFactory;
 import com.re.paas.api.logging.Logger;
 import com.re.paas.api.spi.BaseSPILocator;
 import com.re.paas.api.spi.DelegateSpec;
@@ -25,7 +29,9 @@ import com.re.paas.api.spi.SpiTypes;
 import com.re.paas.api.spi.TypeClassification;
 import com.re.paas.api.threadsecurity.ThreadSecurity;
 import com.re.paas.api.utils.ClassUtils;
+import com.re.paas.api.utils.Utils;
 import com.re.paas.internal.app_provisioning.AppProvisioner;
+import com.re.paas.internal.infra.cache.CacheBackedMap;
 
 public class SpiDelegateHandlerImpl implements SpiDelegateHandler {
 
@@ -37,6 +43,7 @@ public class SpiDelegateHandlerImpl implements SpiDelegateHandler {
 	private static Map<SpiTypes, Map<Object, Object>> resources = Collections
 			.synchronizedMap(new HashMap<SpiTypes, Map<Object, Object>>());
 
+	@BlockerTodo("Add support for making external delegates to be trusted")
 	public final void start(String dependants, String appId, SpiTypes[] types) {
 
 		for (SpiTypes type : types) {
@@ -97,11 +104,11 @@ public class SpiDelegateHandlerImpl implements SpiDelegateHandler {
 							+ locator.delegateType().getName() + " as defined by " + locator.getClass().getName());
 				}
 
-				DelegateSpec spec = delegateClass.getAnnotation(DelegateSpec.class);
+				SpiTypes[] deps = getDependencies(delegateClass);
 
-				if (spec != null && spec.dependencies().length > 0) {
+				if (deps.length > 0) {
 
-					for (SpiTypes dependency : spec.dependencies()) {
+					for (SpiTypes dependency : deps) {
 
 						if (delegates.containsKey(dependency)) {
 							continue;
@@ -138,6 +145,7 @@ public class SpiDelegateHandlerImpl implements SpiDelegateHandler {
 
 				delegates.put(type, delegate);
 
+				// Clear resource from previous delegate
 				if (resources.containsKey(type)) {
 					resources.get(type).clear();
 				}
@@ -146,41 +154,35 @@ public class SpiDelegateHandlerImpl implements SpiDelegateHandler {
 
 				// TODO Here, Check if delegate is respecting the setting in Cloud Environment
 
-				Map<Object, Object> rMap = delegate.inMemory() ? new HashMap<>() : new CacheBackedMap<>();
-				resources.put(type, rMap);
-
-				boolean isTrusted = !(delegateClass.getClassLoader() instanceof AppClassLoader);
-
-				if (!isTrusted && type.classification() == TypeClassification.ACTIVE) {
-					throw new SecurityException("Only internal Spi delegates can be used for an active Spi Type");
+				if (!delegate.inMemory() && !Arrays.asList(deps).contains(SpiTypes.CACHE_ADAPTER)) {
+					Exceptions.throwRuntime(ClassUtils.toString(delegateClass) + " must have a dependency on "
+							+ SpiTypes.CACHE_ADAPTER);
 				}
 
-				// Start delegate
+				Map<Object, Object> rMap = null;
 
-				final SpiDelegate<?> _delegate = delegate;
-
-				if (!isTrusted) {
-
-					ThreadSecurity.get().newCommonThread(() -> {
-						_delegate.init();
-					}, (AppClassLoader) delegateClass.getClassLoader());
-
+				// Create resource map
+				if (delegate.inMemory()) {
+					rMap = new HashMap<>();
 				} else {
-
-					ThreadSecurity.get().newTrustedThread(() -> {
-						_delegate.init();
-					});
-
+					CacheFactory<String, Object> factory = ((AbstractCacheAdapterDelegate) delegates
+							.get(SpiTypes.CACHE_ADAPTER)).getCacheFactory();
+					rMap = new CacheBackedMap<>(factory);
 				}
+
+				resources.put(type, rMap);
 
 				// Here, we have a new delegate, so we are adding all discovered classes
 				// across all applications
 
 				List<Class<?>> classes = SpiLocatorHandler.get().getSpiClasses().get(type).get(appId);
 
-				if (classes != null && !classes.isEmpty()) {
-					delegate.add0(classes);
-				}
+				// Determine whether this delegate is trusted
+				// TODO Add support for making external delegates to be trusted
+				boolean isTrusted = ClassUtils.isTrusted(delegateClass);
+
+				// Initialize delegate
+				initDelegate(isTrusted, type, delegate, classes);
 
 			} else {
 
@@ -207,6 +209,55 @@ public class SpiDelegateHandlerImpl implements SpiDelegateHandler {
 			// #foreach
 
 		}
+	}
+
+	private static SpiTypes[] getDependencies(Class<? extends SpiDelegate<?>> delegateClass) {
+
+		List<SpiTypes> deps = new ArrayList<>();
+
+		// Add dependencies from subclasses
+		ClassUtils.forEachInTree(delegateClass, SpiDelegate.class, (c) -> {
+
+			// Add declared dependencies
+			DelegateSpec spec = c.getAnnotation(DelegateSpec.class);
+
+			if (spec != null) {
+				for (SpiTypes t : spec.dependencies()) {
+					deps.add(t);
+				}
+			}
+		});
+
+		return Utils.toArray(deps);
+	}
+
+	private static void initDelegate(boolean isTrusted, SpiTypes type, SpiDelegate<?> delegate,
+			List<Class<?>> classes) {
+
+		Class<?> delegateClass = delegate.getClass();
+
+		if (!isTrusted && type.classification() == TypeClassification.ACTIVE) {
+			throw new SecurityException("Only trusted Spi delegates can be used for an active Spi Type");
+		}
+
+		// Start delegate
+
+		if (!isTrusted) {
+
+			ThreadSecurity.get().runCommon(() -> {
+
+				delegate.init();
+				
+			}, (AppClassLoader) delegateClass.getClassLoader());
+
+		} else {
+
+			ThreadSecurity.get().runTrusted(() -> {
+
+				delegate.init();
+			});
+		}
+
 	}
 
 	@BlockerBlockerTodo("Ensure that the SPIs are tranversed in the correct order")

@@ -4,6 +4,7 @@ import com.re.paas.api.classes.Exceptions;
 import com.re.paas.api.clustering.AbstractRequest;
 import com.re.paas.api.clustering.Function;
 import com.re.paas.internal.clustering.Functions;
+import com.re.paas.internal.utils.ObjectUtils;
 
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
@@ -24,7 +25,7 @@ public class InboundBusinessHandler extends ChannelInboundHandlerAdapter {
 		
 		try {
 
-			Object parameter = IOUtils.readObject(context.getBytes());
+			Object parameter = ObjectUtils.deserialize(context.getBytes());
 			Function function = Function.fromId(context.getFunctionId());
 
 			if (parameter instanceof AbstractRequest) {

@@ -25,7 +25,6 @@ public enum ClusteringError implements Error {
 	
 	SOCKET_IO_ERROR_OCCURED_ON_WRITE(150, "An IO error occurred while writing to a network socket at remote address: " + "{ref1}"),
 	
-	CLUSTER_NAME_HAS_INCORRECT_FORMAT(78, "Cluster name: {ref1} has an incorrect format"),
 	REGION_HAS_INCORRECT_FORMAT(79, "Region: {ref1} has an incorrect format"),
 	INSTANCE_TYPE_HAS_INCORRECT_FORMAT(80, "Instance Type: {ref1} has an incorrect format"),
 	

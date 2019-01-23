@@ -28,7 +28,7 @@ import com.re.paas.apps.rex.classes.spec.PropertySpec;
 import com.re.paas.apps.rex.classes.spec.PropertyType;
 import com.re.paas.apps.rex.classes.spec.PropertyUpdateSpec;
 import com.re.paas.apps.rex.functionality.PropertyFunctionalities;
-import com.re.paas.internal.classes.GsonFactory;
+import com.re.paas.internal.classes.Json;
 import com.re.paas.internal.classes.spec.ClientSignature;
 import com.re.paas.internal.fusion.services.impl.FusionHelper;
 import com.re.paas.internal.models.BasePropertyModel;
@@ -46,7 +46,7 @@ public class BasePropertyService extends BaseService {
 
 		JsonObject body = ctx.getBodyAsJson();
 
-		CityFeaturesSpec spec = GsonFactory.getInstance().fromJson(body.getJsonObject("spec").encode(),
+		CityFeaturesSpec spec = Json.getGson().fromJson(body.getJsonObject("spec").encode(),
 				CityFeaturesSpec.class);
 
 		BasePropertyModel.setCityFeatutures(spec);
@@ -71,7 +71,7 @@ public class BasePropertyService extends BaseService {
 		JsonObject body = ctx.getBodyAsJson();
 
 		PropertyType type = PropertyType.from(body.getInteger("type"));
-		List<String> features = GsonFactory.getInstance().fromJson(body.getJsonArray("features").encode(),
+		List<String> features = Json.getGson().fromJson(body.getJsonArray("features").encode(),
 				new TypeToken<List<String>>() {
 				}.getType());
 
@@ -85,7 +85,7 @@ public class BasePropertyService extends BaseService {
 
 		JsonObject body = ctx.getBodyAsJson();
 
-		List<Long> ids = GsonFactory.getInstance().fromJson(body.getJsonArray("ids").encode(),
+		List<Long> ids = Json.getGson().fromJson(body.getJsonArray("ids").encode(),
 				new TypeToken<List<Long>>() {
 				}.getType());
 
@@ -111,7 +111,7 @@ public class BasePropertyService extends BaseService {
 		JsonObject body = ctx.getBodyAsJson();
 		Long principal = FusionHelper.getUserId(ctx.request());
 
-		PropertySpec spec = GsonFactory.getInstance().fromJson(body.getJsonObject("spec").encode(), PropertySpec.class);
+		PropertySpec spec = Json.getGson().fromJson(body.getJsonObject("spec").encode(), PropertySpec.class);
 
 		Long id = BasePropertyModel.newPropertyCreationRequest(principal, spec);
 		FusionHelper.response(ctx, id);
@@ -125,7 +125,7 @@ public class BasePropertyService extends BaseService {
 		JsonObject body = ctx.getBodyAsJson();
 		Long principal = FusionHelper.getUserId(ctx.request());
 
-		PropertyUpdateSpec spec = GsonFactory.getInstance().fromJson(body.getJsonObject("spec").encode(),
+		PropertyUpdateSpec spec = Json.getGson().fromJson(body.getJsonObject("spec").encode(),
 				PropertyUpdateSpec.class);
 
 		BasePropertyModel.newPropertyUpdateRequest(principal, spec);
@@ -204,7 +204,7 @@ public class BasePropertyService extends BaseService {
 
 		JsonObject body = ctx.getBodyAsJson();
 
-		PropertyPOISpec spec = GsonFactory.getInstance().fromJson(body.getJsonObject("spec").encode(),
+		PropertyPOISpec spec = Json.getGson().fromJson(body.getJsonObject("spec").encode(),
 				PropertyPOISpec.class);
 
 		BasePropertyModel.setPropertyPOI(principal, spec);
@@ -233,7 +233,7 @@ public class BasePropertyService extends BaseService {
 
 		Long propertyId = body.getLong("propertyId");
 
-		PropertyFloorPlanSpec spec = GsonFactory.getInstance().fromJson(body.getJsonObject("spec").encode(),
+		PropertyFloorPlanSpec spec = Json.getGson().fromJson(body.getJsonObject("spec").encode(),
 				PropertyFloorPlanSpec.class);
 
 		Long id = BasePropertyModel.addPropertyFloorPlan(principal, propertyId, spec);
@@ -260,7 +260,7 @@ public class BasePropertyService extends BaseService {
 
 		JsonObject body = ctx.getBodyAsJson();
 
-		List<Long> ids = GsonFactory.getInstance().fromJson(body.getJsonArray("ids").encode(),
+		List<Long> ids = Json.getGson().fromJson(body.getJsonArray("ids").encode(),
 				new TypeToken<List<Long>>() {
 				}.getType());
 
@@ -355,11 +355,11 @@ public class BasePropertyService extends BaseService {
 
 		switch (contractType) {
 		case RENT:
-			spec = GsonFactory.getInstance().fromJson(body.getJsonObject("spec").encode(),
+			spec = Json.getGson().fromJson(body.getJsonObject("spec").encode(),
 					ListedRentPropertySpec.class);
 			break;
 		case SALE:
-			spec = GsonFactory.getInstance().fromJson(body.getJsonObject("spec").encode(),
+			spec = Json.getGson().fromJson(body.getJsonObject("spec").encode(),
 					ListedSalePropertySpec.class);
 			break;
 		}
@@ -383,11 +383,11 @@ public class BasePropertyService extends BaseService {
 
 		switch (contractType) {
 		case RENT:
-			spec = GsonFactory.getInstance().fromJson(body.getJsonObject("spec").encode(),
+			spec = Json.getGson().fromJson(body.getJsonObject("spec").encode(),
 					ListedRentPropertySpec.class);
 			break;
 		case SALE:
-			spec = GsonFactory.getInstance().fromJson(body.getJsonObject("spec").encode(),
+			spec = Json.getGson().fromJson(body.getJsonObject("spec").encode(),
 					ListedSalePropertySpec.class);
 			break;
 		}
@@ -452,15 +452,15 @@ public class BasePropertyService extends BaseService {
 
 		switch (criteria) {
 		case ADVANCED_SEARCH:
-			spec = GsonFactory.getInstance().fromJson(body.getJsonObject("spec").encode(),
+			spec = Json.getGson().fromJson(body.getJsonObject("spec").encode(),
 					AdvancedPropertySearch.class);
 			break;
 		case BY_AGENT_ORGANIZATION:
-			spec = GsonFactory.getInstance().fromJson(body.getJsonObject("spec").encode(),
+			spec = Json.getGson().fromJson(body.getJsonObject("spec").encode(),
 					PropertySearchByAgentOrganization.class);
 			break;
 		case BY_CITY:
-			spec = GsonFactory.getInstance().fromJson(body.getJsonObject("spec").encode(), PropertySearchByCity.class);
+			spec = Json.getGson().fromJson(body.getJsonObject("spec").encode(), PropertySearchByCity.class);
 			break;
 		}
 
@@ -480,7 +480,7 @@ public class BasePropertyService extends BaseService {
 
 		JsonObject body = ctx.getBodyAsJson();
 
-		PropertyPriceRuleSpec spec = GsonFactory.fromJson(body.getJsonObject("spec").encode(),
+		PropertyPriceRuleSpec spec = Json.fromJson(body.getJsonObject("spec").encode(),
 				PropertyPriceRuleSpec.class);
 
 		Long id = BasePropertyModel.newPropertyPriceRule(principal, spec);
@@ -498,7 +498,7 @@ public class BasePropertyService extends BaseService {
 
 		Long id = body.getLong("id");
 
-		PropertyPriceRuleSpec spec = GsonFactory.fromJson(body.getJsonObject("spec").encode(),
+		PropertyPriceRuleSpec spec = Json.fromJson(body.getJsonObject("spec").encode(),
 				PropertyPriceRuleSpec.class);
 
 		BasePropertyModel.updatePropertyPriceRule(principal, id, spec);

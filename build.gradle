@@ -67,9 +67,18 @@ dependencies {
 	implementation "io.lettuce:lettuce-core:5.1.0.M1"
 	implementation "org.apache.calcite:calcite-core:1.17.0"
 	implementation "org.apache.calcite:calcite-server:1.17.0"
-	implementation "org.cryptomator:cryptofs:1.5.2"
-	implementation "com.google.jimfs:jimfs:1.1"
+	
 	implementation "com.github.oshi:oshi-core:3.8.4"
+	
+	// DB Adapters
+	implementation "com.google.cloud:google-cloud-nio:0.68.0-alpha"
+	implementation "com.upplication:s3fs:2.2.2"
+	implementation "com.google.jimfs:jimfs:1.1"
+	
+	 
+	//SQL Query Builder
+	implementation "org.jooq:jooq:3.11.5"
+	 
 	
 }
 

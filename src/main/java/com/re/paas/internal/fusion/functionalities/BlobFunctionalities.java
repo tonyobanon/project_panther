@@ -83,9 +83,5 @@ public enum BlobFunctionalities implements Functionality {
 	public Boolean isBackend() {
 		return isBackend;
 	}
-	
-	@Override
-	public final String alias() {
-		return this.name();
-	}
+
 }

@@ -21,18 +21,10 @@ public interface Client {
 		return ClientFactory.get().getClient(nodeId);
 	}
 
-	<P, R> CompletableFuture<R> execute(Function function, P parameter, Class<R> R, Integer pThreshold);
-
-	default <P> CompletableFuture<Object> execute(Function function, P parameter, Integer pThreshold) {
-		return execute(function, parameter, Object.class, pThreshold);
-	}
+	<P, R> CompletableFuture<R> execute(Function function, P parameter, Class<R> R);
 
 	default <P> CompletableFuture<Object> execute(Function function, P parameter) {
-		return execute(function, parameter, Object.class, -1);
-	}
-
-	default <P, R> CompletableFuture<R> execute(Function function, P parameter, Class<R> R) {
-		return execute(function, parameter, R, -1);
+		return execute(function, parameter, Object.class);
 	}
 
 	InetAddress host();

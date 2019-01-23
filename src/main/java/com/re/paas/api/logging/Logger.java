@@ -14,7 +14,9 @@ public abstract class Logger {
 
 	public abstract String getNamespace();
 	
-	protected abstract Logger setNamespace(String namespace);
+	public abstract Logger setNamespace(String namespace);
+	
+	public abstract Logger setNamespace(Class<?> clazz, String context);
 	
 	public abstract void verboseMode(VerboseLevel verboseLevel);
 

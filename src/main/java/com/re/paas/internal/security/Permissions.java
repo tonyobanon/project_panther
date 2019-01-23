@@ -19,7 +19,7 @@ import com.re.paas.api.utils.ClassUtils;
 import com.re.paas.api.utils.Utils;
 import com.re.paas.internal.classes.ClasspathScanner;
 
-@Todo("Add permission sets for FilePermission, as well as other perission types")
+@Todo("Add permission sets for FilePermission, SocketPermission, as well as other perission types")
 public class Permissions {
 
 	private static final int PERMISSIONS_ARRAY_SIZE = 100;

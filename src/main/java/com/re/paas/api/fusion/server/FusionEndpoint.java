@@ -34,5 +34,6 @@ public @interface FusionEndpoint {
 
 	Class<? extends ServiceAuthenticator> customAuthenticator() default DefaultServiceAuthenticator.class;
 
-	PlatformPhase phase() default PlatformPhase.POST_INSTALL;
+	ServiceAffinity affinity() default ServiceAffinity.DISTRIBUTED;
+	
 }

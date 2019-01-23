@@ -11,7 +11,7 @@ import com.re.paas.api.fusion.server.Buffer;
 import com.re.paas.api.fusion.server.FusionEndpoint;
 import com.re.paas.api.fusion.server.HttpMethod;
 import com.re.paas.api.fusion.server.RoutingContext;
-import com.re.paas.internal.classes.GsonFactory;
+import com.re.paas.internal.classes.Json;
 import com.re.paas.internal.classes.spec.BlobSpec;
 import com.re.paas.internal.fusion.functionalities.BlobFunctionalities;
 import com.re.paas.internal.models.BlobStoreModel;
@@ -35,7 +35,7 @@ public class BlobstoreService extends BaseService {
 				// Silently fail
 			}
 		});
-		ctx.response().write(GsonFactory.getInstance().toJson(blobIds)).end();
+		ctx.response().write(Json.getGson().toJson(blobIds)).end();
 	}
 
 	@FusionEndpoint(uri = "/get", requestParams = {
@@ -63,6 +63,6 @@ public class BlobstoreService extends BaseService {
 			functionality = BlobFunctionalities.Constants.MANAGE_BINARY_DATA)
 	public void list(RoutingContext ctx) {
 		List<BlobSpec> entries = BlobStoreModel.list();
-		ctx.response().write(GsonFactory.getInstance().toJson(entries)).end();
+		ctx.response().write(Json.getGson().toJson(entries)).end();
 	}
 }

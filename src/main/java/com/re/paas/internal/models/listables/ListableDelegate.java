@@ -10,6 +10,7 @@ import com.re.paas.api.listable.AbstractListableDelegate;
 import com.re.paas.api.listable.IndexedNameType;
 import com.re.paas.api.listable.Listable;
 import com.re.paas.api.listable.SearchableUISpec;
+import com.re.paas.api.spi.DelegateInitResult;
 import com.re.paas.api.spi.DelegateSpec;
 import com.re.paas.api.spi.SpiTypes;
 import com.re.paas.api.utils.ClassUtils;
@@ -21,11 +22,12 @@ public class ListableDelegate extends AbstractListableDelegate {
 	private static Map<String, SearchableUISpec> searchables = new HashMap<>();
 
 	@Override
-	public void init() {
+	public DelegateInitResult init() {
 		Consumer<Class<Listable<?>>> consumer = (c) -> {
 			addListable(c);
 		};
 		forEach(consumer);
+		return DelegateInitResult.SUCCESS;
 	}
 
 	@Override

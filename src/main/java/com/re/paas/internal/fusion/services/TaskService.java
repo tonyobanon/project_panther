@@ -11,7 +11,7 @@ import com.re.paas.api.fusion.server.HttpMethod;
 import com.re.paas.api.fusion.server.JsonObject;
 import com.re.paas.api.fusion.server.RoutingContext;
 import com.re.paas.internal.classes.CronInterval;
-import com.re.paas.internal.classes.GsonFactory;
+import com.re.paas.internal.classes.Json;
 import com.re.paas.internal.fusion.functionalities.TaskFunctionalities;
 import com.re.paas.internal.fusion.services.impl.FusionHelper;
 import com.re.paas.internal.models.TaskModel;
@@ -52,7 +52,7 @@ public class TaskService extends BaseService {
 		String name = body.getString("name");
 		CronInterval interval = CronInterval.from(body.getInteger("interval"));
 
-		ModelTask task = GsonFactory.getInstance().fromJson(body.getJsonObject("task").encode(), ModelTask.class);
+		ModelTask task = Json.getGson().fromJson(body.getJsonObject("task").encode(), ModelTask.class);
 
 		Integer maxExecutionCount = body.getInteger("maxExecutionCount");
 

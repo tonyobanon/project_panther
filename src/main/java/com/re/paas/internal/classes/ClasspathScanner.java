@@ -11,13 +11,9 @@ import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 
@@ -27,8 +23,9 @@ import com.google.common.collect.Lists;
 import com.re.paas.api.app_provisioning.AppClassLoader;
 import com.re.paas.api.classes.Exceptions;
 import com.re.paas.api.logging.Logger;
-import com.re.paas.api.spi.ClassIdentityType;
 import com.re.paas.api.spi.BaseSPILocator.ShuffleStrategy;
+import com.re.paas.api.spi.ClassIdentityType;
+import com.re.paas.api.utils.ClassUtils;
 import com.re.paas.api.utils.Utils;
 
 public class ClasspathScanner<T> {
@@ -202,17 +199,17 @@ public class ClasspathScanner<T> {
 
 					try {
 
-						Class<?> clazz = Class.forName(className, true, cl);
-
+						Class<? extends T> clazz = (Class<? extends T>) Class.forName(className, true, cl);
+						
 						if (classType.equals(clazz)) {
-							LOG.debug("Skipping base type " + clazz.getName());
+							LOG.debug("Skipping base type " + ClassUtils.toString(clazz));
 							return FileVisitResult.CONTINUE;
 						}
 
 						if (!allowAbstractTypes) {
 							if (Modifier.isAbstract(clazz.getModifiers())
 									|| Modifier.isInterface(clazz.getModifiers())) {
-								LOG.debug("Skipping abstract type " + clazz.getName());
+								LOG.debug("Skipping abstract type " + ClassUtils.toString(clazz));
 								return FileVisitResult.CONTINUE;
 							}
 						}
@@ -231,7 +228,7 @@ public class ClasspathScanner<T> {
 						}
 
 						if (!hasNoArgConstructor) {
-							LOG.warn("Class: " + clazz.getName() + " has no no-arg constructor and will be skipped ..");
+							LOG.warn("Class: " + ClassUtils.toString(clazz) + " has no no-arg constructor and will be skipped ..");
 							return FileVisitResult.CONTINUE;
 						}
 
@@ -242,12 +239,12 @@ public class ClasspathScanner<T> {
 							}
 							break;
 						case ASSIGNABLE_FROM:
-							if (classType.isAssignableFrom(clazz) && !clazz.getName().equals(classType.getName())) {
+							if (classType.isAssignableFrom(clazz) && !ClassUtils.equals(classType, clazz)) {
 								classes.add((Class<? extends T>) clazz);
 							}
 							break;
 						case DIRECT_SUPER_CLASS:
-							if (isDirectChild(clazz)) {
+							if (ClassUtils.isDirectChild(classType, clazz)) {
 								classes.add((Class<? extends T>) clazz);
 							}
 							break;
@@ -277,6 +274,10 @@ public class ClasspathScanner<T> {
 
 		} catch (IOException e) {
 			Exceptions.throwRuntime(e);
+		}
+
+		if (classIdentityType != ClassIdentityType.ASSIGNABLE_FROM) {
+			return classes;
 		}
 
 		return shuffleStrategies.get(getShuffleStrategy()).apply(classes);
@@ -309,72 +310,15 @@ public class ClasspathScanner<T> {
 		return this;
 	}
 
-	/**
-	 * This classes attempts to reshuffle the given list, such that higher-depth
-	 * subclasses appear top in the returned list
-	 * 
-	 * @param classes
-	 * @return
-	 */
-	private List<Class<? extends T>> reshuffleByDepth(List<Class<? extends T>> classes, boolean highestFirst) {
-
-		if (classIdentityType != ClassIdentityType.ASSIGNABLE_FROM) {
-			return classes;
-		}
-
-		Map<Class<? extends T>, Integer> classDepths = new HashMap<>();
-
-		classes.forEach(c -> {
-			classDepths.put(c, getInheritanceDepth(0, c));
-		});
-
-		LinkedList<Class<? extends T>> sortedMap = new LinkedList<>();
-
-		Comparator<? super Entry<Class<? extends T>, Integer>> comparator = highestFirst
-				? Map.Entry.comparingByValue(Comparator.reverseOrder())
-				: Map.Entry.comparingByValue();
-
-		classDepths.entrySet().stream().sorted(comparator).forEachOrdered(x -> sortedMap.add(x.getKey()));
-
-		return sortedMap;
-	}
-
-	@SuppressWarnings("unchecked")
-	private int getInheritanceDepth(int currentDepth, Class<? extends T> clazz) {
-
-		boolean isDirectChild = isDirectChild(clazz);
-
-		if (isDirectChild) {
-			return currentDepth;
-		}
-
-		return getInheritanceDepth(currentDepth++, (Class<? extends T>) clazz.getSuperclass());
-	}
-
-	private boolean isDirectChild(Class<?> clazz) {
-
-		if (classType.isInterface()) {
-			if (Arrays.asList(clazz.getInterfaces()).contains(classType)) {
-				return true;
-			}
-		} else {
-
-			if (clazz.getSuperclass() != null && clazz.getSuperclass().equals(classType)
-					&& !clazz.getName().equals(classType.getName())) {
-				return true;
-			}
-		}
-		return false;
-	}
 
 	private void addShuffleStategies() {
 
 		shuffleStrategies.put(ShuffleStrategy.HIGHER_DEPTH, (p) -> {
-			return reshuffleByDepth(p, true);
+			return ClassUtils.reshuffleByDepth(classType, p, true);
 		});
 
 		shuffleStrategies.put(ShuffleStrategy.LOWER_DEPTH, (p) -> {
-			return reshuffleByDepth(p, false);
+			return ClassUtils.reshuffleByDepth(classType, p, false);
 		});
 	}
 

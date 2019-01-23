@@ -5,7 +5,11 @@ import com.re.paas.api.clustering.Function;
 public enum MasterFunction implements Function {
 
 	CLUSTER_JOIN(0, false),
-	CLUSTER_LEAVE(1, false);
+	CLUSTER_LEAVE(1, false),
+	
+	START_PROVISIONED_NODE(2, true),
+	RELEASE_PROVISIONED_NODE(3, true);
+	
 	
 	private short id;
 	private boolean isAsync;
@@ -24,6 +28,12 @@ public enum MasterFunction implements Function {
 			
 		case 1:
 			return CLUSTER_LEAVE;
+			
+		case 2:
+			return START_PROVISIONED_NODE;
+			
+		case 3:
+			return RELEASE_PROVISIONED_NODE;
 	
 		default:
 			throw new IllegalArgumentException("An invalid value was provided");

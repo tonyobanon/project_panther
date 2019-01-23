@@ -220,10 +220,15 @@ public class DefaultLogger extends Logger {
 	}
 	
 	@Override
-	protected Logger setNamespace(String namespace) {
+	public Logger setNamespace(String namespace) {
 		this.namespace = namespace;
 		return this;
 	} 
+	
+	@Override
+	public Logger setNamespace(Class<?> clazz, String context) {
+		return setNamespace(clazz.getName() + " (" + context + ")");
+	}
 	
 	@Override
 	public void debug(String msg) {

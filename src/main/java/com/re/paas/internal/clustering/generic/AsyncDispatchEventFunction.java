@@ -20,10 +20,15 @@ public class AsyncDispatchEventFunction extends AbstractClusterFunction<BaseEven
 		return GenericFunction.ASYNC_DISPATCH_EVENT;
 	}
 
+	/**
+	 * Note: that since the event is dispatched asynchronously, subscriber code is
+	 * executed on a separate thread, and our eager response of "true" does not
+	 * necessarily mean that the dispatch was completely successful
+	 */
 	@Override
 	public Object delegate(BaseEvent t) {
 		AbstractEventDelegate.getInstance().dispatch(t, true);
-		return null;
+		return Boolean.TRUE;
 	}
 
 }

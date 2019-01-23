@@ -1,18 +1,102 @@
+Go through delegate and ensure that they are consuming resources in init().. 
+
+Simplify enum.from
+
+On installation, detect that the user is an admin
+
+I noticed that delegates have not been using createResourceMaps()..
 
 
-Security Manager
-SPI Delegate start
-Clustering
-Functionality
+** Clustering scenarios
+1. If a master leaves, the slaves should rejoin
+
+
+** ThreadSecurity scanarios
+1. When clustering and serving Http requests, manage how
+   threads are marked as secure
+
+Add Platform SpiDelegate
+
+
+###	CREATING AN ADAPTER TYPE
+
+*  Note: Only trusted can create
+
+1. Update the AdapterType enum by adding a new constant
+   
+2. Create an interface that implements the Adapter class. 
+   Then add relevant method signatures / static method(s).
+   You also need to override getType() method
+   
+3. Create the delegate and it's abstract super class (that 
+   directly extends AbstractAdapterDelegate)
+   AbstractAdapterDelegate
+   
+5. If you need to extend the AdapterConfig class inorder,
+   to store and load your configuration files remeber to
+   use the AdapterType created in step 1
+
+
+
+Rewrite the init function of delegates of better take advantage of DelegateInitResult
+
+Add option in BaseEvt to indicate that no more than one listener should be registered
+
+CEA-1 SpiDelegate.init() should return an object, this is important because there are scenarios where the delegate needs more information to continue
+
+
+finish up services for fs,cache,db,crypto
+Implement ability to route request in the cluster. Also, take service affinity into consideration
+
+Ensure that all calls to getDelegate(..) have a cached local copy
+
+Realm Consolidation
+References of Class.getName()
+Factor in platform updates as part of classpath scanning workflow
+In Database setup, use a static method to retrieve Calcite schema factory
+
+A lot of work has to go into rendering of forms, and ability to add custom helpers to customize rendering.
+
+Create more fs adapters, Google Drive, Amazon s3, JimFs
+Create more db adapters, MySQL, postgres, oracle , create a SQLAdapter super class, and just override name, title, logo
+
+
+* - Prototype Available, but not feature complete
+# - Work in progress
+
+Security Manager / Permissions (Create more permission sets) *
+SPI Delegate start *
+Clustering *
+Realms: forms, functionality, Consolidate Form field repository #
+Listable.authenticate still uses RoleModel.isAccessAllowed, fix this
+Move spec.baseObjectType
+Implement ObjectUtils.serialize/deserialize
+Implement session invalidation
+Implement CacheBackedMap (sessions depend on this)
+
+
+When adding to Cache, we need to map appId to key due to the reason below:
+We will need to flush out all entries for an app in the cache, when the app is updated.
+This is because class definitions may change, and as such we may no longer be able to correctly
+deserialize existing entries
+
+
+Generally stop using class.getName(). To do this, scan for references, and find an alternative
+
 
 Some Javax Packages are missing in Java 10
 
-Cache
+
+For string spliting, use patterns, instead of the String class for performance
+
+
 Shared Libraries
 NoSQL-like API on top of javax.sql.Connection ?
 
+IModels
+
+
 Models Rewrite
-Write better Serializer for Odyssey
 
 Platform Start Plan
 
@@ -27,6 +111,19 @@ Properly setup FontCaching for PDFBox
 
 ServiceDelegate should work with ThreadSecurity to smartly decide which threads
 are trusted
+
+
+
+APPS TO BUILD
+1. Real Estate 
+2. Accounting -> OfBiz
+3. Education
+4. Ecommerce -> Konakart
+5. CRM
+6. HR
+7. Manufacturing
+8. Insurance
+
 
 
 Make most methods in AbstractSpiDelegates to be final

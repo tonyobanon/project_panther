@@ -33,11 +33,7 @@ public class CacheAdapter {
 	private static Cache persistentCache;
 	
 
-	public static void start() {
-		
-		new MasterNodeConfig() {
-			
-		};
+	public static void start() {		
 
 		Logger.get().info("Create application caches ..");
 		

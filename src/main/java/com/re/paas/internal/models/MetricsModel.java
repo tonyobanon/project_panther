@@ -10,7 +10,7 @@ import java.util.concurrent.TimeUnit;
 import com.googlecode.objectify.Key;
 import com.re.paas.api.annotations.Todo;
 import com.re.paas.api.classes.FluentArrayList;
-import com.re.paas.api.cloud.CloudEnvironment;
+import com.re.paas.api.infra.cloud.CloudEnvironment;
 import com.re.paas.api.models.BaseModel;
 import com.re.paas.api.models.Model;
 import com.re.paas.api.models.classes.InstallOptions;

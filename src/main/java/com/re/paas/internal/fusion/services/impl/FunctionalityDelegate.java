@@ -10,6 +10,7 @@ import com.re.paas.api.fusion.services.AbstractFunctionalityDelegate;
 import com.re.paas.api.fusion.services.Functionality;
 import com.re.paas.api.realms.AbstractRealmDelegate;
 import com.re.paas.api.realms.Realm;
+import com.re.paas.api.spi.DelegateInitResult;
 
 @BlockerTodo("Make good use of the resource maps, where namepaces are stored")
 public class FunctionalityDelegate extends AbstractFunctionalityDelegate {
@@ -17,8 +18,9 @@ public class FunctionalityDelegate extends AbstractFunctionalityDelegate {
 	private static Map<String, Functionality> functionalities = new HashMap<>();
 	
 	@Override
-	public void init() {
+	public DelegateInitResult init() {
 		forEach(this::addFunctionality);
+		return DelegateInitResult.SUCCESS;
 	}
 
 	@Override

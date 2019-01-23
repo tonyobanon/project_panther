@@ -8,7 +8,7 @@ import com.re.paas.api.fusion.server.BaseService;
 import com.re.paas.api.fusion.server.FusionEndpoint;
 import com.re.paas.api.fusion.server.HttpMethod;
 import com.re.paas.api.fusion.server.RoutingContext;
-import com.re.paas.internal.classes.GsonFactory;
+import com.re.paas.internal.classes.Json;
 import com.re.paas.internal.fusion.functionalities.LocationFunctionalities;
 import com.re.paas.internal.models.LocationModel;
 import com.re.paas.internal.models.RBModel;
@@ -46,7 +46,7 @@ public class ResourceBundleService extends BaseService {
 
 		});
 
-		ctx.response().write(GsonFactory.getInstance().toJson(result));
+		ctx.response().write(Json.getGson().toJson(result));
 	}
 
 	@FusionEndpoint(uri = "/get-rb-entry", bodyParams = {
@@ -61,7 +61,7 @@ public class ResourceBundleService extends BaseService {
 			result.put(k, RBModel.get(v.toString()));
 		});
 
-		ctx.response().write(GsonFactory.getInstance().toJson(result));
+		ctx.response().write(Json.getGson().toJson(result));
 	}
 
 }

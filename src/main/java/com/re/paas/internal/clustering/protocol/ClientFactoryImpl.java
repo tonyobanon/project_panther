@@ -2,21 +2,25 @@ package com.re.paas.internal.clustering.protocol;
 
 import java.net.InetAddress;
 import java.util.Stack;
+import java.util.concurrent.atomic.AtomicReferenceArray;
 import java.util.concurrent.locks.LockSupport;
+import java.util.concurrent.locks.ReentrantLock;
 
+import com.re.paas.api.annotations.Prototype;
 import com.re.paas.api.clustering.NodeRegistry;
 import com.re.paas.api.clustering.protocol.Client;
 import com.re.paas.api.clustering.protocol.ClientFactory;
 import com.re.paas.api.utils.Utils;
 import com.re.paas.internal.classes.NumberRotator;
-import com.re.paas.internal.classes.concurrency.SingleConditionReentrantLock;
+import com.re.paas.internal.utils.ObjectUtils;
 
 /**
  * This is the reference Implementation of {@link ClientFactory} with support
- * for context-aware atomicity.
+ * for context-aware atomicity, using double-checked locking.
  * 
  * @author Tony
  */
+@Prototype
 public class ClientFactoryImpl implements ClientFactory {
 
 	private static final short MAX_ROTATED_CONNECTIONS = -1;
@@ -27,29 +31,34 @@ public class ClientFactoryImpl implements ClientFactory {
 	private static final double CLIENT_COUNT_RESIZE_MULTIPLIER = 2;
 	private static final double NODE_COUNT_RESIZE_MULTIPLIER = 2;
 
-	private static volatile Short[] clientIndexes;
-	private static volatile ClientImpl[][] clients;
+	// Keeps track of the current client indexes for each node
+	private static AtomicReferenceArray<Short> clientIndexes;
+	
+	// Stores the client instances for each node
+	private static AtomicReferenceArray<AtomicReferenceArray<ClientImpl>> clients;
 
-	private static volatile Boolean[][] clientStatuses;
+	// Keeps track of which clients are available for cluster requests
+	private static AtomicReferenceArray<AtomicReferenceArray<Boolean>> clientStatuses;
 
-	private static volatile NumberRotator[] clientRotators;
-	private static volatile Stack<Short>[] unusedClientIndexes;
+	// Stores rotators that keeps track of the currently assigned clientId
+	private static AtomicReferenceArray<NumberRotator> clientRotators;
+	
+	private static AtomicReferenceArray<Stack<Short>> unusedClientIndexes;
 
-	@SuppressWarnings("unchecked")
 	public ClientFactoryImpl() {
 
 		// Read Configuration
+		// .... Todo
 
-		// Assign arrays
-
-		clientIndexes = new Short[NODE_COUNT_BUCKET_SIZE];
-		clients = new ClientImpl[NODE_COUNT_BUCKET_SIZE][CLIENT_COUNT_BUCKET_SIZE];
+		
+		clientIndexes = new AtomicReferenceArray<>(NODE_COUNT_BUCKET_SIZE);
+		clients = new AtomicReferenceArray<AtomicReferenceArray<ClientImpl>>(NODE_COUNT_BUCKET_SIZE);
 
 		if (rotationEnabled()) {
-			clientRotators = new NumberRotator[NODE_COUNT_BUCKET_SIZE];
-			unusedClientIndexes = new Stack[NODE_COUNT_BUCKET_SIZE];
+			clientRotators = new AtomicReferenceArray<>(NODE_COUNT_BUCKET_SIZE);
+			unusedClientIndexes = new AtomicReferenceArray<>(NODE_COUNT_BUCKET_SIZE);
 		} else {
-			clientStatuses = new Boolean[NODE_COUNT_BUCKET_SIZE][CLIENT_COUNT_BUCKET_SIZE];
+			clientStatuses = new AtomicReferenceArray<AtomicReferenceArray<Boolean>>(NODE_COUNT_BUCKET_SIZE);
 		}
 
 		Sync.init();
@@ -74,45 +83,32 @@ public class ClientFactoryImpl implements ClientFactory {
 			Sync.__awaitTier3Lock();
 		}
 
-		int newLength = (int) (clientIndexes.length * multiplier);
-		int len = clientIndexes.length;
+		int len = clientIndexes.length();
+		int newLength = (int) (len * multiplier);
 
-		Short[] newClientIndexes = new Short[newLength];
-		System.arraycopy(clientIndexes, 0, newClientIndexes, 0, len);
-		clientIndexes = newClientIndexes;
+		clientIndexes = ObjectUtils.cloneArrayReference(clientIndexes, newLength);
+		clients = ObjectUtils.cloneMultiArrayReference(clients, newLength);
 
-		ClientImpl[][] newClients = new ClientImpl[newLength][];
-		System.arraycopy(clients, 0, newClients, 0, len);
-		clients = newClients;
-
-		SingleConditionReentrantLock[] newtier2Lock = new SingleConditionReentrantLock[newLength];
+		ReentrantLock[] newtier2Lock = new ReentrantLock[newLength];
 		System.arraycopy(Sync.tier2Lock, 0, newtier2Lock, 0, len);
 		Sync.tier2Lock = newtier2Lock;
 
 		if (rotationEnabled()) {
-
-			NumberRotator[] newClientRotators = new NumberRotator[newLength];
-			System.arraycopy(clientRotators, 0, newClientRotators, 0, len);
-			clientRotators = newClientRotators;
-
-			@SuppressWarnings("unchecked")
-			Stack<Short>[] newUnusedClientIndexes = new Stack[newLength];
-			System.arraycopy(unusedClientIndexes, 0, newUnusedClientIndexes, 0, len);
-			unusedClientIndexes = newUnusedClientIndexes;
+			
+			clientRotators = ObjectUtils.cloneArrayReference(clientRotators, newLength);
+			unusedClientIndexes = ObjectUtils.cloneArrayReference(unusedClientIndexes, newLength);
 
 		} else {
 
-			Boolean[][] newClientStatuses = new Boolean[newLength][];
-			System.arraycopy(clientStatuses, 0, newClientStatuses, 0, len);
-			clientStatuses = newClientStatuses;
+			clientStatuses = ObjectUtils.cloneMultiArrayReference(clientStatuses, newLength);
 
-			SingleConditionReentrantLock[][] newtier3Lock = new SingleConditionReentrantLock[newLength][];
+			ReentrantLock[][] newtier3Lock = new ReentrantLock[newLength][];
 			System.arraycopy(Sync.tier3Lock, 0, newtier3Lock, 0, len);
 			Sync.tier3Lock = newtier3Lock;
 		}
 
 		Sync.tier1Lock.unlock();
-		Sync.tier1Lock.getCondition().signalAll();
+		Sync.tier1Lock.notify();
 	}
 
 	/**
@@ -125,36 +121,35 @@ public class ClientFactoryImpl implements ClientFactory {
 	 * @param nodeId     The Node Id
 	 * @param multiplier multiplier which will determine the new length of the
 	 *                   arrays
+	 *                   
+	 * @return {@link Integer} The new 
 	 */
-	private static void resizeClientArrays(Short nodeId, double multiplier) {
+	private static int resizeClientArrays(Short nodeId, double multiplier) {
 
 		if (!rotationEnabled()) {
 			Sync.__awaitTier3Lock(nodeId);
 		}
-
-		int newLength = (int) (clients[nodeId].length * multiplier);
+		
+		int length = clients.get(nodeId).length();
+		int newLength = (int) (length * multiplier);
 
 		if (newLength > Short.MAX_VALUE) {
+			// Add Flag to indicate that this nodeId can no longer scale up
 			newLength = Short.MAX_VALUE;
 		}
-		
-		int len = clients[nodeId].length;
 
-		ClientImpl[] newClients = new ClientImpl[newLength];
-		System.arraycopy(clients[nodeId], 0, newClients, 0, len);
-
-		clients[nodeId] = newClients;
+		clients.set(nodeId, ObjectUtils.cloneArrayReference(clients.get(nodeId), newLength));
 
 		if (!rotationEnabled()) {
+			
+			clientStatuses.set(nodeId, ObjectUtils.cloneArrayReference(clientStatuses.get(nodeId), newLength));
 
-			Boolean[] newStatuses = new Boolean[newLength];
-			System.arraycopy(clientStatuses[nodeId], 0, newStatuses, 0, len);
-			clientStatuses[nodeId] = newStatuses;
-
-			SingleConditionReentrantLock[] newLocks = new SingleConditionReentrantLock[newLength];
-			System.arraycopy(Sync.tier3Lock[nodeId], 0, newLocks, 0, len);
+			ReentrantLock[] newLocks = new ReentrantLock[newLength];
+			System.arraycopy(Sync.tier3Lock[nodeId], 0, newLocks, 0, length);
 			Sync.tier3Lock[nodeId] = newLocks;
 		}
+		
+		return newLength;
 	}
 
 	/**
@@ -168,28 +163,28 @@ public class ClientFactoryImpl implements ClientFactory {
 
 		Sync.awaitTier1Lock();
 
-		clientIndexes[nodeId] = 0;
-		clients[nodeId] = new ClientImpl[CLIENT_COUNT_BUCKET_SIZE];
+		clientIndexes.set(nodeId, (short) 0);
+		clients.set(nodeId, new AtomicReferenceArray<ClientImpl>(CLIENT_COUNT_BUCKET_SIZE));
 
-		Sync.tier2Lock[nodeId] = new SingleConditionReentrantLock();
+		Sync.tier2Lock[nodeId] = new ReentrantLock();
 
 		if (rotationEnabled()) {
-
+			
 			Stack<Short> stack = new Stack<>();
 			stack.ensureCapacity(Short.MAX_VALUE - getMaxRotatedClients());
 
-			unusedClientIndexes[nodeId] = stack;
+			unusedClientIndexes.set(nodeId, stack);
 
 		} else {
-			clientStatuses[nodeId] = new Boolean[CLIENT_COUNT_BUCKET_SIZE];
-			Sync.tier3Lock[nodeId] = new SingleConditionReentrantLock[CLIENT_COUNT_BUCKET_SIZE];
+			clientStatuses.set(nodeId, new AtomicReferenceArray<Boolean>(CLIENT_COUNT_BUCKET_SIZE));
+			Sync.tier3Lock[nodeId] = new ReentrantLock[CLIENT_COUNT_BUCKET_SIZE];
 		}
 	}
 
 	private static boolean hasClientIndex(Short nodeId, Short clientId) {
 		try {
 			@SuppressWarnings("unused")
-			Client client = clients[nodeId][clientId];
+			Client client = clients.get(nodeId).get(clientId);
 			return true;
 		} catch (ArrayIndexOutOfBoundsException e) {
 			return false;
@@ -202,7 +197,7 @@ public class ClientFactoryImpl implements ClientFactory {
 	 * @param limit  Limit (Exclusive)
 	 */
 	private static void startClientRotation(Short nodeId, NumberRotator rotator) {
-		clientRotators[nodeId] = rotator;
+		clientRotators.set(nodeId, rotator);
 	}
 
 	/**
@@ -214,16 +209,16 @@ public class ClientFactoryImpl implements ClientFactory {
 	 * @return
 	 */
 	private static boolean hasRotatedClients(Short nodeId) {
-		NumberRotator rotator = clientRotators[nodeId];
+		NumberRotator rotator = clientRotators.get(nodeId);
 		return rotator != null;
 	}
 
 	private static NumberRotator getClientRotator(Short nodeId) {
-		return clientRotators[nodeId];
+		return clientRotators.get(nodeId);
 	}
 
 	private static short getRotatedClient(Short nodeId) {
-		return (short) clientRotators[nodeId].next();
+		return (short) clientRotators.get(nodeId).next();
 	}
 
 	static boolean rotationEnabled() {
@@ -243,14 +238,14 @@ public class ClientFactoryImpl implements ClientFactory {
 
 		Sync.tier2Lock[nodeId].lock();
 
-		Short clientIndex = clientIndexes[nodeId];
+		Short clientIndex = clientIndexes.get(nodeId);
 		Short len = (short) (clientIndex + 1);
 
 		if (len > Short.MAX_VALUE) {
 
 			if (rotationEnabled()) {
 
-				Stack<Short> stack = unusedClientIndexes[nodeId];
+				Stack<Short> stack = unusedClientIndexes.get(nodeId);
 
 				/*
 				 * First, check if the unusedClientIndexes stack is full. This is an indicator
@@ -265,7 +260,7 @@ public class ClientFactoryImpl implements ClientFactory {
 					clientIndex = getMaxRotatedClients();
 					len = (short) (clientIndex + 1);
 
-					clientIndexes[nodeId] = len;
+					clientIndexes.set(nodeId, len);
 
 				} else {
 
@@ -298,7 +293,7 @@ public class ClientFactoryImpl implements ClientFactory {
 			}
 
 		} else {
-			clientIndexes[nodeId] = len;
+			clientIndexes.set(nodeId, len);
 		}
 
 		if (!hasClientIndex(nodeId, clientIndex)) {
@@ -306,14 +301,14 @@ public class ClientFactoryImpl implements ClientFactory {
 		}
 
 		Sync.tier2Lock[nodeId].unlock();
-		Sync.tier2Lock[nodeId].getCondition().signalAll();
+		Sync.tier2Lock[nodeId].notify();
 
 		ClientImpl client;
 
 		if (rotationEnabled() && hasRotatedClients(nodeId)) {
 
 			Short nexusClientId = getRotatedClient(nodeId);
-			ClientImpl nexus = clients[nodeId][nexusClientId];
+			ClientImpl nexus = clients.get(nodeId).get(nexusClientId);
 
 			client = new ClientImpl(nodeId, clientIndex, nexus);
 
@@ -321,12 +316,12 @@ public class ClientFactoryImpl implements ClientFactory {
 			client = new ClientImpl(nodeId, clientIndex);
 		}
 
-		clients[nodeId][clientIndex] = client;
+		clients.get(nodeId).set(clientIndex, client);
 
 		if (!rotationEnabled()) {
 
-			Sync.tier3Lock[nodeId][clientIndex] = new SingleConditionReentrantLock();
-			clientStatuses[nodeId][clientIndex] = false;
+			Sync.tier3Lock[nodeId][clientIndex] = new ReentrantLock();
+			clientStatuses.get(nodeId).set(clientIndex, false);
 
 		} else if (/* !hasRotatedClients(nodeId) && */ len == getMaxRotatedClients()) {
 			startClientRotation(nodeId, new NumberRotator(0, len));
@@ -338,7 +333,7 @@ public class ClientFactoryImpl implements ClientFactory {
 	@Override
 	public void addNode(Short nodeId) {
 
-		if (nodeId >= clientIndexes.length) {
+		if (nodeId >= clientIndexes.length()) {
 			resizeNodeArrays(NODE_COUNT_RESIZE_MULTIPLIER);
 		}
 
@@ -348,6 +343,7 @@ public class ClientFactoryImpl implements ClientFactory {
 
 	/**
 	 * This releases a node, and deallocates resources used by it.
+	 * 
 	 * @param nodeId
 	 * 
 	 * @author Tony
@@ -359,20 +355,20 @@ public class ClientFactoryImpl implements ClientFactory {
 
 		Sync.tier2Lock[nodeId].lock();
 
-		short len = clientIndexes[nodeId];
+		short len = clientIndexes.get(nodeId);
 
 		if (!rotationEnabled()) {
 
 			Sync.__awaitTier3Lock(nodeId);
 
 			for (short i = 0; i < len; i++) {
-				clients[nodeId][i].close();
+				clients.get(nodeId).get(i).close();
 			}
 
 		} else {
 
 			for (short i = 0; i < len; i++) {
-				ClientImpl client = clients[nodeId][i];
+				ClientImpl client = clients.get(nodeId).get(i);
 
 				if (!hasRotatedClients(nodeId) || getClientRotator(nodeId).isWithinRange(i) || client.ownsChannel()) {
 					client.close();
@@ -380,21 +376,21 @@ public class ClientFactoryImpl implements ClientFactory {
 			}
 		}
 
-		clients[nodeId] = null;
-		clientIndexes[nodeId] = null;
+		clients.set(nodeId, null);
+		clientIndexes.set(nodeId, null);
 
 		if (rotationEnabled()) {
 
-			clientRotators[nodeId] = null;
-			unusedClientIndexes[nodeId] = null;
+			clientRotators.set(nodeId, null);
+			unusedClientIndexes.set(nodeId, null);
 
 		} else {
-			clientStatuses[nodeId] = null;
+			clientStatuses.set(nodeId, null);
 			Sync.tier3Lock[nodeId] = null;
 		}
 
 		Sync.tier2Lock[nodeId].unlock();
-		Sync.tier2Lock[nodeId].getCondition().signalAll();
+		Sync.tier2Lock[nodeId].notify();
 
 		Sync.tier2Lock[nodeId] = null;
 	}
@@ -416,14 +412,14 @@ public class ClientFactoryImpl implements ClientFactory {
 			return;
 		}
 
-		ClientImpl client = clients[nodeId][clientId];
+		ClientImpl client = clients.get(nodeId).get(clientId);
 
 		if (client.ownsChannel()) {
 			client.close();
 		}
 
-		clients[nodeId][clientId] = null;
-		unusedClientIndexes[nodeId].push(clientId);
+		clients.get(nodeId).set(clientId, null);
+		unusedClientIndexes.get(nodeId).push(clientId);
 	}
 
 	/**
@@ -437,16 +433,16 @@ public class ClientFactoryImpl implements ClientFactory {
 
 		Sync.awaitTier2Lock(nodeId);
 
-		Boolean[] statuses = clientStatuses[nodeId];
-		for (int i = 0; i < statuses.length; i++) {
+		AtomicReferenceArray<Boolean> statuses = clientStatuses.get(nodeId);
+		for (int i = 0; i < statuses.length(); i++) {
 
-			if (statuses[i] == null) {
+			if (statuses.get(i) == null) {
 				continue;
 			}
 
 			Sync.awaitTier3Lock(nodeId, (short) i);
 
-			if (statuses[i] && clients[nodeId][i].getProvisional() == null) {
+			if (statuses.get(i) && clients.get(nodeId).get(i).getProvisional() == null) {
 				return (short) i;
 			}
 		}
@@ -477,13 +473,13 @@ public class ClientFactoryImpl implements ClientFactory {
 		}
 
 		if (rotationEnabled()) {
-			Client client = clients[nodeId][addClient(nodeId)];
+			Client client = clients.get(nodeId).get(addClient(nodeId));
 			return client;
 		}
 
 		short clientId = getAvailableClientOrCreate(nodeId);
 
-		Client client = clients[nodeId][clientId];
+		Client client = clients.get(nodeId).get(clientId);
 		return client;
 	}
 
@@ -523,11 +519,11 @@ public class ClientFactoryImpl implements ClientFactory {
 
 		Sync.awaitTier3Lock(nodeId, clientId);
 
-		Boolean b = clientStatuses[nodeId][clientId];
+		Boolean b = clientStatuses.get(nodeId).get(clientId);
 
 		if (b == null || b) {
 			clientId = getAvailableClientOrCreate(nodeId);
-			client.setProvisional(clients[nodeId][clientId]);
+			client.setProvisional(clients.get(nodeId).get(clientId));
 		}
 
 		updateConnectionStatus(nodeId, clientId, true);
@@ -563,33 +559,29 @@ public class ClientFactoryImpl implements ClientFactory {
 		Sync.awaitTier2Lock(nodeId);
 		Sync.tier3Lock[nodeId][clientId].lock();
 
-		clientStatuses[nodeId][clientId] = b;
+		clientStatuses.get(nodeId).set(clientId, b);
 
 		Sync.tier3Lock[nodeId][clientId].unlock();
-		Sync.tier3Lock[nodeId][clientId].getCondition().signalAll();
+		Sync.tier3Lock[nodeId][clientId].notify();
 	}
 
 	private static class Sync {
 
-		private static volatile SingleConditionReentrantLock tier1Lock;
-		private static volatile SingleConditionReentrantLock[] tier2Lock;
-		private static volatile SingleConditionReentrantLock[][] tier3Lock;
+		private static volatile ReentrantLock tier1Lock;
+		private static volatile ReentrantLock[] tier2Lock;
+		private static volatile ReentrantLock[][] tier3Lock;
 
 		private static void init() {
 
-			tier1Lock = new SingleConditionReentrantLock(true);
-			tier2Lock = new SingleConditionReentrantLock[NODE_COUNT_BUCKET_SIZE];
+			tier1Lock = new ReentrantLock(true);
+			tier2Lock = new ReentrantLock[NODE_COUNT_BUCKET_SIZE];
 
 			if (!rotationEnabled()) {
-				tier3Lock = new SingleConditionReentrantLock[NODE_COUNT_BUCKET_SIZE][CLIENT_COUNT_BUCKET_SIZE];
+				tier3Lock = new ReentrantLock[NODE_COUNT_BUCKET_SIZE][CLIENT_COUNT_BUCKET_SIZE];
 			}
 		}
 
-		private static void awaitLock(SingleConditionReentrantLock lock) {
-			if (lock.isLocked()) {
-				lock.getCondition().awaitUninterruptibly();
-			}
-		}
+		
 
 		/**
 		 * This thread will wait, if from another thread the following method(s) are
@@ -598,7 +590,7 @@ public class ClientFactoryImpl implements ClientFactory {
 		 * 
 		 */
 		private static void awaitTier1Lock() {
-			awaitLock(Sync.tier1Lock);
+			ObjectUtils.awaitLock(Sync.tier1Lock);
 		}
 
 		/**
@@ -611,8 +603,8 @@ public class ClientFactoryImpl implements ClientFactory {
 		 * 
 		 */
 		private static void awaitTier2Lock(Short nodeId) {
-			awaitLock(Sync.tier1Lock);
-			awaitLock(Sync.tier2Lock[nodeId]);
+			ObjectUtils.awaitLock(Sync.tier1Lock);
+			ObjectUtils.awaitLock(Sync.tier2Lock[nodeId]);
 		}
 
 		private static void __awaitTier2Lock() {
@@ -620,7 +612,7 @@ public class ClientFactoryImpl implements ClientFactory {
 				if (Sync.tier2Lock[i] == null) {
 					continue;
 				}
-				awaitLock(Sync.tier2Lock[i]);
+				ObjectUtils.awaitLock(Sync.tier2Lock[i]);
 			}
 		}
 
@@ -635,9 +627,9 @@ public class ClientFactoryImpl implements ClientFactory {
 		 * 
 		 */
 		private static void awaitTier3Lock(Short nodeId, Short clientId) {
-			awaitLock(Sync.tier1Lock);
-			awaitLock(Sync.tier2Lock[nodeId]);
-			awaitLock(Sync.tier3Lock[nodeId][clientId]);
+			ObjectUtils.awaitLock(Sync.tier1Lock);
+			ObjectUtils.awaitLock(Sync.tier2Lock[nodeId]);
+			ObjectUtils.awaitLock(Sync.tier3Lock[nodeId][clientId]);
 		}
 
 		private static void __awaitTier3Lock(Short nodeId) {
@@ -646,7 +638,7 @@ public class ClientFactoryImpl implements ClientFactory {
 				if (Sync.tier3Lock[nodeId][j] == null) {
 					continue;
 				}
-				awaitLock(Sync.tier3Lock[nodeId][j]);
+				ObjectUtils.awaitLock(Sync.tier3Lock[nodeId][j]);
 			}
 		}
 

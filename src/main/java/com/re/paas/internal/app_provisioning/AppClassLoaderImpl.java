@@ -39,7 +39,7 @@ public class AppClassLoaderImpl extends AppClassLoader {
 	public AppClassLoaderImpl(ClassLoader parent, Path path, String appId) {
 		this(parent, path, appId, null);
 	}
-	
+
 	public AppClassLoaderImpl(ClassLoader parent, Path path, String appId, String[] appDependencies) {
 		super(parent);
 		this.appId = appId;
@@ -63,12 +63,11 @@ public class AppClassLoaderImpl extends AppClassLoader {
 			return (URL) Exceptions.throwRuntime(e);
 		}
 	}
-	
-	
+
 	private Class<?> loadClassDelegateFirst(String name) {
 
 		Class<?> c = null;
-		
+
 		// First, Delegate to parent classloader
 		try {
 			c = super.loadClass(name, false);
@@ -83,14 +82,14 @@ public class AppClassLoaderImpl extends AppClassLoader {
 		if (c != null) {
 			return c;
 		}
-		
+
 		return c;
 	}
-	
+
 	private Class<?> loadClassDelegateLater(String name) {
 
 		Class<?> c = null;
-		
+
 		// First, check if the class has already been loaded by the current classloader
 		c = findLoadedClass(name);
 
@@ -105,28 +104,30 @@ public class AppClassLoaderImpl extends AppClassLoader {
 
 		} catch (ClassNotFoundException e) {
 		}
-		
+
 		return c;
 	}
 
 	@JdkUpgradeTask("Verify that Jdk9 still throws a ClassNotFoundException, which is almost useless")
 	@BlockerTodo("Implement for other delegation types")
-	
+
 	@Override
 	public Class<?> loadClass(String name, boolean resolve) {
 
 		String pkg = ClassUtils.getPackageName(name);
 		SecurityManager sm = System.getSecurityManager();
-		
-		if(sm != null) {
-			sm.checkPackageAccess(pkg);
+
+		if (sm != null) {
+			// Here, we are using the className instead of pkg, because we also want to
+			// check for classes as well
+			sm.checkPackageAccess(name);
 		}
-		
+
 		synchronized (getClassLoadingLock(name)) {
 
 			Class<?> c = null;
 
-			switch(getDelegationType()) {
+			switch (getDelegationType()) {
 			case DELEGATE_FIRST:
 				c = loadClassDelegateFirst(name);
 				break;
@@ -134,21 +135,21 @@ public class AppClassLoaderImpl extends AppClassLoader {
 				c = loadClassDelegateLater(name);
 				break;
 			}
-			
-			if(c != null) {
+
+			if (c != null) {
 				return c;
 			}
-			
+
 			c = loadedClasses.get(name);
 			if (c != null) {
 				return c;
 			}
-			
+
 			// Find class file using this classloader and define in Metaspace
 
-			if(sm != null) {
+			if (sm != null) {
 				sm.checkPackageDefinition(pkg);
-				
+
 				byte[] data = loadClassFromDisk(name);
 				if (data != null) {
 					c = defineClass(name, data, 0, data.length);
@@ -181,7 +182,7 @@ public class AppClassLoaderImpl extends AppClassLoader {
 	private byte[] loadClassFromDisk(String className) {
 
 		try {
-	
+
 			// read class
 			InputStream is = Files.newInputStream(path.resolve(className.replace(".", "/") + ".class"));
 			ByteArrayOutputStream byteSt = new ByteArrayOutputStream();

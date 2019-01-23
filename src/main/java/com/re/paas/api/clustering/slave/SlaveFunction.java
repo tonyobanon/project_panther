@@ -3,17 +3,15 @@ package com.re.paas.api.clustering.slave;
 import com.re.paas.api.clustering.Function;
 
 public enum SlaveFunction implements Function {
+
+	INGEST_ADAPTER_CONFIG(0, false);
 	
-	XYZ;
+	private short id;
+	private boolean isAsync;
 	
-	@Override
-	public String namespace() {
-		return "slave";
-	}
-	
-	@Override
-	public short contextId() {
-		return 0;
+	private SlaveFunction(int id, boolean isAsync) {
+		this.id = (short) id;
+		this.isAsync = isAsync;
 	}
 	
 	public static SlaveFunction from(int value) {
@@ -21,15 +19,26 @@ public enum SlaveFunction implements Function {
 		switch (value) {
 		
 		case 0:
-			return XYZ;
+			return INGEST_ADAPTER_CONFIG;
 	
 		default:
 			throw new IllegalArgumentException("An invalid value was provided");
 		}
 	}
+
+	@Override
+	public String namespace() {
+		return "slave";
+	}
+	
+	@Override
+	public short contextId() {
+		return id;
+	}
 	
 	@Override
 	public boolean isAsync() {
-		return false;
+		return isAsync;
 	}
+	
 }

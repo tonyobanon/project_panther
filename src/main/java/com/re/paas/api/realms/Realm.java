@@ -24,11 +24,14 @@ public interface Realm {
 		return true;
 	}
 
+	default boolean passive() {
+		return false;
+	}
 
 	/**
-	 * Check if c directly implements Realm.class
+	 * Check if realm directly implements Realm.class
 	 * 
-	 * @param c
+	 * @param realm
 	 * @return
 	 */
 	static boolean isBaseRealm(Realm realm) {

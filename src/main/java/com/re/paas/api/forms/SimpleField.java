@@ -1,5 +1,7 @@
 package com.re.paas.api.forms;
 
+import com.re.paas.api.forms.input.InputType;
+
 public class SimpleField extends BaseSimpleField {
 
 	private InputType inputType;

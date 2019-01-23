@@ -1,37 +1,31 @@
 package com.re.paas.internal.cloud.aws;
 
-import java.util.List;
 import java.util.Map;
 
-import com.google.common.collect.ImmutableList;
-import com.re.paas.api.cloud.AutoScaleDelegate;
-import com.re.paas.api.databases.DatabaseAdapter;
+import com.re.paas.api.infra.cloud.AbstractProviderHandler;
+import com.re.paas.api.threadsecurity.ThreadSecurity;
 import com.re.paas.internal.cloud.CloudEnvironmentAdapter;
-import com.re.paas.internal.databases.dynamodb.DynamoDBAdapter;
 
 public class AWSEnvironment implements CloudEnvironmentAdapter {
 
 	@Override
 	public String id() {
-		return null;
+		return "aws";
 	}
 
 	@Override
 	public Boolean isProduction() {
-		// TODO Auto-generated method stub
-		return false;
+		return true;
 	}
 
 	@Override
 	public String title() {
-		// TODO Auto-generated method stub
-		return null;
+		return "Amazon Web Services";
 	}
 
 	@Override
 	public Boolean canAutoScale() {
-		// TODO Auto-generated method stub
-		return null;
+		return true;
 	}
 	
 	/**
@@ -43,13 +37,11 @@ public class AWSEnvironment implements CloudEnvironmentAdapter {
 	}
 
 	@Override
-	public AutoScaleDelegate autoScaleDelegate() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-	
-	@Override
-	public List<DatabaseAdapter> databaseAdapters() {
-		return ImmutableList.of(new DynamoDBAdapter());
+	public AbstractProviderHandler providerDelegate() {
+		
+		 // Prevent unauthorized access 
+		 ThreadSecurity.verify();
+		
+		return new AwsHandler();
 	}
 }

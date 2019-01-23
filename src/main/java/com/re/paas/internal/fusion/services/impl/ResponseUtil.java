@@ -8,7 +8,7 @@ import io.netty.handler.codec.http.HttpResponseStatus;
 
 public class ResponseUtil {
 	
-	static String toResponse(int status) {
+	public static String toResponse(int status) {
 		
 		HttpResponseStatus rStatus = HttpResponseStatus.valueOf(status);
 		
@@ -18,7 +18,7 @@ public class ResponseUtil {
 				.put("status", rStatus.reasonPhrase()).encode();
 	}
 	
-	static String toResponse(Throwable T) {
+	public static String toResponse(Throwable T) {
 		
 		HttpResponseStatus rStatus = HttpResponseStatus.valueOf(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
 		
@@ -28,7 +28,7 @@ public class ResponseUtil {
 				.put("message", T.getMessage()).encode();
 	}
 	
-	static String toResponse(int status, String message) {
+	public static String toResponse(int status, String message) {
 		
 		HttpResponseStatus rStatus = HttpResponseStatus.valueOf(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
 		

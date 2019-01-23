@@ -34,5 +34,5 @@ public interface RoutingContext {
 
 	List<String> queryParam(String query);
 
-	Session<String, String> session();
+	Session<String, Object> session();
 }

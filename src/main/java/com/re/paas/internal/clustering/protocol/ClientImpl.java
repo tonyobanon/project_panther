@@ -132,7 +132,7 @@ public class ClientImpl implements Client {
 	}
 	
 	@Override
-	public <P, R> CompletableFuture<R> execute(Function function, P parameter, Class<R> R, Integer pThreshold) {
+	public <P, R> CompletableFuture<R> execute(Function function, P parameter, Class<R> R) {
 
 		if (getNodeId() != null && NodeRegistry.get().getNodeId().equals(getNodeId())) {
 			return Functions.execute(function, parameter);
@@ -159,7 +159,7 @@ public class ClientImpl implements Client {
 		final String handlerName = managed() ? clientId.toString() : Utils.newShortRandom();
 				
 		ClientOutboundRequestHandler<R> handler = new ClientOutboundRequestHandler<R>(clientId,
-				Function.getId(function), parameter, pThreshold, completableFuture);
+				Function.getId(function), parameter, completableFuture);
 
 		// Add handler to channel pipeline
 		channel.get().pipeline().addLast(handlerName, handler);

@@ -1,12 +1,15 @@
 package com.re.paas.internal.cloud.azure;
 
-import java.io.StringReader;
+import java.security.interfaces.RSAPrivateKey;
+import java.security.interfaces.RSAPublicKey;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import com.re.paas.api.cloud.CloudEnvironment;
-import com.re.paas.api.cloud.InstanceCredential;
-import com.re.paas.internal.crypto.RSAKeyPair;
+import com.re.paas.api.cryto.RSAKeyPair;
+import com.re.paas.api.infra.cloud.CloudEnvironment;
+import com.re.paas.api.infra.cloud.InstanceCredential;
+import com.re.paas.internal.classes.Json;
+import com.re.paas.internal.crypto.impl.CryptoUtils;
 
 public class AzureVMCredential extends InstanceCredential {
 
@@ -52,7 +55,8 @@ public class AzureVMCredential extends InstanceCredential {
 		obj.addProperty("password", password);
 		
 		if(keyPair != null){
-			obj.addProperty("keyPair", keyPair.toString());
+			obj.addProperty("rsaPublicKey", CryptoUtils.asString("RSA", keyPair.getPublicKey()));
+			obj.addProperty("rsaPrivateKey", CryptoUtils.asString("RSA", keyPair.getPrivateKey()));
 		}
 
 		return obj.toString();
@@ -61,17 +65,22 @@ public class AzureVMCredential extends InstanceCredential {
 	@Override
 	public InstanceCredential fromString(String instanceId, String stringVal) {
 		
-		JsonObject credentialObj = new JsonParser().parse(stringVal).getAsJsonObject();
+		JsonObject credentialObj = Json.parse(stringVal);
 		
 		String username = credentialObj.get("username").getAsString();
 		String password = credentialObj.get("password").getAsString();
 		
-		String keyPair = credentialObj.get("keyPair").getAsString();
-		
+		String rsaPublicKey = credentialObj.get("rsaPublicKey").getAsString();
+		String rsaPrivateKey = credentialObj.get("rsaPrivateKey").getAsString();
+	
 		AzureVMCredential o = new AzureVMCredential(instanceId, username, password);
 		
 		if(keyPair != null) {
-			o.withKeyPair(RSAKeyPair.fromString(keyPair));
+			
+			RSAPrivateKey privateKey = (RSAPrivateKey) CryptoUtils.toPrivateKey("RSA", rsaPrivateKey);
+			RSAPublicKey publicKey = (RSAPublicKey) CryptoUtils.toPrivateKey("RSA", rsaPublicKey);
+			
+			o.withKeyPair(new RSAKeyPair(privateKey, publicKey));
 		}
 		
 		return o;

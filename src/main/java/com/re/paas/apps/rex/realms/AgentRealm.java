@@ -4,26 +4,27 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.BiConsumer;
 
-import com.re.paas.api.cache.Cache;
 import com.re.paas.api.classes.ClientRBRef;
 import com.re.paas.api.classes.ClientResources;
 import com.re.paas.api.classes.FluentArrayList;
 import com.re.paas.api.classes.PlatformException;
 import com.re.paas.api.classes.ResourceException;
-import com.re.paas.api.cloud.CloudEnvironment;
 import com.re.paas.api.forms.Section;
 import com.re.paas.api.fusion.services.Functionality;
+import com.re.paas.api.infra.cache.Cache;
+import com.re.paas.api.infra.cloud.CloudEnvironment;
 import com.re.paas.api.listable.QueryFilter;
 import com.re.paas.api.realms.Realm;
 import com.re.paas.api.realms.RealmApplicationSpec;
 import com.re.paas.api.sentences.ObjectType;
-import com.re.paas.api.utils.ObjectUtils;
 import com.re.paas.apps.rex.classes.spec.AgentSpec;
 import com.re.paas.apps.rex.functionality.AgentFunctionalities;
 import com.re.paas.apps.rex.functionality.AgentOrganizationFunctionalities;
 import com.re.paas.apps.rex.functionality.PropertyFunctionalities;
 import com.re.paas.apps.rex.models.listables.IndexedNameTypes;
 import com.re.paas.apps.rex.sentences.ObjectTypes;
+import com.re.paas.apps.shared.Functionalities;
+import com.re.paas.apps.shared.PrincipalRealm;
 import com.re.paas.internal.entites.directory.AgentEntity;
 import com.re.paas.internal.entites.directory.AgentOrganizationAdminEntity;
 import com.re.paas.internal.entites.directory.AgentOrganizationEntity;
@@ -36,7 +37,7 @@ import com.re.paas.internal.models.helpers.EntityUtils;
 import com.re.paas.internal.models.helpers.FormFieldRepository;
 import com.re.paas.internal.models.helpers.FormFieldRepository.FormField;
 import com.re.paas.internal.realms.AdminRealm;
-import com.re.paas.internal.realms.PrincipalRealm;
+import com.re.paas.internal.utils.ObjectUtils;
 
 public class AgentRealm implements Realm {
 
@@ -50,7 +51,7 @@ public class AgentRealm implements Realm {
 
 		return ObjectUtils.toArray(
 
-				new CustomerRealm().functionalities(), new PrincipalRealm().functionalities(),
+				Functionalities.forUsers(), Functionalities.forPrincipal(),
 
 				new Functionality[] {
 
@@ -85,6 +86,7 @@ public class AgentRealm implements Realm {
 
 	@Override
 	public Section[] onboardingForm() {
+		
 		return new Section[] {};
 	}
 

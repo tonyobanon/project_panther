@@ -16,7 +16,7 @@ import com.re.paas.api.fusion.server.JsonObject;
 import com.re.paas.api.fusion.server.RoutingContext;
 import com.re.paas.api.realms.Realm;
 import com.re.paas.internal.classes.FormSectionType;
-import com.re.paas.internal.classes.GsonFactory;
+import com.re.paas.internal.classes.Json;
 import com.re.paas.internal.fusion.functionalities.FormFunctionalities;
 import com.re.paas.internal.fusion.functionalities.PlatformFunctionalities;
 import com.re.paas.internal.fusion.functionalities.UserApplicationFunctionalities;
@@ -66,14 +66,14 @@ public class FormService extends BaseService {
 		Realm roleRealm = Realm.get(ctx.request().getParam("realm"));
 		
 		List<Section> sections = FormModel.listSections(FormSectionType.APPLICATION_FORM, roleRealm);
-		ctx.response().write(GsonFactory.getInstance().toJson(sections)).end();
+		ctx.response().write(Json.getGson().toJson(sections)).end();
 	}
 
 	@FusionEndpoint(uri = "/list-system-configuration-sections", functionality = PlatformFunctionalities.Constants.VIEW_SYSTEM_CONFIGURATION)
 	public void listSystemConfigurationSections(RoutingContext ctx) {
 
 		List<Section> sections = FormModel.listSections(FormSectionType.SYSTEM_CONFIGURATION, null);
-		ctx.response().write(GsonFactory.getInstance().toJson(sections)).end();
+		ctx.response().write(Json.getGson().toJson(sections)).end();
 	}
 
 	@FusionEndpoint(uri = "/list-application-form-fields", requestParams = {
@@ -83,7 +83,7 @@ public class FormService extends BaseService {
 		String sectionId = ctx.request().getParam("sectionId");
 
 		List<AbstractField> fields = FormModel.getFields(FormSectionType.APPLICATION_FORM, sectionId);
-		ctx.response().write(GsonFactory.getInstance().toJson(fields)).end();
+		ctx.response().write(Json.getGson().toJson(fields)).end();
 	}
 
 	@FusionEndpoint(uri = "/list-application-form-field-names", requestParams = {
@@ -93,7 +93,7 @@ public class FormService extends BaseService {
 		String sectionId = ctx.request().getParam("sectionId");
 
 		Map<String, ClientRBRef> fields = FormModel.getFieldNames(FormSectionType.APPLICATION_FORM, sectionId);
-		ctx.response().write(GsonFactory.getInstance().toJson(fields)).end();
+		ctx.response().write(Json.getGson().toJson(fields)).end();
 	}
 
 	@FusionEndpoint(uri = "/list-all-application-form-fields", bodyParams = {
@@ -102,12 +102,12 @@ public class FormService extends BaseService {
 
 		JsonObject body = ctx.getBodyAsJson();
 
-		List<String> sectionIds = GsonFactory.getInstance().fromJson(body.getJsonArray("sectionIds").encode(),
+		List<String> sectionIds = Json.getGson().fromJson(body.getJsonArray("sectionIds").encode(),
 				new TypeToken<List<String>>() {
 				}.getType());
 
 		Map<String, List<AbstractField>> fields = FormModel.getAllFields(FormSectionType.APPLICATION_FORM, sectionIds);
-		ctx.response().write(GsonFactory.getInstance().toJson(fields)).end();
+		ctx.response().write(Json.getGson().toJson(fields)).end();
 	}
 
 	@FusionEndpoint(uri = "/list-system-configuration-fields", requestParams = {
@@ -117,7 +117,7 @@ public class FormService extends BaseService {
 		String sectionId = ctx.request().getParam("sectionId");
 
 		List<AbstractField> fields = FormModel.getFields(FormSectionType.SYSTEM_CONFIGURATION, sectionId);
-		ctx.response().write(GsonFactory.getInstance().toJson(fields)).end();
+		ctx.response().write(Json.getGson().toJson(fields)).end();
 	}
 
 	@FusionEndpoint(uri = "/list-system-configuration-field-names", requestParams = {
@@ -127,7 +127,7 @@ public class FormService extends BaseService {
 		String sectionId = ctx.request().getParam("sectionId");
 
 		Map<String, ClientRBRef> fields = FormModel.getFieldNames(FormSectionType.SYSTEM_CONFIGURATION, sectionId);
-		ctx.response().write(GsonFactory.getInstance().toJson(fields)).end();
+		ctx.response().write(Json.getGson().toJson(fields)).end();
 	}
 
 	@FusionEndpoint(uri = "/list-all-system-configuration-fields", bodyParams = {
@@ -136,12 +136,12 @@ public class FormService extends BaseService {
 
 		JsonObject body = ctx.getBodyAsJson();
 
-		List<String> sectionIds = GsonFactory.getInstance().fromJson(body.getJsonArray("sectionIds").encode(),
+		List<String> sectionIds = Json.getGson().fromJson(body.getJsonArray("sectionIds").encode(),
 				new TypeToken<List<String>>() {
 				}.getType());
 
 		Map<String, List<AbstractField>> fields = FormModel.getAllFields(FormSectionType.SYSTEM_CONFIGURATION, sectionIds);
-		ctx.response().write(GsonFactory.getInstance().toJson(fields)).end();
+		ctx.response().write(Json.getGson().toJson(fields)).end();
 	}
 
 	@FusionEndpoint(uri = "/delete-application-form-section", requestParams = {
@@ -183,7 +183,7 @@ public class FormService extends BaseService {
 		JsonObject body = ctx.getBodyAsJson();
 
 		String sectionId = body.getString("sectionId");
-		SimpleField spec = GsonFactory.getInstance().fromJson(body.getJsonObject("spec").encode(), SimpleField.class);
+		SimpleField spec = Json.getGson().fromJson(body.getJsonObject("spec").encode(), SimpleField.class);
 
 		String id = FormModel.newSimpleField(FormSectionType.APPLICATION_FORM, sectionId, spec);
 
@@ -197,7 +197,7 @@ public class FormService extends BaseService {
 		JsonObject body = ctx.getBodyAsJson();
 
 		String sectionId = body.getString("sectionId");
-		CompositeField spec = GsonFactory.getInstance().fromJson(body.getJsonObject("spec").encode(),
+		CompositeField spec = Json.getGson().fromJson(body.getJsonObject("spec").encode(),
 				CompositeField.class);
 
 		String id = FormModel.newCompositeField(FormSectionType.APPLICATION_FORM, sectionId, spec);
@@ -212,7 +212,7 @@ public class FormService extends BaseService {
 		JsonObject body = ctx.getBodyAsJson();
 
 		String sectionId = body.getString("sectionId");
-		SimpleField spec = GsonFactory.getInstance().fromJson(body.getJsonObject("spec").encode(), SimpleField.class);
+		SimpleField spec = Json.getGson().fromJson(body.getJsonObject("spec").encode(), SimpleField.class);
 
 		String id = FormModel.newSimpleField(FormSectionType.SYSTEM_CONFIGURATION, sectionId, spec);
 
@@ -226,7 +226,7 @@ public class FormService extends BaseService {
 		JsonObject body = ctx.getBodyAsJson();
 
 		String sectionId = body.getString("sectionId");
-		CompositeField spec = GsonFactory.getInstance().fromJson(body.getJsonObject("spec").encode(),
+		CompositeField spec = Json.getGson().fromJson(body.getJsonObject("spec").encode(),
 				CompositeField.class);
 
 		String id = FormModel.newCompositeField(FormSectionType.SYSTEM_CONFIGURATION, sectionId, spec);
@@ -242,6 +242,6 @@ public class FormService extends BaseService {
 
 		Map<FormField, String> result = FormFieldRepository.getFieldIds(roleRealm);
 
-		ctx.response().write(GsonFactory.getInstance().toJson(result)).end();
+		ctx.response().write(Json.getGson().toJson(result)).end();
 	}
 }

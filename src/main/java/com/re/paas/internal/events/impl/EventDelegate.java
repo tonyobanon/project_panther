@@ -16,8 +16,9 @@ import com.re.paas.api.events.AbstractEventDelegate;
 import com.re.paas.api.events.BaseEvent;
 import com.re.paas.api.events.EventError;
 import com.re.paas.api.events.Subscribe;
-import com.re.paas.api.tasks.Scheduler;
+import com.re.paas.api.spi.DelegateInitResult;
 import com.re.paas.api.utils.ClassUtils;
+import com.re.paas.internal.compute.Scheduler;
 
 public class EventDelegate extends AbstractEventDelegate {
 
@@ -25,11 +26,12 @@ public class EventDelegate extends AbstractEventDelegate {
 	private static Map<String, List<Consumer<BaseEvent>>> volatileListeners = Maps.newHashMap();
 
 	@Override
-	public void init() {
+	public DelegateInitResult init() {
 		Consumer<Class<Object>> consumer = (c) -> {
 			registerListener(c);
 		};
 		forEach(consumer);
+		return DelegateInitResult.SUCCESS;
 	}
 
 	@SuppressWarnings("unchecked")

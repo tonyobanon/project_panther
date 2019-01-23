@@ -6,7 +6,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import com.google.common.collect.Maps;
-import com.re.paas.api.spi.SpiTypes;
+import com.re.paas.api.spi.DelegateInitResult;
 import com.re.paas.api.templating.AbstractObjectModelFactorySpiDelegate;
 import com.re.paas.api.templating.TemplateObjectModel;
 import com.re.paas.api.templating.TemplateObjectModelFactory;
@@ -15,8 +15,9 @@ import com.re.paas.api.utils.ClassUtils;
 public class ObjectModelFactorySpiDelegate extends AbstractObjectModelFactorySpiDelegate {
 
 	@Override
-	public void init() {
+	public DelegateInitResult init() {
 		forEach(this::addTemplateObjectModelFactory);
+		return DelegateInitResult.SUCCESS;
 	}
 
 	@Override
@@ -38,7 +39,7 @@ public class ObjectModelFactorySpiDelegate extends AbstractObjectModelFactorySpi
 
 		Map<Class<?>, TemplateObjectModelFactory<? extends TemplateObjectModel>> map = Maps.newHashMap();
 
-		getAll(SpiTypes.TEMPLATE_OBJECT_MODEL_FACTORY).forEach((k, v) -> {
+		getAll().forEach((k, v) -> {
 			map.put((Class<?>) k, (TemplateObjectModelFactory<?>) v);
 		});
 

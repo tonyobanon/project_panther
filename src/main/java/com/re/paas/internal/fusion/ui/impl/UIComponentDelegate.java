@@ -38,7 +38,6 @@ import com.re.paas.api.annotations.Todo;
 import com.re.paas.api.classes.Exceptions;
 import com.re.paas.api.classes.FluentArrayList;
 import com.re.paas.api.classes.ResourceException;
-import com.re.paas.api.cloud.CloudEnvironment;
 import com.re.paas.api.fusion.server.Buffer;
 import com.re.paas.api.fusion.server.Cookie;
 import com.re.paas.api.fusion.server.HttpStatusCodes;
@@ -46,15 +45,16 @@ import com.re.paas.api.fusion.server.JsonObject;
 import com.re.paas.api.fusion.server.RoutingContext;
 import com.re.paas.api.fusion.services.Functionality;
 import com.re.paas.api.fusion.ui.AbstractUIComponentDelegate;
+import com.re.paas.api.infra.cloud.CloudEnvironment;
 import com.re.paas.api.logging.Logger;
+import com.re.paas.api.spi.DelegateInitResult;
 import com.re.paas.api.spi.DelegateSpec;
 import com.re.paas.api.spi.SpiTypes;
 import com.re.paas.api.utils.Utils;
 import com.re.paas.internal.classes.AppDirectory;
-import com.re.paas.internal.classes.GsonFactory;
+import com.re.paas.internal.classes.Json;
 import com.re.paas.internal.classes.spec.BlobSpec;
 import com.re.paas.internal.core.keys.CacheValues;
-import com.re.paas.internal.filesystems.FileSystemProviderImpl;
 import com.re.paas.internal.fusion.services.impl.FusionHelper;
 import com.re.paas.internal.models.PlatformModel;
 
@@ -120,7 +120,7 @@ public class UIComponentDelegate extends AbstractUIComponentDelegate {
 
 		// Stop File watcher
 
-		if (!CloudEnvironment.get().isProduction() && FileSystemProviderImpl.supportsWatchers()) {
+		if (!CloudEnvironment.get().isProduction()) {
 
 			if (fileWatcherPool != null) {
 				fileWatcherPool.shutdownNow();
@@ -140,11 +140,11 @@ public class UIComponentDelegate extends AbstractUIComponentDelegate {
 
 	@Todo("Create util for walking file tree")
 	@Override
-	public void init() {
+	public DelegateInitResult init() {
 
 		try {
 
-			Gson gson = GsonFactory.getInstance();
+			Gson gson = Json.getGson();
 
 			// Get Route functionalities
 
@@ -298,10 +298,6 @@ public class UIComponentDelegate extends AbstractUIComponentDelegate {
 			// @Dev Watch files for uris in <singleRoutesData && multiRoutesData>:
 
 			if (!CloudEnvironment.get().isProduction()) {
-				
-				if(!FileSystemProviderImpl.supportsWatchers()) {
-					return;
-				}
 
 				startWatchService();
 
@@ -386,6 +382,7 @@ public class UIComponentDelegate extends AbstractUIComponentDelegate {
 			Exceptions.throwRuntime(e1);
 		}
 
+		return DelegateInitResult.SUCCESS;
 	}
 
 	private static final void onFileChange(String uri, String fileContent) {

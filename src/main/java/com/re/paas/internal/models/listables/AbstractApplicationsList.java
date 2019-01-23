@@ -7,6 +7,8 @@ import java.util.Map;
 
 import com.re.paas.api.classes.FluentHashMap;
 import com.re.paas.api.listable.Listable;
+import com.re.paas.api.listable.ListingFilter;
+import com.re.paas.api.listable.ListingType;
 import com.re.paas.api.models.classes.IndexedNameSpec;
 import com.re.paas.api.realms.Realm;
 import com.re.paas.internal.classes.ApplicationStatus;
@@ -43,6 +45,13 @@ public abstract class AbstractApplicationsList extends Listable<BaseApplicationS
 		});
 
 		return result;
+	}
+	
+	@Override
+	public boolean authenticate(ListingType type, Long userId, List<ListingFilter> listingFilters) {
+		
+		// Check spec.reviewFunctionality()
+		
 	}
 
 }

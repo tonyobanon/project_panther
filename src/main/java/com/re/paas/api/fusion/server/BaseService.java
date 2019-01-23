@@ -15,7 +15,7 @@ public abstract class BaseService {
 		return new Class[] {};
 	}
 
-	protected String getLocationHeader() {
+	protected final String getLocationHeader() {
 		return "X-Location";
 	}
 

@@ -1,8 +1,8 @@
 package com.re.paas.internal.spi.locators;
 
 import com.google.common.collect.Lists;
-import com.re.paas.api.cloud.AbstractCloudEnvironmentDelegate;
-import com.re.paas.api.cloud.CloudEnvironment;
+import com.re.paas.api.infra.cloud.AbstractCloudEnvironmentDelegate;
+import com.re.paas.api.infra.cloud.CloudEnvironment;
 import com.re.paas.api.spi.BaseSPILocator;
 import com.re.paas.api.spi.SpiDelegate;
 import com.re.paas.api.spi.SpiTypes;

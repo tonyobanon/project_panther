@@ -1,7 +1,6 @@
 package com.re.paas.internal.fusion.services;
 
 import java.util.List;
-import java.util.Map;
 
 import javax.servlet.http.HttpServletResponse;
 
@@ -14,23 +13,19 @@ import com.re.paas.api.fusion.server.FusionEndpoint;
 import com.re.paas.api.fusion.server.HttpMethod;
 import com.re.paas.api.fusion.server.JsonObject;
 import com.re.paas.api.fusion.server.RoutingContext;
-import com.re.paas.api.fusion.services.Functionality;
 import com.re.paas.api.fusion.ui.AbstractUIComponentDelegate;
 import com.re.paas.api.models.classes.UserProfileSpec;
-import com.re.paas.api.realms.Realm;
 import com.re.paas.api.utils.Utils;
 import com.re.paas.internal.caching.CacheAdapter;
-import com.re.paas.internal.classes.GsonFactory;
+import com.re.paas.internal.classes.Json;
 import com.re.paas.internal.classes.spec.BaseUserSpec;
 import com.re.paas.internal.classes.spec.LoginIdType;
 import com.re.paas.internal.core.keys.CacheKeys;
 import com.re.paas.internal.core.keys.CacheValues;
 import com.re.paas.internal.fusion.functionalities.UserFunctionalities;
 import com.re.paas.internal.fusion.services.impl.FusionHelper;
-import com.re.paas.internal.models.ApplicationModel;
 import com.re.paas.internal.models.BaseUserModel;
 import com.re.paas.internal.models.LocationModel;
-import com.re.paas.internal.models.RoleModel;
 import com.re.paas.internal.models.UserModel;
 
 
@@ -41,7 +36,6 @@ public class UserService extends BaseService {
 	public String uri() {
 		return "/users";
 	}
-	
 
 	@FusionEndpoint(uri = "/authenticateUser", headerParams = { "email", "pass", "rem" }, requestParams = { "idType",
 			"returnUrl" }, functionality = UserFunctionalities.Constants.AUTHENTICATE)
@@ -88,21 +82,10 @@ public class UserService extends BaseService {
 			ctx.addCookie(cookie);
 			
 			
-			// Add functionality variables
+			// Add realm variables
 			
-			String role = BaseUserModel.getRole(userId);
-			Realm realm = RoleModel.getRealm(role);
+			FusionHelper.addRealmVariablesToSession(ctx, FusionHelper.getRealmVariables(userId));	
 			
-			List<String> variableNames = realm.applicationSpec().getVariableNames();
-			
-			if(!variableNames.isEmpty()) {
-
-				Long applicationId = BaseUserModel.getApplicationId(userId);
-				
-				Map<String, String> variableValues = ApplicationModel.getFieldValues(applicationId, variableNames);
-				ctx.session().put(Functionality.VARIABLES_FIELD, GsonFactory.getInstance().toJson(variableValues));
-			}
-						
 			
 			// Perform Http Redirect
 
@@ -135,7 +118,7 @@ public class UserService extends BaseService {
 		if (json != null) {
 			ctx.response().write(json);
 		} else {
-			json = GsonFactory.getInstance().toJson(BaseUserModel.getProfile(userId));
+			json = Json.getGson().toJson(BaseUserModel.getProfile(userId));
 			CacheAdapter.put(CacheKeys.USER_PROFILE_$USER.replace("$USER", userId.toString()), json);
 			ctx.response().write(json);
 		}
@@ -352,7 +335,7 @@ public class UserService extends BaseService {
 					.setCountryName(LocationModel.getCountryName(spec.getCountry()))
 					.setCountryDialingCode(LocationModel.getCountryDialingCode(spec.getCountry()));
 
-			json = GsonFactory.getInstance().toJson(spec);
+			json = Json.getGson().toJson(spec);
 			CacheAdapter.put(CacheKeys.USER_PROFILE_$USER.replace("$USER", userId.toString()), json);
 			ctx.response().write(json);
 		}
@@ -368,7 +351,7 @@ public class UserService extends BaseService {
 
 		List<BaseUserSpec> profiles = UserModel.getSuggestedProfiles(principal, userId);
 
-		ctx.response().write(GsonFactory.getInstance().toJson(profiles));
+		ctx.response().write(Json.getGson().toJson(profiles));
 	}
 
 	@FusionEndpoint(uri = "/can-access-user-profile", requestParams = {
@@ -381,7 +364,7 @@ public class UserService extends BaseService {
 
 		boolean b = BaseUserModel.canAccessUserProfile(principal, userId);
 
-		ctx.response().write(GsonFactory.getInstance().toJson(b));
+		ctx.response().write(Json.getGson().toJson(b));
 	}
 
 }

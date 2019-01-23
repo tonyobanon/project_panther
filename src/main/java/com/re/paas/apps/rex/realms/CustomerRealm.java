@@ -4,12 +4,13 @@ import com.re.paas.api.forms.Section;
 import com.re.paas.api.fusion.services.Functionality;
 import com.re.paas.api.realms.Realm;
 import com.re.paas.api.realms.RealmApplicationSpec;
-import com.re.paas.api.utils.ObjectUtils;
 import com.re.paas.apps.rex.functionality.AgentOrganizationFunctionalities;
 import com.re.paas.apps.rex.functionality.PropertyFunctionalities;
 import com.re.paas.apps.rex.models.listables.IndexedNameTypes;
 import com.re.paas.apps.rex.sentences.ObjectTypes;
-import com.re.paas.internal.realms.UserRealm;
+import com.re.paas.apps.shared.Functionalities;
+import com.re.paas.apps.shared.UserRealm;
+import com.re.paas.internal.utils.ObjectUtils;
 
 public class CustomerRealm implements Realm {
 
@@ -17,13 +18,11 @@ public class CustomerRealm implements Realm {
 	public String name() {
 		return "customer";
 	}
-
+	
 	@Override
 	public Functionality[] functionalities() {
 		return ObjectUtils.toArray(
-
-				new UserRealm().functionalities(),
-				
+				Functionalities.get(UserRealm.class),			
 				new Functionality[] { PropertyFunctionalities.ADD_TO_OWN_SAVED_LIST,
 						PropertyFunctionalities.REMOVE_FROM_OWN_SAVED_LIST,
 						PropertyFunctionalities.GET_OWN_SAVED_LIST });

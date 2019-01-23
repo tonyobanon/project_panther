@@ -7,8 +7,8 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonPrimitive;
 import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
-import com.re.paas.internal.crypto.CryptoConstants;
-import com.re.paas.internal.crypto.CryptoUtils;
+import com.re.paas.internal.crypto.impl.CryptoConstants;
+import com.re.paas.internal.crypto.impl.CryptoUtils;
 
 public class RSAPrivateKeySerializer implements JsonSerializer<RSAPrivateKey> {
 

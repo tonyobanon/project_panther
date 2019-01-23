@@ -27,7 +27,7 @@ public class NodeEventListener {
 		NodeRegistry registry = NodeRegistry.get();
 		ClientFactory cFactory = ClientFactory.get();
 
-		for (BaseNodeSpec spec : evt.getSpec()) {
+		for (BaseNodeSpec spec : evt.getNodes()) {
 
 			registry.getNodes().put(spec.getId(), spec);
 

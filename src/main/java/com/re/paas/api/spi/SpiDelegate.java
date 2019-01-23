@@ -14,19 +14,21 @@ import com.re.paas.api.utils.ClassUtils;
 /**
  * Note: T must be non-parameterized, since
  * ClassUtils.getGenericSuperclasses(..) does not yet support multi-nested
- * generic construct
+ * generic construct <br>
+ * <br>
+ * <b>Notes on Security</b>
+ * <li>Delegates are responsible for enforcing code security within their
+ * respective domains. Trusted delegates should ensure that the
+ * {@link SpiDelegate#doRunnable(Class, Runnable)} is used when running code
+ * from resource classes</li>
  */
 public abstract class SpiDelegate<T> {
-	
+
 	private static final Logger LOG = Logger.get(SpiDelegate.class);
-	
+
 	private KeyValuePair<SpiTypes, Class<?>> type = null;
 
 	protected static final String DEFAULT_NAMESPACE = "default";
-	
-	public static Map<SpiTypes, Map<Object, Object>> getResources() {
-		return SpiDelegateHandler.get().getResources();
-	}
 
 	public final void set(Object namespace, Object obj) {
 		getAll(type.getKey()).put(namespace, obj);
@@ -48,8 +50,8 @@ public abstract class SpiDelegate<T> {
 		if (!e.contains(obj)) {
 			e.add(obj);
 		} else {
-			LOG.warn("List: " + this.getClass().getSimpleName() + "/"
-					+ namespace + " already contains element: " + obj.toString() + ", skipping ..");
+			LOG.warn("List: " + this.getClass().getSimpleName() + "/" + namespace + " already contains element: "
+					+ obj.toString() + ", skipping ..");
 		}
 	}
 
@@ -57,8 +59,17 @@ public abstract class SpiDelegate<T> {
 		return getAll(type.getKey());
 	}
 
-	protected static Map<Object, Object> getAll(SpiTypes type) {
+	private static final Map<Object, Object> getAll(SpiTypes type) {
 		return SpiDelegateHandler.get().getResources().get(type);
+	}
+
+	/**
+	 * This filters the set of resources
+	 * 
+	 * @return
+	 */
+	protected final List<Class<?>> filter() {
+		return null;
 	}
 
 	public boolean hasKey(String namespace) {
@@ -83,9 +94,10 @@ public abstract class SpiDelegate<T> {
 	public Object remove(String namespace) {
 		return getAll(type.getKey()).remove(namespace);
 	}
- 
+
 	public Class<?> getLocatorClassType() {
-		return ClassUtils.getGenericSuperclasses(getClass()).get(0);
+		return ClassUtils.getGenericRefs(getClass().getClassLoader(), getClass().getSuperclass().getGenericSuperclass())
+				.get(0);
 	}
 
 	public KeyValuePair<SpiTypes, Class<?>> getType() {
@@ -100,13 +112,13 @@ public abstract class SpiDelegate<T> {
 	public final SpiTypes getSpiType() {
 		return type.getKey();
 	}
-	
+
 	protected final List<Class<T>> getResourceClasses() {
 		List<Class<T>> result = new ArrayList<>();
 		forEach(result::add);
 		return result;
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	protected final void forEach(Consumer<Class<T>> consumer) {
 		SpiDelegateHandler.get().forEach(getSpiType(), c -> {
@@ -115,10 +127,11 @@ public abstract class SpiDelegate<T> {
 	}
 
 	/**
-	 * This method is used to initialize the needed resources by this delegate
+	 * This function is used to initialize this delegate. Subclasses should ensure
+	 * that this method takes no longer than 10 seconds to execute.
 	 */
 	@PlatformInternal
-	public abstract void init();
+	public abstract DelegateInitResult init();
 
 	/**
 	 * This releases the resources used by this delegate, and performs any cleanup
@@ -162,8 +175,13 @@ public abstract class SpiDelegate<T> {
 
 	protected void remove(List<Class<T>> classes) {
 	}
-	
-	@PlatformInternal
+
+	/**
+	 * Any delegate that overrides this function as false, must have a dependency on
+	 * {@link SpiTypes#CACHE_ADAPTER}
+	 * 
+	 * @return
+	 */
 	public boolean inMemory() {
 		return true;
 	}

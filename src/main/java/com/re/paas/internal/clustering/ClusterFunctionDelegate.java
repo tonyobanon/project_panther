@@ -11,6 +11,7 @@ import com.re.paas.api.clustering.AbstractClusterFunction;
 import com.re.paas.api.clustering.Function;
 import com.re.paas.api.clustering.NodeRole;
 import com.re.paas.api.logging.Logger;
+import com.re.paas.api.spi.DelegateInitResult;
 import com.re.paas.api.spi.DelegateSpec;
 import com.re.paas.api.spi.SpiTypes;
 import com.re.paas.api.utils.ClassUtils;
@@ -22,8 +23,9 @@ public class ClusterFunctionDelegate extends AbstractClusterFunctionDelegate {
 			.synchronizedMap(new HashMap<Short, AbstractClusterFunction<Object, Object>>(32767));
 
 	@Override
-	public void init() {
+	public DelegateInitResult init() {
 		scanFunctions();
+		return DelegateInitResult.SUCCESS;
 	}
 
 	@Override

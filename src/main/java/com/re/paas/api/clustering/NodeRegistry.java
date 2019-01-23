@@ -13,11 +13,11 @@ public interface NodeRegistry {
 	public static NodeRegistry get() {
 		return Singleton.get(NodeRegistry.class);
 	}
-	
+
 	void setNodeId(Short nodeId);
 
 	Short getNodeId();
-	
+
 	void setMasterNodeId(Short nodeId);
 
 	Short getMasterNodeId();
@@ -35,11 +35,11 @@ public interface NodeRegistry {
 	InetAddress getClusteringAddress();
 
 	InetAddress getWkaHost();
-	
+
 	Integer getWkaInboundPort();
 
 	Server getServer();
-	
+
 	CompletableFuture<Void> start();
 
 	void stop();
@@ -47,5 +47,4 @@ public interface NodeRegistry {
 	Map<Short, BaseNodeSpec> getNodes();
 
 	String getNodesAsJson();
-	
 }

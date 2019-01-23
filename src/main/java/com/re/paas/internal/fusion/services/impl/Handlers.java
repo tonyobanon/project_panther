@@ -16,7 +16,6 @@ import com.re.paas.api.fusion.server.RoutingContext;
 import com.re.paas.api.fusion.server.ServiceAuthenticator;
 import com.re.paas.api.fusion.services.AbstractServiceDelegate;
 import com.re.paas.api.fusion.services.Functionality;
-import com.re.paas.internal.classes.GsonFactory;
 import com.re.paas.internal.fusion.services.ResourceBundleService;
 import com.re.paas.internal.models.LocaleModel;
 import com.re.paas.internal.utils.LocaleUtils;
@@ -35,8 +34,7 @@ public class Handlers {
 
 			if (!authenticator.authenticate(ctx)) {
 				ctx.response().setStatusCode(HttpStatusCodes.SC_UNAUTHORIZED)
-						.write(ResponseUtil.toResponse(HttpStatusCodes.SC_UNAUTHORIZED))
-						.end();
+						.write(ResponseUtil.toResponse(HttpStatusCodes.SC_UNAUTHORIZED)).end();
 			}
 			return;
 		}
@@ -47,11 +45,11 @@ public class Handlers {
 		// do not allow proxies to cache the data
 		ctx.response().putHeader("Cache-Control", "no-store, no-cache");
 
-		String uri = ctx.request().path().replace(FusionServiceDelegate.BASE_PATH, "");
+		String uri = ctx.request().path().replace(ServiceDelegate.BASE_PATH, "");
 		HttpMethod method = ctx.request().method();
 
 		Route route = new Route(uri, method);
-		
+
 		Functionality functionality = BaseService.getDelegate().getRouteFunctionality(route);
 
 		if (functionality == null || !functionality.requiresBasicAuth()) {
@@ -90,15 +88,13 @@ public class Handlers {
 			FusionHelper.setUserId(ctx.request(), userId);
 		} else {
 			ctx.response().setStatusCode(HttpStatusCodes.SC_UNAUTHORIZED)
-					.write(ResponseUtil.toResponse(HttpStatusCodes.SC_UNAUTHORIZED))
-					.end();
+					.write(ResponseUtil.toResponse(HttpStatusCodes.SC_UNAUTHORIZED)).end();
 		}
 	}
 
 	static void addCustomAuthenticator(String uri, ServiceAuthenticator customAuthenticator) {
 		Handlers.customAuthenticators.put(uri, customAuthenticator);
 	}
-	
 
 	static RouteHandler defaultTailHandler() {
 		return new RouteHandler(ctx -> {
@@ -110,7 +106,7 @@ public class Handlers {
 	static RouteHandler defaultHeadHandler() {
 
 		return new RouteHandler(ctx -> {
-			
+
 			// Note: container pools request threads, we need to create new LocalThread
 			// context
 			ThreadContext.newRequestContext();
@@ -130,17 +126,11 @@ public class Handlers {
 				});
 			}
 			LocaleModel.setUserLocale(locales, FusionHelper.getUserId(ctx.request()));
-		
-			// Functionality variables must have been added on login
+
+			// Realm variables must have been added on login
 			// Add these variables from session to thread local context
-			
-			String variablesString = ctx.session().get(Functionality.VARIABLES_FIELD);
-			
-			if(variablesString != null) {
-				Map<String, String> variables = GsonFactory.toMap(variablesString);
-				ThreadContext.set(Functionality.VARIABLES_FIELD, variables);
-			}
-			
+			FusionHelper.addRealmVariablesToContext(FusionHelper.getRealmVariablesFromSession(ctx));
+
 		}, false);
 	}
 

@@ -6,8 +6,8 @@ import java.util.List;
 import java.util.Map;
 
 import com.re.paas.api.annotations.Todo;
-import com.re.paas.api.forms.InputType;
 import com.re.paas.api.forms.Section;
+import com.re.paas.api.forms.input.InputType;
 
 @Todo("Add inputTypePrefixes helper functions")
 public class PDFForm  {

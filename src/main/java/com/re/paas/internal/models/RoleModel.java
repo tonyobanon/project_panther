@@ -7,17 +7,20 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
+import com.google.common.collect.Lists;
 import com.googlecode.objectify.Key;
 import com.googlecode.objectify.NotFoundException;
 import com.googlecode.objectify.cmd.Query;
 import com.re.paas.api.classes.FluentHashMap;
 import com.re.paas.api.classes.PlatformException;
+import com.re.paas.api.designpatterns.Singleton;
 import com.re.paas.api.fusion.services.Functionality;
 import com.re.paas.api.listable.QueryFilter;
 import com.re.paas.api.logging.Logger;
 import com.re.paas.api.models.BaseModel;
 import com.re.paas.api.models.ModelMethod;
 import com.re.paas.api.models.classes.InstallOptions;
+import com.re.paas.api.realms.AbstractRealmDelegate;
 import com.re.paas.api.realms.Realm;
 import com.re.paas.api.utils.Dates;
 import com.re.paas.api.utils.Utils;
@@ -29,7 +32,6 @@ import com.re.paas.internal.fusion.functionalities.RoleFunctionalities;
 import com.re.paas.internal.models.errors.RolesError;
 import com.re.paas.internal.models.helpers.EntityUtils;
 import com.re.paas.internal.realms.AdminRealm;
-import com.re.paas.internal.users.RoleUpdateAction;
 
 public class RoleModel implements BaseModel {
 
@@ -50,8 +52,37 @@ public class RoleModel implements BaseModel {
 	}
 
 	@Override
-	public void install(InstallOptions options) {
+	public void start() {
 
+		// Register role functionalities in realm delegate
+		
+		AbstractRealmDelegate delegate = Realm.getDelegate();
+
+		for (String realmName : delegate.getRealmNames()) {
+
+			Realm realm = delegate.getRealm(realmName);
+
+			for (String role : listRoles(realm)) {
+
+				Collection<Functionality> functionalities = new ArrayList<>();
+
+				for (String fString : fetchRoleFunctionalities(role)) {
+
+					Functionality f = Functionality.fromString(fString);
+
+					if (f == null) {
+
+						// This functionality has been removed from the realm
+						// so we need to remove from db as well
+						updateRoleSpec(role, false, f, false);
+					}
+
+					functionalities.add(f);
+				}
+
+				delegate.addRoleFunctionalities(role, functionalities);
+			}
+		}
 	}
 
 	@ModelMethod(functionality = RoleFunctionalities.Constants.MANAGE_ROLES)
@@ -92,14 +123,14 @@ public class RoleModel implements BaseModel {
 	}
 
 	@ModelMethod(functionality = RoleFunctionalities.Constants.MANAGE_ROLES)
-	public static Map<String, String> listRoles(Realm realm) {
+	public static Collection<String> listRoles(Realm realm) {
 
-		Map<String, String> roles = new FluentHashMap<>();
+		Collection<String> roles = new ArrayList<>();
 
 		Query<UserRoleEntity> query = ofy().load().type(UserRoleEntity.class).filter("realm =", realm.getValue());
 		for (UserRoleEntity role : query) {
 
-			roles.put(role.getName(), realm.name());
+			roles.add(role.getName());
 		}
 
 		return roles;
@@ -124,7 +155,7 @@ public class RoleModel implements BaseModel {
 	public static Map<String, String> getRealmFunctionalities(Realm realm) {
 
 		Map<String, String> result = new FluentHashMap<>();
-		
+
 		Collection<Functionality> f = Realm.getDelegate().getFunctionalities(realm);
 
 		f.forEach(k -> {
@@ -135,14 +166,7 @@ public class RoleModel implements BaseModel {
 		return result;
 	}
 
-	/**
-	 * This method is deprecated. Callers should the realm delegate
-	 * @param name
-	 * @return
-	 */
-	@ModelMethod(functionality = RoleFunctionalities.Constants.MANAGE_ROLES)
-	@Deprecated
-	public static List<String> getRoleFunctionalities(String name) {
+	private static Collection<String> fetchRoleFunctionalities(String name) {
 		List<String> result = new ArrayList<>();
 		UserRoleEntity entity = ofy().load().type(UserRoleEntity.class).id(name).safe();
 		entity.getSpec().forEach(f -> {
@@ -152,17 +176,35 @@ public class RoleModel implements BaseModel {
 	}
 
 	@ModelMethod(functionality = RoleFunctionalities.Constants.MANAGE_ROLES)
+	public static Collection<String> getRoleFunctionalities(String name) {
+		return Realm.getDelegate().getRoleFunctionalitiesAstring(name);
+	}
+
+	@ModelMethod(functionality = RoleFunctionalities.Constants.MANAGE_ROLES)
 	public static void updateRoleSpec(String name, Boolean add, Functionality f) {
+		updateRoleSpec(name, add, f, true);
+	}
+
+	@ModelMethod(functionality = RoleFunctionalities.Constants.MANAGE_ROLES)
+	private static void updateRoleSpec(String name, Boolean add, Functionality f, boolean updateDelegate) {
 
 		UserRoleEntity entity = ofy().load().type(UserRoleEntity.class).id(name).safe();
 		List<String> functions = entity.getSpec();
 
-		if(add) {
+		AbstractRealmDelegate delegate = Realm.getDelegate();
+
+		if (add) {
 			functions.add(f.asString());
+			if (updateDelegate) {
+				delegate.addRoleFunctionalities(name, Lists.newArrayList(f));
+			}
 		} else {
 			functions.remove(f.asString());
+			if (updateDelegate) {
+				delegate.removeRoleFunctionalities(name, Lists.newArrayList(f));
+			}
 		}
-		
+
 		entity.setSpec(functions);
 		ofy().save().entity(entity).now();
 	}
@@ -198,7 +240,7 @@ public class RoleModel implements BaseModel {
 
 	public static boolean isAccessAllowed(String roleName, Functionality... functionalities) {
 
-		List<String> Userfunctionalities = getRoleFunctionalities(roleName);
+		Collection<String> Userfunctionalities = getRoleFunctionalities(roleName);
 
 		for (Functionality f : functionalities) {
 			if (!Userfunctionalities.contains(f.asString())) {
@@ -210,20 +252,15 @@ public class RoleModel implements BaseModel {
 	}
 
 	@Override
-	public void start() {
-		
-	}
-
-	@Override
 	public void update() {
 		// TODO Auto-generated method stub
-		
+
 	}
 
 	@Override
 	public void unInstall() {
 		// TODO Auto-generated method stub
-		
+
 	}
 
 }

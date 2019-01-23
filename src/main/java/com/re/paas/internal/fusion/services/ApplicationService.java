@@ -9,7 +9,6 @@ import com.re.paas.api.fusion.server.JsonObject;
 import com.re.paas.api.fusion.server.RoutingContext;
 import com.re.paas.api.models.classes.ApplicationDeclineReason;
 import com.re.paas.api.realms.Realm;
-import com.re.paas.api.utils.ObjectUtils;
 import com.re.paas.apps.rex.functionality.AgentFunctionalities;
 import com.re.paas.apps.rex.functionality.AgentOrganizationFunctionalities;
 import com.re.paas.internal.classes.GsonFactory;
@@ -18,6 +17,7 @@ import com.re.paas.internal.fusion.services.impl.FusionHelper;
 import com.re.paas.internal.models.ApplicationModel;
 import com.re.paas.internal.models.BaseUserModel;
 import com.re.paas.internal.models.RoleModel;
+import com.re.paas.internal.utils.ObjectUtils;
 
 public class ApplicationService extends BaseService {
 
@@ -196,27 +196,6 @@ public class ApplicationService extends BaseService {
 		Integer reason = Integer.parseInt(body.getString("reason"));
 		
 		ApplicationModel.declineApplication(applicationId, principal, ApplicationDeclineReason.from(reason));
-	}
-
-	@FusionEndpoint(uri = "/can-user-review", requestParams = {}, functionality = UserApplicationFunctionalities.Constants.CAN_USER_REVIEW_APPLICATION)
-	public void canUserReviewApplications(RoutingContext ctx) {
-		
-		Long principal = FusionHelper.getUserId(ctx.request());
-		Long applicationId = Long.parseLong(ctx.request().getParam("applicationId"));
-		
-		Realm realm = RoleModel.getRealm(ApplicationModel.getApplicationRole(applicationId));
-		
-		ctx.session().put("", "");
-		
-		Boolean b = false;
-		
-		try {
-			realm.applicationSpec().getReviewValidator().accept(applicationId.toString(), principal.toString());
-			b = true;
-		} catch (Exception e) {
-		}
-		
-		ctx.response().write(b.toString());
 	}
 
 }

@@ -9,6 +9,7 @@ import com.re.paas.api.listable.AbstractIndexedNameTypeDelegate;
 import com.re.paas.api.listable.AbstractListableDelegate;
 import com.re.paas.api.listable.IndexedNameType;
 import com.re.paas.api.listable.Listable;
+import com.re.paas.api.spi.DelegateInitResult;
 
 @BlockerTodo("Make good use of the resource maps, where namepaces are stored")
 public class IndexedNameTypeDelegate extends AbstractIndexedNameTypeDelegate {
@@ -17,8 +18,9 @@ public class IndexedNameTypeDelegate extends AbstractIndexedNameTypeDelegate {
 	private static Map<String, IndexedNameType> indexedNameTypes = new HashMap<>();
 
 	@Override
-	public void init() {
+	public DelegateInitResult init() {
 		forEach(this::addIndexedNameType);
+		return DelegateInitResult.SUCCESS;
 	}
 
 	@Override

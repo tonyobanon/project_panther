@@ -9,6 +9,8 @@ import com.re.paas.api.classes.Exceptions;
 import com.re.paas.api.classes.PlatformException;
 import com.re.paas.api.clustering.AbstractFunctionDelegate;
 import com.re.paas.api.clustering.Function;
+import com.re.paas.api.spi.DelegateInitResult;
+import com.re.paas.api.utils.ClassUtils;
 import com.re.paas.internal.errors.ClusterFunctionError;
 
 public class FunctionDelegate extends AbstractFunctionDelegate {
@@ -17,11 +19,12 @@ public class FunctionDelegate extends AbstractFunctionDelegate {
 	private static Map<Short, Function> functions = new HashMap<>();
 
 	@Override
-	public void init() {
+	public DelegateInitResult init() {
 		Consumer<Class<Function>> consumer = c -> {
 			addFunction(c);
 		};
 		forEach(consumer);
+		return DelegateInitResult.SUCCESS;
 	}
 	
 	@Override
@@ -95,7 +98,7 @@ public class FunctionDelegate extends AbstractFunctionDelegate {
 			
 			functionMap.forEach((k, v) -> {
 				if(existingMap.containsKey(k)) {
-					throw new RuntimeException("Namespace: " + namespace + " already contains context-id: " + k + " => " + c.getName());
+					throw new RuntimeException("Namespace: " + namespace + " already contains context-id: " + k + " => " + ClassUtils.toString(c));
 				}
 				existingMap.put(k, v);
 			});

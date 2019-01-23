@@ -40,6 +40,15 @@ public class Section {
 		}
 		return null;
 	}
+	
+	public AbstractField getField(String id) {
+		for (AbstractField field : fields) {
+			if (field.getId().equals(id)) {
+				return field;
+			}
+		}
+		return null;
+	}
 
 	public List<AbstractField> getFields() {
 		return fields;

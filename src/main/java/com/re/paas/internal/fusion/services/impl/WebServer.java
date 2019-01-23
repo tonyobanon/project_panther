@@ -25,6 +25,8 @@ import org.eclipse.jetty.util.ssl.SslContextFactory;
 
 import com.google.common.collect.ImmutableList;
 import com.re.paas.api.annotations.PlatformInternal;
+import com.re.paas.api.cryto.KeyStoreProperties;
+import com.re.paas.api.cryto.SSLContext;
 import com.re.paas.api.fusion.server.BaseService;
 import com.re.paas.api.fusion.server.HttpMethod;
 import com.re.paas.api.fusion.server.Route;
@@ -34,8 +36,6 @@ import com.re.paas.api.fusion.services.AbstractServiceDelegate;
 import com.re.paas.api.fusion.ui.AbstractComponent;
 import com.re.paas.api.logging.Logger;
 import com.re.paas.internal.Platform;
-import com.re.paas.internal.crypto.KeyStoreConfig;
-import com.re.paas.internal.crypto.SSLContext;
 
 public class WebServer {
 
@@ -61,10 +61,10 @@ public class WebServer {
 		// SSL Connection Factory
 		SslConnectionFactory ssl = null;
 
-		KeyStoreConfig keyStoreManager = null;
+		KeyStoreProperties keyStoreManager = null;
 		SSLContext sslContext;
 
-		if (Platform.isInstalled() && (keyStoreManager = KeyStoreConfig.get()).keyStoreEnabled()
+		if (Platform.isInstalled() && (keyStoreManager = KeyStoreProperties.get()).keyStoreEnabled()
 				&& (sslContext = keyStoreManager.getSslContext()) != null) {
 
 			http_config.setSecureScheme("https");
@@ -76,7 +76,7 @@ public class WebServer {
 			// SSL Context Factory for HTTPS and HTTP/2
 			SslContextFactory sslContextFactory = new SslContextFactory();
 
-			sslContextFactory.setKeyStoreType(KeyStoreConfig.getType());
+			sslContextFactory.setKeyStoreType(KeyStoreProperties.getType());
 			
 			sslContextFactory.setCertAlias(sslContext.getCertAlias());
 			sslContextFactory.setKeyStore(keyStoreManager.getKeystore());

@@ -37,6 +37,7 @@ import com.re.paas.api.models.classes.InstallOptions;
 import com.re.paas.api.models.classes.UserProfileSpec;
 import com.re.paas.api.realms.AbstractRealmDelegate;
 import com.re.paas.api.realms.Realm;
+import com.re.paas.api.realms.RealmApplicationSpec;
 import com.re.paas.api.sentences.Article;
 import com.re.paas.api.sentences.CustomPredicate;
 import com.re.paas.api.sentences.ObjectEntity;
@@ -132,6 +133,7 @@ public class ApplicationModel implements BaseModel {
 
 		String role = getApplicationRole(applicationId);
 		Realm realm = RoleModel.getRealm(role);
+		RealmApplicationSpec applicationSpec = realm.applicationSpec();
 
 		if (!(status.equals(ApplicationStatus.CREATED) || status.equals(ApplicationStatus.OPEN))) {
 			throw new ResourceException(ResourceException.UPDATE_NOT_ALLOWED,
@@ -159,7 +161,7 @@ public class ApplicationModel implements BaseModel {
 		ofy().save().entities(entries).now();
 
 		// Update Application ref, if necessary
-		String refField = realm.applicationSpec().getListingRefField();
+		String refField = applicationSpec.getListingRefField();
 		String refValue = null;
 
 		String currentRefValue = getApplicationRef(applicationId);
@@ -214,7 +216,7 @@ public class ApplicationModel implements BaseModel {
 			}
 		}
 
-		if (realm.applicationSpec().isAutoAccept()) {
+		if (applicationSpec.isAutoAccept()) {
 			submitApplication(applicationId);
 		} else {
 
@@ -222,7 +224,7 @@ public class ApplicationModel implements BaseModel {
 
 			Sentence activity = Sentence.newInstance().setSubject(getNameSpec(applicationId, realm))
 					.setPredicate(CustomPredicate.UPDATED)
-					.setObject(ObjectEntity.get(realm.applicationSpec().getBaseObjectType())
+					.setObject(ObjectEntity.get(applicationSpec.getBaseObjectType())
 							.setIdentifiers(FluentArrayList.asList(applicationId))
 							.setArticle(isMaleApplicant(applicationId, realm) ? Article.HIS : Article.HER));
 

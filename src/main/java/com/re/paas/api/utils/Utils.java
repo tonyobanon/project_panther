@@ -60,7 +60,11 @@ public class Utils {
 	}
 
 	public static JsonObject getJson(InputStream in) {
-		return new JsonParser().parse(Utils.getString(in)).getAsJsonObject();
+		return getJson(Utils.getString(in));
+	}
+	
+	public static JsonObject getJson(String s) {
+		return new JsonParser().parse(s).getAsJsonObject();
 	}
 
 	public static Properties getProperties(InputStream in) {
@@ -428,4 +432,21 @@ public class Utils {
 		}
 		return false;
 	}
+	
+	public static boolean equals(String key, String... entries) {
+		for (String e : entries) {
+			if (key.equals(e)) {
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	public static <T> T[] toArray(List<T> l) {
+		@SuppressWarnings("unchecked")
+		T[] r =  (T[]) l.toArray(new Object[l.size()]);
+		return r;
+	}
+	
+	
 }

@@ -14,7 +14,7 @@ import com.re.paas.api.fusion.server.RoutingContext;
 import com.re.paas.api.fusion.services.Functionality;
 import com.re.paas.api.realms.Realm;
 import com.re.paas.internal.caching.CacheAdapter;
-import com.re.paas.internal.classes.GsonFactory;
+import com.re.paas.internal.classes.Json;
 import com.re.paas.internal.core.keys.CacheKeys;
 import com.re.paas.internal.fusion.functionalities.RoleFunctionalities;
 import com.re.paas.internal.fusion.services.impl.FusionHelper;
@@ -55,7 +55,7 @@ public class RolesService extends BaseService {
 
 		Map<String, String> roles = realm.equals("undefined") ? RoleModel.listRoles() : RoleModel.listRoles(realm);
 
-		ctx.response().write(GsonFactory.getInstance().toJson(roles));
+		ctx.response().write(Json.getGson().toJson(roles));
 	}
 
 	@FusionEndpoint(uri = "/user-count", bodyParams = {
@@ -63,12 +63,12 @@ public class RolesService extends BaseService {
 	public void getUsersCount(RoutingContext ctx) {
 
 		JsonObject body = ctx.getBodyAsJson();
-		List<String> names = GsonFactory.getInstance().fromJson(body.getJsonArray("roleNames").encode(),
+		List<String> names = Json.getGson().fromJson(body.getJsonArray("roleNames").encode(),
 				new TypeToken<List<String>>() {
 				}.getType());
 
 		Map<String, Integer> result = RoleModel.getUsersCount(names);
-		ctx.response().write(GsonFactory.getInstance().toJson(result));
+		ctx.response().write(Json.getGson().toJson(result));
 	}
 
 	@FusionEndpoint(uri = "/does-user-role-allow", bodyParams = {
@@ -79,7 +79,7 @@ public class RolesService extends BaseService {
 
 		JsonObject body = ctx.getBodyAsJson();
 
-		List<Integer> functionalities_ = GsonFactory.getInstance()
+		List<Integer> functionalities_ = Json.getGson()
 				.fromJson(body.getJsonArray("functionalities").encode(), new TypeToken<List<Integer>>() {
 				}.getType());
 
@@ -93,13 +93,13 @@ public class RolesService extends BaseService {
 
 		Boolean isAllowed = RoleModel.isAccessAllowed(roleName,
 				functionalities.toArray(new RoleFunctionalities[functionalities.size()]));
-		ctx.response().write(GsonFactory.getInstance().toJson(isAllowed));
+		ctx.response().write(Json.getGson().toJson(isAllowed));
 	}
 
 	@FusionEndpoint(uri = "/realms", method = HttpMethod.GET, functionality = RoleFunctionalities.Constants.GET_ROLE_REALMS)
 	public void listRealms(RoutingContext ctx) {
 		Map<String, String> roles = RoleModel.listRoles();
-		ctx.response().write(GsonFactory.getInstance().toJson(roles));
+		ctx.response().write(Json.getGson().toJson(roles));
 	}
 
 	/**
@@ -110,7 +110,7 @@ public class RolesService extends BaseService {
 	public void getRealmFunctionalities(RoutingContext ctx) {
 		String roleName = ctx.request().getParam("role");
 		Realm realm = RoleModel.getRealm(roleName);
-		String json = GsonFactory.getInstance().toJson(RoleModel.getRealmFunctionalities(realm));
+		String json = Json.getGson().toJson(RoleModel.getRealmFunctionalities(realm));
 		ctx.response().write(json);
 	}
 
@@ -126,7 +126,7 @@ public class RolesService extends BaseService {
 
 		CacheAdapter.put(CacheKeys.ROLE_FUNCTIONALITIES_$ROLE.replace("$ROLE", roleName), new JsonArray(e).toString());
 
-		String json = GsonFactory.getInstance().toJson(e);
+		String json = Json.getGson().toJson(e);
 		ctx.response().write(json);
 	}
 
@@ -158,7 +158,7 @@ public class RolesService extends BaseService {
 	public void getRoleRealm(RoutingContext ctx) {
 		String roleName = ctx.request().getParam("role");
 		Realm realm = RoleModel.getRealm(roleName);
-		ctx.response().write(GsonFactory.getInstance().toJson(realm));
+		ctx.response().write(Json.getGson().toJson(realm));
 	}
 
 }

@@ -8,7 +8,7 @@ import com.re.paas.internal.security.BasePermission;
 import com.re.paas.internal.security.Permissions;
 
 public class RuntimePermissions implements BasePermission {
-	
+
 	@Override
 	public String permissionClass() {
 		return RuntimePermission.class.getName();
@@ -65,6 +65,10 @@ public class RuntimePermissions implements BasePermission {
 		case PermissionNames.ACCESS_CLASS_IN_PACAKAGE:
 
 			if (Utils.startsWith(context, Platform.getAccessForbiddenPackages())) {
+				return Permissions.DENY;
+			}
+
+			if (Utils.equals(context, Platform.getAccessForbiddenClasses())) {
 				return Permissions.DENY;
 			}
 
@@ -139,7 +143,7 @@ public class RuntimePermissions implements BasePermission {
 		destination[PermissionIndexes.PREFERENCES] = false;
 		destination[PermissionIndexes.USE_POLICY] = false;
 	}
-	
+
 	private static class PermissionIndexes {
 
 		public static final int CREATE_CLASS_LOADER = 0;
@@ -178,7 +182,7 @@ public class RuntimePermissions implements BasePermission {
 		public static final int PREFERENCES = 27;
 		public static final int USE_POLICY = 28;
 	}
-	
+
 	private static class PermissionNames {
 
 		public static final String CREATE_CLASS_LOADER = "createClassLoader";
@@ -219,5 +223,4 @@ public class RuntimePermissions implements BasePermission {
 
 	}
 
-	
 }

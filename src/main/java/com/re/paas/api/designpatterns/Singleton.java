@@ -3,7 +3,10 @@ package com.re.paas.api.designpatterns;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.re.paas.api.spi.SpiDelegateHandler;
 import com.re.paas.api.threadsecurity.ThreadSecurity;
+import com.re.paas.api.utils.ClassUtils;
+
 
 public class Singleton {
 
@@ -11,18 +14,43 @@ public class Singleton {
 
 	public static <T> T get(Class<T> type) {
 		
+		String name = ClassUtils.toString(type);
+		
 		@SuppressWarnings("unchecked")
-		T o = (T) singletons.get(type.getName());
+		T o = (T) singletons.get(name);
+		
+		if (!ClassUtils.isAccessible(o.getClass())) {
+			throw new SecurityException(name + " is not accessible by the current thread");
+		}
+		
 		return o;
 	}
 
+	/**
+	 * 
+	 * <b>Implementation notes</b> <br>
+	 * <p>
+	 * <li>Since the current {@link SpiDelegateHandler} stores delegate instances as
+	 * singletons, there is need to be able to register an already
+	 * registered type. In light of this, trusted threads are permitted to overwrite
+	 * entries</li>
+	 * </p>
+	 * 
+	 * @param type
+	 * @param typeSubType
+	 */
 	public static <T> void register(Class<T> type, T typeSubType) {
+
+		String name = ClassUtils.toString(type);
 		
-		if(!ThreadSecurity.get().isTrusted()) {
-			assert !singletons.containsKey(type.getName());
+		if (!ThreadSecurity.get().isTrusted()) {
+			
+			if(singletons.containsKey(name)) {
+				throw new SecurityException(name + " is already regustered");
+			}
 		}
-		
-		singletons.put(type.getName(), typeSubType);
+
+		singletons.put(name, typeSubType);
 	}
 
 }

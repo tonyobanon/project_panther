@@ -6,7 +6,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import com.re.paas.api.classes.Exceptions;
-import com.re.paas.internal.filesystems.FileSystemProviders;
+import com.re.paas.internal.infra.filesystem.FileSystemProviders;
 
 public class Platform {
 
@@ -19,7 +19,7 @@ public class Platform {
 		String env = System.getenv("REALIGNITE_ENVIRONMENT");
 		return env == null || !env.equals("development");
 	}
-	
+
 	public static Boolean isInstalled() {
 		return isInstalled;
 	}
@@ -44,6 +44,13 @@ public class Platform {
 		return Paths.get("/", getPlatformPrefix());
 	}
 
+	public static String[] getAccessForbiddenClasses() {
+		return new String[] {
+				// Reason: This class uses the platform's local file system. As an alternative, the developer should use 
+				// FileSystemProvider. Also for file creation, newByteChannel(..) should be used
+				"java.io.File" };
+	}
+
 	public static String[] getAccessForbiddenPackages() {
 		return new String[] { "sun.", "com.sun.", "jdk.internal" };
 	}
@@ -53,9 +60,9 @@ public class Platform {
 	}
 
 	static {
-		
+
 		// Set up resource path
-		if(!Files.exists(getResourcePath())) {
+		if (!Files.exists(getResourcePath())) {
 			try {
 				Files.createDirectories(getResourcePath());
 			} catch (IOException e) {

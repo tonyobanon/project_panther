@@ -18,7 +18,9 @@ import com.re.paas.api.classes.Exceptions;
 import com.re.paas.api.classes.FluentHashMap;
 import com.re.paas.api.classes.PlatformException;
 import com.re.paas.api.clustering.classes.OsPlatform;
-import com.re.paas.internal.classes.GsonFactory;
+import com.re.paas.api.infra.cloud.CloudEnvironment;
+import com.re.paas.internal.classes.Json;
+import com.re.paas.internal.cloud.aws.AwsTags;
 import com.re.paas.internal.clustering.MasterNodeConfig;
 import com.re.paas.internal.clustering.classes.Utils;
 import com.re.paas.internal.errors.ClusteringError;
@@ -116,26 +118,28 @@ public class AzureHelper {
 				URI.create("http://169.254.169.254/metadata/instance/compute/tags?api-version=" + defaultAPIVersion()),
 				FluentHashMap.forNameMap().with("Metadata", "true"));
 
-		Map<String, String> tagsMap = GsonFactory.getInstance().fromJson(tags, new TypeToken<Map<String, String>>() {
+		Map<String, String> tagsMap = Json.getGson().fromJson(tags, new TypeToken<Map<String, String>>() {
 		}.getType());
 
 		return tagsMap;
 	}
 
 	static {
+		
+		CloudEnvironment env = CloudEnvironment.get();
 
 		// Setup Credentials
 
-		String clientId = MasterNodeConfig.getInstance().get(MasterNodeConfig.AZURE_CLIENT);
-		String key = MasterNodeConfig.getInstance().get(MasterNodeConfig.AZURE_KEY);
+		String clientId = env.getInstanceTags().get(AzureTags.AZURE_CLIENT);
+		String key = env.getInstanceTags().get(AzureTags.AZURE_KEY);
 
-		subscription = MasterNodeConfig.getInstance().get(MasterNodeConfig.AZURE_SUBSCRIPTION);
+		subscription = env.getInstanceTags().get(AzureTags.AZURE_SUBSCRIPTION);
 
 		credentials = new ApplicationTokenCredentials(clientId, null, key, AzureEnvironment.AZURE)
 				.withDefaultSubscriptionId(subscription);
 
 		// Set Resource Group
-		resourceGroup = MasterNodeConfig.getInstance().get(MasterNodeConfig.AZURE_RESOURCE_GROUP);
+		resourceGroup = env.getInstanceTags().get(AzureTags.AZURE_RESOURCE_GROUP);
 	}
 
 }

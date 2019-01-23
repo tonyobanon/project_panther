@@ -1,10 +1,15 @@
 package com.re.paas.api.models;
 
 import com.re.paas.api.annotations.BlockerTodo;
+import com.re.paas.api.designpatterns.Singleton;
 import com.re.paas.api.models.classes.InstallOptions;
 
 @BlockerTodo("Create classes containing entity attribute names. See project <eaa>")
 public interface BaseModel {
+	
+	public static AbstractModelDelegate getDelegate() {
+		return Singleton.get(AbstractModelDelegate.class);
+	}
 
 	/**
 	 * This method is used by models to populate data into their tables after

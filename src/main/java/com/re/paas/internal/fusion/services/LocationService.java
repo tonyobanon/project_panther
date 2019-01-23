@@ -4,7 +4,7 @@ import com.re.paas.api.fusion.server.BaseService;
 import com.re.paas.api.fusion.server.FusionEndpoint;
 import com.re.paas.api.fusion.server.RoutingContext;
 import com.re.paas.internal.caching.CacheAdapter;
-import com.re.paas.internal.classes.GsonFactory;
+import com.re.paas.internal.classes.Json;
 import com.re.paas.internal.core.keys.CacheKeys;
 import com.re.paas.internal.fusion.functionalities.LocationFunctionalities;
 import com.re.paas.internal.models.LocationModel;
@@ -22,7 +22,7 @@ public String uri() {
 		if (json != null) {
 			ctx.response().write(json);
 		} else {
-			json = GsonFactory.getInstance().toJson(LocationModel.getCountryNames());
+			json = Json.getGson().toJson(LocationModel.getCountryNames());
 			CacheAdapter.put(CacheKeys.COUNTRY_NAMES, json);
 			ctx.response().write(json);
 		}
@@ -36,7 +36,7 @@ public String uri() {
 		if (json != null) {
 			ctx.response().write(json);
 		} else {
-			json = GsonFactory.getInstance().toJson(LocationModel.getCurrencyNames());
+			json = Json.getGson().toJson(LocationModel.getCurrencyNames());
 			CacheAdapter.put(CacheKeys.CURRENCY_NAMES, json);
 			ctx.response().write(json);
 		}
@@ -54,7 +54,7 @@ public String uri() {
 			if (json != null) {
 				ctx.response().write(json);
 			} else {
-				json = GsonFactory.getInstance().toJson(LocationModel.getAvailableLocales(countryCode));
+				json = Json.getGson().toJson(LocationModel.getAvailableLocales(countryCode));
 				CacheAdapter.put(CacheKeys.LOCALES_$COUNTRY.replace("$COUNTRY", countryCode), json);
 				ctx.response().write(json);
 			}
@@ -63,7 +63,7 @@ public String uri() {
 			if (json != null) {
 				ctx.response().write(json);
 			} else {
-				json = GsonFactory.getInstance().toJson(LocationModel.getAllLocales());
+				json = Json.getGson().toJson(LocationModel.getAllLocales());
 				CacheAdapter.put(CacheKeys.LOCALES, json);
 				ctx.response().write(json);
 			}
@@ -78,7 +78,7 @@ public String uri() {
 		if (json != null) {
 			ctx.response().write(json);
 		} else {
-			json = GsonFactory.getInstance().toJson(LocationModel.getAllTimezones());
+			json = Json.getGson().toJson(LocationModel.getAllTimezones());
 			CacheAdapter.put(CacheKeys.TIMEZONES, json);
 			ctx.response().write(json);
 		}
@@ -93,7 +93,7 @@ public String uri() {
 		if (json != null) {
 			ctx.response().write(json);
 		} else {
-			json = GsonFactory.getInstance().toJson(LocationModel.getTerritoryNames(countryCode));
+			json = Json.getGson().toJson(LocationModel.getTerritoryNames(countryCode));
 			CacheAdapter.put(CacheKeys.TERRITORIES_$COUNTRY.replace("$COUNTRY", countryCode), json);
 			ctx.response().write(json);
 		}
@@ -108,7 +108,7 @@ public String uri() {
 		if (json != null) {
 			ctx.response().write(json);
 		} else {
-			json = GsonFactory.getInstance().toJson(LocationModel.getCityNames(territoryCode));
+			json = Json.getGson().toJson(LocationModel.getCityNames(territoryCode));
 			CacheAdapter.put(CacheKeys.CITIES_$TERRITORY.replace("$TERRITORY", territoryCode), json);
 			ctx.response().write(json);
 		}
@@ -123,7 +123,7 @@ public String uri() {
 		if (json != null) {
 			ctx.response().write(json);
 		} else {
-			json = GsonFactory.getInstance().toJson(LocationModel.getCoordinates(Integer.parseInt(cityCode)));
+			json = Json.getGson().toJson(LocationModel.getCoordinates(Integer.parseInt(cityCode)));
 			CacheAdapter.put(CacheKeys.COORDINATES_$CITY.replace("$CITY", cityCode), json);
 			ctx.response().write(json);
 		}
@@ -138,7 +138,7 @@ public String uri() {
 		if (json != null) {
 			ctx.response().write(json);
 		} else {
-			json = GsonFactory.getInstance().toJson(LocationModel.getTimezone(Integer.parseInt(cityCode)));
+			json = Json.getGson().toJson(LocationModel.getTimezone(Integer.parseInt(cityCode)));
 			CacheAdapter.put(CacheKeys.TIMEZONE_$CITY.replace("$CITY", cityCode), json);
 			ctx.response().write(json);
 		}
@@ -153,7 +153,7 @@ public String uri() {
 		if (json != null) {
 			ctx.response().write(json);
 		} else {
-			json = GsonFactory.getInstance().toJson(LocationModel.getSpokenLanguages(countryCode));
+			json = Json.getGson().toJson(LocationModel.getSpokenLanguages(countryCode));
 			CacheAdapter.put(CacheKeys.SPOKEN_LANGUAGES_$COUNTRY.replace("$COUNTRY", countryCode), json);
 			ctx.response().write(json);
 		}

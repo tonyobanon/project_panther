@@ -3,8 +3,8 @@ package com.re.paas.internal.clustering;
 import java.util.List;
 
 import com.re.paas.api.classes.FluentArrayList;
-import com.re.paas.api.cloud.CloudEnvironment;
 import com.re.paas.api.clustering.NodeRole;
+import com.re.paas.api.infra.cloud.CloudEnvironment;
 
 public class ReplicaMasterNodeRole extends NodeRole {
 

@@ -1,60 +1,32 @@
 package com.re.paas.internal.cloud;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.re.paas.api.cloud.AbstractCloudEnvironmentDelegate;
-import com.re.paas.api.cloud.CloudEnvironment;
-import com.re.paas.api.databases.DatabaseAdapter;
-import com.re.paas.api.filesystems.FileSystemAdapter;
+import com.re.paas.api.infra.cloud.AbstractCloudEnvironmentDelegate;
+import com.re.paas.api.infra.cloud.CloudEnvironment;
+import com.re.paas.api.spi.DelegateInitResult;
 import com.re.paas.api.utils.ClassUtils;
 
 public class CloudEnvironmentDelegate extends AbstractCloudEnvironmentDelegate {
 
-	private static final String FS_ADAPTERS_NAMESPACE = "fs_adapters";
-	private static final String DB_ADAPTERS_NAMESPACE = "db_adapters";
 
 	private static CloudEnvironment instance;
 
 	@Override
-	public void init() {
-		
-		createResourceMaps();
+	public DelegateInitResult init() {
 		
 		forEach(c -> {
 
 			CloudEnvironment e = ClassUtils.createInstance(c);
-
-			registerAdapters(e);
 
 			if (get(e.id()) != null) {
 				throw new RuntimeException("Duplicate CloudEnvironment definitions exists with id: " + e.id());
 			}
 			set(e.id(), e);
 		});
-	}
-
-	private void registerAdapters(CloudEnvironment e) {
-
-		Map<String, DatabaseAdapter> dbAdapters = getDbAdaptersMap();
-		
-		e.databaseAdapters().forEach(dbAdapter -> {
-			if(dbAdapters.containsKey(dbAdapter.name())) {
-				throw new RuntimeException("Duplicate DatabaseAdapter definitions exists with name: " + dbAdapter.name());
-			}
-			dbAdapters.put(dbAdapter.name(), dbAdapter);
-		});
-		
-		Map<String, FileSystemAdapter> fsAdapters = getFsAdaptersMap();
-		
-		e.fileSystemAdapters().forEach(fsAdapter -> {
-			if(fsAdapters.containsKey(fsAdapter.name())) {
-				throw new RuntimeException("Duplicate FileSystemAdapter definitions exists with name: " + fsAdapter.name());
-			}
-			fsAdapters.put(fsAdapter.name(), fsAdapter);
-		});
+		return DelegateInitResult.SUCCESS;
 	}
 
 	@Override
@@ -76,17 +48,6 @@ public class CloudEnvironmentDelegate extends AbstractCloudEnvironmentDelegate {
 		return null;
 	}
 
-	@Override
-	@SuppressWarnings("unchecked")
-	public Map<String, FileSystemAdapter> getFsAdaptersMap() {
-		return (Map<String, FileSystemAdapter>) get(FS_ADAPTERS_NAMESPACE);
-	}
-
-	@Override
-	@SuppressWarnings("unchecked")
-	public Map<String, DatabaseAdapter> getDbAdaptersMap() {
-		return (Map<String, DatabaseAdapter>) get(DB_ADAPTERS_NAMESPACE);
-	}
 
 	@Override
 	public List<CloudEnvironment> getInstances() {
@@ -103,8 +64,4 @@ public class CloudEnvironmentDelegate extends AbstractCloudEnvironmentDelegate {
 		return r;
 	}
 	
-	private void createResourceMaps() {
-		set(FS_ADAPTERS_NAMESPACE, new HashMap<>());
-		set(DB_ADAPTERS_NAMESPACE, new HashMap<>());
-	}
 }

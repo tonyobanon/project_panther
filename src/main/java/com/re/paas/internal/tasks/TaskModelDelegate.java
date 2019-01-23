@@ -4,6 +4,7 @@ import java.util.Map;
 
 import com.google.common.collect.Maps;
 import com.re.paas.api.classes.ClientRBRef;
+import com.re.paas.api.spi.DelegateInitResult;
 import com.re.paas.api.tasks.AbstractTaskModelDelegate;
 import com.re.paas.api.tasks.TaskImage;
 import com.re.paas.api.utils.ClassUtils;
@@ -11,11 +12,12 @@ import com.re.paas.api.utils.ClassUtils;
 public class TaskModelDelegate extends AbstractTaskModelDelegate {
 
 	@Override
-	public void init() {
+	public DelegateInitResult init() {
 		forEach(c -> {
 			TaskImage model = ClassUtils.createInstance(c);
 			set(model.name(), model);
 		});
+		return DelegateInitResult.SUCCESS;
 	}
 	
 	@Override

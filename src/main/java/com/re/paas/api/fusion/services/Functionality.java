@@ -1,13 +1,10 @@
 package com.re.paas.api.fusion.services;
 
 import java.util.Collection;
-import java.util.Map;
 
 import com.re.paas.api.designpatterns.Singleton;
 
 public interface Functionality {
-	
-	static final String VARIABLES_FIELD = "_FVF";
 
 	public static AbstractFunctionalityDelegate getDelegate() {
 		return Singleton.get(AbstractFunctionalityDelegate.class);
@@ -52,22 +49,5 @@ public interface Functionality {
 	public default Boolean requiresAuth() {
 		return id() > 0;
 	}
-	
-	String alias();
-	
-	default Map<String, String> getExpectedVariables() {
-		return null;
-	}
-	
-	default void setExpectedVariables(Map<String, String> variables) {
-		
-	}
-	
-	default String expectedAlias() {
-		return null;
-	}
-	
-	default String actualAlias() {
-		return null;
-	}
+
 }

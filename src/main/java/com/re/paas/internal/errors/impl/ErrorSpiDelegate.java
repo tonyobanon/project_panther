@@ -7,17 +7,19 @@ import java.util.function.Consumer;
 
 import com.re.paas.api.errors.AbstractErrorSpiDelegate;
 import com.re.paas.api.errors.Error;
+import com.re.paas.api.spi.DelegateInitResult;
 
 public class ErrorSpiDelegate extends AbstractErrorSpiDelegate {
 
 	@Override
-	public void init() {
+	public DelegateInitResult init() {
 
 		Consumer<Class<Error>> consumer = c -> {
 			addError(c);
 		};
 
 		forEach(consumer);
+		return DelegateInitResult.SUCCESS;
 	}
 
 	private void addError(Class<Error> c) {

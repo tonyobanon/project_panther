@@ -8,9 +8,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import javax.json.Json;
-import javax.json.JsonObject;
-
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.HttpClients;
@@ -25,7 +22,9 @@ import com.amazonaws.services.ec2.AmazonEC2Client;
 import com.amazonaws.services.ec2.AmazonEC2ClientBuilder;
 import com.amazonaws.services.ec2.model.InstanceType;
 import com.google.common.collect.Maps;
+import com.google.gson.JsonObject;
 import com.re.paas.api.classes.Exceptions;
+import com.re.paas.api.infra.cloud.CloudEnvironment;
 import com.re.paas.internal.cloud.KVPair;
 import com.re.paas.internal.clustering.MasterNodeConfig;
 import com.re.paas.internal.clustering.classes.Utils;
@@ -108,7 +107,7 @@ public class AWSHelper {
 
 		InputStream in = resp.getEntity().getContent();
 
-		return Json.createReader(in).readObject();
+		return com.re.paas.api.utils.Utils.getJson(in);
 	}
 
 	private static AWSCredentials getCredentials() {
@@ -184,9 +183,11 @@ public class AWSHelper {
 	}
 
 	static {
+		
+		CloudEnvironment env = CloudEnvironment.get();
 
-		String accessKey = MasterNodeConfig.getInstance().getOrNull(MasterNodeConfig.AWS_ACCESS_KEY);
-		String secretKey = MasterNodeConfig.getInstance().getOrNull(MasterNodeConfig.AWS_SECRET_KEY);
+		String accessKey = env.getInstanceTags().get(AwsTags.AWS_ACCESS_KEY);
+		String secretKey = env.getInstanceTags().get(AwsTags.AWS_SECRET_KEY);
 
 		if (accessKey == null || secretKey == null) {
 			credentialsProvider = new InstanceProfileCredentialsProvider(true);

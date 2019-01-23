@@ -2,14 +2,12 @@ package com.re.paas.internal.clustering.protocol;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.OutputStream;
 import java.util.concurrent.CompletableFuture;
 
 import com.re.paas.api.clustering.NodeRegistry;
 import com.re.paas.api.clustering.classes.Conditional;
 import com.re.paas.api.logging.Logger;
+import com.re.paas.internal.utils.ObjectUtils;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
@@ -39,7 +37,6 @@ public class ClientOutboundRequestHandler<R> extends ChannelInboundHandlerAdapte
 
 	private final Short functionId;
 	private final Object requestBody;
-	private final Integer requestBodyThreshold;
 
 	private final CompletableFuture<R> future;
 
@@ -48,13 +45,12 @@ public class ClientOutboundRequestHandler<R> extends ChannelInboundHandlerAdapte
 	long endTime;
 
 	protected ClientOutboundRequestHandler(Short clientId, Short functionId, Object requestBody,
-			Integer requestBodyThreshold, CompletableFuture<R> future) {
+			CompletableFuture<R> future) {
 
 		this.clientId = clientId;
 
 		this.functionId = functionId;
 		this.requestBody = requestBody;
-		this.requestBodyThreshold = requestBodyThreshold;
 
 		this.future = future;
 	}
@@ -148,22 +144,16 @@ public class ClientOutboundRequestHandler<R> extends ChannelInboundHandlerAdapte
 		responseReader = this.new ResponseReader(responseLength);
 
 		responseReaderThread = new Thread(() -> {
-			try {
-				ObjectInputStream responseStream = new ObjectInputStream(responseReader);
-				Object o = responseStream.readObject();
-				responseStream.close();
 
-				// @DEV
-				endTime = System.nanoTime();
-				long timeElapsed = (endTime - startTime) / 1000;
+			Object o = ObjectUtils.deserialize(responseReader);
 
-				Logger.get().debug("Time elapsed for request: " + timeElapsed + " microseconds");
+			// @DEV
+			endTime = System.nanoTime();
+			long timeElapsed = (endTime - startTime) / 1000;
 
-				done(ctx, o);
+			Logger.get().debug("Time elapsed for request: " + timeElapsed + " microseconds");
 
-			} catch (IOException | ClassNotFoundException e) {
-				throw new RuntimeException(e);
-			}
+			done(ctx, o);
 		});
 		responseReaderThread.start();
 	}
@@ -230,22 +220,9 @@ public class ClientOutboundRequestHandler<R> extends ChannelInboundHandlerAdapte
 
 	private void sendRequest() throws IOException {
 
-		ByteBuf body = requestBodyThreshold == -1 ? ByteBufAllocator.DEFAULT.directBuffer()
-				: ByteBufAllocator.DEFAULT.directBuffer(requestBodyThreshold);
-
-		// Buffer requestBody
-		ObjectOutputStream stream = new ObjectOutputStream(new OutputStream() {
-			@Override
-			public void write(int b) throws IOException {
-				body.writeByte(b);
-			}
-		});
-
-		// Write to buf
-		stream.writeObject(requestBody);
-
-		// close object stream
-		stream.close();
+		byte[] bodyContents = ObjectUtils.serialize(this.requestBody);
+		ByteBuf body = ByteBufAllocator.DEFAULT.directBuffer(bodyContents.length, bodyContents.length);
+		body.writeBytes(bodyContents);
 
 		// Create header bytes
 		ByteBuf header = ByteBufAllocator.DEFAULT.directBuffer(Constants.CLIENT_PACKET_FRAME_SIZE);
@@ -264,6 +241,6 @@ public class ClientOutboundRequestHandler<R> extends ChannelInboundHandlerAdapte
 		header.writeBytes(Unpooled.copyShort(Constants.HE3));
 
 		// Write to remote host
-		IOUtils.writeAndFlush(this, header, body, Constants.CLIENT_PACKET_FRAME_SIZE, nodeId, getClientId());
+		ChannelUtils.sendRequest(this, header, body, Constants.CLIENT_PACKET_FRAME_SIZE, nodeId, getClientId());
 	}
 }

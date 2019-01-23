@@ -27,6 +27,7 @@ import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
 import com.re.paas.api.classes.Exceptions;
 import com.re.paas.api.forms.Column;
 import com.re.paas.api.forms.SizeSpec;
+import com.re.paas.internal.crypto.impl.signer.PdfSignerUtil;
 import com.re.paas.internal.documents.pdf.gen.Constants;
 import com.re.paas.internal.documents.pdf.gen.Image;
 import com.re.paas.internal.documents.pdf.gen.InputControl;
@@ -579,7 +580,7 @@ public class PDFBuilder {
 
 			out.close();
 			
-			PdfUtil.signPdf(unsigned, path);
+			PdfSignerUtil.signPdf(unsigned, path);
 
 		} catch (IOException e) {
 			Exceptions.throwRuntime(e);

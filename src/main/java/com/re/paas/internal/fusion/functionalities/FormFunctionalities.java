@@ -80,8 +80,4 @@ public enum FormFunctionalities implements Functionality {
 		return isBackend;
 	}
 	
-	@Override
-	public final String alias() {
-		return this.name();
-	}
 }

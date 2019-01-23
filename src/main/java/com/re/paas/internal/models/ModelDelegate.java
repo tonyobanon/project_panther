@@ -12,6 +12,7 @@ import com.re.paas.api.logging.Logger;
 import com.re.paas.api.models.AbstractModelDelegate;
 import com.re.paas.api.models.BaseModel;
 import com.re.paas.api.models.Model;
+import com.re.paas.api.spi.DelegateInitResult;
 import com.re.paas.api.spi.SpiDelegate;
 import com.re.paas.api.utils.ClassUtils;
 import com.re.paas.internal.core.keys.ConfigKeys;
@@ -23,11 +24,12 @@ public class ModelDelegate extends AbstractModelDelegate {
 	private static LinkedHashMap<String, BaseModel> linkedModels = new LinkedHashMap<String, BaseModel>();
 
 	@Override
-	protected void init() {
+	public DelegateInitResult init() {
 		Consumer<Class<BaseModel>> consumer = (c) -> {
 			addConcreteModel(null, c);
 		};
 		forEach(consumer);
+		return DelegateInitResult.SUCCESS;
 	}
 
 	@Override

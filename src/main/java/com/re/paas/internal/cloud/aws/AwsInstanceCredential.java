@@ -1,12 +1,11 @@
 package com.re.paas.internal.cloud.aws;
 
-import java.io.StringReader;
+import java.util.HashMap;
+import java.util.Map;
 
-import javax.json.Json;
-import javax.json.JsonObject;
-
-import com.re.paas.api.cloud.CloudEnvironment;
-import com.re.paas.api.cloud.InstanceCredential;
+import com.re.paas.api.infra.cloud.CloudEnvironment;
+import com.re.paas.api.infra.cloud.InstanceCredential;
+import com.re.paas.internal.classes.Json;
 
 public class AwsInstanceCredential extends InstanceCredential {
 
@@ -46,16 +45,23 @@ public class AwsInstanceCredential extends InstanceCredential {
 
 	@Override
 	public final String toString() {
-		JsonObject o = Json.createObjectBuilder().add("name", name).add("fingerprint", keyFingerprint)
-				.add("material", keyMaterial).build();
-		return o.toString();
+		
+		Map<String, String> props = new HashMap<>();
+		
+		props.put("name", name);
+		props.put("fingerprint", keyFingerprint);
+		props.put("material", keyMaterial);
+		
+		return Json.fromMap(props).toString();
 	}
 
 	@Override
 	public InstanceCredential fromString(String instanceId, String stringVal) {
-		JsonObject credentialObj = Json.createReader(new StringReader(stringVal)).readObject();
-		return new AwsInstanceCredential(instanceId, credentialObj.getString("name"), credentialObj.getString("fingerprint"),
-				credentialObj.getString("material"));
+		
+		Map<String, String> props = Json.toMap(stringVal);
+		
+		return new AwsInstanceCredential(instanceId, props.get("name"), props.get("fingerprint"),
+				props.get("material"));
 	}
 
 }

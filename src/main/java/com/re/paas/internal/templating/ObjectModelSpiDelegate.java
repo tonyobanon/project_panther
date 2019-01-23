@@ -13,6 +13,7 @@ import org.apache.velocity.runtime.RuntimeConstants;
 import com.google.common.collect.Maps;
 import com.re.paas.api.app_provisioning.AppClassLoader;
 import com.re.paas.api.classes.Exceptions;
+import com.re.paas.api.spi.DelegateInitResult;
 import com.re.paas.api.templating.AbstractObjectModelSpiDelegate;
 import com.re.paas.api.templating.TemplateObjectModel;
 import com.re.paas.api.utils.ClassUtils;
@@ -23,12 +24,13 @@ public class ObjectModelSpiDelegate extends AbstractObjectModelSpiDelegate {
 	private static final String VELOCITY_INSTANCES_RESOURCE_KEY = "VIRK";
 
 	@Override
-	public void init() {
+	public DelegateInitResult init() {
 
 		// Create resource map for storing instances of the velocity engine
 		set(VELOCITY_INSTANCES_RESOURCE_KEY, Maps.newHashMap());
 
 		forEach(this::addTemplateObjectModel);
+		return DelegateInitResult.SUCCESS;
 	}
 
 	@Override

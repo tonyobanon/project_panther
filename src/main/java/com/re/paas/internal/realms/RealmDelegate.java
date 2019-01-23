@@ -22,6 +22,7 @@ import com.re.paas.api.fusion.services.Functionality;
 import com.re.paas.api.logging.Logger;
 import com.re.paas.api.realms.AbstractRealmDelegate;
 import com.re.paas.api.realms.Realm;
+import com.re.paas.api.spi.DelegateInitResult;
 import com.re.paas.api.spi.DelegateSpec;
 import com.re.paas.api.spi.SpiTypes;
 import com.re.paas.api.utils.ClassUtils;
@@ -49,14 +50,15 @@ public class RealmDelegate extends AbstractRealmDelegate {
 	private static final boolean ALLOW_MULTI_REFERENCING = false;
 
 	@Override
-	public void init() {
+	public DelegateInitResult init() {
 		createResourceMaps();
 		add(getResourceClasses());
+		return DelegateInitResult.SUCCESS;
 	}
 
 	@Override
 	protected void add(List<Class<Realm>> classes) {
-
+		
 		List<Realm> realms = new ArrayList<>();
 
 		classes.forEach(c -> {
@@ -138,7 +140,14 @@ public class RealmDelegate extends AbstractRealmDelegate {
 			Exceptions.throwRuntime(
 					PlatformException.get(RealmError.REALM_NAME_MISMATCH, realm.getClass().getName(), realm.name()));
 		}
-
+		
+		
+		// Check realm spec
+		//ClassUtils.
+		Class clazz;
+		
+		
+		
 		// Add functionalities
 
 		List<String> functionalities = getFunctionalitiesMap().get(realm.name());
@@ -148,6 +157,7 @@ public class RealmDelegate extends AbstractRealmDelegate {
 			String fString = f.asString();
 
 			if (functionalities.contains(fString)) {
+				
 				// Fail-fast if f already exist, since this could potentially cause issues
 				// when the app is uninstalled
 				Exceptions.throwRuntime(
@@ -743,6 +753,18 @@ public class RealmDelegate extends AbstractRealmDelegate {
 		set(REALM_OBJECT_NAMESPACE, new HashMap<>());
 	}
 
+	@Override
+	public void removeRoleFunctionalities(String role, Collection<Functionality> functionalities) {
+		
+		Map<String, List<String>> functionalitiesMap = getRoleFunctionalities();
+		List<String> functionalityList = functionalitiesMap.get(role);
+
+		functionalities.forEach(f -> {
+			functionalityList.remove(f.asString());
+		});
+		
+	}
+	
 	@Override
 	public void addRoleFunctionalities(String role, Collection<Functionality> functionalities) {
 

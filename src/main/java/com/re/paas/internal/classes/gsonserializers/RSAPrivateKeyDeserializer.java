@@ -7,8 +7,8 @@ import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParseException;
-import com.re.paas.internal.crypto.CryptoConstants;
-import com.re.paas.internal.crypto.CryptoUtils;
+import com.re.paas.internal.crypto.impl.CryptoConstants;
+import com.re.paas.internal.crypto.impl.CryptoUtils;
 
 public class RSAPrivateKeyDeserializer implements JsonDeserializer<RSAPrivateKey> {
 

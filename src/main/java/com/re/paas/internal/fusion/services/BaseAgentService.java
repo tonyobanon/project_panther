@@ -17,7 +17,7 @@ import com.re.paas.apps.rex.classes.spec.AgentSpec;
 import com.re.paas.apps.rex.classes.spec.IssueResolution;
 import com.re.paas.apps.rex.functionality.AgentFunctionalities;
 import com.re.paas.apps.rex.functionality.AgentOrganizationFunctionalities;
-import com.re.paas.internal.classes.GsonFactory;
+import com.re.paas.internal.classes.Json;
 import com.re.paas.internal.fusion.services.impl.FusionHelper;
 import com.re.paas.internal.models.BaseAgentModel;
 
@@ -38,7 +38,7 @@ public class BaseAgentService extends BaseService {
 
 		Map<Long, String> names = BaseAgentModel.listAgentOrganizationNames(territory);
 
-		ctx.response().write(GsonFactory.getInstance().toJson(names));
+		ctx.response().write(Json.getGson().toJson(names));
 	}
 
 	@FusionEndpoint(uri = "/get-agent-organization", requestParams = {
@@ -50,7 +50,7 @@ public class BaseAgentService extends BaseService {
 
 		AgentOrganizationSpec spec = BaseAgentModel.getAgentOrganization(id);
 
-		ctx.response().write(GsonFactory.getInstance().toJson(spec));
+		ctx.response().write(Json.getGson().toJson(spec));
 	}
 
 	@FusionEndpoint(uri = "/get-agents", bodyParams = {
@@ -60,13 +60,13 @@ public class BaseAgentService extends BaseService {
 
 		JsonObject body = ctx.getBodyAsJson();
 
-		List<Long> ids = GsonFactory.getInstance().fromJson(body.getJsonArray("ids").encode(),
+		List<Long> ids = Json.getGson().fromJson(body.getJsonArray("ids").encode(),
 				new TypeToken<List<Long>>() {
 				}.getType());
 
 		List<AgentSpec> spec = BaseAgentModel.getAgents(ids);
 
-		ctx.response().write(GsonFactory.getInstance().toJson(spec));
+		ctx.response().write(Json.getGson().toJson(spec));
 	}
 
 	@FusionEndpoint(uri = "/new-agent-organization-message", bodyParams = {
@@ -78,14 +78,14 @@ public class BaseAgentService extends BaseService {
 
 		Long principal = FusionHelper.getUserId(ctx.request());
 
-		AgentOrganizationMessageSpec spec = GsonFactory.getInstance().fromJson(body.getJsonObject("spec").encode(),
+		AgentOrganizationMessageSpec spec = Json.getGson().fromJson(body.getJsonObject("spec").encode(),
 				AgentOrganizationMessageSpec.class);
 
 		spec.setUserId(principal);
 
 		BaseAgentModel.newAgentOrganizationMessage(spec);
 
-		ctx.response().write(GsonFactory.getInstance().toJson(spec));
+		ctx.response().write(Json.getGson().toJson(spec));
 	}
 
 	@FusionEndpoint(uri = "/update-agent-organization-message", requestParams = { "id",
@@ -124,7 +124,7 @@ public class BaseAgentService extends BaseService {
 
 		AgentOrganizationMessageSpec spec = BaseAgentModel.getAgentOrganizationMessage(id, principal);
 
-		ctx.response().write(GsonFactory.getInstance().toJson(spec));
+		ctx.response().write(Json.getGson().toJson(spec));
 	}
 
 	@FusionEndpoint(uri = "/new-agent-organization-whistleblow-message", bodyParams = {
@@ -136,14 +136,14 @@ public class BaseAgentService extends BaseService {
 
 		Long principal = FusionHelper.getUserId(ctx.request());
 
-		AgentOrganizationWhistleblowMessageSpec spec = GsonFactory.getInstance()
+		AgentOrganizationWhistleblowMessageSpec spec = Json.getGson()
 				.fromJson(body.getJsonObject("spec").encode(), AgentOrganizationWhistleblowMessageSpec.class);
 
 		spec.setUserId(principal);
 
 		BaseAgentModel.newAgentOrganizationWhistleblowMessage(spec);
 
-		ctx.response().write(GsonFactory.getInstance().toJson(spec));
+		ctx.response().write(Json.getGson().toJson(spec));
 	}
 
 	@FusionEndpoint(uri = "/update-agent-organization-whistleblow-message", requestParams = { "id",
@@ -183,7 +183,7 @@ public class BaseAgentService extends BaseService {
 		AgentOrganizationWhistleblowMessageSpec spec = BaseAgentModel.getAgentOrganizationWhistleblowMessage(id,
 				principal);
 
-		ctx.response().write(GsonFactory.getInstance().toJson(spec));
+		ctx.response().write(Json.getGson().toJson(spec));
 	}
 
 	@FusionEndpoint(uri = "/new-agent-organization-review", bodyParams = {
@@ -195,13 +195,13 @@ public class BaseAgentService extends BaseService {
 
 		Long principal = FusionHelper.getUserId(ctx.request());
 
-		AgentOrganizationReviewSpec spec = GsonFactory.getInstance().fromJson(body.getJsonObject("spec").encode(),
+		AgentOrganizationReviewSpec spec = Json.getGson().fromJson(body.getJsonObject("spec").encode(),
 				AgentOrganizationReviewSpec.class);
 
 		spec.setUserId(principal);
 
 		BaseAgentModel.newAgentOrganizationReview(spec);
-		ctx.response().write(GsonFactory.getInstance().toJson(spec));
+		ctx.response().write(Json.getGson().toJson(spec));
 	}
 
 	@FusionEndpoint(uri = "/delete-agent-organization-review", requestParams = {

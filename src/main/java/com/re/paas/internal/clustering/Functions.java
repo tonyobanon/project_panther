@@ -2,8 +2,8 @@ package com.re.paas.internal.clustering;
 
 import com.re.paas.api.clustering.AbstractClusterFunction;
 import com.re.paas.api.clustering.Function;
-import com.re.paas.api.tasks.Scheduler;
-import com.re.paas.internal.clustering.protocol.IOUtils;
+import com.re.paas.internal.clustering.protocol.ChannelUtils;
+import com.re.paas.internal.compute.Scheduler;
 
 import io.netty.channel.Channel;
 
@@ -30,7 +30,7 @@ public class Functions {
 		}
 		
 		if (channel != null) {
-			IOUtils.writeAndFlush(channel, result);
+			ChannelUtils.sendResponse(channel, result);
 		}
 
 		return result;

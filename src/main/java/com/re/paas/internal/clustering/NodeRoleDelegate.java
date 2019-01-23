@@ -12,21 +12,22 @@ import java.util.function.Consumer;
 import com.re.paas.api.annotations.BlockerTodo;
 import com.re.paas.api.classes.Exceptions;
 import com.re.paas.api.classes.ObjectWrapper;
+import com.re.paas.api.clustering.AbstractClusterFunction;
 import com.re.paas.api.clustering.AbstractMasterNodeRole;
 import com.re.paas.api.clustering.AbstractNodeRoleDelegate;
 import com.re.paas.api.clustering.NodeRegistry;
-import com.re.paas.api.clustering.AbstractClusterFunction;
 import com.re.paas.api.clustering.NodeRole;
 import com.re.paas.api.events.AbstractEventDelegate;
 import com.re.paas.api.logging.Logger;
+import com.re.paas.api.spi.DelegateInitResult;
 import com.re.paas.api.spi.DelegateSpec;
 import com.re.paas.api.spi.SpiTypes;
-import com.re.paas.api.tasks.Scheduler;
 import com.re.paas.api.utils.ClassUtils;
+import com.re.paas.internal.compute.Scheduler;
 
 @BlockerTodo("Add logic for SpiDelegate.remove(..), store nodeRoles as SPI Resource")
 
-@DelegateSpec(dependencies = { SpiTypes.CLOUD_ENVIRONMENT })
+@DelegateSpec(dependencies = {SpiTypes.CLOUD_ENVIRONMENT})
 public class NodeRoleDelegate extends AbstractNodeRoleDelegate {
 
 	private static AbstractMasterNodeRole masterNodeRole;
@@ -35,7 +36,7 @@ public class NodeRoleDelegate extends AbstractNodeRoleDelegate {
 	private static Map<String, NodeRole> allRoles = Collections.synchronizedMap(new HashMap<String, NodeRole>());
 
 	@Override
-	public void init() {
+	public DelegateInitResult init() {
 		
 		NodeRegistry.get().start().join();
 
@@ -51,6 +52,7 @@ public class NodeRoleDelegate extends AbstractNodeRoleDelegate {
 		forEach(consumer);
 
 		processRoles(roles);
+		return DelegateInitResult.SUCCESS;
 	}
 
 	@Override
