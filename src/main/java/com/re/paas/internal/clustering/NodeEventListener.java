@@ -18,8 +18,7 @@ import com.re.paas.api.logging.Logger;
  * 
  * @author Tony
  */
-@EventListener
-public class NodeEventListener {
+public class NodeEventListener implements EventListener {
 
 	@Subscribe
 	public void onNodeJoin(NodeJoinEvent evt) {

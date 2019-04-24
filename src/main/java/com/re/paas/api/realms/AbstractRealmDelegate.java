@@ -9,7 +9,7 @@ import com.re.paas.api.forms.Reference;
 import com.re.paas.api.forms.Section;
 import com.re.paas.api.forms.SectionReference;
 import com.re.paas.api.fusion.services.Functionality;
-import com.re.paas.api.spi.SpiDelegate;
+import com.re.paas.api.runtime.spi.SpiDelegate;
 
 public abstract class AbstractRealmDelegate extends SpiDelegate<Realm> {
 

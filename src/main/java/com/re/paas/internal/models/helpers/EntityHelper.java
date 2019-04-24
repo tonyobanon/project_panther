@@ -7,11 +7,11 @@ import java.util.Map;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.re.paas.api.classes.ClientRBRef;
+import com.re.paas.api.classes.IndexedNameSpec;
 import com.re.paas.api.forms.CompositeField;
 import com.re.paas.api.forms.SimpleField;
 import com.re.paas.api.forms.input.InputType;
 import com.re.paas.api.models.classes.Gender;
-import com.re.paas.api.models.classes.IndexedNameSpec;
 import com.re.paas.api.models.classes.UserProfileSpec;
 import com.re.paas.api.utils.Dates;
 import com.re.paas.api.utils.Utils;
@@ -33,6 +33,20 @@ import com.re.paas.apps.rex.classes.spec.PropertyPOISpec;
 import com.re.paas.apps.rex.classes.spec.PropertyPriceRuleSpec;
 import com.re.paas.apps.rex.classes.spec.PropertySpec;
 import com.re.paas.apps.rex.classes.spec.PropertyType;
+import com.re.paas.apps.rex.classes.spec.PropertyUpdateSpec;
+import com.re.paas.apps.rex.models.tables.AgentOrganizationMessageTable;
+import com.re.paas.apps.rex.models.tables.AgentOrganizationReviewTable;
+import com.re.paas.apps.rex.models.tables.AgentOrganizationTable;
+import com.re.paas.apps.rex.models.tables.AgentOrganizationWhistleblowMessageTable;
+import com.re.paas.apps.rex.models.tables.AgentTable;
+import com.re.paas.apps.rex.models.tables.CityFeaturesTable;
+import com.re.paas.apps.rex.models.tables.ListedRentPropertyTable;
+import com.re.paas.apps.rex.models.tables.ListedSalePropertyTable;
+import com.re.paas.apps.rex.models.tables.PropertyFloorPlanTable;
+import com.re.paas.apps.rex.models.tables.PropertyListingStatusTable;
+import com.re.paas.apps.rex.models.tables.PropertyPOITable;
+import com.re.paas.apps.rex.models.tables.PropertyPriceRuleTable;
+import com.re.paas.apps.rex.models.tables.PropertyTable;
 import com.re.paas.internal.billing.BaseCardInfo;
 import com.re.paas.internal.billing.CardInfo;
 import com.re.paas.internal.billing.CseTokenInfo;
@@ -47,35 +61,22 @@ import com.re.paas.internal.classes.spec.PaymentOptions;
 import com.re.paas.internal.classes.spec.PriceRuleOperator;
 import com.re.paas.internal.classes.spec.PublicHolidaySpec;
 import com.re.paas.internal.classes.spec.YearlyPaymentPeriod;
-import com.re.paas.internal.entites.ActivityStreamEntity;
-import com.re.paas.internal.entites.BaseUserEntity;
-import com.re.paas.internal.entites.BlobEntity;
-import com.re.paas.internal.entites.CardEntity;
-import com.re.paas.internal.entites.FormCompositeFieldEntity;
-import com.re.paas.internal.entites.FormSimpleFieldEntity;
-import com.re.paas.internal.entites.IndexedNameEntity;
-import com.re.paas.internal.entites.directory.AgentEntity;
-import com.re.paas.internal.entites.directory.AgentOrganizationEntity;
-import com.re.paas.internal.entites.directory.AgentOrganizationMessageEntity;
-import com.re.paas.internal.entites.directory.AgentOrganizationReviewEntity;
-import com.re.paas.internal.entites.directory.AgentOrganizationWhistleblowMessageEntity;
-import com.re.paas.internal.entites.directory.CityFeaturesEntity;
-import com.re.paas.internal.entites.directory.ListedRentPropertyEntity;
-import com.re.paas.internal.entites.directory.ListedSalePropertyEntity;
-import com.re.paas.internal.entites.directory.PropertyEntity;
-import com.re.paas.internal.entites.directory.PropertyFloorPlanEntity;
-import com.re.paas.internal.entites.directory.PropertyListingStatusEntity;
-import com.re.paas.internal.entites.directory.PropertyPOIEntity;
-import com.re.paas.internal.entites.directory.PropertyPriceRuleEntity;
-import com.re.paas.internal.entites.locations.PublicHolidayEntity;
-import com.re.paas.internal.entites.payments.InvoiceEntity;
-import com.re.paas.internal.entites.payments.InvoiceItemEntity;
-import com.re.paas.internal.entites.payments.InvoicePaymentEntity;
-import com.re.paas.internal.entites.payments.InvoicePaymentHistoryEntity;
+import com.re.paas.internal.models.tables.ActivityStreamTable;
+import com.re.paas.internal.models.tables.BlobTable;
+import com.re.paas.internal.models.tables.IndexedNameTable;
+import com.re.paas.internal.models.tables.forms.FormCompositeFieldTable;
+import com.re.paas.internal.models.tables.forms.FormSimpleFieldTable;
+import com.re.paas.internal.models.tables.locations.PublicHolidayTable;
+import com.re.paas.internal.models.tables.payments.CardTable;
+import com.re.paas.internal.models.tables.payments.InvoiceItemTable;
+import com.re.paas.internal.models.tables.payments.InvoicePaymentHistoryTable;
+import com.re.paas.internal.models.tables.payments.InvoicePaymentTable;
+import com.re.paas.internal.models.tables.payments.InvoiceTable;
+import com.re.paas.internal.models.tables.users.BaseUserEntity;
 
 public class EntityHelper {
 
-	public static CompositeField toObjectModel(FormCompositeFieldEntity entity) {
+	public static CompositeField toObjectModel(FormCompositeFieldTable entity) {
 
 		CompositeField o = new CompositeField(entity.getId(), entity.getTitle().toString())
 				.setItemsSource(entity.getItemsSource()).setDefaultSelections(entity.getDefaultSelections())
@@ -93,9 +94,9 @@ public class EntityHelper {
 		return o;
 	}
 
-	public static FormCompositeFieldEntity fromObjectModel(String sectionId, Boolean isInternal, CompositeField spec) {
+	public static FormCompositeFieldTable fromObjectModel(String sectionId, Boolean isInternal, CompositeField spec) {
 
-		FormCompositeFieldEntity o = new FormCompositeFieldEntity()
+		FormCompositeFieldTable o = new FormCompositeFieldTable()
 
 				.setId(spec.getId() != null ? (String) spec.getId() : Utils.newRandom()).setSection(sectionId)
 
@@ -132,7 +133,7 @@ public class EntityHelper {
 		return o;
 	}
 
-	public static SimpleField toObjectModel(FormSimpleFieldEntity entity) {
+	public static SimpleField toObjectModel(FormSimpleFieldTable entity) {
 
 		SimpleField o = new SimpleField(entity.getId(), InputType.valueOf(entity.getInputType()),
 				entity.getTitle().toString())
@@ -147,9 +148,9 @@ public class EntityHelper {
 		return o;
 	}
 
-	public static FormSimpleFieldEntity fromObjectModel(String sectionId, Boolean isDefault, SimpleField spec) {
+	public static FormSimpleFieldTable fromObjectModel(String sectionId, Boolean isDefault, SimpleField spec) {
 
-		FormSimpleFieldEntity o = new FormSimpleFieldEntity()
+		FormSimpleFieldTable o = new FormSimpleFieldTable()
 
 				.setId(spec.getId() != null ? (String) spec.getId() : Utils.newRandom())
 
@@ -203,7 +204,7 @@ public class EntityHelper {
 		return o;
 	}
 
-	public static BlobSpec toObjectModel(BlobEntity entity) {
+	public static BlobSpec toObjectModel(BlobTable entity) {
 
 		BlobSpec o = new BlobSpec().setId(entity.getId()).setData(entity.getData()).setSize(entity.getSize())
 				.setMimeType(entity.getMimeType()).setDateCreated(entity.getDateCreated());
@@ -211,15 +212,15 @@ public class EntityHelper {
 		return o;
 	}
 
-	public static BlobEntity fromObjectModel(BlobSpec spec) {
+	public static BlobTable fromObjectModel(BlobSpec spec) {
 
-		BlobEntity o = new BlobEntity().setId(spec.getId()).setData(spec.getData()).setSize(spec.getSize())
+		BlobTable o = new BlobTable().setId(spec.getId()).setData(spec.getData()).setSize(spec.getSize())
 				.setMimeType(spec.getMimeType()).setDateCreated(spec.getDateCreated());
 
 		return o;
 	}
 
-	public static IndexedNameSpec toObjectModel(IndexedNameEntity entity) {
+	public static IndexedNameSpec toObjectModel(IndexedNameTable entity) {
 
 		IndexedNameSpec o = new IndexedNameSpec().setKey(entity.getEntityId()).setX(entity.getX()).setY(entity.getY())
 				.setZ(entity.getZ());
@@ -227,7 +228,7 @@ public class EntityHelper {
 		return o;
 	}
 
-	public static ActivitySpec toObjectModel(ActivityStreamEntity entity) {
+	public static ActivitySpec toObjectModel(ActivityStreamTable entity) {
 
 		// Sentence s = GsonFactory.newInstance().fromJson(entity.getActivity(),
 		// Sentence.class);
@@ -239,7 +240,7 @@ public class EntityHelper {
 		return o;
 	}
 
-	public static AgentOrganizationReviewSpec toObjectModel(AgentOrganizationReviewEntity entity) {
+	public static AgentOrganizationReviewSpec toObjectModel(AgentOrganizationReviewTable entity) {
 
 		AgentOrganizationReviewSpec o = new AgentOrganizationReviewSpec().setId(entity.getId())
 				.setAgentOrganization(entity.getAgentOrganization()).setUserId(entity.getUserId())
@@ -249,9 +250,9 @@ public class EntityHelper {
 		return o;
 	}
 
-	public static AgentOrganizationReviewEntity fromObjectModel(AgentOrganizationReviewSpec spec) {
+	public static AgentOrganizationReviewTable fromObjectModel(AgentOrganizationReviewSpec spec) {
 
-		AgentOrganizationReviewEntity o = new AgentOrganizationReviewEntity()
+		AgentOrganizationReviewTable o = new AgentOrganizationReviewTable()
 				.setAgentOrganization(spec.getAgentOrganization()).setUserId(spec.getUserId())
 				.setDescription(spec.getDescription()).setRating(spec.getRating())
 				.setDateCreated(Dates.now());
@@ -259,7 +260,7 @@ public class EntityHelper {
 		return o;
 	}
 
-	public static AgentOrganizationMessageSpec toObjectModel(AgentOrganizationMessageEntity entity) {
+	public static AgentOrganizationMessageSpec toObjectModel(AgentOrganizationMessageTable entity) {
 
 		AgentOrganizationMessageSpec o = new AgentOrganizationMessageSpec().setId(entity.getId())
 				.setAgentOrganization(entity.getAgentOrganization()).setMessage(entity.getMessage())
@@ -272,9 +273,9 @@ public class EntityHelper {
 		return o;
 	}
 
-	public static AgentOrganizationMessageEntity fromObjectModel(AgentOrganizationMessageSpec spec) {
+	public static AgentOrganizationMessageTable fromObjectModel(AgentOrganizationMessageSpec spec) {
 
-		AgentOrganizationMessageEntity o = new AgentOrganizationMessageEntity()
+		AgentOrganizationMessageTable o = new AgentOrganizationMessageTable()
 				.setAgentOrganization(spec.getAgentOrganization()).setMessage(spec.getMessage())
 				.setUserId(spec.getUserId()).setName(spec.getName()).setResolution(IssueResolution.OPEN.getValue())
 				.setResolutionHistory(Maps.newHashMap()).setEmail(spec.getEmail()).setMobile(spec.getMobile())
@@ -284,7 +285,7 @@ public class EntityHelper {
 	}
 
 	public static AgentOrganizationWhistleblowMessageSpec toObjectModel(
-			AgentOrganizationWhistleblowMessageEntity entity) {
+			AgentOrganizationWhistleblowMessageTable entity) {
 
 		AgentOrganizationWhistleblowMessageSpec o = new AgentOrganizationWhistleblowMessageSpec().setId(entity.getId())
 				.setAgentOrganization(entity.getAgentOrganization()).setMessage(entity.getMessage())
@@ -297,10 +298,10 @@ public class EntityHelper {
 		return o;
 	}
 
-	public static AgentOrganizationWhistleblowMessageEntity fromObjectModel(
+	public static AgentOrganizationWhistleblowMessageTable fromObjectModel(
 			AgentOrganizationWhistleblowMessageSpec spec) {
 
-		AgentOrganizationWhistleblowMessageEntity o = new AgentOrganizationWhistleblowMessageEntity()
+		AgentOrganizationWhistleblowMessageTable o = new AgentOrganizationWhistleblowMessageTable()
 				.setAgentOrganization(spec.getAgentOrganization()).setMessage(spec.getMessage())
 				.setUserId(spec.getUserId()).setName(spec.getName()).setResolution(IssueResolution.OPEN.getValue())
 				.setResolutionHistory(Maps.newHashMap()).setEmail(spec.getEmail()).setMobile(spec.getMobile())
@@ -309,7 +310,7 @@ public class EntityHelper {
 		return o;
 	}
 
-	public static AgentOrganizationSpec toObjectModel(AgentOrganizationEntity entity) {
+	public static AgentOrganizationSpec toObjectModel(AgentOrganizationTable entity) {
 
 		AgentOrganizationSpec o = new AgentOrganizationSpec().setId(entity.getId()).setLogo(entity.getLogo())
 				.setName(entity.getName()).setPhone(entity.getPhone()).setEmail(entity.getEmail())
@@ -321,9 +322,9 @@ public class EntityHelper {
 		return o;
 	}
 
-	public static AgentOrganizationEntity fromObjectModel(AgentOrganizationSpec spec) {
+	public static AgentOrganizationTable fromObjectModel(AgentOrganizationSpec spec) {
 
-		AgentOrganizationEntity o = new AgentOrganizationEntity().setLogo(spec.getLogo()).setName(spec.getName())
+		AgentOrganizationTable o = new AgentOrganizationTable().setLogo(spec.getLogo()).setName(spec.getName())
 				.setPhone(spec.getPhone()).setEmail(spec.getEmail()).setRating(spec.getRating())
 				.setAdmin(spec.getAdmin()).setAgents(spec.getAgents())
 				.setAddress(spec.getAddress()).setPostalCode(spec.getPostalCode())
@@ -332,7 +333,7 @@ public class EntityHelper {
 		return o;
 	}
 
-	public static AgentSpec toObjectModel(AgentEntity entity) {
+	public static AgentSpec toObjectModel(AgentTable entity) {
 
 		AgentSpec o = new AgentSpec().setId(entity.getId()).setAgentOrganization(entity.getAgentOrganization())
 				.setIsActive(entity.getIsActive()).setYearsOfExperience(entity.getYearsOfExperience());
@@ -340,15 +341,15 @@ public class EntityHelper {
 		return o;
 	}
 
-	public static AgentEntity fromObjectModel(AgentSpec spec) {
+	public static AgentTable fromObjectModel(AgentSpec spec) {
 
-		AgentEntity o = new AgentEntity().setAgentOrganization(spec.getAgentOrganization())
+		AgentTable o = new AgentTable().setAgentOrganization(spec.getAgentOrganization())
 				.setYearsOfExperience(spec.getYearsOfExperience());
 
 		return o;
 	}
 
-	public static CityFeaturesSpec toObjectModel(CityFeaturesEntity entity) {
+	public static CityFeaturesSpec toObjectModel(CityFeaturesTable entity) {
 
 		CityFeaturesSpec o = new CityFeaturesSpec().setId(entity.getId()).setGoodRoad(entity.getGoodRoad())
 				.setPower(entity.getPower()).setSecurity(entity.getSecurity())
@@ -358,15 +359,15 @@ public class EntityHelper {
 		return o;
 	}
 
-	public static CityFeaturesEntity fromObjectModel(CityFeaturesSpec spec) {
+	public static CityFeaturesTable fromObjectModel(CityFeaturesSpec spec) {
 
-		CityFeaturesEntity o = new CityFeaturesEntity().setId(spec.getId()).setGoodRoad(spec.getGoodRoad())
+		CityFeaturesTable o = new CityFeaturesTable().setId(spec.getId()).setGoodRoad(spec.getGoodRoad())
 				.setPower(spec.getPower()).setSecurity(spec.getSecurity()).setSocialization(spec.getSocialization())
 				.setWater(spec.getWater()).setDateCreated(spec.getDateCreated());
 		return o;
 	}
 
-	public static PropertyPOISpec toObjectModel(PropertyPOIEntity entity) {
+	public static PropertyPOISpec toObjectModel(PropertyPOITable entity) {
 
 		PropertyPOISpec o = new PropertyPOISpec().setId(entity.getId()).setBank(entity.getBank())
 				.setPublicTransportation(entity.getPublicTransportation()).setRestaurant(entity.getRestaurant())
@@ -375,15 +376,15 @@ public class EntityHelper {
 		return o;
 	}
 
-	public static PropertyPOIEntity fromObjectModel(PropertyPOISpec spec) {
+	public static PropertyPOITable fromObjectModel(PropertyPOISpec spec) {
 
-		PropertyPOIEntity o = new PropertyPOIEntity().setId(spec.getId()).setBank(spec.getBank())
+		PropertyPOITable o = new PropertyPOITable().setId(spec.getId()).setBank(spec.getBank())
 				.setPublicTransportation(spec.getPublicTransportation()).setRestaurant(spec.getRestaurant())
 				.setSchool(spec.getSchool()).setDateCreated(spec.getDateCreated());
 		return o;
 	}
 
-	public static PropertyFloorPlanSpec toObjectModel(PropertyFloorPlanEntity entity) {
+	public static PropertyFloorPlanSpec toObjectModel(PropertyFloorPlanTable entity) {
 
 		PropertyFloorPlanSpec o = new PropertyFloorPlanSpec().setId(entity.getId()).setImages(entity.getImages())
 				.setRoomCount(entity.getRoomCount()).setBathroomCount(entity.getBathroomCount())
@@ -393,15 +394,15 @@ public class EntityHelper {
 		return o;
 	}
 
-	public static PropertyFloorPlanEntity fromObjectModel(PropertyFloorPlanSpec spec) {
+	public static PropertyFloorPlanTable fromObjectModel(PropertyFloorPlanSpec spec) {
 
-		PropertyFloorPlanEntity o = new PropertyFloorPlanEntity().setImages(spec.getImages())
+		PropertyFloorPlanTable o = new PropertyFloorPlanTable().setImages(spec.getImages())
 				.setRoomCount(spec.getRoomCount()).setBathroomCount(spec.getBathroomCount()).setFloor(spec.getFloor())
 				.setArea(spec.getArea()).setDescription(spec.getDescription()).setDateUpdated(spec.getDateUpdated());
 		return o;
 	}
 
-	public static PropertySpec toObjectModel(PropertyEntity entity, List<ListedProperty> listings) {
+	public static PropertySpec toObjectModel(PropertyTable entity, List<ListedProperty> listings) {
 
 		PropertySpec o = new PropertySpec().setAddress(entity.getAddress())
 				.setAgentOrganization(entity.getAgentOrganization()).setArea(entity.getArea())
@@ -423,9 +424,9 @@ public class EntityHelper {
 		return o;
 	}
 
-	public static PropertyEntity fromObjectModel(PropertySpec spec) {
+	public static PropertyTable fromObjectModel(PropertySpec spec) {
 
-		PropertyEntity o = new PropertyEntity().setAddress(spec.getAddress())
+		PropertyTable o = new PropertyTable().setAddress(spec.getAddress())
 				.setAgentOrganization(spec.getAgentOrganization()).setArea(spec.getArea())
 				.setBathroomCount(spec.getBathroomCount()).setCity(spec.getCity()).setCountry(spec.getCountry())
 				.setDateCreated(Dates.now()).setDateUpdated(Dates.now()).setImages(spec.getImages())
@@ -440,8 +441,55 @@ public class EntityHelper {
 				.setZipCode(spec.getZipCode()).setLastUpdatedBy(spec.getLastUpdatedBy());
 		return o;
 	}
+	
+	public static PropertyTable fromObjectModel(PropertyTable e, PropertyUpdateSpec spec) {
 
-	public static ListedRentPropertySpec toObjectModel(ListedRentPropertyEntity entity) {
+		if (spec.getIsFullyFurnished() != null) {
+			e.setIsFullyFurnished(spec.getIsFullyFurnished());
+		}
+		if (spec.getArea() != null) {
+			e.setArea(spec.getArea());
+		}
+		if (spec.getBathroomCount() != null) {
+			e.setBathroomCount(spec.getBathroomCount());
+		}
+		if (spec.getImages() != null) {
+			e.setImages(spec.getImages());
+		}
+		if (spec.getKeywords() != null) {
+			e.setKeywords(spec.getKeywords());
+		}
+		if (spec.getParkingSpaceCount() != null) {
+			e.setParkingSpaceCount(spec.getParkingSpaceCount());
+		}
+		if (spec.getPaymentPeriod() != null) {
+			e.setPaymentPeriod(spec.getPaymentPeriod().getValue());
+		}
+		if (spec.getCurrency() != null) {
+			e.setCurrency(spec.getCurrency());
+		}
+		if (spec.getPrice() != null) {
+			e.setPrice(spec.getPrice());
+		}
+		if (spec.getProperties() != null) {
+			e.setProperties(spec.getProperties());
+		}
+		if (spec.getRoomCount() != null) {
+			e.setRoomCount(spec.getRoomCount());
+		}
+		if (spec.getTitle() != null) {
+			e.setTitle(spec.getTitle());
+		}
+		if (spec.getType() != null) {
+			e.setType(spec.getType().getValue());
+		}
+		if (spec.getVideoTourLink() != null) {
+			e.setVideoTourLink(spec.getVideoTourLink());
+		}
+		return e;
+	}
+
+	public static ListedRentPropertySpec toObjectModel(ListedRentPropertyTable entity) {
 
 		ListedRentPropertySpec o = new ListedRentPropertySpec().setId(entity.getId())
 				.setPropertyId(entity.getPropertyId()).setAgentOrganizationId(entity.getAgentOrganizationId())
@@ -453,9 +501,9 @@ public class EntityHelper {
 		return o;
 	}
 
-	public static ListedRentPropertyEntity fromObjectModel(ListedRentPropertySpec spec) {
+	public static ListedRentPropertyTable fromObjectModel(ListedRentPropertySpec spec) {
 
-		ListedRentPropertyEntity o = new ListedRentPropertyEntity().setPropertyId(spec.getPropertyId())
+		ListedRentPropertyTable o = new ListedRentPropertyTable().setPropertyId(spec.getPropertyId())
 				.setAgentOrganizationId(spec.getAgentOrganizationId()).setYearsRequired(spec.getYearsRequired())
 				.setAvailabilityStatus(spec.getAvailabilityStatus().getValue()).setDateCreated(spec.getDateCreated())
 				.setDateUpdated(spec.getDateUpdated()).setIsHot(spec.getIsHot()).setIsPremium(spec.getIsPremium());
@@ -463,7 +511,7 @@ public class EntityHelper {
 		return o;
 	}
 
-	public static ListedSalePropertySpec toObjectModel(ListedSalePropertyEntity entity) {
+	public static ListedSalePropertySpec toObjectModel(ListedSalePropertyTable entity) {
 
 		ListedSalePropertySpec o = new ListedSalePropertySpec().setId(entity.getId())
 				.setPaymentOption(PaymentOptions.from(entity.getPaymentOption())).setPropertyId(entity.getPropertyId())
@@ -476,9 +524,9 @@ public class EntityHelper {
 		return o;
 	}
 
-	public static ListedSalePropertyEntity fromObjectModel(ListedSalePropertySpec spec) {
+	public static ListedSalePropertyTable fromObjectModel(ListedSalePropertySpec spec) {
 
-		ListedSalePropertyEntity o = new ListedSalePropertyEntity().setPaymentOption(spec.getPaymentOption().getValue())
+		ListedSalePropertyTable o = new ListedSalePropertyTable().setPaymentOption(spec.getPaymentOption().getValue())
 				.setPropertyId(spec.getPropertyId()).setAgentOrganizationId(spec.getAgentOrganizationId())
 				.setAvailabilityStatus(spec.getAvailabilityStatus().getValue()).setDateCreated(spec.getDateCreated())
 				.setDateUpdated(spec.getDateUpdated()).setIsHot(spec.getIsHot()).setIsPremium(spec.getIsPremium());
@@ -486,7 +534,7 @@ public class EntityHelper {
 		return o;
 	}
 
-	public static PropertyListingStatusSpec toObjectModel(PropertyListingStatusEntity entity) {
+	public static PropertyListingStatusSpec toObjectModel(PropertyListingStatusTable entity) {
 
 		PropertyListingStatusSpec o = new PropertyListingStatusSpec().setId(entity.getId())
 				.setPropertyId(entity.getPropertyId()).setPrincipal(entity.getPrincipal())
@@ -496,9 +544,9 @@ public class EntityHelper {
 		return o;
 	}
 
-	public static PropertyListingStatusEntity fromObjectModel(PropertyListingStatusSpec spec) {
+	public static PropertyListingStatusTable fromObjectModel(PropertyListingStatusSpec spec) {
 
-		PropertyListingStatusEntity o = new PropertyListingStatusEntity().setPropertyId(spec.getPropertyId())
+		PropertyListingStatusTable o = new PropertyListingStatusTable().setPropertyId(spec.getPropertyId())
 				.setPrincipal(spec.getPrincipal()).setListingStatus(spec.getListingStatus().getValue())
 				.setMessage(spec.getMessage()).setAttachments(spec.getAttachments())
 				.setDateCreated(spec.getDateCreated());
@@ -506,7 +554,7 @@ public class EntityHelper {
 		return o;
 	}
 
-	public static PropertyPriceRuleSpec toObjectModel(PropertyPriceRuleEntity entity) {
+	public static PropertyPriceRuleSpec toObjectModel(PropertyPriceRuleTable entity) {
 
 		PropertyPriceRuleSpec o = new PropertyPriceRuleSpec().setId(entity.getId())
 				.setPropertyId(entity.getPropertyId()).setRules(entity.getRules())
@@ -517,18 +565,18 @@ public class EntityHelper {
 		return o;
 	}
 
-	public static PropertyPriceRuleEntity fromObjectModel(PropertyPriceRuleSpec spec) {
+	public static PropertyPriceRuleTable fromObjectModel(PropertyPriceRuleSpec spec) {
 
-		PropertyPriceRuleEntity o = new PropertyPriceRuleEntity().setPropertyId(spec.getPropertyId())
+		PropertyPriceRuleTable o = new PropertyPriceRuleTable().setPropertyId(spec.getPropertyId())
 				.setRules(spec.getRules()).setOperator(spec.getOperator().getValue())
 				.setPercentile(spec.getPercentile()).setPrice(spec.getPrice()).setBasePrice(spec.getBasePrice())
 				.setDateCreated(Dates.now()).setDateUpdated(Dates.now());
 		return o;
 	}
 
-	public static CardEntity fromObjectModel(Long accountId, BaseCardInfo spec) {
+	public static CardTable fromObjectModel(Long accountId, BaseCardInfo spec) {
 
-		CardEntity e = new CardEntity().setAccountId(accountId);
+		CardTable e = new CardTable().setAccountId(accountId);
 
 		if (spec instanceof CardInfo) {
 			CardInfo info = (CardInfo) spec;
@@ -542,7 +590,7 @@ public class EntityHelper {
 		return e;
 	}
 
-	public static BaseCardInfo toObjectModel(CardEntity entity) {
+	public static BaseCardInfo toObjectModel(CardTable entity) {
 
 		if (entity.getCseToken() == null) {
 			CardInfo spec = new CardInfo().setAccountId(entity.getAccountId()).setDateCreated(entity.getDateCreated())
@@ -560,7 +608,7 @@ public class EntityHelper {
 		}
 	}
 
-	public static InvoiceItem toObjectModel(InvoiceItemEntity entity) {
+	public static InvoiceItem toObjectModel(InvoiceItemTable entity) {
 
 		InvoiceItem o = new InvoiceItem().setId(entity.getId()).setName(entity.getName())
 				.setDescription(entity.getDescription()).setAmount(entity.getAmount())
@@ -569,15 +617,15 @@ public class EntityHelper {
 		return o;
 	}
 
-	public static InvoiceItemEntity fromObjectModel(InvoiceItem spec) {
+	public static InvoiceItemTable fromObjectModel(InvoiceItem spec) {
 
-		InvoiceItemEntity o = new InvoiceItemEntity().setName(spec.getName()).setDescription(spec.getDescription())
+		InvoiceItemTable o = new InvoiceItemTable().setName(spec.getName()).setDescription(spec.getDescription())
 				.setAmount(spec.getAmount()).setDateCreated(Dates.now());
 
 		return o;
 	}
 
-	public static InvoiceSpec toObjectModel(InvoiceEntity entity) {
+	public static InvoiceSpec toObjectModel(InvoiceTable entity) {
 
 		InvoiceSpec o = new InvoiceSpec().setId(entity.getId()).setAccountId(entity.getAccountId())
 				.setStatus(InvoiceStatus.from(entity.getStatus())).setStartDate(entity.getStartDate())
@@ -588,9 +636,9 @@ public class EntityHelper {
 		return o;
 	}
 
-	public static InvoiceEntity fromObjectModel(InvoiceSpec spec) {
+	public static InvoiceTable fromObjectModel(InvoiceSpec spec) {
 
-		InvoiceEntity o = new InvoiceEntity().setAccountId(spec.getAccountId())
+		InvoiceTable o = new InvoiceTable().setAccountId(spec.getAccountId())
 				.setOutstanding(spec.getStatus().isOutstanding()).setStatus(spec.getStatus().getValue())
 				.setStartDate(Dates.now()).setCurrency(spec.getCurrency()).setTotalDue(spec.getTotalDue())
 				.setComment(spec.getComment()).setDateCreated(Dates.now()).setDateUpdated(Dates.now());
@@ -600,7 +648,7 @@ public class EntityHelper {
 	
 	
 	
-	public static InvoicePaymentSpec toObjectModel(InvoicePaymentEntity entity) {
+	public static InvoicePaymentSpec toObjectModel(InvoicePaymentTable entity) {
 
 		InvoicePaymentSpec o = new InvoicePaymentSpec()
 				.setInvoiceId(entity.getInvoiceId())
@@ -614,9 +662,9 @@ public class EntityHelper {
 		return o;
 	}
 
-	public static InvoicePaymentEntity fromObjectModel(InvoicePaymentSpec spec) {
+	public static InvoicePaymentTable fromObjectModel(InvoicePaymentSpec spec) {
 
-		InvoicePaymentEntity o = new InvoicePaymentEntity()
+		InvoicePaymentTable o = new InvoicePaymentTable()
 				.setInvoiceId(spec.getInvoiceId())
 				.setExtReference(spec.getExtReference())
 				.setStatus(spec.getStatus().getValue())
@@ -628,7 +676,7 @@ public class EntityHelper {
 	}
 	
 	
-	public static InvoicePaymentSpec toObjectModel(InvoicePaymentHistoryEntity entity) {
+	public static InvoicePaymentSpec toObjectModel(InvoicePaymentHistoryTable entity) {
 
 		InvoicePaymentSpec o = new InvoicePaymentSpec()
 				.setInvoiceId(entity.getInvoiceId())
@@ -645,9 +693,9 @@ public class EntityHelper {
 		return o;
 	}
 
-	public static InvoicePaymentHistoryEntity fromObjectModel2(Long id, InvoicePaymentSpec spec) {
+	public static InvoicePaymentHistoryTable fromObjectModel2(Long id, InvoicePaymentSpec spec) {
 
-		InvoicePaymentHistoryEntity o = new InvoicePaymentHistoryEntity()
+		InvoicePaymentHistoryTable o = new InvoicePaymentHistoryTable()
 				.setId(id)
 				.setInvoiceId(spec.getInvoiceId())
 				.setExtReference(spec.getExtReference())
@@ -660,7 +708,7 @@ public class EntityHelper {
 		return o;
 	}
 	
-	public static PublicHolidaySpec toObjectModel(PublicHolidayEntity entity) {
+	public static PublicHolidaySpec toObjectModel(PublicHolidayTable entity) {
 
 		PublicHolidaySpec o = new PublicHolidaySpec()
 				.setId(entity.getId())
@@ -673,9 +721,9 @@ public class EntityHelper {
 		return o;
 	}
 	
-	public static PublicHolidayEntity fromObjectModel(PublicHolidaySpec spec) {
+	public static PublicHolidayTable fromObjectModel(PublicHolidaySpec spec) {
 
-		PublicHolidayEntity o = new PublicHolidayEntity()
+		PublicHolidayTable o = new PublicHolidayTable()
 				.setName(spec.getName())
 				.setCountry(spec.getCountry())
 				.setPublic(spec.isPublic())

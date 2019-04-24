@@ -8,11 +8,10 @@ import com.re.paas.api.listable.ListingType;
 import com.re.paas.api.listable.SearchableUISpec;
 import com.re.paas.apps.rex.functionality.AgentOrganizationFunctionalities;
 import com.re.paas.apps.rex.realms.OrganizationAdminRealm;
-import com.re.paas.internal.entites.ApplicationEntity;
 import com.re.paas.internal.models.BaseUserModel;
 import com.re.paas.internal.models.RoleModel;
 import com.re.paas.internal.models.listables.AbstractApplicationsList;
-import com.re.paas.apps.rex.models.listables.IndexedNameTypes;
+import com.re.paas.internal.models.tables.users.ApplicationEntity;
 
 public class OrganizationAdminApplicationsList extends AbstractApplicationsList {
 

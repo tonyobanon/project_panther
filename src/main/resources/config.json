@@ -1,10 +1,5 @@
 {
 
-	"app_dependencies": [],
-
-	"custom_spi_types": {
-	},
-	
 	"platform.spi.error.locator": "com.re.paas.api.spi.ErrorSPILocator",
 	"platform.spi.cloud_environment.locator": "com.re.paas.api.spi.CloudEnvironmentSPILocator",
 	"platform.spi.template_object_model.locator": "com.re.paas.api.spi.TemplateObjectModelSPILocator",
@@ -33,7 +28,7 @@
 	"platform.spi.cluster_function.delegate": "com.re.paas.internal.clustering.ClusterFunctionDelegate",
 	"platform.spi.task_model.delegate": "com.re.paas.internal.tasks.impl.TaskModelDelegate",
 	"platform.spi.listable.delegate": "com.re.paas.internal.models.ListableDelegate",
-	"platform.spi.ui_component.delegate": "com.re.paas.internal.fusion.ui.UIComponentDelegate"
-	"platform.spi.functionality.delegate": "com.re.paas.internal.fusion.services.impl.FunctionalityDelegate"
+	"platform.spi.ui_component.delegate": "com.re.paas.internal.fusion.ui.UIComponentDelegate",
+	"platform.spi.functionality.delegate": "com.re.paas.internal.fusion.services.impl.FunctionalityDelegate",
 	"platform.spi.node_registry.delegate": "com.re.paas.internal.clustering.NodeRegistryDelegate"
 }

@@ -50,7 +50,7 @@ dependencies {
 	implementation "com.infobip:infobip-api-java-client:2.1.0"
 	implementation "commons-net:commons-net:3.6"
 	implementation "com.microsoft.azure:azure:1.8.0"
-	implementation "com.amazonaws:aws-java-sdk:1.11.303"
+	implementation "com.amazonaws:aws-java-sdk:1.11.491"
 	implementation "javax.json:javax.json-api:1.1.2"
 	implementation "org.glassfish:javax.json:1.1"
 	implementation "org.slf4j:slf4j-api:1.8.0-beta2"
@@ -63,7 +63,9 @@ dependencies {
 	compile group: 'org.eclipse.jetty', name: 'jetty-alpn-server', version: '9.4.11.v20180605'
 	compile group: 'org.mortbay.jetty.alpn', name: 'alpn-boot', version: '8.1.12.v20180117'
 	implementation "org.jsoup:jsoup:1.11.2"
-	compile group: 'javax.servlet', name: 'javax.servlet-api', version: '4.0.1'	
+	compile group: 'javax.servlet', name: 'javax.servlet-api', version: '4.0.1'
+	implementation "javax.xml.bind:jaxb-api:2.4.0-b180830.0359"
+	
 	implementation "io.lettuce:lettuce-core:5.1.0.M1"
 	implementation "org.apache.calcite:calcite-core:1.17.0"
 	implementation "org.apache.calcite:calcite-server:1.17.0"
@@ -71,14 +73,14 @@ dependencies {
 	implementation "com.github.oshi:oshi-core:3.8.4"
 	
 	// DB Adapters
-	implementation "com.google.cloud:google-cloud-nio:0.68.0-alpha"
+	implementation "com.google.cloud:google-cloud-nio:0.87.0-alpha"
 	implementation "com.upplication:s3fs:2.2.2"
 	implementation "com.google.jimfs:jimfs:1.1"
 	
-	 
-	//SQL Query Builder
-	implementation "org.jooq:jooq:3.11.5"
-	 
+	
+   	implementation "org.ow2.asm:asm:7.1"
+   	implementation "net.bytebuddy:byte-buddy:1.9.12"
+	implementation "org.javassist:javassist:3.24.1-GA"
 	
 }
 

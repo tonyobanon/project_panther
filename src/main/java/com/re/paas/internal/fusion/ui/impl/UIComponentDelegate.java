@@ -32,9 +32,9 @@ import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-import com.re.paas.api.annotations.BlockerTodo;
-import com.re.paas.api.annotations.Note;
-import com.re.paas.api.annotations.Todo;
+import com.re.paas.api.annotations.develop.BlockerTodo;
+import com.re.paas.api.annotations.develop.Note;
+import com.re.paas.api.annotations.develop.Todo;
 import com.re.paas.api.classes.Exceptions;
 import com.re.paas.api.classes.FluentArrayList;
 import com.re.paas.api.classes.ResourceException;
@@ -47,18 +47,18 @@ import com.re.paas.api.fusion.services.Functionality;
 import com.re.paas.api.fusion.ui.AbstractUIComponentDelegate;
 import com.re.paas.api.infra.cloud.CloudEnvironment;
 import com.re.paas.api.logging.Logger;
-import com.re.paas.api.spi.DelegateInitResult;
-import com.re.paas.api.spi.DelegateSpec;
-import com.re.paas.api.spi.SpiTypes;
+import com.re.paas.api.runtime.spi.DelegateInitResult;
+import com.re.paas.api.runtime.spi.DelegateSpec;
+import com.re.paas.api.runtime.spi.SpiType;
 import com.re.paas.api.utils.Utils;
-import com.re.paas.internal.classes.AppDirectory;
+import com.re.paas.internal.Platform;
 import com.re.paas.internal.classes.Json;
 import com.re.paas.internal.classes.spec.BlobSpec;
 import com.re.paas.internal.core.keys.CacheValues;
 import com.re.paas.internal.fusion.services.impl.FusionHelper;
 import com.re.paas.internal.models.PlatformModel;
 
-@DelegateSpec(dependencies = { SpiTypes.CLOUD_ENVIRONMENT, SpiTypes.FUNCTIONALITY })
+@DelegateSpec(dependencies = { SpiType.CLOUD_ENVIRONMENT, SpiType.FUNCTIONALITY })
 public class UIComponentDelegate extends AbstractUIComponentDelegate {
 
 	// Use Google CDN for caching instead, for fine grained control over cached data
@@ -68,15 +68,12 @@ public class UIComponentDelegate extends AbstractUIComponentDelegate {
 	// @DEV
 	public static ExecutorService fileWatcherPool = null;
 	// @DEV
-	public static WatchService watchService = null;
-	// @DEV
-	private static final Path PROJECT_RESOURCES_FOLDER = Paths
-			.get("C:/Users/Tony/Documents/workspace/ce/src/main/resources");
+	public static WatchService watchService = null;;
 
-	protected static final String webFolder = "web/public_html";
+	protected static final String webFolder = "web/public";
 
 	// @DEV
-	protected static Path webFolderURI = AppDirectory.getPath(webFolder);
+	protected static Path webFolderURI = Platform.getResourcePath().resolve(webFolder);
 
 	public static String DEFAULT_INDEX_URI = "/";
 
@@ -116,8 +113,7 @@ public class UIComponentDelegate extends AbstractUIComponentDelegate {
 	public static final String USER_ID_PARAM_NAME = "x_uid";
 
 	@Override
-	public void destroy() {
-
+	public void shutdown() {
 		// Stop File watcher
 
 		if (!CloudEnvironment.get().isProduction()) {
@@ -135,7 +131,6 @@ public class UIComponentDelegate extends AbstractUIComponentDelegate {
 				}
 			}
 		}
-
 	}
 
 	@Todo("Create util for walking file tree")
@@ -308,7 +303,7 @@ public class UIComponentDelegate extends AbstractUIComponentDelegate {
 
 				allRoutes.forEach(k -> {
 
-					Path folder = PROJECT_RESOURCES_FOLDER.resolve(webFolder).resolve(Paths.get(routes.get(k)))
+					Path folder = Platform.getResourcePath().resolve(webFolder).resolve(Paths.get(routes.get(k)))
 							.getParent();
 
 					if (!watchedFolders.contains(folder.toString())) {
@@ -347,7 +342,7 @@ public class UIComponentDelegate extends AbstractUIComponentDelegate {
 									continue;
 								}
 
-								String uri = PROJECT_RESOURCES_FOLDER.resolve(webFolder).relativize(file).toString()
+								String uri = Platform.getResourcePath().resolve(webFolder).relativize(file).toString()
 										.replaceAll("\\\\", "/");
 
 								if (webpagePattern.matcher(uri).matches()) {

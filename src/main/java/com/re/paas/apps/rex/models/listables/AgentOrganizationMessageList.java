@@ -10,15 +10,13 @@ import com.re.paas.api.classes.FluentHashMap;
 import com.re.paas.api.listable.ListingFilter;
 import com.re.paas.api.listable.ListingType;
 import com.re.paas.api.listable.SearchableUISpec;
-import com.re.paas.api.utils.Utils;
-import com.re.paas.internal.entites.directory.AgentOrganizationMessageEntity;
-import com.re.paas.internal.fusion.functionalities.RoleFunctionalities;
-import com.re.paas.internal.models.BaseUserModel;
-import com.re.paas.internal.models.RoleModel;
 import com.re.paas.apps.rex.classes.spec.BaseAgentOrganizationMessageSpec;
 import com.re.paas.apps.rex.classes.spec.IssueResolution;
 import com.re.paas.apps.rex.functionality.AgentOrganizationFunctionalities;
-import com.re.paas.apps.rex.models.listables.IndexedNameTypes;
+import com.re.paas.apps.rex.models.tables.AgentOrganizationMessageTable;
+import com.re.paas.internal.fusion.services.impl.ResponseUtil;
+import com.re.paas.internal.models.BaseUserModel;
+import com.re.paas.internal.models.RoleModel;
 
 public class AgentOrganizationMessageList extends AbstractAgentOrganizationList<BaseAgentOrganizationMessageSpec> {
 
@@ -41,8 +39,8 @@ public class AgentOrganizationMessageList extends AbstractAgentOrganizationList<
 	}
 
 	@Override
-	public Class<AgentOrganizationMessageEntity> entityType() {
-		return AgentOrganizationMessageEntity.class;
+	public Class<AgentOrganizationMessageTable> entityType() {
+		return AgentOrganizationMessageTable.class;
 	}
 
 	@Override
@@ -62,7 +60,7 @@ public class AgentOrganizationMessageList extends AbstractAgentOrganizationList<
 			longKeys.add(Long.parseLong(k));
 		});
 
-		ofy().load().type(AgentOrganizationMessageEntity.class).ids(longKeys).forEach((k, v) -> {
+		ofy().load().type(AgentOrganizationMessageTable.class).ids(longKeys).forEach((k, v) -> {
 			
 			BaseAgentOrganizationMessageSpec spec = new BaseAgentOrganizationMessageSpec()
 					.setId(v.getId())

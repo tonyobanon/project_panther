@@ -4,12 +4,20 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.re.paas.api.annotations.ProtectionContext;
+import com.re.paas.api.annotations.ProtectionContext.Factor;
 import com.re.paas.api.designpatterns.Singleton;
 import com.re.paas.api.forms.Section;
 import com.re.paas.api.fusion.services.Functionality;
+import com.re.paas.api.runtime.spi.AbstractResource;
+import com.re.paas.api.runtime.spi.SpiType;
 
-public interface Realm {
+public abstract class Realm extends AbstractResource {
 
+	public Realm() {
+		super(SpiType.REALM);
+	}
+	
 	public static AbstractRealmDelegate getDelegate() {
 		return Singleton.get(AbstractRealmDelegate.class);
 	}
@@ -18,13 +26,13 @@ public interface Realm {
 		return getDelegate().getRealm(name);
 	}
 
-	String name();
+	public abstract String name();
 
-	default boolean enabled() {
+	public boolean enabled() {
 		return true;
 	}
 
-	default boolean passive() {
+	public boolean passive() {
 		return false;
 	}
 
@@ -38,15 +46,16 @@ public interface Realm {
 		return Arrays.asList(realm.getClass().getInterfaces()).contains(Realm.class);
 	}
 
-	Functionality[] functionalities();
+	public abstract Functionality[] functionalities();
 
-	Section[] onboardingForm();
+	public abstract Section[] onboardingForm();
 
-	Integer authority();
+	@ProtectionContext(allowed= {}, factor=Factor.CALLER, allowInternal=false)
+	public abstract Integer authority();
 
-	default Map<String, String> getSuggestedProfiles(Long principal, Long userId) {
+	public  Map<String, String> getSuggestedProfiles(Long principal, Long userId) {
 		return new HashMap<>();
 	}
 
-	RealmApplicationSpec applicationSpec();
+	public abstract RealmApplicationSpec applicationSpec();
 }

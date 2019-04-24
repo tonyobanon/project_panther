@@ -15,18 +15,16 @@ import com.re.paas.apps.rex.classes.spec.BasePropertySpec;
 import com.re.paas.apps.rex.classes.spec.ListedProperty;
 import com.re.paas.apps.rex.classes.spec.PropertyType;
 import com.re.paas.apps.rex.functionality.PropertyFunctionalities;
+import com.re.paas.apps.rex.models.tables.ListedPropertyTable;
+import com.re.paas.apps.rex.models.tables.ListedRentPropertyTable;
+import com.re.paas.apps.rex.models.tables.ListedSalePropertyTable;
+import com.re.paas.apps.rex.models.tables.PropertyTable;
 import com.re.paas.internal.classes.spec.YearlyPaymentPeriod;
 import com.re.paas.internal.core.keys.ConfigKeys;
-import com.re.paas.internal.entites.directory.ListedPropertyEntity;
-import com.re.paas.internal.entites.directory.ListedRentPropertyEntity;
-import com.re.paas.internal.entites.directory.ListedSalePropertyEntity;
-import com.re.paas.internal.entites.directory.PropertyEntity;
-import com.re.paas.internal.fusion.functionalities.RoleFunctionalities;
 import com.re.paas.internal.models.BaseUserModel;
 import com.re.paas.internal.models.ConfigModel;
 import com.re.paas.internal.models.RoleModel;
 import com.re.paas.internal.models.helpers.EntityHelper;
-import com.re.paas.apps.rex.models.listables.IndexedNameTypes;
 import com.re.paas.internal.utils.BackendObjectMarshaller;
 
 public class PropertySpecList extends Listable<BasePropertySpec> {
@@ -48,8 +46,8 @@ public class PropertySpecList extends Listable<BasePropertySpec> {
 	}
 
 	@Override
-	public Class<PropertyEntity> entityType() {
-		return PropertyEntity.class;
+	public Class<PropertyTable> entityType() {
+		return PropertyTable.class;
 	}
 
 	@Override
@@ -84,13 +82,13 @@ public class PropertySpecList extends Listable<BasePropertySpec> {
 
 			Long listingId = keysMap.forEach(k) != null  ? keysMap.forEach(k) : v.getListings().forEach(0);
 			
-			ListedPropertyEntity l = ofy().load().type(ListedPropertyEntity.class).id(listingId).now();
+			ListedPropertyTable l = ofy().load().type(ListedPropertyTable.class).id(listingId).now();
 			ListedProperty lSpec = null;
 
-			if (l instanceof ListedRentPropertyEntity) {
-				lSpec = EntityHelper.toObjectModel((ListedRentPropertyEntity) l);
-			} else if (l instanceof ListedSalePropertyEntity) {
-				lSpec = EntityHelper.toObjectModel((ListedSalePropertyEntity) l);
+			if (l instanceof ListedRentPropertyTable) {
+				lSpec = EntityHelper.toObjectModel((ListedRentPropertyTable) l);
+			} else if (l instanceof ListedSalePropertyTable) {
+				lSpec = EntityHelper.toObjectModel((ListedSalePropertyTable) l);
 			}
 			
 			assert lSpec != null;

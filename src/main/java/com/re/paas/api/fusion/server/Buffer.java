@@ -1,9 +1,9 @@
 package com.re.paas.api.fusion.server;
 
-import io.netty.buffer.ByteBuf;
-
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
+
+import io.netty.buffer.ByteBuf;
 
 public abstract class Buffer {
 

@@ -1,16 +1,17 @@
 package com.re.paas.internal.fusion.services.impl;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.re.paas.api.annotations.BlockerTodo;
+import com.re.paas.api.annotations.develop.BlockerTodo;
 import com.re.paas.api.fusion.services.AbstractFunctionalityDelegate;
 import com.re.paas.api.fusion.services.Functionality;
 import com.re.paas.api.realms.AbstractRealmDelegate;
 import com.re.paas.api.realms.Realm;
-import com.re.paas.api.spi.DelegateInitResult;
+import com.re.paas.api.runtime.spi.DelegateInitResult;
 
 @BlockerTodo("Make good use of the resource maps, where namepaces are stored")
 public class FunctionalityDelegate extends AbstractFunctionalityDelegate {
@@ -29,8 +30,9 @@ public class FunctionalityDelegate extends AbstractFunctionalityDelegate {
 	}
 
 	@Override
-	protected void remove(List<Class<Functionality>> classes) {
+	protected List<Class<Functionality>> remove(List<Class<Functionality>> classes) {
 		classes.forEach(this::removeFunctionality);
+		return Collections.emptyList();
 	}
 
 	@Override

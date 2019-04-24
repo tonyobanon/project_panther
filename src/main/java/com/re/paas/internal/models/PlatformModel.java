@@ -6,10 +6,9 @@ import com.re.paas.api.models.ModelMethod;
 import com.re.paas.api.models.classes.InstallOptions;
 import com.re.paas.internal.core.keys.ConfigKeys;
 import com.re.paas.internal.fusion.functionalities.PlatformFunctionalities;
-import com.re.paas.internal.fusion.functionalities.RoleFunctionalities;
 import com.re.paas.internal.utils.BackendObjectMarshaller;
 
-public class PlatformModel implements BaseModel {
+public class PlatformModel extends BaseModel {
 
 	private static Boolean isInstalled;
 

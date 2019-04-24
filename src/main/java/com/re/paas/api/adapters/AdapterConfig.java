@@ -14,24 +14,27 @@ import com.re.paas.internal.classes.Json;
 
 public class AdapterConfig {
 
-	private static final Map<AdapterType, AdapterConfig> instances = Collections
+	private static transient final Map<AdapterType, AdapterConfig> instances = Collections
 			.synchronizedMap(new HashMap<AdapterType, AdapterConfig>());
 
-	private final AdapterType type;
-	private final Path file;
+	private transient final AdapterType type;
+	private transient Path basePath = Platform.getResourcePath().resolve("adapter_config");
+	
+	private transient final Path file;
 
 	private String adapterName;
 	private Map<String, String> fields;
 
 	public AdapterConfig(AdapterType type) {
 		this.type = type;
-		this.file = Platform.getResourcePath().resolve("config").resolve(type.name().toLowerCase() + ".json");
+		this.file = basePath.resolve(type.name().toLowerCase() + ".json");
 	}
 
 	public AdapterConfig load() {
 
 		if (!Files.exists(file)) {
-			Exceptions.throwRuntime(new FileNotFoundException("Adapter config file: " + file.toString() + " does not exist"));
+			Exceptions.throwRuntime(
+					new FileNotFoundException("Adapter config file: " + file.toString() + " does not exist"));
 		}
 
 		AdapterConfig instance = instances.get(type);
@@ -49,12 +52,29 @@ public class AdapterConfig {
 
 	public AdapterConfig save() {
 
-		Utils.saveString(Json.getGson().toJson(this), file);
+		try {
+
+			if (!Files.exists(file)) {
+
+				Files.createDirectories(file);
+				Files.createFile(file);
+			}
+
+			Utils.saveString(toString(), file);
+
+		} catch (Exception e) {
+			Exceptions.throwRuntime(e);
+		}
+
 		instances.put(type, this);
 
 		return this;
 	}
 	
+	public String toString() {
+		return Json.getGson().toJson(this);
+	}
+
 	public AdapterType getType() {
 		return type;
 	}
@@ -80,5 +100,5 @@ public class AdapterConfig {
 		this.fields = fields;
 		return this;
 	}
-	
+
 }

@@ -33,7 +33,7 @@ import com.re.paas.internal.forms.FormHelper;
 public class DefaultCryptoAdapter implements CryptoAdapter {
 
 	private static Form initForm;
-
+	
 	@Override
 	public String name() {
 		return "default_provider";
@@ -86,11 +86,10 @@ public class DefaultCryptoAdapter implements CryptoAdapter {
 		initForm = form;
 		return form;
 	}
-
-	@Override
-	public CryptoProvider getProvider(Map<String, String> fields) {
-
-		KeyStoreProperties properties = new KeyStoreProperties();
+	
+	private KeyStoreProperties getKeyStoreProperties(Map<String, String> fields) {
+		
+		KeyStoreProperties properties = new DefaultKeyStoreProperties();
 
 		properties.setKeyStoreEnabled(Boolean.parseBoolean(fields.get("keyStoreEnabled")));
 		properties.setKeyStorePassword(fields.get("keyStorePassword"));
@@ -101,7 +100,7 @@ public class DefaultCryptoAdapter implements CryptoAdapter {
 
 		try {
 
-			ks = KeyStore.getInstance(KeyStoreProperties.getType());
+			ks = KeyStore.getInstance(properties.getType());
 
 			Path path = FormHelper.getFormFilesPath(this.initForm(), "keyStoreFile");
 			
@@ -140,8 +139,13 @@ public class DefaultCryptoAdapter implements CryptoAdapter {
 		signCtx.setPrivateKey(privateKey);
 
 		properties.setSignContext(signCtx);
+		
+		return properties;
+	}
 
-		DefaultCryptoProvider provider = new DefaultCryptoProvider(properties);
+	@Override
+	public CryptoProvider getResource(Map<String, String> fields) {
+		DefaultCryptoProvider provider = new DefaultCryptoProvider(getKeyStoreProperties(fields));
 		return provider;
 	}
 

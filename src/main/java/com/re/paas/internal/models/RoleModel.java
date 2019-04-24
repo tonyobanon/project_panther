@@ -8,32 +8,26 @@ import java.util.List;
 import java.util.Map;
 
 import com.google.common.collect.Lists;
-import com.googlecode.objectify.Key;
-import com.googlecode.objectify.NotFoundException;
-import com.googlecode.objectify.cmd.Query;
 import com.re.paas.api.classes.FluentHashMap;
 import com.re.paas.api.classes.PlatformException;
-import com.re.paas.api.designpatterns.Singleton;
 import com.re.paas.api.fusion.services.Functionality;
 import com.re.paas.api.listable.QueryFilter;
 import com.re.paas.api.logging.Logger;
 import com.re.paas.api.models.BaseModel;
 import com.re.paas.api.models.ModelMethod;
-import com.re.paas.api.models.classes.InstallOptions;
 import com.re.paas.api.realms.AbstractRealmDelegate;
 import com.re.paas.api.realms.Realm;
 import com.re.paas.api.utils.Dates;
-import com.re.paas.api.utils.Utils;
 import com.re.paas.apps.rex.realms.AgentRealm;
 import com.re.paas.apps.rex.realms.OrganizationAdminRealm;
-import com.re.paas.internal.entites.BaseUserEntity;
-import com.re.paas.internal.entites.UserRoleEntity;
 import com.re.paas.internal.fusion.functionalities.RoleFunctionalities;
 import com.re.paas.internal.models.errors.RolesError;
 import com.re.paas.internal.models.helpers.EntityUtils;
+import com.re.paas.internal.models.tables.users.BaseUserEntity;
+import com.re.paas.internal.models.tables.users.UserRoleEntity;
 import com.re.paas.internal.realms.AdminRealm;
 
-public class RoleModel implements BaseModel {
+public class RoleModel extends BaseModel {
 
 	@Override
 	public String path() {

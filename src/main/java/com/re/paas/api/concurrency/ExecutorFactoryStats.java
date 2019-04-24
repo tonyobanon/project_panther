@@ -9,7 +9,6 @@ public class ExecutorFactoryStats {
 	private long maxThreads;
 
 	
-	
 	public int getExponent() {
 		return exponent;
 	}

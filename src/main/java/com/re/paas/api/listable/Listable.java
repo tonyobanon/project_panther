@@ -5,8 +5,14 @@ import java.util.List;
 import java.util.Map;
 
 import com.re.paas.api.designpatterns.Singleton;
+import com.re.paas.api.runtime.spi.AbstractResource;
+import com.re.paas.api.runtime.spi.SpiType;
 
-public abstract class Listable<S> {
+public abstract class Listable<S> extends AbstractResource {
+	
+	public Listable() {
+		super(SpiType.LISTABLE);
+	}
 	
 	public static AbstractListableDelegate getDelegate() {
 		return Singleton.get(AbstractListableDelegate.class);

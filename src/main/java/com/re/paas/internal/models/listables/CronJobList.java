@@ -12,12 +12,10 @@ import com.re.paas.api.listable.ListingType;
 import com.re.paas.internal.classes.CronInterval;
 import com.re.paas.internal.classes.CronType;
 import com.re.paas.internal.classes.spec.BaseCronJobSpec;
-import com.re.paas.internal.entites.CronJobEntity;
-import com.re.paas.internal.fusion.functionalities.PlatformFunctionalities;
-import com.re.paas.internal.fusion.functionalities.RoleFunctionalities;
 import com.re.paas.internal.fusion.functionalities.TaskFunctionalities;
 import com.re.paas.internal.models.BaseUserModel;
 import com.re.paas.internal.models.RoleModel;
+import com.re.paas.internal.models.tables.CronJobTable;
 
 public class CronJobList extends Listable<BaseCronJobSpec>{
 
@@ -32,8 +30,8 @@ public class CronJobList extends Listable<BaseCronJobSpec>{
 	}
 
 	@Override
-	public Class<CronJobEntity> entityType() {
-		return CronJobEntity.class;
+	public Class<CronJobTable> entityType() {
+		return CronJobTable.class;
 	}
 	
 	@Override
@@ -50,7 +48,7 @@ public class CronJobList extends Listable<BaseCronJobSpec>{
 			
 			Long id = Long.parseLong(k);
 			
-			CronJobEntity e = ofy().load().type(CronJobEntity.class).id(id).safe();
+			CronJobTable e = ofy().load().type(CronJobTable.class).id(id).safe();
 			
 			BaseCronJobSpec spec = new BaseCronJobSpec()
 					.setId(e.getId())

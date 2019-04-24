@@ -3,6 +3,7 @@ package com.re.paas.internal.boostrapping.clustering.slave;
 import com.re.paas.api.Adapter;
 import com.re.paas.api.adapters.AbstractAdapterDelegate;
 import com.re.paas.api.adapters.AdapterConfig;
+import com.re.paas.api.adapters.LoadPhase;
 import com.re.paas.api.clustering.AbstractClusterFunction;
 import com.re.paas.api.clustering.Function;
 import com.re.paas.api.clustering.NodeRole;
@@ -35,11 +36,11 @@ public class IngestAdapterConfigFunction
 
 			Logger.get().info("Ingesting configuration for " + config.getType() + " adapter");
 
-			AbstractAdapterDelegate<? extends Adapter> delegate = Singleton.get(config.getType().getDelegateType());
+			AbstractAdapterDelegate<?, ? extends Adapter<?>> delegate = Singleton.get(config.getType().getDelegateType());
 
 			delegate.setConfig(config);
 
-			response.addStatus(config.getType(), delegate.load());
+			response.addStatus(config.getType(), delegate.load(LoadPhase.START));
 		}
 		return response;
 	}

@@ -11,14 +11,12 @@ import com.re.paas.api.listable.Listable;
 import com.re.paas.api.listable.ListingFilter;
 import com.re.paas.api.listable.ListingType;
 import com.re.paas.api.listable.SearchableUISpec;
-import com.re.paas.internal.entites.directory.AgentOrganizationEntity;
-import com.re.paas.internal.fusion.functionalities.RoleFunctionalities;
+import com.re.paas.apps.rex.classes.spec.BaseAgentOrganizationSpec;
+import com.re.paas.apps.rex.functionality.AgentOrganizationFunctionalities;
+import com.re.paas.apps.rex.models.tables.AgentOrganizationTable;
 import com.re.paas.internal.models.BaseUserModel;
 import com.re.paas.internal.models.LocationModel;
 import com.re.paas.internal.models.RoleModel;
-import com.re.paas.apps.rex.classes.spec.BaseAgentOrganizationSpec;
-import com.re.paas.apps.rex.functionality.AgentOrganizationFunctionalities;
-import com.re.paas.apps.rex.models.listables.IndexedNameTypes;
 
 public class AgentOrganizationList extends Listable<BaseAgentOrganizationSpec> {
 
@@ -40,8 +38,8 @@ public class AgentOrganizationList extends Listable<BaseAgentOrganizationSpec> {
 	}
 
 	@Override
-	public Class<AgentOrganizationEntity> entityType() {
-		return AgentOrganizationEntity.class;
+	public Class<AgentOrganizationTable> entityType() {
+		return AgentOrganizationTable.class;
 	}
 
 	@Override
@@ -61,7 +59,7 @@ public class AgentOrganizationList extends Listable<BaseAgentOrganizationSpec> {
 			longKeys.add(Long.parseLong(k));
 		});
 
-		ofy().load().type(AgentOrganizationEntity.class).ids(longKeys).forEach((k, v) -> {
+		ofy().load().type(AgentOrganizationTable.class).ids(longKeys).forEach((k, v) -> {
 
 			BaseAgentOrganizationSpec spec = new BaseAgentOrganizationSpec().setId(v.getId()).setName(v.getName())
 					.setEmail(v.getEmail()).setLogo(v.getLogo()).setRating(v.getRating()).setAddress(v.getAddress())

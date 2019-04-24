@@ -2,7 +2,7 @@ package com.re.paas.internal.classes.spec;
 
 import java.util.Date;
 
-import com.re.paas.api.models.classes.IndexedNameSpec;
+import com.re.paas.api.classes.IndexedNameSpec;
 import com.re.paas.internal.classes.ApplicationStatus;
 
 public class BaseApplicationSpec {

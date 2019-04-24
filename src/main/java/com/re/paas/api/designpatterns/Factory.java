@@ -1,5 +1,6 @@
 package com.re.paas.api.designpatterns;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
@@ -8,7 +9,7 @@ import com.re.paas.api.utils.ClassUtils;
 
 public class Factory {
 
-	private static final Map<String, Function<Object[], Object>> constructors = new HashMap<>();
+	private static final Map<String, Function<Object[], Object>> constructors = Collections.synchronizedMap(new HashMap<>());
 
 	public static <T> T get(Class<T> type, Object... parameters) {
 

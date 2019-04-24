@@ -7,13 +7,13 @@ import java.util.Map;
 
 import com.google.cloud.translate.Translate;
 import com.google.cloud.translate.Translate.TranslateOption;
+import com.google.cloud.translate.TranslateOptions;
+import com.google.cloud.translate.Translation;
 import com.re.paas.api.models.BaseModel;
 import com.re.paas.api.models.classes.InstallOptions;
 import com.re.paas.internal.models.helpers.GoogleHelper;
-import com.google.cloud.translate.TranslateOptions;
-import com.google.cloud.translate.Translation;
 
-public class TranslateModel implements BaseModel {
+public class TranslateModel extends BaseModel {
 
 	private static Translate translateService;
 

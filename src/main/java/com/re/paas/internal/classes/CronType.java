@@ -2,7 +2,7 @@ package com.re.paas.internal.classes;
 
 public enum CronType {
 
-	STANDALONE_JOB(0), MODEL_TASK(1);
+	STANDALONE_JOB(0), TASK_IMAGE(1);
 
 	private int value;
 
@@ -18,7 +18,7 @@ public enum CronType {
 			return CronType.STANDALONE_JOB;
 			
 		case 1:
-			return CronType.MODEL_TASK;
+			return CronType.TASK_IMAGE;
 			
 		default:
 			throw new IllegalArgumentException("An invalid value was provided");

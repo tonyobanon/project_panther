@@ -2,7 +2,7 @@ package com.re.paas.api.infra.cloud;
 
 import java.util.List;
 
-import com.re.paas.api.spi.SpiDelegate;
+import com.re.paas.api.runtime.spi.SpiDelegate;
 
 public abstract class AbstractCloudEnvironmentDelegate extends SpiDelegate<CloudEnvironment> {
 

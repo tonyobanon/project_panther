@@ -20,13 +20,10 @@ import com.re.paas.api.utils.Utils;
 import com.re.paas.internal.classes.FormSectionType;
 import com.re.paas.internal.classes.spec.TokenCredentials;
 import com.re.paas.internal.core.keys.ConfigKeys;
-import com.re.paas.internal.entites.CurrencyRatesEntity;
+import com.re.paas.internal.models.tables.payments.CurrencyRatesTable;
 import com.re.paas.internal.realms.AdminRealm;
-import com.re.paas.internal.users.RoleRealm;
 
-import io.vertx.core.json.JsonObject;
-
-public class CurrencyModel implements BaseModel {
+public class CurrencyModel extends BaseModel {
 
 	private static TokenCredentials credentials = null;
 
@@ -91,7 +88,7 @@ public class CurrencyModel implements BaseModel {
 
 		Integer refreshInterval = getRefreshInterval();
 
-		CurrencyRatesEntity e = ofy().load().type(CurrencyRatesEntity.class).id(base + currency).now();
+		CurrencyRatesTable e = ofy().load().type(CurrencyRatesTable.class).id(base + currency).now();
 
 		boolean minutesElapsed = Math.abs(Utils.getTimeOffset(TimeUnit.MINUTES, e.getLastUpdated())) > refreshInterval;
 
@@ -101,7 +98,7 @@ public class CurrencyModel implements BaseModel {
 
 		Double rate = _getCurrencyRate(base, currency);
 
-		e = new CurrencyRatesEntity().setPair(base + currency).setRate(rate).setLastUpdated(Dates.now());
+		e = new CurrencyRatesTable().setPair(base + currency).setRate(rate).setLastUpdated(Dates.now());
 
 		ofy().save().entity(e).now();
 

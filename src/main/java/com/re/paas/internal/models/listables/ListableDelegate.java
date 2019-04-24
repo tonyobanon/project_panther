@@ -5,17 +5,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
-import com.re.paas.api.annotations.BlockerTodo;
+import com.re.paas.api.annotations.develop.BlockerTodo;
 import com.re.paas.api.listable.AbstractListableDelegate;
 import com.re.paas.api.listable.IndexedNameType;
 import com.re.paas.api.listable.Listable;
 import com.re.paas.api.listable.SearchableUISpec;
-import com.re.paas.api.spi.DelegateInitResult;
-import com.re.paas.api.spi.DelegateSpec;
-import com.re.paas.api.spi.SpiTypes;
+import com.re.paas.api.runtime.spi.DelegateInitResult;
+import com.re.paas.api.runtime.spi.DelegateSpec;
+import com.re.paas.api.runtime.spi.SpiType;
 import com.re.paas.api.utils.ClassUtils;
 
-@DelegateSpec(dependencies = {SpiTypes.INDEXED_NAME_TYPE})
+@DelegateSpec(dependencies = {SpiType.INDEXED_NAME_TYPE})
 public class ListableDelegate extends AbstractListableDelegate {
  
 	private static Map<String, Listable<?>> listables = new HashMap<>();

@@ -7,10 +7,16 @@ import com.re.paas.api.classes.ClientRBRef;
 import com.re.paas.api.classes.TaskExecutionOutcome;
 import com.re.paas.api.designpatterns.Singleton;
 import com.re.paas.api.forms.AbstractField;
+import com.re.paas.api.runtime.spi.AbstractResource;
+import com.re.paas.api.runtime.spi.SpiType;
 
-public abstract class TaskImage implements Cloneable {
+public abstract class TaskImage extends AbstractResource implements Cloneable {
 	
 	private Map<String, String> parameters;
+	
+	public TaskImage() {
+		super(SpiType.TASK_IMAGE);
+	}
 	
 	public static AbstractTaskModelDelegate getDelegate() {
 		return Singleton.get(AbstractTaskModelDelegate.class);

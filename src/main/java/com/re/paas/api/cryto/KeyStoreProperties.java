@@ -9,10 +9,9 @@ import java.security.cert.CertificateNotYetValidException;
 import java.security.cert.X509Certificate;
 
 import com.re.paas.api.classes.Exceptions;
-import com.re.paas.internal.Platform;
 
-public class KeyStoreProperties {
-
+public abstract class KeyStoreProperties {
+	
 	private boolean keyStoreEnabled;
 	private KeyStore keyStore;
 	
@@ -55,7 +54,6 @@ public class KeyStoreProperties {
 			Exceptions.throwRuntime(e);
 		}
 	}
-
 	
 	public KeyStoreProperties setKeyStoreEnabled(boolean keyStoreEnabled) {
 		this.keyStoreEnabled = keyStoreEnabled;
@@ -102,15 +100,8 @@ public class KeyStoreProperties {
 		return signContext;
 	}
 
-	public static Path getKeyStorePath() {
-		
-		
-		
-		return Platform.getResourcePath().resolve("/crypto/keystore.p12");
-	}
+	public abstract Path getKeyStorePath();
 
-	public static String getType() {
-		return "PKCS12";
-	}
+	public abstract String getType();
 
 }

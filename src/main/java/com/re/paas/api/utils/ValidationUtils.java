@@ -18,6 +18,24 @@ public class ValidationUtils {
      * @throws IllegalArgumentException
      *         If object was null
      */
+    public static <T> T assertNotNull(T object) throws IllegalArgumentException {
+        if (object == null) {
+            throw new IllegalArgumentException();
+        }
+        return object;
+    }
+    
+    /**
+     * Asserts that the given object is non-null and returns it.
+     *
+     * @param object
+     *         Object to assert on
+     * @param fieldName
+     *         Field name to display in exception message if null
+     * @return Object if non null
+     * @throws IllegalArgumentException
+     *         If object was null
+     */
     public static <T> T assertNotNull(T object, String fieldName) throws IllegalArgumentException {
         if (object == null) {
             throw new IllegalArgumentException(String.format("%s cannot be null", fieldName));
@@ -53,12 +71,28 @@ public class ValidationUtils {
         return num;
     }
 
+    public static <T extends Collection<?>> T assertNotEmpty(T collection) throws IllegalArgumentException{
+        assertNotNull(collection);
+        if (collection.isEmpty()) {
+            throw new IllegalArgumentException();
+        }
+        return collection;
+    }
+    
     public static <T extends Collection<?>> T assertNotEmpty(T collection, String fieldName) throws IllegalArgumentException{
         assertNotNull(collection, fieldName);
         if (collection.isEmpty()) {
             throw new IllegalArgumentException(String.format("%s cannot be empty", fieldName));
         }
         return collection;
+    }
+    
+    public static <T> T[] assertNotEmpty(T[] array) throws IllegalArgumentException {
+        assertNotNull(array);
+        if (array.length == 0) {
+            throw new IllegalArgumentException();
+        }
+        return array;
     }
 
     public static <T> T[] assertNotEmpty(T[] array, String fieldName) throws IllegalArgumentException {

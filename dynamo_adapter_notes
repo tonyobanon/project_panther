@@ -1,0 +1,7 @@
+
+On Installation, allow the user to determine, whether TTL is enabled, or not
+
+
+	//public static final ProvisionedThroughput DEFAULT_PROVISIONED_THROUGHPUT = new ProvisionedThroughput(3000l, 1000l);
+	//public static final ProvisionedThroughput DEFAULT_PROVISIONED_THROUGHPUT = new ProvisionedThroughput(100l, 50l);
+	

@@ -1,21 +1,18 @@
 package com.re.paas.api.infra.database;
 
-import java.sql.Connection;
-
 import com.re.paas.api.adapters.AbstractAdapterDelegate;
+import com.re.paas.api.infra.database.document.Database;
 
-public abstract class AbstractDatabaseAdapterDelegate extends AbstractAdapterDelegate<DatabaseAdapter> {
+public abstract class AbstractDatabaseAdapterDelegate extends AbstractAdapterDelegate<Database, DatabaseAdapter> {
 	
-	public abstract Connection getSQLDatabase(boolean loadConfigFile);
+	public abstract Database getDatabase(boolean loadConfigFile);
 	
-	public Connection getSQLDatabase() {
-		return getSQLDatabase(false);
+	public Database getDatabase() { 
+		return getDatabase(false);
 	}
 	
-	public abstract NoSQLInterface getNoSQLDatabase(NoSQLInterfaceType type, boolean loadConfigFile);
-	
-	public NoSQLInterface getNoSQLDatabase(NoSQLInterfaceType type) {
-		return getNoSQLDatabase(type, false);
+	@Override
+	public final boolean requiresMigration() {
+		return true;
 	}
-	
 }

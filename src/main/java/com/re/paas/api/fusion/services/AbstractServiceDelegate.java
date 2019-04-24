@@ -6,7 +6,7 @@ import com.google.common.collect.Multimap;
 import com.re.paas.api.fusion.server.BaseService;
 import com.re.paas.api.fusion.server.Route;
 import com.re.paas.api.fusion.server.RouteHandler;
-import com.re.paas.api.spi.SpiDelegate;
+import com.re.paas.api.runtime.spi.SpiDelegate;
 
 public abstract class AbstractServiceDelegate extends SpiDelegate<BaseService> {
 

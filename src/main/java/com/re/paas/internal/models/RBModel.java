@@ -15,9 +15,9 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import com.google.common.collect.Lists;
-import com.re.paas.api.annotations.BlockerBlockerTodo;
-import com.re.paas.api.annotations.BlockerTodo;
-import com.re.paas.api.annotations.Todo;
+import com.re.paas.api.annotations.develop.BlockerBlockerTodo;
+import com.re.paas.api.annotations.develop.BlockerTodo;
+import com.re.paas.api.annotations.develop.Todo;
 import com.re.paas.api.classes.Exceptions;
 import com.re.paas.api.classes.FluentArrayList;
 import com.re.paas.api.logging.Logger;
@@ -28,12 +28,12 @@ import com.re.paas.api.models.classes.RBEntry;
 import com.re.paas.api.utils.Dates;
 import com.re.paas.internal.caching.CacheType;
 import com.re.paas.internal.classes.ResourceScanner;
-import com.re.paas.internal.entites.RBEntryEntity;
 import com.re.paas.internal.fusion.functionalities.RoleFunctionalities;
 import com.re.paas.internal.models.helpers.CacheHelper;
+import com.re.paas.internal.models.tables.RBEntryTable;
 import com.re.paas.internal.utils.LocaleUtils;
 
-public class RBModel implements BaseModel {
+public class RBModel extends BaseModel {
 
 	private static final boolean STORE_IN_MEMORY = true;
 
@@ -125,7 +125,7 @@ public class RBModel implements BaseModel {
 
 		
 		// Read from DB
-		ofy().load().type(RBEntryEntity.class).forEach(e -> {
+		ofy().load().type(RBEntryTable.class).forEach(e -> {
 
 			if (!iEntries.containsKey(e.getLocale())) {
 				iEntries.put(e.getLocale(), new HashMap<>());
@@ -159,11 +159,11 @@ public class RBModel implements BaseModel {
 
 		Map<String, Map<String, Object>> iEntries = new HashMap<>();
 
-		List<RBEntryEntity> entities = new ArrayList<>();
+		List<RBEntryTable> entities = new ArrayList<>();
 
 		for (RBEntry entry : entries) {
 
-			RBEntryEntity e = new RBEntryEntity().setKey(entry.getKey()).setLocale(entry.getLocale())
+			RBEntryTable e = new RBEntryTable().setKey(entry.getKey()).setLocale(entry.getLocale())
 					.setValue(entry.getValue()).setDateCreated(Dates.now());
 			entities.add(e);
 

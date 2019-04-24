@@ -25,16 +25,18 @@ public class Constants {
 
 	// Client Channel Handlers
 	protected static final String OUTBOUND_REQUEST_HANDLER = "OUTBOUND_REQUEST_HANDLER";
+	
+	public static final short MAX_TRANSACTION_COUNT = Short.MAX_VALUE;
+	public static final short MAX_NODE_COUNT = 5000;
 
-	protected static final TransactionContext[][] ServerTransactionsRT = new TransactionContext[Short.MAX_VALUE][];
-
+	protected static final TransactionContext[][] ServerTransactionsRT = new TransactionContext[MAX_NODE_COUNT][];
 	
 	static {
 		
 		LOG.info("Creating data store for storing server transactions");
 		
 		for(int i = 0; i < ServerTransactionsRT.length; i++) {
-			ServerTransactionsRT[i] = new TransactionContext[Short.MAX_VALUE];
+			ServerTransactionsRT[i] = new TransactionContext[MAX_TRANSACTION_COUNT];
 		}
 		
 	}

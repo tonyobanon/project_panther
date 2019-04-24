@@ -3,8 +3,10 @@ package com.re.paas.api.fusion.services;
 import java.util.Collection;
 
 import com.re.paas.api.designpatterns.Singleton;
+import com.re.paas.api.runtime.spi.Resource;
+import com.re.paas.api.runtime.spi.SpiType;
 
-public interface Functionality {
+public interface Functionality extends Resource {
 
 	public static AbstractFunctionalityDelegate getDelegate() {
 		return Singleton.get(AbstractFunctionalityDelegate.class);
@@ -48,6 +50,11 @@ public interface Functionality {
 	
 	public default Boolean requiresAuth() {
 		return id() > 0;
+	}
+	
+	@Override
+	default SpiType getSpiType() {
+		return SpiType.FUNCTIONALITY;
 	}
 
 }

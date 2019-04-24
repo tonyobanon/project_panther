@@ -3,7 +3,7 @@ package com.re.paas.internal.models;
 import com.re.paas.api.models.BaseModel;
 import com.re.paas.api.models.classes.InstallOptions;
 
-public class SystemMetricsModel implements BaseModel {
+public class SystemMetricsModel extends BaseModel {
 
 	@Override
 	public String path() {

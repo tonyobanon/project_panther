@@ -13,7 +13,8 @@ import java.util.regex.Pattern;
 
 import com.google.common.collect.LinkedHashMultimap;
 import com.google.common.collect.Multimap;
-import com.re.paas.api.annotations.BlockerTodo;
+import com.re.paas.api.annotations.develop.BlockerTodo;
+import com.re.paas.api.app_provisioning.AppClassLoader;
 import com.re.paas.api.classes.Exceptions;
 import com.re.paas.api.classes.ObjectWrapper;
 import com.re.paas.api.classes.ResourceException;
@@ -28,21 +29,22 @@ import com.re.paas.api.fusion.services.AbstractServiceDelegate;
 import com.re.paas.api.fusion.services.Functionality;
 import com.re.paas.api.infra.cloud.CloudEnvironment;
 import com.re.paas.api.logging.Logger;
-import com.re.paas.api.spi.DelegateInitResult;
-import com.re.paas.api.spi.DelegateSpec;
-import com.re.paas.api.spi.SpiTypes;
+import com.re.paas.api.runtime.spi.DelegateInitResult;
+import com.re.paas.api.runtime.spi.DelegateSpec;
+import com.re.paas.api.runtime.spi.SpiType;
 import com.re.paas.api.utils.ClassUtils;
 import com.re.paas.api.utils.Utils;
 import com.re.paas.internal.Platform;
 import com.re.paas.internal.caching.CacheAdapter;
 import com.re.paas.internal.fusion.ui.impl.RPCFactory;
+import com.re.paas.internal.runtime.spi.AppProvisioner;
 
 @BlockerTodo("Create optionalRequestParams setting, Validate request params in fusion. Do in main ctx handler. Add support for service docs")
 /**
  * Note: This class calls LocaleModel, to set user locale
  */
 
-@DelegateSpec(dependencies = { SpiTypes.CLOUD_ENVIRONMENT, SpiTypes.FUNCTIONALITY })
+@DelegateSpec(dependencies = { SpiType.CLOUD_ENVIRONMENT, SpiType.FUNCTIONALITY })
 public class ServiceDelegate extends AbstractServiceDelegate {
 
 	private static final Integer DEFAULT_CACHE_MAX_AGE = 259200;
@@ -59,7 +61,7 @@ public class ServiceDelegate extends AbstractServiceDelegate {
 	private static final String ROUTE_HANDLER_KEYS = "rhk";
 
 	private static final String ROUTE_FUNCTIONALITY_RK_PREFIX = "rfrkp_";
-	private static final String FUNCTIONALITY_ROUTES_RK_PREFIX = "rfrkp_";
+	private static final String FUNCTIONALITY_ROUTES_RK_PREFIX = "frrkp_";
 
 	protected static final String USER_ID_PARAM_NAME = "x_uid";
 	public static final String BASE_PATH = "/api";
@@ -138,8 +140,10 @@ public class ServiceDelegate extends AbstractServiceDelegate {
 		Map<String, String> methodNames = new HashMap<>();
 
 		scanAll(context -> {
+			
+			Class<?> serviceClass = context.getService().getClass();
 
-			String className = context.getService().getClass().getSimpleName();
+			String className = serviceClass.getSimpleName();
 			String methodName = context.getMethod().getName();
 
 			if (methodNames.containsKey(methodName)) {
@@ -153,7 +157,10 @@ public class ServiceDelegate extends AbstractServiceDelegate {
 
 			Functionality functionality = Functionality.fromString(context.getEndpoint().functionality());
 
-			String uri = context.getService().uri() + context.getEndpoint().uri();
+			// Get appId that owns this service
+			String appId = serviceClass.getClassLoader() instanceof AppClassLoader ? ((AppClassLoader)serviceClass.getClassLoader()).getAppId() : AppProvisioner.DEFAULT_APP_ID;
+			
+			String uri = "/" + appId + context.getService().uri() + context.getEndpoint().uri();
 			HttpMethod httpMethod = context.getEndpoint().method();
 
 			Route route = new Route(uri, HttpMethod.valueOf(httpMethod.name()));
@@ -224,7 +231,7 @@ public class ServiceDelegate extends AbstractServiceDelegate {
 		Logger.get().debug("Scanning for services");
 
 		forEach(c -> {
-
+			
 			final BaseService service = ClassUtils.createInstance(c);
 
 			if (!endpointClassUriPattern.matcher(service.uri()).matches()) {

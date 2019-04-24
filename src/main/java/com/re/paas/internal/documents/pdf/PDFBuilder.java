@@ -31,12 +31,12 @@ import com.re.paas.internal.crypto.impl.signer.PdfSignerUtil;
 import com.re.paas.internal.documents.pdf.gen.Constants;
 import com.re.paas.internal.documents.pdf.gen.Image;
 import com.re.paas.internal.documents.pdf.gen.InputControl;
+import com.re.paas.internal.documents.pdf.gen.InputControl.Size;
 import com.re.paas.internal.documents.pdf.gen.Row;
 import com.re.paas.internal.documents.pdf.gen.Table;
 import com.re.paas.internal.documents.pdf.gen.TextControl;
-import com.re.paas.internal.documents.pdf.gen.XCoordinate;
-import com.re.paas.internal.documents.pdf.gen.InputControl.Size;
 import com.re.paas.internal.documents.pdf.gen.TextControl.UnderlineType;
+import com.re.paas.internal.documents.pdf.gen.XCoordinate;
 
 public class PDFBuilder {
 

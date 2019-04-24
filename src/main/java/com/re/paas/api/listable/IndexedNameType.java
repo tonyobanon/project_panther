@@ -1,10 +1,12 @@
 package com.re.paas.api.listable;
 
 import com.re.paas.api.designpatterns.Singleton;
+import com.re.paas.api.runtime.spi.Resource;
+import com.re.paas.api.runtime.spi.SpiType;
 
-public interface IndexedNameType {
-	
-	Integer id();
+public interface IndexedNameType extends Resource {
+
+	abstract Integer id();
 	
 	String namespace();
 	
@@ -18,5 +20,10 @@ public interface IndexedNameType {
 	
 	default String asString() {
 		return getDelegate().toString(this);
+	}
+	
+	@Override
+	default SpiType getSpiType() {
+		return SpiType.INDEXED_NAME_TYPE ;
 	}
 }

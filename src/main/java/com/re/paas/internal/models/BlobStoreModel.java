@@ -13,24 +13,22 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.SerializationUtils;
 import org.apache.tika.Tika;
 
-import com.re.paas.api.annotations.BlockerTodo;
-import com.re.paas.api.annotations.Todo;
+import com.re.paas.api.annotations.develop.BlockerTodo;
+import com.re.paas.api.annotations.develop.Todo;
 import com.re.paas.api.classes.FluentArrayList;
-import com.re.paas.api.fusion.services.impl.ui.WebRoutes;
-import com.re.paas.api.fusion.ui.AbstractComponent;
 import com.re.paas.api.models.BaseModel;
 import com.re.paas.api.models.ModelMethod;
 import com.re.paas.api.models.classes.InstallOptions;
 import com.re.paas.api.utils.Dates;
 import com.re.paas.api.utils.Utils;
 import com.re.paas.internal.classes.spec.BlobSpec;
-import com.re.paas.internal.entites.BlobEntity;
 import com.re.paas.internal.fusion.functionalities.RoleFunctionalities;
 import com.re.paas.internal.models.helpers.EntityHelper;
+import com.re.paas.internal.models.tables.BlobTable;
 
 @BlockerTodo("Deprecate this functionality in favour of the GAE Blob Service")
 @Todo("Add functionality that enables the administrator to create arbitary rules for blob storage, use: MANAGE_BINARY_DATA")
-public class BlobStoreModel implements BaseModel {
+public class BlobStoreModel extends BaseModel {
 
 	private static Tika TIKA_INSTANCE = new Tika();
 	
@@ -72,7 +70,7 @@ public class BlobStoreModel implements BaseModel {
 
 		int size = data.length;
 
-		BlobEntity entity = new BlobEntity().setId(id).setData(data).setSize(size).setMimeType(mimeType)
+		BlobTable entity = new BlobTable().setId(id).setData(data).setSize(size).setMimeType(mimeType)
 				.setDateCreated(Dates.now());
 
 		ofy().save().entity(entity).now();
@@ -83,7 +81,7 @@ public class BlobStoreModel implements BaseModel {
 	@ModelMethod(functionality = RoleFunctionalities.MANAGE_BINARY_DATA)
 	public static List<BlobSpec> list() {
 		List<BlobSpec> result = new FluentArrayList<>();
-		ofy().load().type(BlobEntity.class).forEach(e -> {
+		ofy().load().type(BlobTable.class).forEach(e -> {
 			result.add(EntityHelper.toObjectModel(e));
 		});
 		return result;
@@ -91,12 +89,12 @@ public class BlobStoreModel implements BaseModel {
 
 	@ModelMethod(functionality = RoleFunctionalities.MANAGE_BINARY_DATA)
 	public static void delete(String id) {
-		ofy().delete().type(BlobEntity.class).id(id).now();
+		ofy().delete().type(BlobTable.class).id(id).now();
 	}
 
 	@ModelMethod(functionality = RoleFunctionalities.GET_BINARY_DATA)
 	public static BlobSpec get(String id) {
-		BlobEntity entity = ofy().load().type(BlobEntity.class).id(id).safe();
+		BlobTable entity = ofy().load().type(BlobTable.class).id(id).safe();
 		return EntityHelper.toObjectModel(entity);
 	}
 

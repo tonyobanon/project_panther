@@ -25,13 +25,14 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Random;
 import java.util.UUID;
+import java.util.concurrent.Callable;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-
-import com.re.paas.api.annotations.BlockerTodo;
+import com.re.paas.api.annotations.develop.BlockerTodo;
 import com.re.paas.api.classes.ClientResources.HtmlCharacterEntities;
 import com.re.paas.api.classes.Exceptions;
 import com.re.paas.api.classes.TimeUnit;
@@ -59,12 +60,24 @@ public class Utils {
 		return sb.toString();
 	}
 
+	public static JsonObject getJson(Path p) {
+		return getJson(Utils.getString(p));
+	}
+
+	public static JsonArray getJsonArray(Path p) {
+		return getJsonArray(Utils.getString(p));
+	}
+
 	public static JsonObject getJson(InputStream in) {
 		return getJson(Utils.getString(in));
 	}
-	
+
 	public static JsonObject getJson(String s) {
 		return new JsonParser().parse(s).getAsJsonObject();
+	}
+
+	public static JsonArray getJsonArray(String s) {
+		return new JsonParser().parse(s).getAsJsonArray();
 	}
 
 	public static Properties getProperties(InputStream in) {
@@ -265,7 +278,7 @@ public class Utils {
 	public static int sum(List<Integer> list) {
 		return sum(list.toArray(new Integer[list.size()]));
 	}
-	
+
 	public static int sum(Integer[] list) {
 		int i = 0;
 		for (int e : list) {
@@ -432,7 +445,7 @@ public class Utils {
 		}
 		return false;
 	}
-	
+
 	public static boolean equals(String key, String... entries) {
 		for (String e : entries) {
 			if (key.equals(e)) {
@@ -441,12 +454,36 @@ public class Utils {
 		}
 		return false;
 	}
-	
-	public static <T> T[] toArray(List<T> l) {
-		@SuppressWarnings("unchecked")
-		T[] r =  (T[]) l.toArray(new Object[l.size()]);
+
+	public static <T> List<Class<?>> fromGenericList(List<Class<T>> list) {
+		List<Class<?>> o = new ArrayList<Class<?>>();
+		list.forEach(c -> {
+			o.add((Class<T>) c);
+		});
+		return o;
+	}
+
+	@SuppressWarnings("unchecked")
+	public static <T> List<Class<T>> toGenericList(List<Class<?>> list) {
+		List<Class<T>> o = new ArrayList<Class<T>>();
+		list.forEach(c -> {
+			o.add((Class<T>) c);
+		});
+		return o;
+	}
+
+	public static <T> T call(Callable<T> task) {
+		T r = null;
+		try {
+			r = task.call();
+		} catch (Exception e) {
+			Exceptions.throwRuntime(e);
+		}
 		return r;
 	}
 	
-	
+	public static <T> T getAnnotation() {
+		return null;
+	}
+
 }

@@ -1,6 +1,6 @@
 package com.re.paas.internal.errors;
 
-import com.re.paas.api.annotations.BlockerBlockerTodo;
+import com.re.paas.api.annotations.develop.BlockerBlockerTodo;
 import com.re.paas.api.errors.Error;
 
 @BlockerBlockerTodo("Update from() method")

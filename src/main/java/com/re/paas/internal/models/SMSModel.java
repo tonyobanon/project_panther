@@ -3,7 +3,7 @@ package com.re.paas.internal.models;
 import java.util.Arrays;
 import java.util.Map;
 
-import com.re.paas.api.annotations.BlockerTodo;
+import com.re.paas.api.annotations.develop.BlockerTodo;
 import com.re.paas.api.classes.ClientRBRef;
 import com.re.paas.api.classes.FluentHashMap;
 import com.re.paas.api.forms.SimpleField;
@@ -19,7 +19,7 @@ import infobip.api.client.SendSingleTextualSms;
 import infobip.api.config.BasicAuthConfiguration;
 import infobip.api.model.sms.mt.send.textual.SMSTextualRequest;
 
-public class SMSModel implements BaseModel {
+public class SMSModel extends BaseModel {
 
 	private static BasicAuthConfiguration authConfiguration = null;
 

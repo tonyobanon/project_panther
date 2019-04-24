@@ -1,5 +1,6 @@
 package com.re.paas.internal.errors.impl;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -7,7 +8,7 @@ import java.util.function.Consumer;
 
 import com.re.paas.api.errors.AbstractErrorSpiDelegate;
 import com.re.paas.api.errors.Error;
-import com.re.paas.api.spi.DelegateInitResult;
+import com.re.paas.api.runtime.spi.DelegateInitResult;
 
 public class ErrorSpiDelegate extends AbstractErrorSpiDelegate {
 
@@ -98,10 +99,11 @@ public class ErrorSpiDelegate extends AbstractErrorSpiDelegate {
 	}
 
 	@Override
-	protected void remove(List<Class<Error>> classes) {
+	protected List<Class<Error>> remove(List<Class<Error>> classes) {
 		classes.forEach(c -> {
 			removeError(c);
 		});
+		return Collections.emptyList();
 	}
-
+	
 }

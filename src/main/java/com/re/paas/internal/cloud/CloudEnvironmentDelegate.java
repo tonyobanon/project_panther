@@ -6,7 +6,7 @@ import java.util.Map;
 
 import com.re.paas.api.infra.cloud.AbstractCloudEnvironmentDelegate;
 import com.re.paas.api.infra.cloud.CloudEnvironment;
-import com.re.paas.api.spi.DelegateInitResult;
+import com.re.paas.api.runtime.spi.DelegateInitResult;
 import com.re.paas.api.utils.ClassUtils;
 
 public class CloudEnvironmentDelegate extends AbstractCloudEnvironmentDelegate {

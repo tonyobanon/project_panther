@@ -3,6 +3,7 @@ package com.re.paas.api.classes;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.re.paas.api.annotations.develop.BlockerTodo;
 import com.re.paas.api.classes.ClientResources.ClientRBRefEntry;
 import com.re.paas.api.classes.ClientResources.ClientRBRefEntryType;
 
@@ -12,7 +13,7 @@ public class ClientRBRef {
 
 	public ClientRBRef() {
 	}
-	
+
 	private ClientRBRef(Object value) {
 		this(new String[] { value.toString() });
 	}
@@ -39,7 +40,7 @@ public class ClientRBRef {
 	public static ClientRBRef get(Object value) {
 		return new ClientRBRef(value);
 	}
-	
+
 	public static ClientRBRef get(ClientRBRefEntry value) {
 		return new ClientRBRef().add(value);
 	}
@@ -58,11 +59,11 @@ public class ClientRBRef {
 		assert v.getType() == ClientRBRefEntryType.TRANSLATE;
 		return v.getText();
 	}
-	
+
 	public List<ClientRBRefEntry> getValues() {
 		return values;
 	}
-	
+
 	public ClientRBRef setValues(List<ClientRBRefEntry> values) {
 		this.values = values;
 		return this;
@@ -70,6 +71,7 @@ public class ClientRBRef {
 
 	@Override
 	@ClientAware
+	@BlockerTodo("Properly format, remove multiple whitespace")
 	public String toString() {
 
 		StringBuilder sb = new StringBuilder();

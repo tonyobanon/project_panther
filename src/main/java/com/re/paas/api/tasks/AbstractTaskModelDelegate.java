@@ -3,7 +3,7 @@ package com.re.paas.api.tasks;
 import java.util.Map;
 
 import com.re.paas.api.classes.ClientRBRef;
-import com.re.paas.api.spi.SpiDelegate;
+import com.re.paas.api.runtime.spi.SpiDelegate;
 
 public abstract class AbstractTaskModelDelegate extends SpiDelegate<TaskImage> {
 

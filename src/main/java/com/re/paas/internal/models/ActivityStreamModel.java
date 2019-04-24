@@ -2,8 +2,8 @@ package com.re.paas.internal.models;
 
 import static com.googlecode.objectify.ObjectifyService.ofy;
 
-import com.re.paas.api.annotations.BlockerTodo;
-import com.re.paas.api.annotations.Todo;
+import com.re.paas.api.annotations.develop.BlockerTodo;
+import com.re.paas.api.annotations.develop.Todo;
 import com.re.paas.api.models.BaseModel;
 import com.re.paas.api.models.classes.InstallOptions;
 import com.re.paas.api.sentences.Sentence;
@@ -11,7 +11,7 @@ import com.re.paas.api.sentences.SubjectEntity;
 import com.re.paas.api.utils.Dates;
 import com.re.paas.internal.classes.ActivitityStreamTimeline;
 import com.re.paas.internal.core.keys.ConfigKeys;
-import com.re.paas.internal.entites.ActivityStreamEntity;
+import com.re.paas.internal.models.tables.ActivityStreamTable;
 import com.re.paas.internal.sentences.DefaultSentenceStringifier;
 import com.re.paas.internal.utils.BackendObjectMarshaller;
 
@@ -23,7 +23,7 @@ import com.re.paas.internal.utils.BackendObjectMarshaller;
 @BlockerTodo("Create a configuration, that allows admins to set the default page size when\n" + 
 		"retrieving activity streams on the client")
 
-public class ActivityStreamModel implements BaseModel {
+public class ActivityStreamModel extends BaseModel {
 
 	@Override
 	public String path() {
@@ -86,7 +86,7 @@ public class ActivityStreamModel implements BaseModel {
 			}
 		}
 
-		ActivityStreamEntity e = new ActivityStreamEntity()
+		ActivityStreamTable e = new ActivityStreamTable()
 				.setActivity(activity.asString(new DefaultSentenceStringifier()))
 				.setSubject(subject)
 				.setSubjectImage(subject != null ? BaseUserModel.getAvatar(subject) : null)

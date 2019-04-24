@@ -1,10 +1,18 @@
 package com.re.paas.internal.utils;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Enumeration;
 import java.util.zip.DataFormatException;
 import java.util.zip.Deflater;
 import java.util.zip.Inflater;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 
 public class FileUtils {
 
@@ -42,5 +50,53 @@ public class FileUtils {
 			throw new RuntimeException(ex);
 		}
 	}
-	
+
+	public static void extractZipped(File zipped, Path outputFolder) {
+
+		try {
+			
+			// Open the zip file
+			ZipFile zipFile = new ZipFile(zipped);
+			Enumeration<?> enu = zipFile.entries();
+			
+			while (enu.hasMoreElements()) {
+				ZipEntry zipEntry = (ZipEntry) enu.nextElement();
+
+				String name = zipEntry.getName();
+				
+				//long size = zipEntry.getSize();
+				//long compressedSize = zipEntry.getCompressedSize();
+				
+				// Do we need to create a directory ?
+				Path file = outputFolder.resolve(name);
+				if (name.endsWith("/")) {
+					Files.createDirectories(file);
+					continue;
+				}
+
+				Path parent = file.getParent();
+				if (parent != null) {
+					Files.createDirectories(parent);
+				}
+
+				// Extract the file
+				InputStream is = zipFile.getInputStream(zipEntry);
+				OutputStream fos = Files.newOutputStream(file);
+				
+				byte[] bytes = new byte[1024];
+				int length;
+				while ((length = is.read(bytes)) >= 0) {
+					fos.write(bytes, 0, length);
+				}
+				
+				is.close();
+				fos.close();
+
+			}
+			zipFile.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+
 }

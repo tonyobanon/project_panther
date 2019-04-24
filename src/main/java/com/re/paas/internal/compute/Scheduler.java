@@ -10,7 +10,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-import com.re.paas.api.annotations.BlockerTodo;
+import com.re.paas.api.annotations.develop.BlockerTodo;
 import com.re.paas.api.utils.Utils;
 
 
@@ -18,6 +18,7 @@ import com.re.paas.api.utils.Utils;
  * This class may be used to perform certain routine tasks.
  **/
 
+@SuppressWarnings("unused")
 @BlockerTodo("Make thread count fully configurable, to allow for scalability")
 public class Scheduler {
 

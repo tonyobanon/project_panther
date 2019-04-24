@@ -3,7 +3,6 @@ package com.re.paas.internal.cloud.azure;
 import java.util.Map;
 
 import com.re.paas.api.infra.cloud.AbstractProviderHandler;
-import com.re.paas.api.threadsecurity.ThreadSecurity;
 import com.re.paas.internal.cloud.CloudEnvironmentAdapter;
 
 public class AzureEnvironment implements CloudEnvironmentAdapter {
@@ -35,10 +34,6 @@ public class AzureEnvironment implements CloudEnvironmentAdapter {
 
 	@Override
 	public AbstractProviderHandler providerDelegate() { 
-		
-		// Prevent unauthorized access 
-		ThreadSecurity.verify();
-		
 		return new AzureHandler();
 	}
 	

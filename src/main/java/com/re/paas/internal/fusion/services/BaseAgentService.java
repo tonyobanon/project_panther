@@ -17,9 +17,9 @@ import com.re.paas.apps.rex.classes.spec.AgentSpec;
 import com.re.paas.apps.rex.classes.spec.IssueResolution;
 import com.re.paas.apps.rex.functionality.AgentFunctionalities;
 import com.re.paas.apps.rex.functionality.AgentOrganizationFunctionalities;
+import com.re.paas.apps.rex.models.BaseAgentModel;
 import com.re.paas.internal.classes.Json;
 import com.re.paas.internal.fusion.services.impl.FusionHelper;
-import com.re.paas.internal.models.BaseAgentModel;
 
 
 public class BaseAgentService extends BaseService {

@@ -1,5 +1,6 @@
 package com.re.paas.internal.clustering;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -9,7 +10,7 @@ import com.re.paas.api.classes.Exceptions;
 import com.re.paas.api.classes.PlatformException;
 import com.re.paas.api.clustering.AbstractFunctionDelegate;
 import com.re.paas.api.clustering.Function;
-import com.re.paas.api.spi.DelegateInitResult;
+import com.re.paas.api.runtime.spi.DelegateInitResult;
 import com.re.paas.api.utils.ClassUtils;
 import com.re.paas.internal.errors.ClusterFunctionError;
 
@@ -67,10 +68,11 @@ public class FunctionDelegate extends AbstractFunctionDelegate {
 	}
 
 	@Override
-	protected void remove(List<Class<Function>> classes) {
+	protected List<Class<Function>> remove(List<Class<Function>> classes) {
 		classes.forEach(c -> {
 			removeFunction(c);
 		});
+		return Collections.emptyList();
 	}
 
 	private void addFunction(Class<Function> c) {

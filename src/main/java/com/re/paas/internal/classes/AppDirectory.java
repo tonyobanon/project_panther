@@ -1,62 +1,34 @@
 package com.re.paas.internal.classes;
 
-import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
-import java.net.URISyntaxException;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 
 import com.google.gson.JsonObject;
-import com.re.paas.api.classes.Exceptions;
+import com.re.paas.api.annotations.ProtectionContext;
 import com.re.paas.api.utils.Utils;
-import com.re.paas.internal.Application;
+import com.re.paas.internal.infra.filesystem.FileSystemProviders;
 
 /**
- * This class provides static helper methods to read config files, as well as scan the
- * classpath.
+ * This class provides static helper methods to read config files, as well as
+ * scan the classpath. This class should not be annotated with {@link ProtectionContext}
+ * as it cannot be re-injected into the base class loader without any error
  * 
  * @author Tony
  */
 public class AppDirectory {
 
-	private static ClassLoader classloader;
 	private static JsonObject config;
 
 	public static Path getBasePath() {
-		try {
-			return Paths.get(classloader.getResource("").toURI());
-		} catch (URISyntaxException e) {
-			Exceptions.throwRuntime(e);
-			return null;
-		}
+		return FileSystemProviders.getInternal().getPath(getBaseClassloader().getResource("").getPath());
 	}
 
 	public static ClassLoader getBaseClassloader() {
-		return classloader;
-	}
-
-	public static Path getPath(String resource) {
-		try {
-			return Paths.get(classloader.getResource(resource).toURI());
-		} catch (URISyntaxException e) {
-			Exceptions.throwRuntime(e);
-			return null;
-		}
+		return ClassLoader.getSystemClassLoader();
 	}
 
 	public static InputStream getInputStream(String resource) {
-		return classloader.getResourceAsStream(resource);
-	}
-
-	public static OutputStream getOutputStream(String resource) {
-		try {
-			return Files.newOutputStream(getPath(resource));
-		} catch (IOException e) {
-			Exceptions.throwRuntime(e);
-			return null;
-		}
+		return getBaseClassloader().getResourceAsStream(resource);
 	}
 
 	public static JsonObject getConfig() {
@@ -64,9 +36,7 @@ public class AppDirectory {
 	}
 
 	static {
-		
-		classloader = Application.class.getClassLoader();
-		
+
 		try {
 			config = Utils.getJson(AppDirectory.getInputStream("config.json"));
 		} catch (Exception e) {

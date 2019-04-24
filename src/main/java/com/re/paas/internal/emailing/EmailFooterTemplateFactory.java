@@ -8,7 +8,7 @@ import com.re.paas.api.classes.ClientResources.HtmlCharacterEntities;
 import com.re.paas.api.classes.ClientResources.WebResource;
 import com.re.paas.api.models.classes.UserProfileSpec;
 import com.re.paas.api.templating.TemplateObjectModelFactory;
-import com.re.paas.internal.entites.BaseUserEntity;
+import com.re.paas.internal.models.tables.users.BaseUserEntity;
 
 public class EmailFooterTemplateFactory extends TemplateObjectModelFactory<EmailFooterTemplate> {
 

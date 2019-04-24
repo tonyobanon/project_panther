@@ -16,6 +16,7 @@ import com.re.paas.api.models.BaseModel;
 import com.re.paas.api.models.classes.InstallOptions;
 import com.re.paas.api.tasks.CronJob;
 import com.re.paas.api.utils.Dates;
+import com.re.paas.apps.rex.models.BaseAgentModel;
 import com.re.paas.internal.billing.Authorise3dSecureRequest;
 import com.re.paas.internal.billing.AuthorizationResult;
 import com.re.paas.internal.billing.BaseCardInfo;
@@ -29,18 +30,18 @@ import com.re.paas.internal.billing.IpnEventType;
 import com.re.paas.internal.billing.PaymentRequest;
 import com.re.paas.internal.classes.CronInterval;
 import com.re.paas.internal.core.keys.ConfigKeys;
-import com.re.paas.internal.entites.CardEntity;
-import com.re.paas.internal.entites.payments.BillingContextEntity;
-import com.re.paas.internal.entites.payments.InvoiceEntity;
-import com.re.paas.internal.entites.payments.InvoiceItemEntity;
-import com.re.paas.internal.entites.payments.InvoicePaymentEntity;
-import com.re.paas.internal.entites.payments.InvoicePaymentHistoryEntity;
-import com.re.paas.internal.entites.payments.InvoiceStatusHistoryEntity;
 import com.re.paas.internal.models.errors.BillingError;
 import com.re.paas.internal.models.helpers.EntityHelper;
 import com.re.paas.internal.models.helpers.EntityUtils;
+import com.re.paas.internal.models.tables.payments.BillingContextTable;
+import com.re.paas.internal.models.tables.payments.CardTable;
+import com.re.paas.internal.models.tables.payments.InvoiceItemTable;
+import com.re.paas.internal.models.tables.payments.InvoicePaymentHistoryTable;
+import com.re.paas.internal.models.tables.payments.InvoicePaymentTable;
+import com.re.paas.internal.models.tables.payments.InvoiceStatusHistoryTable;
+import com.re.paas.internal.models.tables.payments.InvoiceTable;
 
-public class BillingModel implements BaseModel {
+public class BillingModel extends BaseModel {
 
 	@Override
 	public String path() {
@@ -68,7 +69,7 @@ public class BillingModel implements BaseModel {
 
 	public static Long setPaymentMethod(Long accountId, BaseCardInfo spec) {
 
-		CardEntity e = EntityHelper.fromObjectModel(accountId, spec);
+		CardTable e = EntityHelper.fromObjectModel(accountId, spec);
 		Long id = ofy().save().entity(e).now().getId();
 
 		// Add to activity stream
@@ -77,14 +78,14 @@ public class BillingModel implements BaseModel {
 
 	public static void removePaymentMethod(Long accountId) {
 
-		ofy().delete().type(CardEntity.class).id(accountId);
+		ofy().delete().type(CardTable.class).id(accountId);
 
 		// Add to activity stream
 	}
 
 	public static BaseCardInfo getPaymentMethod(Long accountId) {
 
-		CardEntity e = ofy().load().type(CardEntity.class).id(accountId).now();
+		CardTable e = ofy().load().type(CardTable.class).id(accountId).now();
 
 		if (e != null) {
 			return EntityHelper.toObjectModel(e);
@@ -97,7 +98,7 @@ public class BillingModel implements BaseModel {
 
 		Long invoicePaymentId = event.getMerchantReference();
 
-		InvoicePaymentHistoryEntity e = ofy().load().type(InvoicePaymentHistoryEntity.class).id(invoicePaymentId)
+		InvoicePaymentHistoryTable e = ofy().load().type(InvoicePaymentHistoryTable.class).id(invoicePaymentId)
 				.safe();
 
 		InvoicePaymentStatus status = InvoicePaymentStatus.from(e.getStatus());
@@ -244,7 +245,7 @@ public class BillingModel implements BaseModel {
 
 	public static void payOustandingInvoices(Long invoiceId) {
 
-		EntityUtils.lazyQuery(InvoiceEntity.class, QueryFilter.get("isOutstanding", true)).forEach(e -> {
+		EntityUtils.lazyQuery(InvoiceTable.class, QueryFilter.get("isOutstanding", true)).forEach(e -> {
 
 			InvoiceSpec spec = EntityHelper.toObjectModel(e);
 
@@ -280,7 +281,7 @@ public class BillingModel implements BaseModel {
 
 	public static InvoicePaymentSpec getInvoicePayment(Long invoiceId) {
 
-		InvoicePaymentEntity e = ofy().load().type(InvoicePaymentEntity.class).id(invoiceId).safe();
+		InvoicePaymentTable e = ofy().load().type(InvoicePaymentTable.class).id(invoiceId).safe();
 		return EntityHelper.toObjectModel(e);
 	}
 
@@ -290,8 +291,8 @@ public class BillingModel implements BaseModel {
 
 	public static Long createInvoicePayment(Long id, InvoicePaymentSpec spec) {
 
-		InvoicePaymentEntity e = EntityHelper.fromObjectModel(spec);
-		InvoicePaymentHistoryEntity e2 = EntityHelper.fromObjectModel2(id, spec);
+		InvoicePaymentTable e = EntityHelper.fromObjectModel(spec);
+		InvoicePaymentHistoryTable e2 = EntityHelper.fromObjectModel2(id, spec);
 
 		ofy().save().entities(e, e2).now();
 
@@ -305,7 +306,7 @@ public class BillingModel implements BaseModel {
 	public static List<InvoicePaymentSpec> listInvoicePaymentHistory(Long invoiceId) {
 
 		List<InvoicePaymentSpec> result = new ArrayList<InvoicePaymentSpec>();
-		EntityUtils.query(InvoicePaymentHistoryEntity.class, QueryFilter.get("invoiceId", invoiceId.toString()))
+		EntityUtils.query(InvoicePaymentHistoryTable.class, QueryFilter.get("invoiceId", invoiceId.toString()))
 				.forEach(e -> {
 					result.add(EntityHelper.toObjectModel(e));
 				});
@@ -315,12 +316,12 @@ public class BillingModel implements BaseModel {
 	public static InvoiceSpec getInvoice(Long invoiceId) {
 
 		// fetch entity
-		InvoiceEntity ie = ofy().load().type(InvoiceEntity.class).id(invoiceId).safe();
+		InvoiceTable ie = ofy().load().type(InvoiceTable.class).id(invoiceId).safe();
 
 		// add items
 		List<InvoiceItem> items = new ArrayList<>();
 
-		ofy().load().type(InvoiceItemEntity.class).ids(ie.getItems()).forEach((k, v) -> {
+		ofy().load().type(InvoiceItemTable.class).ids(ie.getItems()).forEach((k, v) -> {
 			items.add(EntityHelper.toObjectModel(v));
 		});
 
@@ -334,7 +335,7 @@ public class BillingModel implements BaseModel {
 		// An invoice can only be created, if the previous one for the user ==
 		// COMPLETED, or if none exists yet for the user yet
 
-		BillingContextEntity bce = ofy().load().type(BillingContextEntity.class).id(spec.getAccountId()).now();
+		BillingContextTable bce = ofy().load().type(BillingContextTable.class).id(spec.getAccountId()).now();
 
 		if (bce != null) {
 			if (InvoiceStatus.from(bce.getStatus()).isOutstanding()) {
@@ -343,13 +344,13 @@ public class BillingModel implements BaseModel {
 		}
 
 		// Create Invoice
-		InvoiceEntity ie = EntityHelper.fromObjectModel(spec);
+		InvoiceTable ie = EntityHelper.fromObjectModel(spec);
 
 		ofy().save().entity(ie).now();
 
 		// Set default billing context
 
-		bce = new BillingContextEntity().setAccountId(ie.getAccountId()).setInvoiceId(ie.getId())
+		bce = new BillingContextTable().setAccountId(ie.getAccountId()).setInvoiceId(ie.getId())
 				.setStatus(ie.getStatus()).setCurrency(ie.getCurrency()).setTotalDue(ie.getTotalDue())
 				.setDateUpdated(Dates.now());
 
@@ -366,11 +367,11 @@ public class BillingModel implements BaseModel {
 			throw new PlatformException(BillingError.NO_AMOUNT_ON_INVOICE_ITEM);
 		}
 
-		InvoiceEntity ie = ofy().load().type(InvoiceEntity.class).id(invoiceId).safe();
+		InvoiceTable ie = ofy().load().type(InvoiceTable.class).id(invoiceId).safe();
 
 		InvoiceStatus iStatus = InvoiceStatus.from(ie.getStatus());
 
-		BillingContextEntity bce = ofy().load().type(BillingContextEntity.class).id(ie.getAccountId()).safe();
+		BillingContextTable bce = ofy().load().type(BillingContextTable.class).id(ie.getAccountId()).safe();
 
 		if (iStatus == InvoiceStatus.CREATED) {
 
@@ -387,7 +388,7 @@ public class BillingModel implements BaseModel {
 		Date now = Dates.now();
 
 		// add item
-		InvoiceItemEntity iie = EntityHelper.fromObjectModel(item);
+		InvoiceItemTable iie = EntityHelper.fromObjectModel(item);
 
 		ofy().save().entity(iie).now();
 
@@ -410,15 +411,15 @@ public class BillingModel implements BaseModel {
 
 		BigDecimal newTotal = BigDecimal.ZERO;
 
-		InvoiceEntity ie = ofy().load().type(InvoiceEntity.class).id(invoiceId).safe();
+		InvoiceTable ie = ofy().load().type(InvoiceTable.class).id(invoiceId).safe();
 
-		BillingContextEntity bce = ofy().load().type(BillingContextEntity.class).id(ie.getAccountId()).safe();
+		BillingContextTable bce = ofy().load().type(BillingContextTable.class).id(ie.getAccountId()).safe();
 
 		// recalculate amount on invoice items
 
-		Collection<InvoiceItemEntity> iies = ofy().load().type(InvoiceItemEntity.class).ids(ie.getItems()).values();
+		Collection<InvoiceItemTable> iies = ofy().load().type(InvoiceItemTable.class).ids(ie.getItems()).values();
 
-		for (InvoiceItemEntity iie : iies) {
+		for (InvoiceItemTable iie : iies) {
 
 			Double amount = CurrencyModel.getCurrencyRate(ie.getCurrency(), newCurrency) * iie.getAmount();
 			iie.setAmount(amount);
@@ -436,13 +437,13 @@ public class BillingModel implements BaseModel {
 
 	public static void updateInvoiceStatus(Long invoiceId, InvoiceStatus status, ClientRBRef message) {
 
-		InvoiceEntity ie = ofy().load().type(InvoiceEntity.class).id(invoiceId).safe();
+		InvoiceTable ie = ofy().load().type(InvoiceTable.class).id(invoiceId).safe();
 
 		boolean save = !ie.getStatus().equals(status.getValue());
 
 		ie.setStatus(status.getValue());
 
-		InvoiceStatusHistoryEntity e = new InvoiceStatusHistoryEntity().setInvoiceId(invoiceId)
+		InvoiceStatusHistoryTable e = new InvoiceStatusHistoryTable().setInvoiceId(invoiceId)
 				.setStatus(status.getValue()).setMessage(message).setDateCreated(Dates.now());
 
 		List<Object> entities = new ArrayList<>();
@@ -450,7 +451,7 @@ public class BillingModel implements BaseModel {
 
 		if (save) {
 
-			BillingContextEntity bce = ofy().load().type(BillingContextEntity.class).id(ie.getAccountId()).safe();
+			BillingContextTable bce = ofy().load().type(BillingContextTable.class).id(ie.getAccountId()).safe();
 			bce.setStatus(status.getValue());
 
 			entities.add(ie);

@@ -3,7 +3,6 @@ package com.re.paas.internal.cloud.aws;
 import java.util.Map;
 
 import com.re.paas.api.infra.cloud.AbstractProviderHandler;
-import com.re.paas.api.threadsecurity.ThreadSecurity;
 import com.re.paas.internal.cloud.CloudEnvironmentAdapter;
 
 public class AWSEnvironment implements CloudEnvironmentAdapter {
@@ -38,10 +37,6 @@ public class AWSEnvironment implements CloudEnvironmentAdapter {
 
 	@Override
 	public AbstractProviderHandler providerDelegate() {
-		
-		 // Prevent unauthorized access 
-		 ThreadSecurity.verify();
-		
 		return new AwsHandler();
 	}
 }

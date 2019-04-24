@@ -5,7 +5,7 @@ import java.util.List;
 import com.re.paas.api.listable.Listable;
 import com.re.paas.api.listable.ListingFilter;
 import com.re.paas.api.realms.Realm;
-import com.re.paas.internal.models.BaseAgentModel;
+import com.re.paas.apps.rex.models.BaseAgentModel;
 import com.re.paas.internal.models.BaseUserModel;
 import com.re.paas.internal.models.RoleModel;
 import com.re.paas.internal.realms.AdminRealm;

@@ -12,16 +12,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.function.BiConsumer;
-import java.util.function.Consumer;
 
-import com.googlecode.objectify.Key;
-import com.re.paas.api.annotations.BlockerTodo;
-import com.re.paas.api.annotations.Todo;
+import com.re.paas.api.annotations.develop.BlockerTodo;
+import com.re.paas.api.annotations.develop.Todo;
 import com.re.paas.api.classes.ClientRBRef;
 import com.re.paas.api.classes.Exceptions;
 import com.re.paas.api.classes.FluentArrayList;
 import com.re.paas.api.classes.FluentHashMap;
-import com.re.paas.api.classes.PlatformException;
+import com.re.paas.api.classes.IndexedNameSpec;
 import com.re.paas.api.classes.ResourceException;
 import com.re.paas.api.forms.SizeSpec;
 import com.re.paas.api.listable.IndexedNameType;
@@ -32,7 +30,6 @@ import com.re.paas.api.models.Model;
 import com.re.paas.api.models.ModelMethod;
 import com.re.paas.api.models.classes.ApplicationDeclineReason;
 import com.re.paas.api.models.classes.Gender;
-import com.re.paas.api.models.classes.IndexedNameSpec;
 import com.re.paas.api.models.classes.InstallOptions;
 import com.re.paas.api.models.classes.UserProfileSpec;
 import com.re.paas.api.realms.AbstractRealmDelegate;
@@ -51,22 +48,19 @@ import com.re.paas.internal.classes.ApplicationStatus;
 import com.re.paas.internal.classes.FormSectionType;
 import com.re.paas.internal.core.keys.ConfigKeys;
 import com.re.paas.internal.documents.pdf.gen.PDFForm;
-import com.re.paas.internal.entites.ApplicationEntity;
-import com.re.paas.internal.entites.ApplicationFormValueEntity;
-import com.re.paas.internal.entites.DeclinedApplicationEntity;
-import com.re.paas.internal.fusion.functionalities.RoleFunctionalities;
 import com.re.paas.internal.fusion.functionalities.UserApplicationFunctionalities;
-import com.re.paas.internal.models.errors.RexError;
 import com.re.paas.internal.models.helpers.FormFactory;
 import com.re.paas.internal.models.helpers.FormFieldRepository;
 import com.re.paas.internal.models.helpers.FormFieldRepository.FormField;
 import com.re.paas.internal.models.listables.IndexedNameTypes;
-import com.re.paas.internal.sentences.ObjectTypes;
+import com.re.paas.internal.models.tables.users.ApplicationEntity;
+import com.re.paas.internal.models.tables.users.ApplicationFormValueEntity;
+import com.re.paas.internal.models.tables.users.DeclinedApplicationEntity;
 import com.re.paas.internal.sentences.SubjectTypes;
 import com.re.paas.internal.utils.FrontendObjectMarshaller;
 
 @Model(dependencies = { ConfigModel.class, FormModel.class })
-public class ApplicationModel implements BaseModel {
+public class ApplicationModel extends BaseModel {
 
 	@Override
 	public String path() {

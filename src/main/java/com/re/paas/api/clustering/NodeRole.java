@@ -9,8 +9,14 @@ import com.re.paas.api.clustering.events.NodeStateChangeEvent;
 import com.re.paas.api.designpatterns.Singleton;
 import com.re.paas.api.infra.cloud.CloudEnvironment;
 import com.re.paas.api.infra.cloud.Tags;
+import com.re.paas.api.runtime.spi.AbstractResource;
+import com.re.paas.api.runtime.spi.SpiType;
 
-public abstract class NodeRole {
+public abstract class NodeRole extends AbstractResource {
+	
+	public NodeRole() {
+		super(SpiType.NODE_ROLE);
+	}
 	
 	public String toString() {
 		return name();

@@ -1,0 +1,7 @@
+
+* Since MongoDB doesn't keep track of collection creation dates, we need to do this manually. see here:
+https://stackoverflow.com/questions/7083943/how-do-i-get-the-date-a-mongodb-collection-was-created-using-mongodb-c-sharp-dri
+
+* If no native implementation of scanIndexForward exists, we can use a field to keep track of this.
+
+* To implement Text Search for the MongoDB adapter, see here: https://docs.mongodb.com/manual/text-search

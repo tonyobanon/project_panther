@@ -1,13 +1,13 @@
 package com.re.paas.internal.models;
 
-import com.re.paas.api.annotations.BlockerTodo;
+import com.re.paas.api.annotations.develop.BlockerTodo;
 import com.re.paas.api.models.BaseModel;
 import com.re.paas.api.models.ModelMethod;
 import com.re.paas.api.models.classes.InstallOptions;
 import com.re.paas.internal.fusion.functionalities.RoleFunctionalities;
 
 @BlockerTodo("Implement ASAP")
-public class ConfigurationModel implements BaseModel {
+public class ConfigurationModel extends BaseModel {
 
 	@Override
 	public String path() {

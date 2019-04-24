@@ -20,8 +20,6 @@ import com.re.paas.api.classes.PlatformException;
 import com.re.paas.api.clustering.classes.OsPlatform;
 import com.re.paas.api.infra.cloud.CloudEnvironment;
 import com.re.paas.internal.classes.Json;
-import com.re.paas.internal.cloud.aws.AwsTags;
-import com.re.paas.internal.clustering.MasterNodeConfig;
 import com.re.paas.internal.clustering.classes.Utils;
 import com.re.paas.internal.errors.ClusteringError;
 

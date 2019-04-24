@@ -5,20 +5,19 @@ import java.util.List;
 import java.util.concurrent.Callable;
 
 import com.google.appengine.api.datastore.QueryResultIterator;
-import com.googlecode.objectify.Key;
 import com.googlecode.objectify.cmd.QueryKeys;
 import com.re.paas.api.classes.Exceptions;
 import com.re.paas.api.classes.FluentArrayList;
 import com.re.paas.api.listable.ListingFilter;
+import com.re.paas.apps.rex.models.tables.PropertyTable;
 import com.re.paas.internal.caching.CacheAdapter;
 import com.re.paas.internal.caching.CacheType;
-import com.re.paas.internal.entites.directory.PropertyEntity;
 import com.re.paas.internal.models.SearchModel;
 import com.re.paas.internal.models.listables.IndexedNameTypes;
 
 public class SearchHelper {
 
-	public static List<Long> getKeys(IndexedNameTypes type, ListingFilter filter, Callable<QueryKeys<PropertyEntity>> fetch) {
+	public static List<Long> getKeys(IndexedNameTypes type, ListingFilter filter, Callable<QueryKeys<PropertyTable>> fetch) {
 
 		String key = SearchModel.buildCacheListKey(type, FluentArrayList.asList(filter));
 
@@ -30,7 +29,7 @@ public class SearchHelper {
 
 			result = new ArrayList<>();
 
-			QueryResultIterator<Key<PropertyEntity>> it = null;
+			QueryResultIterator<Key<PropertyTable>> it = null;
 			try {
 				it = fetch.call().iterator();
 			} catch (Exception e) {

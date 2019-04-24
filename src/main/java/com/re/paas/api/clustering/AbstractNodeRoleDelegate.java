@@ -2,7 +2,7 @@ package com.re.paas.api.clustering;
 
 import java.util.Map;
 
-import com.re.paas.api.spi.SpiDelegate;
+import com.re.paas.api.runtime.spi.SpiDelegate;
 
 public abstract class AbstractNodeRoleDelegate extends SpiDelegate<NodeRole> {
 

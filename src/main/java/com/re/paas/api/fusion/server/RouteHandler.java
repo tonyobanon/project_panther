@@ -1,6 +1,6 @@
 package com.re.paas.api.fusion.server;
 
-import java.util.function.Consumer;
+import com.re.paas.api.runtime.Consumer;
 
 public class RouteHandler {
 

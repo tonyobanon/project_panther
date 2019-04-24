@@ -8,6 +8,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
+import com.re.paas.api.annotations.develop.BlockerTodo;
 import com.re.paas.api.classes.Exceptions;
 import com.re.paas.api.classes.ObjectWrapper;
 import com.re.paas.api.infra.cache.Cache;
@@ -19,15 +20,19 @@ import com.re.paas.api.utils.Utils;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.api.async.RedisAsyncCommands;
 
+@BlockerTodo("Since, redis has inbuilt support for list, rewrite to use that instead")
+@BlockerTodo("this.decrStack() should be called when the future completes")
 public class RedisCache implements Cache<String, Object> {
 
 	private static final String keyLength = "_";
 	private static final String missesCount = "_mc";
 	private static final String valueKeyMappingPrefix = "_vkmp_";
 
+	private static final String entryTypeHashKey = "_ethk_";
+
 	private String instanceId;
 	private RedisCacheFactory factory;
-	
+
 	RedisAsyncCommands<String, Object> commands;
 
 	private int limit;
@@ -36,12 +41,12 @@ public class RedisCache implements Cache<String, Object> {
 	RedisCache(RedisCacheFactory factory) {
 		this(Utils.newShortRandom(), factory);
 	}
-	
+
 	RedisCache(String instanceId, RedisCacheFactory factory) {
 
 		this.instanceId = instanceId;
 		this.factory = factory;
-		
+
 		this.commands = createRedisClient().connect(new RedisObjectCodec()).async();
 
 		this.reset();
@@ -58,7 +63,7 @@ public class RedisCache implements Cache<String, Object> {
 			factory.decrStack(instanceId);
 		}
 	}
-	
+
 	String getInstanceId() {
 		return instanceId;
 	}
@@ -288,6 +293,8 @@ public class RedisCache implements Cache<String, Object> {
 
 			Integer currentLength = elements.size();
 
+			List<CompletableFuture<?>> futures = new ArrayList<>();
+
 			for (Integer i = totalLength; i < totalLength + currentLength; i++) {
 
 				String k = i.toString();
@@ -300,10 +307,10 @@ public class RedisCache implements Cache<String, Object> {
 				}
 
 				// map keys to values
-				this.hset(key, k, v);
+				futures.add(this.hset(key, k, v, false));
 
 				// map values to keys
-				this.hset(valueKeyMappingPrefix + key, v, k);
+				futures.add(this.hset(valueKeyMappingPrefix + key, v, k, false));
 			}
 
 			if (totalLength == 0) {
@@ -312,6 +319,10 @@ public class RedisCache implements Cache<String, Object> {
 			}
 
 			this.hincrby(key, keyLength, currentLength.longValue()).join();
+
+			CompletableFuture.allOf((CompletableFuture<?>[]) futures.toArray()).thenRun(() -> {
+				addKeyType(key, CacheEntryType.SET);
+			});
 
 			this.decrStack();
 
@@ -377,7 +388,7 @@ public class RedisCache implements Cache<String, Object> {
 			List<CompletableFuture<?>> futures = new ArrayList<>(value.size());
 
 			value.forEach((k, v) -> {
-				futures.add(this.hset(key, k, v));
+				futures.add(this.hset(key, k, v, false));
 			});
 
 			Long hLen = this.hlen(key).get();
@@ -388,6 +399,9 @@ public class RedisCache implements Cache<String, Object> {
 			}
 
 			return CompletableFuture.allOf(futures.toArray(new CompletableFuture[futures.size()])).thenRun(() -> {
+
+				addKeyType(key, CacheEntryType.MAP);
+
 				this.decrStack();
 			});
 		};
@@ -424,6 +438,7 @@ public class RedisCache implements Cache<String, Object> {
 		this.incrStack();
 		@SuppressWarnings("unchecked")
 		CompletableFuture<String> o = (CompletableFuture<String>) this.commands.set(key, value);
+		addKeyType(key, CacheEntryType.PRIMITIVE);
 		this.decrStack();
 		return o;
 	}
@@ -434,16 +449,27 @@ public class RedisCache implements Cache<String, Object> {
 		@SuppressWarnings("unchecked")
 		CompletableFuture<Long> o = (CompletableFuture<Long>) this.commands.del(keys);
 		this.decrStack();
+		removeKeyType(keys);
+		return o;
+	}
+
+	private CompletableFuture<Boolean> hset(String key, String field, Object value, Boolean addKeyType) {
+
+		if (key.equals(entryTypeHashKey)) {
+			Exceptions.throwRuntime("Hashkey must not equal: " + key);
+		}
+
+		this.incrStack();
+		@SuppressWarnings("unchecked")
+		CompletableFuture<Boolean> o = (CompletableFuture<Boolean>) this.commands.hset(key, field, value);
+
+		this.decrStack();
 		return o;
 	}
 
 	@Override
 	public CompletableFuture<Boolean> hset(String key, String field, Object value) {
-		this.incrStack();
-		@SuppressWarnings("unchecked")
-		CompletableFuture<Boolean> o = (CompletableFuture<Boolean>) this.commands.hset(key, field, value);
-		this.decrStack();
-		return o;
+		return hset(key, field, value, true);
 	}
 
 	@Override
@@ -516,6 +542,27 @@ public class RedisCache implements Cache<String, Object> {
 		CompletableFuture<String> o = (CompletableFuture<String>) this.commands.quit();
 		this.decrStack();
 		return o.thenApply(r -> r.equals("OK"));
+	}
+
+	/**
+	 * For each entry in cache, this register the key and its type. This is
+	 * especially useful when data in this cache needs to be exported, or for
+	 * reporting purpose
+	 * 
+	 * @param key
+	 * @param type
+	 */
+	@BlockerTodo("In the set(...) method, this method may not be invoked accurately because, it happens before the future completes")
+	private void addKeyType(String key, CacheEntryType type) {
+		this.incrStack();
+		this.commands.hset(entryTypeHashKey, key, type.toString());
+		this.decrStack();
+	}
+
+	private void removeKeyType(String... key) {
+		this.incrStack();
+		this.commands.hdel(entryTypeHashKey, key);
+		this.decrStack();
 	}
 
 }

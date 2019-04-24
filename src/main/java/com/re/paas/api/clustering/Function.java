@@ -10,8 +10,10 @@ import com.re.paas.api.clustering.classes.ClusterDestination;
 import com.re.paas.api.clustering.classes.ClusteringUtils;
 import com.re.paas.api.clustering.protocol.Client;
 import com.re.paas.api.designpatterns.Singleton;
+import com.re.paas.api.runtime.spi.Resource;
+import com.re.paas.api.runtime.spi.SpiType;
 
-public interface Function {
+public interface Function extends Resource {
 
 	public static AbstractFunctionDelegate getDelegate() {
 		return Singleton.get(AbstractFunctionDelegate.class);
@@ -30,6 +32,11 @@ public interface Function {
 	public short contextId();
 
 	public boolean isAsync();
+	
+	@Override
+	default SpiType getSpiType() {
+		return SpiType.FUNCTION;
+	}
 
 	public static <P> Map<String, Object> execute(Function function, P parameter) {
 		return execute(function, parameter, Object.class);

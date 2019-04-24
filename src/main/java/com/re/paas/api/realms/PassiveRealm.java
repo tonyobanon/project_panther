@@ -1,19 +1,22 @@
 package com.re.paas.api.realms;
 
-public interface PassiveRealm extends Realm {
+import com.re.paas.api.annotations.develop.Prototype;
+
+public abstract class PassiveRealm extends Realm {
 
 	@Override
-	default RealmApplicationSpec applicationSpec() {
+	public RealmApplicationSpec applicationSpec() {
 		return null;
 	}
 	
 	@Override
-	default Integer authority() {
+	@Prototype
+	public Integer authority() {
 		return null;
 	}
 	
 	@Override
-	default boolean passive() {
+	public boolean passive() {
 		return true;
 	}
 	

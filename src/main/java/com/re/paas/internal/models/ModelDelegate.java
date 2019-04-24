@@ -12,8 +12,7 @@ import com.re.paas.api.logging.Logger;
 import com.re.paas.api.models.AbstractModelDelegate;
 import com.re.paas.api.models.BaseModel;
 import com.re.paas.api.models.Model;
-import com.re.paas.api.spi.DelegateInitResult;
-import com.re.paas.api.spi.SpiDelegate;
+import com.re.paas.api.runtime.spi.DelegateInitResult;
 import com.re.paas.api.utils.ClassUtils;
 import com.re.paas.internal.core.keys.ConfigKeys;
 

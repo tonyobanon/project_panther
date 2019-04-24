@@ -3,7 +3,6 @@ package com.re.paas.apps.shared;
 import com.re.paas.api.forms.Section;
 import com.re.paas.api.fusion.services.Functionality;
 import com.re.paas.api.realms.PassiveRealm;
-import com.re.paas.api.realms.Realm;
 import com.re.paas.api.realms.RealmSpec;
 import com.re.paas.internal.fusion.functionalities.RoleFunctionalities;
 import com.re.paas.internal.fusion.functionalities.SearchFunctionalities;

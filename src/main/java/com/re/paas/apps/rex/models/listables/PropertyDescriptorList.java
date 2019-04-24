@@ -10,14 +10,12 @@ import com.re.paas.api.classes.FluentHashMap;
 import com.re.paas.api.listable.Listable;
 import com.re.paas.api.listable.ListingFilter;
 import com.re.paas.api.listable.ListingType;
-import com.re.paas.internal.entites.directory.PropertyEntity;
-import com.re.paas.internal.fusion.functionalities.RoleFunctionalities;
-import com.re.paas.internal.models.BaseUserModel;
-import com.re.paas.internal.models.RoleModel;
 import com.re.paas.apps.rex.classes.spec.BasePropertyDescriptor;
 import com.re.paas.apps.rex.classes.spec.PropertyType;
 import com.re.paas.apps.rex.functionality.PropertyFunctionalities;
-import com.re.paas.apps.rex.models.listables.IndexedNameTypes;
+import com.re.paas.apps.rex.models.tables.PropertyTable;
+import com.re.paas.internal.models.BaseUserModel;
+import com.re.paas.internal.models.RoleModel;
 
 public class PropertyDescriptorList extends Listable<BasePropertyDescriptor> {
 
@@ -32,8 +30,8 @@ public class PropertyDescriptorList extends Listable<BasePropertyDescriptor> {
 	}
 
 	@Override
-	public Class<PropertyEntity> entityType() {
-		return PropertyEntity.class;
+	public Class<PropertyTable> entityType() {
+		return PropertyTable.class;
 	}
 
 	@Override

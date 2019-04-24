@@ -2,7 +2,7 @@ package com.re.paas.api.listable;
 
 import java.util.function.Consumer;
 
-import com.re.paas.api.spi.SpiDelegate;
+import com.re.paas.api.runtime.spi.SpiDelegate;
 
 public abstract class AbstractListableDelegate extends SpiDelegate<Listable<?>> {
 

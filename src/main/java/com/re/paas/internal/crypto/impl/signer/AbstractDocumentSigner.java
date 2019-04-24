@@ -3,7 +3,6 @@ package com.re.paas.internal.crypto.impl.signer;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.security.GeneralSecurityException;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
@@ -41,9 +40,7 @@ import org.bouncycastle.operator.jcajce.JcaDigestCalculatorProviderBuilder;
 import org.bouncycastle.tsp.TSPException;
 import org.bouncycastle.util.Store;
 
-import com.re.paas.api.annotations.Todo;
 import com.re.paas.api.classes.Exceptions;
-import com.re.paas.api.cryto.CryptoAdapter;
 import com.re.paas.api.cryto.CryptoProvider;
 import com.re.paas.api.cryto.KeyStoreProperties;
 import com.re.paas.api.cryto.SignContext;

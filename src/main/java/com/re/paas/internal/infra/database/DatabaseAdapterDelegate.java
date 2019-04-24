@@ -1,62 +1,69 @@
 package com.re.paas.internal.infra.database;
 
-import java.sql.Connection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.function.BiConsumer;
 
+import com.re.paas.api.adapters.LoadPhase;
+import com.re.paas.api.annotations.develop.BlockerTodo;
+import com.re.paas.api.clustering.NodeRole;
 import com.re.paas.api.infra.database.AbstractDatabaseAdapterDelegate;
-import com.re.paas.api.infra.database.DatabaseAdapter;
-import com.re.paas.api.infra.database.NoSQLInterface;
-import com.re.paas.api.infra.database.NoSQLInterfaceType;
+import com.re.paas.api.infra.database.document.Database;
+import com.re.paas.api.runtime.spi.DelegateSpec;
+import com.re.paas.api.runtime.spi.SpiType;
 
+@DelegateSpec(dependencies = SpiType.NODE_ROLE)
 public class DatabaseAdapterDelegate extends AbstractDatabaseAdapterDelegate {
 
-	private static Connection sqlDatabase;
-	private static Map<NoSQLInterfaceType, NoSQLInterface> nosqlDatabase = Collections
-			.unmodifiableMap(new HashMap<>(NoSQLInterfaceType.values().length));
+	private static Database database;
 
 	@Override
-	public Object load() {
-		
-		getSQLDatabase(true);
-		
-		for (NoSQLInterfaceType i : NoSQLInterfaceType.values()) {
-			getNoSQLDatabase(i, true);
+	public Object load(LoadPhase phase) {
+		Database db = getDatabase(true);
+
+		if (NodeRole.getDelegate().isMaster()) {
+			switch (phase) {
+			case PLATFORM_SETUP: // Needs db.load as newly created artifacts may need to be loaded
+				setupTables(); 
+				break;
+			case START: // Needs db.load as existing artifacts may need to be loaded
+				updateSchemas(); 
+				break;
+			case MIGRATE: // Does not need db.load as no artifacts exists
+				break;
+			}
+			db.load();
 		}
-		
 		return true;
 	}
 
 	@Override
-	public Connection getSQLDatabase(boolean loadConfigFile) {
+	public Database getDatabase(boolean loadConfigFile) {
 
-		if (sqlDatabase != null && !loadConfigFile) {
-			return sqlDatabase;
+		if (database != null && !loadConfigFile) {
+			return database;
 		}
 
-		DatabaseAdapterConfig dbConfig = (DatabaseAdapterConfig) getConfig();
+		Database db = getAdapter().getDatabase(getConfig().getFields());
 
-		DatabaseAdapter adapter = getAdapter(dbConfig.getAdapterName());
-		Connection db = adapter.getSQLDatabase(dbConfig.getFields());
+		database = db;
+		return database;
+	}
 
-		sqlDatabase = db;
-		return sqlDatabase;
+	private void setupTables() {
+		// auto creation of new table(s)
+	}
+
+	private void updateSchemas() {
+		// update existing tables (if necessary)
 	}
 
 	@Override
-	public NoSQLInterface getNoSQLDatabase(NoSQLInterfaceType type, boolean loadConfigFile) {
+	@BlockerTodo
+	public void migrate(Database outgoing, BiConsumer<Integer, String> listener) {
 
-		if (nosqlDatabase.containsKey(type) && !loadConfigFile) {
-			return nosqlDatabase.get(type);
-		}
+		// Create tables
 
-		DatabaseAdapterConfig dbConfig = (DatabaseAdapterConfig) getConfig();
+		// Create Indexes
 
-		DatabaseAdapter adapter = getAdapter(dbConfig.getAdapterName());
-		NoSQLInterface db = adapter.getNoSQLDatabase(type, dbConfig.getFields());
-
-		nosqlDatabase.put(type, db);
-		return db;
+		// Scan each table
 	}
 }

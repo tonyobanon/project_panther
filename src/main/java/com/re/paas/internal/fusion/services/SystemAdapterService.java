@@ -1,14 +1,18 @@
 package com.re.paas.internal.fusion.services;
 
+import static com.re.paas.api.adapters.LoadPhase.MIGRATE;
+import static com.re.paas.api.adapters.LoadPhase.PLATFORM_SETUP;
 import static com.re.paas.api.clustering.slave.SlaveFunction.INGEST_ADAPTER_CONFIG;
 
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.function.BiConsumer;
 
 import com.re.paas.api.Adapter;
 import com.re.paas.api.adapters.AbstractAdapterDelegate;
 import com.re.paas.api.adapters.AdapterConfig;
 import com.re.paas.api.adapters.AdapterType;
+import com.re.paas.api.adapters.LoadPhase;
 import com.re.paas.api.clustering.Function;
 import com.re.paas.api.clustering.classes.ClusterDestination;
 import com.re.paas.api.designpatterns.Singleton;
@@ -24,6 +28,7 @@ import com.re.paas.internal.classes.Json;
 import com.re.paas.internal.clustering.objectmodels.IngestAdapterConfigRequest;
 import com.re.paas.internal.clustering.objectmodels.IngestAdapterConfigResponse;
 import com.re.paas.internal.fusion.functionalities.SystemAdapterFunctionalities;
+import com.re.paas.internal.fusion.ui.impl.UIContext;
 import com.re.paas.internal.utils.ObjectUtils;
 
 public class SystemAdapterService extends BaseService {
@@ -50,14 +55,14 @@ public class SystemAdapterService extends BaseService {
 
 		AdapterType type = AdapterType.from(ctx.request().getParam("type"));
 
-		AbstractAdapterDelegate<? extends Adapter> delegate = Singleton.get(type.getDelegateType());
+		AbstractAdapterDelegate<?, ? extends Adapter<?>> delegate = Singleton.get(type.getDelegateType());
 
 		JsonObject res = new JsonObject();
 
 		delegate.getAdapters().entrySet().forEach(s -> {
 
 			String adapterName = s.getKey();
-			Adapter adapter = s.getValue();
+			Adapter<?> adapter = s.getValue();
 
 			JsonObject spec = new JsonObject().put("title", adapter.title()).put("description", adapter.description())
 					.put("iconUrl", adapter.iconUrl());
@@ -74,8 +79,9 @@ public class SystemAdapterService extends BaseService {
 		AdapterType type = AdapterType.from(ctx.request().getParam("type"));
 		String adapterName = ctx.request().getParam("name");
 
-		AbstractAdapterDelegate<? extends Adapter> delegate = Singleton.get(type.getDelegateType());
-		Adapter adapter = delegate.getAdapter(adapterName);
+		@SuppressWarnings("rawtypes")
+		AbstractAdapterDelegate delegate = Singleton.get(type.getDelegateType());
+		Adapter<?> adapter = delegate.getAdapter(adapterName);
 
 		String parameters = Json.getGson().toJson(adapter.initForm());
 
@@ -91,15 +97,44 @@ public class SystemAdapterService extends BaseService {
 		String adapterName = body.getString("name");
 		Map<String, String> fields = ObjectUtils.toStringMap(body.getJsonObject("fields").getMap());
 
-		AbstractAdapterDelegate<? extends Adapter> delegate = Singleton.get(type.getDelegateType());
+		@SuppressWarnings("unchecked")
+		AbstractAdapterDelegate<Object, ? extends Adapter<?>> delegate = (AbstractAdapterDelegate<Object, ? extends Adapter<?>>) Singleton
+				.get(type.getDelegateType());
 
 		AdapterConfig config = new AdapterConfig(type).setAdapterName(adapterName).setFields(fields);
+
+		Object currentResource = null;
+		LoadPhase loadPhase = null;
+
+		try {
+			currentResource = delegate.getAdapter().getResource(delegate.getConfig().getFields());
+
+			// If this is a new installation, a call to getConfig() in delegate.getAdapter()
+			// should return null,
+			// and a NullpointerException will be thrown
+
+			// Since a configuration file already exists, we need to do a migration
+			loadPhase = MIGRATE;
+
+		} catch (NullPointerException e) {
+
+			// Since a configuration file does not already exist, we need to do a setup
+			loadPhase = PLATFORM_SETUP;
+		}
 
 		config.save();
 
 		delegate.setConfig(config);
 
-		Object response = delegate.load();
+		Object response = delegate.load(loadPhase);
+
+		if (loadPhase == MIGRATE && delegate.requiresMigration()) {
+
+			// Run adapter migration
+			BiConsumer<Integer, String> loadContext = UIContext.loading("Running " + type + " migration", true);
+
+			delegate.migrate(currentResource, loadContext);
+		}
 
 		StringBuilder errMessage = new StringBuilder();
 

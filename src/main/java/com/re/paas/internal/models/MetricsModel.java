@@ -7,17 +7,16 @@ import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-import com.googlecode.objectify.Key;
-import com.re.paas.api.annotations.Todo;
+import com.re.paas.api.annotations.develop.Todo;
 import com.re.paas.api.classes.FluentArrayList;
 import com.re.paas.api.infra.cloud.CloudEnvironment;
 import com.re.paas.api.models.BaseModel;
 import com.re.paas.api.models.Model;
 import com.re.paas.api.models.classes.InstallOptions;
-import com.re.paas.internal.entites.MetricEntity;
+import com.re.paas.internal.models.tables.MetricTable;
 
 @Model(version = "0.0.3-rc.1+build.1")
-public class MetricsModel implements BaseModel {
+public class MetricsModel extends BaseModel {
 
 	@Override
 	public String path() {
@@ -78,19 +77,19 @@ public class MetricsModel implements BaseModel {
 	}
 
 	private static Integer get(String key) {
-		MetricEntity e = ((MetricEntity) ofy().load().type(MetricEntity.class).id(key).now());
+		MetricTable e = ((MetricTable) ofy().load().type(MetricTable.class).id(key).now());
 		return e != null ? e.getValue() : 0;
 	}
 
 	private static void put(String key, String parentKey, Integer value) {
-		ofy().save().entity(new MetricEntity().setKey(key).setParentKey(parentKey).setValue(value)).now();
+		ofy().save().entity(new MetricTable().setKey(key).setParentKey(parentKey).setValue(value)).now();
 	}
 
 	public static void clear(String parentKey) {
 
 		List<String> keys = new FluentArrayList<>();
 
-		ofy().load().type(MetricEntity.class).filter("parentKey = ", parentKey).forEach((e) -> {
+		ofy().load().type(MetricTable.class).filter("parentKey = ", parentKey).forEach((e) -> {
 			keys.add(e.getKey());
 		});
 
@@ -98,10 +97,10 @@ public class MetricsModel implements BaseModel {
 	}
 
 	private static void delete(String... keys) {
-		List<Key<MetricEntity>> keysO = new FluentArrayList<>();
+		List<Key<MetricTable>> keysO = new FluentArrayList<>();
 
 		for (String k : keys) {
-			keysO.add(Key.create(MetricEntity.class, k));
+			keysO.add(Key.create(MetricTable.class, k));
 		}
 
 		ofy().delete().keys(keysO).now();

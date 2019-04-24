@@ -3,27 +3,19 @@ package com.re.paas.internal.models;
 import static com.googlecode.objectify.ObjectifyService.ofy;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.re.paas.api.annotations.BlockerTodo;
-import com.re.paas.api.classes.ClientRBRef;
+import com.re.paas.api.annotations.develop.BlockerTodo;
 import com.re.paas.api.classes.ClientResources;
 import com.re.paas.api.classes.ResourceException;
-import com.re.paas.api.listable.QueryFilter;
 import com.re.paas.api.models.BaseModel;
 import com.re.paas.api.models.classes.InstallOptions;
 import com.re.paas.api.realms.Realm;
 import com.re.paas.internal.classes.spec.BaseUserSpec;
-import com.re.paas.internal.entites.BaseUserEntity;
-import com.re.paas.internal.entites.directory.AgentEntity;
-import com.re.paas.internal.entites.directory.AgentOrganizationAdminEntity;
-import com.re.paas.internal.entites.directory.AgentOrganizationEntity;
-import com.re.paas.internal.models.helpers.EntityUtils;
-import com.re.paas.internal.users.RoleRealm;
+import com.re.paas.internal.models.tables.users.BaseUserEntity;
 
-public class UserModel implements BaseModel {
+public class UserModel extends BaseModel {
 
 	@Override
 	public String path() {
@@ -50,7 +42,7 @@ public class UserModel implements BaseModel {
 	private static List<BaseUserSpec> getBaseUserSpec(Map<String, String> keys) {
 
 		List<BaseUserSpec> result = new ArrayList<>();
-
+		
 		ofy().load().type(BaseUserEntity.class).ids(keys.keySet()).forEach((k, v) -> {
 
 			BaseUserSpec spec = new BaseUserSpec().setId(v.getId()).setRole(v.getRole()).setDescription(keys.forEach(k))

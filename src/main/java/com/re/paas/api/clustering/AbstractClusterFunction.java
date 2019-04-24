@@ -1,9 +1,15 @@
 package com.re.paas.api.clustering;
 
 import com.re.paas.api.designpatterns.Singleton;
+import com.re.paas.api.runtime.spi.AbstractResource;
+import com.re.paas.api.runtime.spi.SpiType;
 
-public abstract class AbstractClusterFunction<P, R> {
+public abstract class AbstractClusterFunction<P, R> extends AbstractResource {
 
+	public AbstractClusterFunction() {
+		super(SpiType.CLUSTER_FUNCTION);
+	}
+	
 	public abstract Class<? extends NodeRole> role();
 
 	public abstract Function id();

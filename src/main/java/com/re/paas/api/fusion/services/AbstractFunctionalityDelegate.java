@@ -2,7 +2,7 @@ package com.re.paas.api.fusion.services;
 
 import java.util.Collection;
 
-import com.re.paas.api.spi.SpiDelegate;
+import com.re.paas.api.runtime.spi.SpiDelegate;
 
 public abstract class AbstractFunctionalityDelegate extends SpiDelegate<Functionality> {
 	

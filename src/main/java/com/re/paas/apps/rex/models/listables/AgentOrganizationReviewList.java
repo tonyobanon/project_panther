@@ -11,14 +11,12 @@ import com.re.paas.api.listable.Listable;
 import com.re.paas.api.listable.ListingFilter;
 import com.re.paas.api.listable.ListingType;
 import com.re.paas.api.listable.SearchableUISpec;
-import com.re.paas.internal.entites.directory.AgentOrganizationReviewEntity;
-import com.re.paas.internal.fusion.functionalities.RoleFunctionalities;
+import com.re.paas.apps.rex.classes.spec.AgentOrganizationReviewSpec;
+import com.re.paas.apps.rex.functionality.AgentOrganizationFunctionalities;
+import com.re.paas.apps.rex.models.tables.AgentOrganizationReviewTable;
 import com.re.paas.internal.models.BaseUserModel;
 import com.re.paas.internal.models.RoleModel;
 import com.re.paas.internal.models.helpers.EntityHelper;
-import com.re.paas.apps.rex.classes.spec.AgentOrganizationReviewSpec;
-import com.re.paas.apps.rex.functionality.AgentOrganizationFunctionalities;
-import com.re.paas.apps.rex.models.listables.IndexedNameTypes;
 
 public class AgentOrganizationReviewList extends Listable<AgentOrganizationReviewSpec> {
 
@@ -35,8 +33,8 @@ public class AgentOrganizationReviewList extends Listable<AgentOrganizationRevie
 	}
 
 	@Override
-	public Class<AgentOrganizationReviewEntity> entityType() {
-		return AgentOrganizationReviewEntity.class;
+	public Class<AgentOrganizationReviewTable> entityType() {
+		return AgentOrganizationReviewTable.class;
 	}
 
 	@Override
@@ -56,7 +54,7 @@ public class AgentOrganizationReviewList extends Listable<AgentOrganizationRevie
 			longKeys.add(Long.parseLong(k));
 		});
 
-		ofy().load().type(AgentOrganizationReviewEntity.class).ids(longKeys).forEach((k, v) -> {
+		ofy().load().type(AgentOrganizationReviewTable.class).ids(longKeys).forEach((k, v) -> {
 			
 			AgentOrganizationReviewSpec spec = EntityHelper.toObjectModel(v);
 			

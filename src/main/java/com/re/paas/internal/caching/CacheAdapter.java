@@ -4,18 +4,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import javax.cache.Cache;
 import javax.cache.CacheException;
-import javax.cache.CacheFactory;
 import javax.cache.CacheManager;
 
 import com.google.appengine.api.memcache.stdimpl.GCacheFactory;
 import com.re.paas.api.classes.Exceptions;
 import com.re.paas.api.classes.FluentHashMap;
+import com.re.paas.api.infra.cache.CacheFactory;
 import com.re.paas.api.logging.Logger;
 import com.re.paas.api.models.Model;
 import com.re.paas.api.utils.Utils;
-import com.re.paas.internal.clustering.MasterNodeConfig;
 import com.re.paas.internal.fusion.services.impl.JwtTokens;
 
 @Model
@@ -57,7 +55,7 @@ public class CacheAdapter {
 	    Cache cache = null;
 		
 		try {
-			CacheFactory cacheFactory = CacheManager.get().getCacheFactory();
+			CacheFactory cacheFactory = CacheManager.getInstance().getCacheFactory();
 			cache = (cacheFactory.createCache(properties));
 		} catch (CacheException e) {
 			Exceptions.throwRuntime(e);

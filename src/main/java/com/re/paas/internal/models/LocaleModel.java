@@ -6,7 +6,7 @@ import java.util.Locale;
 
 import com.googlecode.objectify.ObjectifyService;
 import com.googlecode.objectify.VoidWork;
-import com.re.paas.api.annotations.PlatformInternal;
+import com.re.paas.api.annotations.develop.PlatformInternal;
 import com.re.paas.api.classes.ThreadContext;
 import com.re.paas.api.models.BaseModel;
 import com.re.paas.api.models.Model;
@@ -15,7 +15,7 @@ import com.re.paas.internal.core.keys.ConfigKeys;
 import com.re.paas.internal.utils.LocaleUtils;
 
 @Model(dependencies = ConfigModel.class)
-public class LocaleModel implements BaseModel {
+public class LocaleModel extends BaseModel {
 
 	private static String defaultLocale;
 

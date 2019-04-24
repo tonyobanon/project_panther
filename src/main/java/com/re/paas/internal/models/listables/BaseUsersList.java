@@ -6,17 +6,16 @@ import java.util.List;
 import java.util.Map;
 
 import com.re.paas.api.classes.FluentHashMap;
+import com.re.paas.api.classes.IndexedNameSpec;
 import com.re.paas.api.listable.Listable;
 import com.re.paas.api.listable.ListingFilter;
 import com.re.paas.api.listable.ListingType;
 import com.re.paas.api.listable.SearchableUISpec;
-import com.re.paas.api.models.classes.IndexedNameSpec;
 import com.re.paas.internal.classes.spec.BaseUserSpec;
-import com.re.paas.internal.entites.BaseUserEntity;
-import com.re.paas.internal.fusion.functionalities.RoleFunctionalities;
 import com.re.paas.internal.fusion.functionalities.UserFunctionalities;
 import com.re.paas.internal.models.BaseUserModel;
 import com.re.paas.internal.models.RoleModel;
+import com.re.paas.internal.models.tables.users.BaseUserEntity;
 
 public class BaseUsersList extends Listable<BaseUserSpec>{
 

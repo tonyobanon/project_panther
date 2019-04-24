@@ -13,7 +13,7 @@ import com.google.gson.JsonParser;
 import com.google.gson.JsonSerializer;
 import com.re.paas.api.logging.Logger;
 import com.re.paas.api.logging.LoggerFactory;
-import com.re.paas.api.spi.ClassIdentityType;
+import com.re.paas.api.runtime.spi.ClassIdentityType;
 import com.re.paas.api.utils.ClassUtils;
 
 public class Json {
@@ -48,7 +48,7 @@ public class Json {
 
 	private static void registerTypeAdapters(GsonBuilder builder, Class<?> typeAdapterClass) {
 
-		Class<?> type = ClassUtils.getGenericRefs(typeAdapterClass.getClassLoader(), typeAdapterClass.getGenericSuperclass()).get(0);
+		Class<?> type = ClassUtils.getGenericRefs(typeAdapterClass.getClassLoader(), typeAdapterClass.getGenericInterfaces()[0]).get(0);
 		builder.registerTypeAdapter(type, ClassUtils.createInstance(typeAdapterClass));
 
 		LOG.debug("==== " + ClassUtils.toString(type) + ": " + ClassUtils.toString(typeAdapterClass) + "====");
@@ -56,6 +56,10 @@ public class Json {
 
 	public static Gson getGson() {
 		return instance;
+	}
+	
+	public static String toJson(Object o) {
+		return instance.toJson(o);
 	}
 
 	public static <T> T fromJson(String json, Class<T> type) {

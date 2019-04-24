@@ -15,7 +15,7 @@ import com.adyen.model.modification.ModificationResult;
 import com.adyen.service.Modification;
 import com.adyen.service.Payment;
 import com.adyen.service.exception.ApiException;
-import com.re.paas.api.annotations.Todo;
+import com.re.paas.api.annotations.develop.Todo;
 import com.re.paas.api.classes.ClientRBRef;
 import com.re.paas.api.classes.Exceptions;
 import com.re.paas.api.classes.FluentHashMap;
@@ -40,7 +40,7 @@ import com.re.paas.internal.models.errors.BillingError;
 import com.re.paas.internal.models.helpers.BillingHelper;
 import com.re.paas.internal.realms.AdminRealm;
 
-public class BasePaymentModel implements BaseModel {
+public class BasePaymentModel extends BaseModel {
 
 	public static final String IPN_CALLBACK_URL = "/ipn_callback";
 

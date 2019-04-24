@@ -6,10 +6,10 @@ import com.re.paas.api.classes.FluentArrayList;
 import com.re.paas.api.listable.ListingFilter;
 import com.re.paas.api.listable.ListingType;
 import com.re.paas.api.listable.SearchableUISpec;
-import com.re.paas.internal.entites.ApplicationEntity;
 import com.re.paas.internal.fusion.functionalities.UserApplicationFunctionalities;
 import com.re.paas.internal.models.BaseUserModel;
 import com.re.paas.internal.models.RoleModel;
+import com.re.paas.internal.models.tables.users.ApplicationEntity;
 import com.re.paas.internal.realms.AdminRealm;
 
 public class AdminApplicationsList extends AbstractApplicationsList {

@@ -2,14 +2,18 @@ package com.re.paas.api.templating;
 
 import com.re.paas.api.classes.Exceptions;
 import com.re.paas.api.designpatterns.Singleton;
+import com.re.paas.api.runtime.spi.AbstractResource;
+import com.re.paas.api.runtime.spi.SpiType;
 import com.re.paas.api.utils.ClassUtils;
 
-public abstract class TemplateObjectModelFactory<M extends TemplateObjectModel> {
+public abstract class TemplateObjectModelFactory<M extends TemplateObjectModel> extends AbstractResource {
 
 	private final Class<M> templateClass;
 
 	public TemplateObjectModelFactory() {
 
+		super(SpiType.TEMPLATE_OBJECT_MODEL_FACTORY);
+		
 		@SuppressWarnings("unchecked")
 		Class<M> templateClass = (Class<M>) ClassUtils
 				.getGenericRefs(getClass().getClassLoader(), getClass().getGenericSuperclass()).get(0);

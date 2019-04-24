@@ -2,6 +2,7 @@ package com.re.paas.internal.templating;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -13,11 +14,10 @@ import org.apache.velocity.runtime.RuntimeConstants;
 import com.google.common.collect.Maps;
 import com.re.paas.api.app_provisioning.AppClassLoader;
 import com.re.paas.api.classes.Exceptions;
-import com.re.paas.api.spi.DelegateInitResult;
+import com.re.paas.api.runtime.spi.DelegateInitResult;
 import com.re.paas.api.templating.AbstractObjectModelSpiDelegate;
 import com.re.paas.api.templating.TemplateObjectModel;
 import com.re.paas.api.utils.ClassUtils;
-import com.re.paas.internal.app_provisioning.AppProvisioner;
 
 public class ObjectModelSpiDelegate extends AbstractObjectModelSpiDelegate {
 
@@ -41,9 +41,10 @@ public class ObjectModelSpiDelegate extends AbstractObjectModelSpiDelegate {
 	}
 	
 	@Override
-	protected void remove(List<Class<TemplateObjectModel>> classes) {
+	protected List<Class<TemplateObjectModel>> remove(List<Class<TemplateObjectModel>> classes) {
 		String app = ((AppClassLoader) classes.get(0).getClassLoader()).getAppId();
 		getVelocityEngines().remove(app);
+		return Collections.emptyList();
 	}
 
 	private final Map<String, VelocityEngine> getVelocityEngines() {
@@ -56,7 +57,7 @@ public class ObjectModelSpiDelegate extends AbstractObjectModelSpiDelegate {
 
 		TemplateObjectModel tm = ClassUtils.createInstance(c);
 
-		String appId = AppProvisioner.get().getAppId(tm.getClass());
+		String appId = ClassUtils.getAppId(tm.getClass());
 
 		VelocityEngine ve = getVelocityEngines().get(appId);
 
@@ -74,7 +75,7 @@ public class ObjectModelSpiDelegate extends AbstractObjectModelSpiDelegate {
 			try {
 
 				loaderClass = c.getClassLoader()
-						.loadClass("com.ce.saas.internal.templating.api.ClasspathResourceLoader");
+						.loadClass("com.re.paas.internal.templating.api.ClasspathResourceLoader");
 
 			} catch (ClassNotFoundException ex) {
 				Exceptions.throwRuntime(ex);

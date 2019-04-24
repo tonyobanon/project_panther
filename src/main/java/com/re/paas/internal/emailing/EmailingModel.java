@@ -22,7 +22,7 @@ import com.re.paas.internal.models.RBModel;
 import com.re.paas.internal.templating.TemplatingModel;
 import com.re.paas.internal.utils.JMSUtil;
 
-public class EmailingModel implements BaseModel {
+public class EmailingModel extends BaseModel {
 
 	@Override
 	public String path() {

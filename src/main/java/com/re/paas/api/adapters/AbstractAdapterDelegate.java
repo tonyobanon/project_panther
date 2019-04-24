@@ -1,23 +1,25 @@
 package com.re.paas.api.adapters;
 
 import java.io.FileNotFoundException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.BiConsumer;
 
 import com.re.paas.api.Adapter;
+import com.re.paas.api.annotations.ProtectionContext;
 import com.re.paas.api.classes.Exceptions;
 import com.re.paas.api.clustering.NodeRole;
-import com.re.paas.api.spi.DelegateInitResult;
-import com.re.paas.api.spi.DelegateSpec;
-import com.re.paas.api.spi.SpiDelegate;
-import com.re.paas.api.spi.SpiTypes;
-import com.re.paas.api.threadsecurity.ThreadSecurity;
+import com.re.paas.api.runtime.spi.DelegateInitResult;
+import com.re.paas.api.runtime.spi.DelegateSpec;
+import com.re.paas.api.runtime.spi.SpiDelegate;
+import com.re.paas.api.runtime.spi.SpiType;
 import com.re.paas.api.utils.ClassUtils;
 import com.re.paas.internal.Platform;
 
-@DelegateSpec(dependencies = { SpiTypes.NODE_ROLE })
-public abstract class AbstractAdapterDelegate<T extends Adapter> extends SpiDelegate<T> {
+@DelegateSpec(dependencies = { SpiType.NODE_ROLE })
+public abstract class AbstractAdapterDelegate<U extends Object, T extends Adapter<U>> extends SpiDelegate<T> {
 
 	private AdapterConfig config;
 	private static final String ADAPTERS_RESOURCE_NAMESPACE = "ADAPTERS_RESOURCE_NAMESPACE";
@@ -36,7 +38,7 @@ public abstract class AbstractAdapterDelegate<T extends Adapter> extends SpiDele
 		// If this is the master, load adapter if configuration is available
 		if (Platform.isInstalled() && NodeRole.getDelegate().isMaster()) {
 
-			AdapterType type = ClassUtils.createInstance((Class<? extends Adapter>) getResourceClasses().get(0))
+			AdapterType type = ClassUtils.createInstance((Class<? extends Adapter<?>>) getResourceClasses().get(0))
 					.getType();
 
 			AdapterConfig config = new AdapterConfig(type);
@@ -50,13 +52,13 @@ public abstract class AbstractAdapterDelegate<T extends Adapter> extends SpiDele
 				setConfig(config);
 
 				// Load adapter resource
-				this.load();
+				this.load(LoadPhase.START);
 
 				return DelegateInitResult.SUCCESS;
 
 			} catch (Exception e) {
 
-				if (e instanceof FileNotFoundException) {
+				if (Exceptions.recurseCause(e) instanceof FileNotFoundException) {
 					return DelegateInitResult.PENDING_ADAPTER_CONFIGURATION.setType(type);
 				}
 
@@ -77,23 +79,32 @@ public abstract class AbstractAdapterDelegate<T extends Adapter> extends SpiDele
 		return config;
 	}
 
-	public AbstractAdapterDelegate<T> setConfig(AdapterConfig config) {
-		ThreadSecurity.verify();
+	@ProtectionContext
+	public AbstractAdapterDelegate<U, T> setConfig(AdapterConfig config) {
 		this.config = config;
 		return this;
 	}
 
-	public abstract Object load();
+	@ProtectionContext
+	public abstract Object load(LoadPhase phase);
 
 	public T getAdapter(String name) {
 		return getAdapters().get(name);
 	}
 
+	public boolean requiresMigration() {
+		return false;
+	}
+
+	/**
+	 * 
+	 * @param outgoing The outgoing adapter
+	 */
+	public void migrate(U outgoing, BiConsumer<Integer, String> listener) {
+	}
+
 	public T getAdapter() {
-		if (getConfig() != null) {
-			return getAdapters().get(getConfig().getAdapterName());
-		}
-		return null;
+		return getAdapters().get(getConfig().getAdapterName());
 	}
 
 	@Override
@@ -111,16 +122,24 @@ public abstract class AbstractAdapterDelegate<T extends Adapter> extends SpiDele
 	}
 
 	@Override
-	protected final void remove(List<Class<T>> classes) {
+	protected final List<Class<T>> remove(List<Class<T>> classes) {
 
 		Map<String, T> adapters = getAdapters();
-
-		// Todo: Do not remove if active
+		List<Class<T>> result = new ArrayList<>();
 
 		classes.forEach(c -> {
+
+			if (ClassUtils.equals(c, getAdapter().getClass())) {
+				// Do not remove if active
+				result.add(c);
+				return;
+			}
+
 			T o = ClassUtils.createInstance(c);
 			adapters.remove(o.name());
 		});
+
+		return result;
 	}
 
 	private void createResourceMaps() {

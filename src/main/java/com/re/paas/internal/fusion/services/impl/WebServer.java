@@ -24,7 +24,9 @@ import org.eclipse.jetty.server.handler.AbstractHandler;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 
 import com.google.common.collect.ImmutableList;
-import com.re.paas.api.annotations.PlatformInternal;
+import com.re.paas.api.annotations.develop.PlatformInternal;
+import com.re.paas.api.app_provisioning.AppClassLoader;
+import com.re.paas.api.cryto.CryptoAdapter;
 import com.re.paas.api.cryto.KeyStoreProperties;
 import com.re.paas.api.cryto.SSLContext;
 import com.re.paas.api.fusion.server.BaseService;
@@ -35,7 +37,11 @@ import com.re.paas.api.fusion.server.RoutingContext;
 import com.re.paas.api.fusion.services.AbstractServiceDelegate;
 import com.re.paas.api.fusion.ui.AbstractComponent;
 import com.re.paas.api.logging.Logger;
+import com.re.paas.api.runtime.Consumer;
+import com.re.paas.api.runtime.ExecutorFactory;
+import com.re.paas.api.runtime.Invokable;
 import com.re.paas.internal.Platform;
+import com.re.paas.internal.runtime.spi.AppProvisioner;
 
 public class WebServer {
 
@@ -61,11 +67,13 @@ public class WebServer {
 		// SSL Connection Factory
 		SslConnectionFactory ssl = null;
 
-		KeyStoreProperties keyStoreManager = null;
+		KeyStoreProperties keyStoreProperties = null;
 		SSLContext sslContext;
 
-		if (Platform.isInstalled() && (keyStoreManager = KeyStoreProperties.get()).keyStoreEnabled()
-				&& (sslContext = keyStoreManager.getSslContext()) != null) {
+		if (Platform.isInstalled()
+				&& (keyStoreProperties = CryptoAdapter.getDelegate().getProvider().getKeyStoreProperties())
+						.keyStoreEnabled()
+				&& (sslContext = keyStoreProperties.getSslContext()) != null) {
 
 			http_config.setSecureScheme("https");
 			http_config.setSecurePort(options.getSslPort());
@@ -76,11 +84,11 @@ public class WebServer {
 			// SSL Context Factory for HTTPS and HTTP/2
 			SslContextFactory sslContextFactory = new SslContextFactory();
 
-			sslContextFactory.setKeyStoreType(KeyStoreProperties.getType());
-			
+			sslContextFactory.setKeyStoreType(keyStoreProperties.getType());
+
 			sslContextFactory.setCertAlias(sslContext.getCertAlias());
-			sslContextFactory.setKeyStore(keyStoreManager.getKeystore());
-			sslContextFactory.setKeyStorePassword(keyStoreManager.getKeyStorePassword());
+			sslContextFactory.setKeyStore(keyStoreProperties.getKeystore());
+			sslContextFactory.setKeyStorePassword(keyStoreProperties.getKeyStorePassword());
 
 			sslContextFactory.setCipherComparator(HTTP2Cipher.COMPARATOR);
 
@@ -153,6 +161,9 @@ public class WebServer {
 
 			AbstractServiceDelegate serviceDelegate = BaseService.getDelegate();
 
+			// Based on the path, we need to determine the application that owns it
+			String appId = path.split("/")[1];
+
 			// Find all matching handlers
 
 			List<RouteHandler> handlers = new ArrayList<>();
@@ -182,7 +193,23 @@ public class WebServer {
 				// Create exception catching mechanism
 
 				try {
-					handler.getHandler().accept(ctx);
+
+					Consumer<RoutingContext> o = handler.getHandler();
+
+					Invokable<Void> i = () -> {
+						try {
+							AppClassLoader cl = AppProvisioner.get().getClassloader(appId);
+							Class<?> consumerClazz = cl.loadClass(Consumer.class.getName());
+
+							consumerClazz.getDeclaredMethod("accept", Object.class).invoke(o, ctx);
+							return null;
+							
+						} catch (Exception e) {
+							throw new RuntimeException(e);
+						}
+					};
+					
+					ExecutorFactory.get().execute(i);
 
 				} catch (Exception e) {
 					ctx.response().setStatusCode(HttpServletResponse.SC_INTERNAL_SERVER_ERROR).end(

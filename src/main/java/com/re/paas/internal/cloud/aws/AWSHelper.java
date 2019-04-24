@@ -26,7 +26,6 @@ import com.google.gson.JsonObject;
 import com.re.paas.api.classes.Exceptions;
 import com.re.paas.api.infra.cloud.CloudEnvironment;
 import com.re.paas.internal.cloud.KVPair;
-import com.re.paas.internal.clustering.MasterNodeConfig;
 import com.re.paas.internal.clustering.classes.Utils;
 
 public class AWSHelper {

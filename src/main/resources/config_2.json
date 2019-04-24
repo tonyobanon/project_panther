@@ -1,0 +1,14 @@
+{
+
+	"app_dependencies": [],
+
+	"custom_spi_types": {
+	},
+	
+	"platform.spi.model.fileSuffixes": "",
+	"platform.spi.logger.fileSuffixes": "",
+	
+	"platform.spi.error.delegate": "com.re.paas.internal.errors.ErrorSpiDelegate",
+	"platform.spi.cloud_environment.delegate": "com.re.paas.internal.cloud_environment.CloudEnvironmentDelegate"
+	
+}

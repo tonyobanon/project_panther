@@ -2,56 +2,56 @@ package com.re.paas.internal.infra.filesystem;
 
 import java.net.URI;
 import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
 import java.nio.file.spi.FileSystemProvider;
 
+import com.re.paas.api.annotations.ProtectionContext;
 import com.re.paas.api.utils.ClassUtils;
-import com.re.paas.internal.Application;
+import com.re.paas.internal.Interceptor;
 
 public class FileSystemProviders {
 
 	private static FileSystem internalFs;
 
-	/**
-	 * This function eagerly sets the Jvm FileSystemProvider on app startup, since
-	 * this cannot be changed later in time
-	 */
+	@ProtectionContext
 	public static void init() {
 		System.setProperty("java.nio.file.spi.DefaultFileSystemProvider", FileSystemProviderImpl.class.getName());
-		initInternalFs();
+
+		FileSystemProvider provider = FileSystems.getDefault().provider();
+
+		// At this point, we are sure that provider.getClass() ==
+		// com.re.paas.internal.infra.filesystem.FileSystemProviderImpl
+
+		// However, since this method is also called in AppDelegate, we cannot
+		// cast normally, because the active classloader would have changed then, hence
+		// a ClassCastException will be thrown. Hence, the need to use reflection
+
+		FileSystemProvider iProvider = (FileSystemProvider) ClassUtils.getFieldValue(provider.getClass(), "provider");
+
+		// Save reference to OS-internal file system
+		internalFs = iProvider.getFileSystem(URI.create("file:///"));
+
+		System.clearProperty("java.nio.file.spi.DefaultFileSystemProvider");
 	}
 
-	@SuppressWarnings("unchecked")
-	private static void initInternalFs() {
+	/**
+	 * Reload the Jvm file system. This should be called after scanning protection
+	 * context, because we need to update the default file system class with the
+	 * transformed version that contains an indirection to {@link Interceptor} (if
+	 * any exists)
+	 */
+	@ProtectionContext
+	public static void reload() {
 
-		ClassLoader cl = Application.class.getClassLoader();
-		Class<FileSystemProvider> internalFsProviderClass = null;
-		FileSystemProvider internalFsProvider = null;
+		// At this point, we are sure that FileSystems.getDefault().getClass() ==
+		// com.re.paas.internal.infra.filesystem.FileSystemImpl
+		
+		FileSystem fs0 = FileSystems.getDefault();
 
-		String os = System.getProperty("os.name").toLowerCase();
-
-		try {
-			if (os.indexOf("win") >= 0) {
-				internalFsProviderClass = (Class<FileSystemProvider>) cl
-						.loadClass("sun.nio.fs.WindowsFileSystemProvider");
-			} else if (os.indexOf("mac") >= 0) {
-				internalFsProviderClass = (Class<FileSystemProvider>) cl.loadClass("sun.nio.fs.MacOSXFileSystemProvider");
-			} else if (os.indexOf("sunos") >= 0) {
-				internalFsProviderClass = (Class<FileSystemProvider>) cl
-						.loadClass("sun.nio.fs.SolarisFileSystemProvider");
-			} else if (os.indexOf("unix") >= 0) {
-				internalFsProviderClass = (Class<FileSystemProvider>) cl.loadClass("sun.nio.fs.UnixFileSystemProvider");
-			} else if (os.indexOf("linux") >= 0) {
-				internalFsProviderClass = (Class<FileSystemProvider>) cl
-						.loadClass("sun.nio.fs.LinuxFileSystemProvider");
-			} else if (os.indexOf("aix") >= 0) {
-				internalFsProviderClass = (Class<FileSystemProvider>) cl.loadClass("sun.nio.fs.AixFileSystemProvider");
-			}
-		} catch (ClassNotFoundException e) {
-			throw new RuntimeException(e);
-		}
-
-		internalFsProvider = ClassUtils.createInstance(internalFsProviderClass);
-		internalFs = internalFsProvider.getFileSystem(URI.create("file:///"));
+		FileSystem fs = (FileSystem) ClassUtils.getFieldValue(fs0.getClass(), fs0, "fs");
+		
+		ClassUtils.updateField(FileSystems.class.getDeclaredClasses()[0], "defaultFileSystem",
+				new FileSystemProviderImpl(fs).getFileSystem(URI.create("file:///")));
 	}
 
 	/**
@@ -59,6 +59,7 @@ public class FileSystemProviders {
 	 * 
 	 * @return
 	 */
+	@ProtectionContext
 	public static FileSystem getInternal() {
 		return internalFs;
 	}

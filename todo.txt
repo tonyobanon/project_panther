@@ -1,3 +1,90 @@
+
+I introduced a system property "bootstage.scanProtectionContext"
+to bypass constraint in ThreadSecurity.setInstance(..)
+When adding the permission sets, this should be taken note of
+
+///////////////////////////
+
+Should ClientRBRef bw supported as a column type?
+
+For properties that are lists and maps
+try to add a default
+
+Add a feature on QOpt that allows only items with specific attribute values
+to be projected in. This will help us optimize these indexes
+
+In the DB Api, add helper annotation table fields, i.e
+1. Serialize
+2. Auto generated
+
+////////////////////////////
+
+
+Figure out unload() in SpiDelegate
+
+The credentials path is broken in GoogleHelper:31
+
+When provisioning apps, eargerly load all classes
+into the app's class loader
+
+Use static analysis to process @Final annotation. This prevents
+children of an interface from overriding a method, even though
+it is valid in the Jvm
+
+Implement the CodeSecurity class
+
+Finish work on DelegateInitResult in SpiDelegateHandler
+Finish work on Resource
+
+
+Properly group singletons because I can see that some classes
+work together e.h the SPI implementations
+
+Stop using Platform Internal
+
+Moving forward, use collections from http://www.magicwerk.org/page-collections-overview.html
+
+These components needs DB:
+1. User defined permissions
+2. SpiBase's trusted app list
+
+
+
+A new attack vector:
+1. A malicious resource class is created
+2. It prevents being loaded by using a different class name
+3. It attempts to use the SpiDelegate's rMap
+4. The SPI delegate grants it access because of its type
+5. It fills up the rMap's space
+
+When Fusion request come in, inorder we get the appId
+and check
+
+Modify qopt tools to use the adapter delegate's cache
+
+Add migration logic for all AdapterLogic
+
+Work on UIContext
+
+Write logic to determine if Platform is installed
+Also, introspect getResourcePath() -> Do we need to create it ahead of time?
+
+Build Internal Code Generator that works based using predefined annotations, see ThreadSecurity.verify()
+
+Integrate Apache solr (if it's compatible with Jvm FileSystemProvider)
+
+determine if item count can be added to the index description in the Database API
+
+create a user-facing seetings that helps describes the provisioned throughput, as this is not part of the Database API
+
+use JsonParser singleton instead of GsonFactory
+
+Implement migration for all adapters
+
+Add security manager for new File(..)
+
+Replace gson.JsonObject with fusion
+
 Go through delegate and ensure that they are consuming resources in init().. 
 
 Simplify enum.from
@@ -7,11 +94,15 @@ On installation, detect that the user is an admin
 I noticed that delegates have not been using createResourceMaps()..
 
 
+apps, adapter_config, spi_config, crypto, web_assets
+
+Note: properly synchrionize when writing to above files
+
 ** Clustering scenarios
 1. If a master leaves, the slaves should rejoin
 
 
-** ThreadSecurity scanarios
+** ThreadSecurity scenarios
 1. When clustering and serving Http requests, manage how
    threads are marked as secure
 

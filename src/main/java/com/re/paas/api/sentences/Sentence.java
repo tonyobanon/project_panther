@@ -6,8 +6,8 @@ import java.util.Map;
 
 import com.re.paas.api.classes.ClientRBRef;
 import com.re.paas.api.classes.ClientResources;
+import com.re.paas.api.classes.IndexedNameSpec;
 import com.re.paas.api.classes.KeyValuePair;
-import com.re.paas.api.models.classes.IndexedNameSpec;
 
 public class Sentence implements Serializable {
 

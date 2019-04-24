@@ -7,7 +7,7 @@ import java.util.Map.Entry;
 import java.util.function.Consumer;
 
 import com.google.common.collect.Lists;
-import com.re.paas.api.annotations.PlatformInternal;
+import com.re.paas.api.annotations.develop.PlatformInternal;
 import com.re.paas.api.logging.Logger;
 import com.re.paas.api.models.BaseModel;
 import com.re.paas.api.templating.TemplateObjectModel;
@@ -17,7 +17,7 @@ import com.re.paas.api.utils.ClassUtils;
 /**
  * This model used Apache Velocity as the default templating engine
  */
-public class TemplatingModel implements BaseModel {
+public class TemplatingModel extends BaseModel {
 
 	@Override
 	public String path() {

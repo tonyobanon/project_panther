@@ -2,8 +2,6 @@ package com.re.paas.internal.clustering.protocol;
 
 import java.util.concurrent.atomic.AtomicReferenceArray;
 
-import com.re.paas.api.utils.Utils;
-
 public class Playground {
 
 	public static void main(String[] args) {

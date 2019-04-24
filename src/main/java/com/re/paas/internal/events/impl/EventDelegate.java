@@ -3,6 +3,7 @@ package com.re.paas.internal.events.impl;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -15,8 +16,9 @@ import com.re.paas.api.classes.PlatformException;
 import com.re.paas.api.events.AbstractEventDelegate;
 import com.re.paas.api.events.BaseEvent;
 import com.re.paas.api.events.EventError;
+import com.re.paas.api.events.EventListener;
 import com.re.paas.api.events.Subscribe;
-import com.re.paas.api.spi.DelegateInitResult;
+import com.re.paas.api.runtime.spi.DelegateInitResult;
 import com.re.paas.api.utils.ClassUtils;
 import com.re.paas.internal.compute.Scheduler;
 
@@ -27,7 +29,7 @@ public class EventDelegate extends AbstractEventDelegate {
 
 	@Override
 	public DelegateInitResult init() {
-		Consumer<Class<Object>> consumer = (c) -> {
+		Consumer<Class<EventListener>> consumer = (c) -> {
 			registerListener(c);
 		};
 		forEach(consumer);
@@ -47,17 +49,18 @@ public class EventDelegate extends AbstractEventDelegate {
 	}
 
 	@Override
-	protected void add(List<Class<Object>> classes) {
+	protected void add(List<Class<EventListener>> classes) {
 		classes.forEach(c -> {
 			registerListener(c);
 		});
 	}
 
 	@Override
-	protected void remove(List<Class<Object>> classes) {
+	protected List<Class<EventListener>> remove(List<Class<EventListener>> classes) {
 		classes.forEach(c -> {
 			unregisterListener(c);
 		});
+		return Collections.emptyList();
 	}
 
 	private static void unregisterListener(Class<?> c) {

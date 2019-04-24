@@ -8,14 +8,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import com.googlecode.objectify.Key;
 import com.googlecode.objectify.cmd.QueryKeys;
-import com.re.paas.api.annotations.BlockerBlockerTodo;
-import com.re.paas.api.annotations.BlockerTodo;
-import com.re.paas.api.annotations.PlatformInternal;
-import com.re.paas.api.annotations.Todo;
+import com.re.paas.api.annotations.develop.BlockerBlockerTodo;
+import com.re.paas.api.annotations.develop.BlockerTodo;
+import com.re.paas.api.annotations.develop.PlatformInternal;
+import com.re.paas.api.annotations.develop.Todo;
 import com.re.paas.api.classes.FluentArrayList;
 import com.re.paas.api.classes.FluentHashMap;
+import com.re.paas.api.classes.IndexedNameSpec;
 import com.re.paas.api.classes.PlatformException;
 import com.re.paas.api.classes.ResourceException;
 import com.re.paas.api.listable.IndexedNameType;
@@ -26,21 +26,18 @@ import com.re.paas.api.listable.QueryFilter;
 import com.re.paas.api.listable.SearchableUISpec;
 import com.re.paas.api.models.BaseModel;
 import com.re.paas.api.models.ModelMethod;
-import com.re.paas.api.models.classes.IndexedNameSpec;
 import com.re.paas.api.models.classes.InstallOptions;
 import com.re.paas.api.utils.Utils;
 import com.re.paas.internal.caching.CacheAdapter;
 import com.re.paas.internal.caching.CacheType;
 import com.re.paas.internal.classes.CursorMoveType;
 import com.re.paas.internal.classes.ListableContext;
-import com.re.paas.internal.entites.IndexedNameEntity;
 import com.re.paas.internal.fusion.functionalities.PlatformFunctionalities;
-import com.re.paas.internal.fusion.functionalities.RoleFunctionalities;
 import com.re.paas.internal.fusion.functionalities.SearchFunctionalities;
 import com.re.paas.internal.models.errors.ListablesError;
 import com.re.paas.internal.models.helpers.CacheHelper;
 import com.re.paas.internal.models.helpers.EntityUtils;
-import com.re.paas.internal.models.listables.IndexedNameTypes;
+import com.re.paas.internal.models.tables.IndexedNameTable;
 
 @BlockerTodo("Cleanup of listing contexts is poorly done, and this could be expensive")
 
@@ -48,7 +45,7 @@ import com.re.paas.internal.models.listables.IndexedNameTypes;
 
 @Todo("Make search functionality configurable")
 
-public class SearchModel implements BaseModel {
+public class SearchModel extends BaseModel {
 
 	// Persistent
 	public static final String CACHE_KEY_LIST_$TYPE = "CACHE_KEY_LIST_$TYPE";
@@ -374,7 +371,7 @@ public class SearchModel implements BaseModel {
 	public static void updateIndexedNameType(Object oldEntityId, Object newEntityId, IndexedNameType oldType,
 			IndexedNameType newType) {
 
-		ofy().load().type(IndexedNameEntity.class).filter("entityId = ", oldEntityId.toString()).forEach(e -> {
+		ofy().load().type(IndexedNameTable.class).filter("entityId = ", oldEntityId.toString()).forEach(e -> {
 			if (e.getType().equals(oldType.asString())) {
 
 				e.setEntityId(newEntityId.toString());
@@ -390,9 +387,9 @@ public class SearchModel implements BaseModel {
 
 		List<Key<?>> keys = new FluentArrayList<>();
 
-		ofy().load().type(IndexedNameEntity.class).filter("entityId = ", entityId).forEach(e -> {
+		ofy().load().type(IndexedNameTable.class).filter("entityId = ", entityId).forEach(e -> {
 			if (e.getType().equals(type.asString())) {
-				keys.add(Key.create(IndexedNameEntity.class, e.getId()));
+				keys.add(Key.create(IndexedNameTable.class, e.getId()));
 			}
 		});
 
@@ -411,7 +408,7 @@ public class SearchModel implements BaseModel {
 				.addIfNotNull(spec.getZ());
 		Integer[] indexes = Utils.indexes(nameList.size());
 
-		List<IndexedNameEntity> ies = new FluentArrayList<>();
+		List<IndexedNameTable> ies = new FluentArrayList<>();
 
 		Utils.permute(indexes).forEach(l1 -> {
 
@@ -434,7 +431,7 @@ public class SearchModel implements BaseModel {
 				break;
 			}
 
-			IndexedNameEntity ie = new IndexedNameEntity().setType(type.asString()).setEntityId(spec.getKey()).setX(x)
+			IndexedNameTable ie = new IndexedNameTable().setType(type.asString()).setEntityId(spec.getKey()).setX(x)
 					.setY(y).setZ(z);
 
 			ies.add(ie);
@@ -514,11 +511,11 @@ public class SearchModel implements BaseModel {
 		List<Long> keys = new FluentArrayList<>();
 		List<String> filteredKeys = new FluentArrayList<>();
 
-		EntityUtils.search(IndexedNameEntity.class, values, o -> {
+		EntityUtils.search(IndexedNameTable.class, values, o -> {
 			keys.add(o.getId());
 		});
 
-		ofy().load().type(IndexedNameEntity.class).ids(keys).forEach((k, v) -> {
+		ofy().load().type(IndexedNameTable.class).ids(keys).forEach((k, v) -> {
 			if (v.getType().equals(type.getValue()) && !filteredKeys.contains(v.getEntityId())) {
 				filteredKeys.add(v.getEntityId());
 			}

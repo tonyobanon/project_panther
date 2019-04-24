@@ -18,7 +18,6 @@ public abstract class AbstractFileSystemProvider extends FileSystemProvider {
 	 * This indicates that the previously started transaction has ended
 	 */
 	public abstract void endContext();
-
 	
 	public abstract Integer getReferenceCount();
 }

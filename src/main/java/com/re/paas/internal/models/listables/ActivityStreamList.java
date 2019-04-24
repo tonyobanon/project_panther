@@ -12,12 +12,11 @@ import com.re.paas.api.listable.ListingFilter;
 import com.re.paas.api.listable.ListingType;
 import com.re.paas.api.listable.SearchableUISpec;
 import com.re.paas.internal.classes.spec.ActivitySpec;
-import com.re.paas.internal.entites.ActivityStreamEntity;
 import com.re.paas.internal.fusion.functionalities.PlatformFunctionalities;
-import com.re.paas.internal.fusion.functionalities.RoleFunctionalities;
 import com.re.paas.internal.models.BaseUserModel;
 import com.re.paas.internal.models.RoleModel;
 import com.re.paas.internal.models.helpers.EntityHelper;
+import com.re.paas.internal.models.tables.ActivityStreamTable;
 
 public class ActivityStreamList extends Listable<ActivitySpec> {
 
@@ -86,8 +85,8 @@ public class ActivityStreamList extends Listable<ActivitySpec> {
 	}
 
 	@Override
-	public Class<ActivityStreamEntity> entityType() {
-		return ActivityStreamEntity.class;
+	public Class<ActivityStreamTable> entityType() {
+		return ActivityStreamTable.class;
 	}
 
 	@Override
@@ -107,7 +106,7 @@ public class ActivityStreamList extends Listable<ActivitySpec> {
 			longKeys.add(Long.parseLong(k));
 		});
 
-		ofy().load().type(ActivityStreamEntity.class).ids(longKeys).forEach((k, v) -> {
+		ofy().load().type(ActivityStreamTable.class).ids(longKeys).forEach((k, v) -> {
 			result.put(k, EntityHelper.toObjectModel(v));
 		});
 

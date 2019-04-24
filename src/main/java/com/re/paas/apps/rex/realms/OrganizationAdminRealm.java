@@ -2,37 +2,32 @@ package com.re.paas.apps.rex.realms;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.function.BiConsumer;
 
 import com.re.paas.api.classes.ClientRBRef;
 import com.re.paas.api.classes.ClientResources;
 import com.re.paas.api.classes.FluentArrayList;
-import com.re.paas.api.classes.ResourceException;
 import com.re.paas.api.forms.Section;
 import com.re.paas.api.fusion.services.Functionality;
 import com.re.paas.api.listable.QueryFilter;
 import com.re.paas.api.realms.Realm;
 import com.re.paas.api.realms.RealmApplicationSpec;
-import com.re.paas.api.sentences.ObjectType;
 import com.re.paas.apps.rex.classes.spec.AgentOrganizationSpec;
 import com.re.paas.apps.rex.functionality.AgentFunctionalities;
 import com.re.paas.apps.rex.functionality.AgentOrganizationFunctionalities;
+import com.re.paas.apps.rex.models.BaseAgentModel;
 import com.re.paas.apps.rex.models.listables.IndexedNameTypes;
+import com.re.paas.apps.rex.models.tables.AgentOrganizationAdminTable;
+import com.re.paas.apps.rex.models.tables.AgentOrganizationTable;
 import com.re.paas.apps.rex.sentences.ObjectTypes;
 import com.re.paas.apps.shared.Functionalities;
-import com.re.paas.internal.entites.directory.AgentOrganizationAdminEntity;
-import com.re.paas.internal.entites.directory.AgentOrganizationEntity;
-import com.re.paas.internal.fusion.functionalities.UserApplicationFunctionalities;
 import com.re.paas.internal.models.ApplicationModel;
-import com.re.paas.internal.models.BaseAgentModel;
 import com.re.paas.internal.models.RoleModel;
 import com.re.paas.internal.models.helpers.EntityUtils;
 import com.re.paas.internal.models.helpers.FormFieldRepository;
 import com.re.paas.internal.models.helpers.FormFieldRepository.FormField;
-import com.re.paas.internal.realms.AdminRealm;
 import com.re.paas.internal.utils.ObjectUtils;
 
-public class OrganizationAdminRealm implements Realm {
+public class OrganizationAdminRealm extends Realm {
 
 	@Override
 	public String name() {
@@ -73,11 +68,11 @@ public class OrganizationAdminRealm implements Realm {
 
 		Map<String, String> keys = new HashMap<String, String>();
 
-		AgentOrganizationAdminEntity oae = ofy().load().type(AgentOrganizationAdminEntity.class).id(userId).safe();
-		AgentOrganizationEntity oe = ofy().load().type(AgentOrganizationEntity.class).id(oae.getAgentOrganization())
+		AgentOrganizationAdminTable oae = ofy().load().type(AgentOrganizationAdminTable.class).id(userId).safe();
+		AgentOrganizationTable oe = ofy().load().type(AgentOrganizationTable.class).id(oae.getAgentOrganization())
 				.safe();
 
-		EntityUtils.query(AgentOrganizationEntity.class, QueryFilter.get("city", oe.getCity())).forEach(e -> {
+		EntityUtils.query(AgentOrganizationTable.class, QueryFilter.get("city", oe.getCity())).forEach(e -> {
 			keys.put(e.getAdmin().toString(), ClientRBRef.forAll("Admin_agent", "at").toString()
 					+ ClientResources.HtmlCharacterEntities.SPACE + oe.getName());
 		});

@@ -1,16 +1,17 @@
 package com.re.paas.api.designpatterns;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.re.paas.api.spi.SpiDelegateHandler;
-import com.re.paas.api.threadsecurity.ThreadSecurity;
+import com.re.paas.api.runtime.ThreadSecurity;
+import com.re.paas.api.runtime.spi.SpiDelegateHandler;
 import com.re.paas.api.utils.ClassUtils;
 
 
 public class Singleton {
 
-	private static final Map<String, Object> singletons = new HashMap<>();
+	private static final Map<String, Object> singletons = Collections.synchronizedMap(new HashMap<>());
 
 	public static <T> T get(Class<T> type) {
 		
@@ -43,10 +44,10 @@ public class Singleton {
 
 		String name = ClassUtils.toString(type);
 		
-		if (!ThreadSecurity.get().isTrusted()) {
+		if (!ThreadSecurity.hasTrust()) {
 			
 			if(singletons.containsKey(name)) {
-				throw new SecurityException(name + " is already regustered");
+				throw new SecurityException(name + " is already registered");
 			}
 		}
 

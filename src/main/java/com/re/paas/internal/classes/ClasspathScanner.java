@@ -2,7 +2,6 @@ package com.re.paas.internal.classes;
 
 import java.io.File;
 import java.io.IOException;
-import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Modifier;
 import java.nio.file.FileVisitResult;
@@ -23,8 +22,8 @@ import com.google.common.collect.Lists;
 import com.re.paas.api.app_provisioning.AppClassLoader;
 import com.re.paas.api.classes.Exceptions;
 import com.re.paas.api.logging.Logger;
-import com.re.paas.api.spi.BaseSPILocator.ShuffleStrategy;
-import com.re.paas.api.spi.ClassIdentityType;
+import com.re.paas.api.runtime.spi.BaseSPILocator.ShuffleStrategy;
+import com.re.paas.api.runtime.spi.ClassIdentityType;
 import com.re.paas.api.utils.ClassUtils;
 import com.re.paas.api.utils.Utils;
 
@@ -32,10 +31,9 @@ public class ClasspathScanner<T> {
 
 	private static final Logger LOG = Logger.get(ClasspathScanner.class);
 
-	private Map<ShuffleStrategy, Function<List<Class<? extends T>>, List<Class<? extends T>>>> shuffleStrategies = new HashMap<>();
-	private static final boolean allowAbstractTypes = false;
+	private Map<ShuffleStrategy, Function<ArrayList<Class<? extends T>>, ArrayList<Class<? extends T>>>> shuffleStrategies = new HashMap<>();
 
-	private AppClassLoader classLoader;
+	private ClassLoader cl;
 
 	private final String fileExtension;
 	private final Iterable<String> nameSuffixes;
@@ -44,6 +42,9 @@ public class ClasspathScanner<T> {
 	private ShuffleStrategy shuffleStrategy = ShuffleStrategy.HIGHER_DEPTH;
 
 	private int maxCount = -1;
+
+	private boolean loadAbstractClasses = false;
+	private boolean accessAllConstructors = false;
 
 	/**
 	 * This constructor should be used for XML and JSON artifacts
@@ -56,7 +57,11 @@ public class ClasspathScanner<T> {
 		this.classIdentityType = null;
 		this.classType = type;
 	}
-	
+
+	public ClasspathScanner(Class<T> type) {
+		this("", type);
+	}
+
 	public ClasspathScanner(String nameSuffix, Class<T> type) {
 		this(nameSuffix, type, ClassIdentityType.ASSIGNABLE_FROM);
 	}
@@ -64,7 +69,7 @@ public class ClasspathScanner<T> {
 	public ClasspathScanner(String nameSuffix, Class<T> type, ClassIdentityType identityType) {
 		this(Lists.newArrayList(nameSuffix), type, identityType);
 	}
-	
+
 	/**
 	 * This constructor should be used for classes
 	 */
@@ -75,7 +80,7 @@ public class ClasspathScanner<T> {
 
 		this.classIdentityType = identityType;
 		this.classType = type;
-		
+
 		addShuffleStategies();
 	}
 
@@ -83,7 +88,7 @@ public class ClasspathScanner<T> {
 	 * This constructor should be used for classes
 	 */
 	public ClasspathScanner(Class<T> type, ClassIdentityType identityType) {
-		this((Iterable<String>)null, type, identityType);
+		this((Iterable<String>) null, type, identityType);
 	}
 
 	private static boolean isExtensionSiupported(String ext) {
@@ -106,7 +111,7 @@ public class ClasspathScanner<T> {
 
 		try {
 
-			Path basePath = classLoader != null ? classLoader.getPath() : AppDirectory.getBasePath();
+			Path basePath = getPath();
 
 			Files.walkFileTree(basePath, new SimpleFileVisitor<Path>() {
 				@Override
@@ -160,20 +165,20 @@ public class ClasspathScanner<T> {
 
 	}
 
-	public List<Class<? extends T>> scanClasses() {
+	public ArrayList<Class<? extends T>> scanClasses() {
 
 		if (classIdentityType == null || classType == null) {
 			return new ArrayList<>();
 		}
 
-		final List<Class<? extends T>> classes = new ArrayList<Class<? extends T>>();
+		final ArrayList<Class<? extends T>> classes = new ArrayList<Class<? extends T>>();
 
 		// Scan classpath
 
 		try {
 
-			ClassLoader cl = classLoader != null ? classLoader : AppDirectory.getBaseClassloader();
-			Path basePath = classLoader != null ? classLoader.getPath() : AppDirectory.getBasePath();
+			ClassLoader cl = this.cl != null ? this.cl : (ClassLoader) AppDirectory.getBaseClassloader();
+			Path basePath = getPath();
 
 			Files.walkFileTree(basePath, new SimpleFileVisitor<Path>() {
 				@SuppressWarnings("unchecked")
@@ -199,14 +204,25 @@ public class ClasspathScanner<T> {
 
 					try {
 
-						Class<? extends T> clazz = (Class<? extends T>) Class.forName(className, true, cl);
-						
+						// System.out.println(className);
+
+						Class<? extends T> clazz = null;
+	
+
+						try {
+							clazz = (Class<? extends T>) cl.loadClass(className);
+						} catch (Error e) {
+							// Possibly some compilation problem, skip
+							// System.out.println("skipping " + className);
+							return FileVisitResult.CONTINUE;
+						}
+
 						if (classType.equals(clazz)) {
 							LOG.debug("Skipping base type " + ClassUtils.toString(clazz));
 							return FileVisitResult.CONTINUE;
 						}
 
-						if (!allowAbstractTypes) {
+						if (!loadAbstractClasses) {
 							if (Modifier.isAbstract(clazz.getModifiers())
 									|| Modifier.isInterface(clazz.getModifiers())) {
 								LOG.debug("Skipping abstract type " + ClassUtils.toString(clazz));
@@ -218,40 +234,42 @@ public class ClasspathScanner<T> {
 							return FileVisitResult.CONTINUE;
 						}
 
-						boolean hasNoArgConstructor = false;
+						if (!loadAbstractClasses) {
 
-						for (Constructor<?> constr : clazz.getConstructors()) {
-							if (constr.getParameterCount() == 0) {
-								hasNoArgConstructor = true;
-								break;
+							boolean hasNoArgConstructor = false;
+
+							for (Constructor<?> constr : accessAllConstructors ? clazz.getDeclaredConstructors()
+									: clazz.getConstructors()) {
+								if (constr.getParameterCount() == 0 && Modifier.isPublic(constr.getModifiers())) {
+									hasNoArgConstructor = true;
+									break;
+								}
+							}
+
+							if (!hasNoArgConstructor) {
+								// LOG.warn("Class: " + ClassUtils.toString(clazz) + " has no no-arg constructor
+								// and will be skipped ..");
+								return FileVisitResult.CONTINUE;
 							}
 						}
 
-						if (!hasNoArgConstructor) {
-							LOG.warn("Class: " + ClassUtils.toString(clazz) + " has no no-arg constructor and will be skipped ..");
-							return FileVisitResult.CONTINUE;
-						}
-
+						boolean b = false;
+						
 						switch (classIdentityType) {
-						case ANNOTATION:
-							if (clazz.isAnnotationPresent((Class<? extends Annotation>) classType)) {
-								classes.add((Class<? extends T>) clazz);
-							}
-							break;
 						case ASSIGNABLE_FROM:
-							if (classType.isAssignableFrom(clazz) && !ClassUtils.equals(classType, clazz)) {
-								classes.add((Class<? extends T>) clazz);
-							}
+							b = classType.isAssignableFrom(clazz) && !ClassUtils.equals(classType, clazz);
 							break;
 						case DIRECT_SUPER_CLASS:
-							if (ClassUtils.isDirectChild(classType, clazz)) {
-								classes.add((Class<? extends T>) clazz);
-							}
+							b = ClassUtils.isDirectChild(classType, clazz);
 							break;
 						}
+						
+						if(b) {
+							classes.add((Class<? extends T>) clazz);
+						}
 
-					} catch (ClassNotFoundException e) {
-						Logger.get().error(e.getMessage());
+					} catch (Exception e) {
+						// Logger.get().error(e.getMessage());
 					}
 
 					if (maxCount != -1 && maxCount >= classes.size()) {
@@ -283,6 +301,11 @@ public class ClasspathScanner<T> {
 		return shuffleStrategies.get(getShuffleStrategy()).apply(classes);
 	}
 
+	private Path getPath() {
+		return cl != null && cl instanceof AppClassLoader ? ((AppClassLoader) cl).getPath()
+				: AppDirectory.getBasePath();
+	}
+
 	public int getMaxCount() {
 		return maxCount;
 	}
@@ -292,12 +315,12 @@ public class ClasspathScanner<T> {
 		return this;
 	}
 
-	public AppClassLoader getClassLoader() {
-		return classLoader;
+	public ClassLoader getClassLoader() {
+		return cl;
 	}
 
-	public ClasspathScanner<T> setClassLoader(AppClassLoader classLoader) {
-		this.classLoader = classLoader;
+	public ClasspathScanner<T> setClassLoader(ClassLoader cl) {
+		this.cl = cl;
 		return this;
 	}
 
@@ -310,7 +333,6 @@ public class ClasspathScanner<T> {
 		return this;
 	}
 
-
 	private void addShuffleStategies() {
 
 		shuffleStrategies.put(ShuffleStrategy.HIGHER_DEPTH, (p) -> {
@@ -322,4 +344,20 @@ public class ClasspathScanner<T> {
 		});
 	}
 
+	/**
+	 * This indicates whether this classpath scanner can discover interfaces and
+	 * abstract classes
+	 * 
+	 * @param loadAbstractClasses
+	 * @return
+	 */
+	public ClasspathScanner<T> setLoadAbstractClasses(boolean loadAbstractClasses) {
+		this.loadAbstractClasses = loadAbstractClasses;
+		return this;
+	}
+
+	public ClasspathScanner<T> setAccessAllConstructors(boolean accessAllConstructors) {
+		this.accessAllConstructors = accessAllConstructors;
+		return this;
+	}
 }

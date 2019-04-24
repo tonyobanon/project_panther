@@ -1,13 +1,13 @@
 package com.re.paas.api.events;
 
-import static java.lang.annotation.ElementType.TYPE;
-import static java.lang.annotation.RetentionPolicy.RUNTIME;
+import com.re.paas.api.runtime.spi.Resource;
+import com.re.paas.api.runtime.spi.SpiType;
 
-import java.lang.annotation.Retention;
-import java.lang.annotation.Target;
+public interface EventListener extends Resource {
 
-@Retention(RUNTIME)
-@Target(TYPE)
-public @interface EventListener {
-	
+	@Override
+	default SpiType getSpiType() {
+		return SpiType.EVENT_LISTENER;
+	}
+
 }

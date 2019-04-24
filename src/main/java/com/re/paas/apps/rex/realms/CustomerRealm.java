@@ -12,7 +12,7 @@ import com.re.paas.apps.shared.Functionalities;
 import com.re.paas.apps.shared.UserRealm;
 import com.re.paas.internal.utils.ObjectUtils;
 
-public class CustomerRealm implements Realm {
+public class CustomerRealm extends Realm {
 
 	@Override
 	public String name() {
@@ -22,7 +22,7 @@ public class CustomerRealm implements Realm {
 	@Override
 	public Functionality[] functionalities() {
 		return ObjectUtils.toArray(
-				Functionalities.get(UserRealm.class),			
+				Functionalities.get(UserRealm.class),	// Fix error and uncomment		
 				new Functionality[] { PropertyFunctionalities.ADD_TO_OWN_SAVED_LIST,
 						PropertyFunctionalities.REMOVE_FROM_OWN_SAVED_LIST,
 						PropertyFunctionalities.GET_OWN_SAVED_LIST });
@@ -36,7 +36,6 @@ public class CustomerRealm implements Realm {
 
 	@Override
 	public Integer authority() {
-		// TODO Auto-generated method stub
 		return null;
 	}
 

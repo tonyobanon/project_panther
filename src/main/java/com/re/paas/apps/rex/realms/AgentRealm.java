@@ -2,44 +2,34 @@ package com.re.paas.apps.rex.realms;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.function.BiConsumer;
 
+import com.re.paas.api.annotations.ProtectionContext;
+import com.re.paas.api.annotations.ProtectionContext.Factor;
+import com.re.paas.api.annotations.develop.Prototype;
 import com.re.paas.api.classes.ClientRBRef;
 import com.re.paas.api.classes.ClientResources;
 import com.re.paas.api.classes.FluentArrayList;
-import com.re.paas.api.classes.PlatformException;
-import com.re.paas.api.classes.ResourceException;
 import com.re.paas.api.forms.Section;
 import com.re.paas.api.fusion.services.Functionality;
-import com.re.paas.api.infra.cache.Cache;
-import com.re.paas.api.infra.cloud.CloudEnvironment;
-import com.re.paas.api.listable.QueryFilter;
 import com.re.paas.api.realms.Realm;
 import com.re.paas.api.realms.RealmApplicationSpec;
-import com.re.paas.api.sentences.ObjectType;
 import com.re.paas.apps.rex.classes.spec.AgentSpec;
 import com.re.paas.apps.rex.functionality.AgentFunctionalities;
 import com.re.paas.apps.rex.functionality.AgentOrganizationFunctionalities;
 import com.re.paas.apps.rex.functionality.PropertyFunctionalities;
+import com.re.paas.apps.rex.models.BaseAgentModel;
 import com.re.paas.apps.rex.models.listables.IndexedNameTypes;
+import com.re.paas.apps.rex.models.tables.AgentOrganizationTable;
+import com.re.paas.apps.rex.models.tables.AgentTable;
 import com.re.paas.apps.rex.sentences.ObjectTypes;
 import com.re.paas.apps.shared.Functionalities;
-import com.re.paas.apps.shared.PrincipalRealm;
-import com.re.paas.internal.entites.directory.AgentEntity;
-import com.re.paas.internal.entites.directory.AgentOrganizationAdminEntity;
-import com.re.paas.internal.entites.directory.AgentOrganizationEntity;
 import com.re.paas.internal.models.ApplicationModel;
-import com.re.paas.internal.models.BaseAgentModel;
-import com.re.paas.internal.models.BaseUserModel;
 import com.re.paas.internal.models.RoleModel;
-import com.re.paas.internal.models.errors.RexError;
-import com.re.paas.internal.models.helpers.EntityUtils;
 import com.re.paas.internal.models.helpers.FormFieldRepository;
 import com.re.paas.internal.models.helpers.FormFieldRepository.FormField;
-import com.re.paas.internal.realms.AdminRealm;
 import com.re.paas.internal.utils.ObjectUtils;
 
-public class AgentRealm implements Realm {
+public class AgentRealm extends Realm {
 
 	@Override
 	public String name() {
@@ -92,7 +82,7 @@ public class AgentRealm implements Realm {
 
 	@Override
 	public Integer authority() {
-		return 10;
+		return null;
 	}
 
 	@Override
@@ -100,8 +90,8 @@ public class AgentRealm implements Realm {
 
 		Map<String, String> keys = new HashMap<String, String>();
 
-		AgentEntity ae = ofy().load().type(AgentEntity.class).id(userId).safe();
-		AgentOrganizationEntity aoe = ofy().load().type(AgentOrganizationEntity.class).id(ae.getAgentOrganization())
+		AgentTable ae = ofy().load().type(AgentTable.class).id(userId).safe();
+		AgentOrganizationTable aoe = ofy().load().type(AgentOrganizationTable.class).id(ae.getAgentOrganization())
 				.safe();
 
 		aoe.getAgents().forEach(e -> {

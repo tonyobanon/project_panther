@@ -7,13 +7,19 @@ import org.apache.velocity.Template;
 import org.apache.velocity.VelocityContext;
 
 import com.re.paas.api.designpatterns.Singleton;
+import com.re.paas.api.runtime.spi.AbstractResource;
+import com.re.paas.api.runtime.spi.SpiType;
 
 /**
  * In practice, subclasses of this class, are typically used by model methods
- * for to orchestrate some of their functionalities. In this case the
+ * for to orchestrate some of their functionalities.
  */
-public abstract class TemplateObjectModel {
+public abstract class TemplateObjectModel extends AbstractResource {
 
+	public TemplateObjectModel() {
+		super(SpiType.TEMPLATE_OBJECT_MODEL);
+	}
+	
 	public static AbstractObjectModelSpiDelegate getDelegate() {
 		return Singleton.get(AbstractObjectModelSpiDelegate.class);
 	}

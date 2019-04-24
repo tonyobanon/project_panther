@@ -6,8 +6,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
-import com.googlecode.objectify.Key;
-import com.googlecode.objectify.cmd.Query;
 import com.re.paas.api.classes.FluentArrayList;
 import com.re.paas.api.listable.QueryFilter;
 

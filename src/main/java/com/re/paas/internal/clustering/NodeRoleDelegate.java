@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
-import com.re.paas.api.annotations.BlockerTodo;
+import com.re.paas.api.annotations.develop.BlockerTodo;
 import com.re.paas.api.classes.Exceptions;
 import com.re.paas.api.classes.ObjectWrapper;
 import com.re.paas.api.clustering.AbstractClusterFunction;
@@ -19,15 +19,15 @@ import com.re.paas.api.clustering.NodeRegistry;
 import com.re.paas.api.clustering.NodeRole;
 import com.re.paas.api.events.AbstractEventDelegate;
 import com.re.paas.api.logging.Logger;
-import com.re.paas.api.spi.DelegateInitResult;
-import com.re.paas.api.spi.DelegateSpec;
-import com.re.paas.api.spi.SpiTypes;
+import com.re.paas.api.runtime.spi.DelegateInitResult;
+import com.re.paas.api.runtime.spi.DelegateSpec;
+import com.re.paas.api.runtime.spi.SpiType;
 import com.re.paas.api.utils.ClassUtils;
 import com.re.paas.internal.compute.Scheduler;
 
 @BlockerTodo("Add logic for SpiDelegate.remove(..), store nodeRoles as SPI Resource")
 
-@DelegateSpec(dependencies = {SpiTypes.CLOUD_ENVIRONMENT})
+@DelegateSpec(dependencies = {SpiType.CLOUD_ENVIRONMENT})
 public class NodeRoleDelegate extends AbstractNodeRoleDelegate {
 
 	private static AbstractMasterNodeRole masterNodeRole;
@@ -176,9 +176,9 @@ public class NodeRoleDelegate extends AbstractNodeRoleDelegate {
 	public Map<String, NodeRole> getNodeRoles() {
 		return nodeRoles;
 	}
-
+	
 	@Override
-	public void destroy() {
+	public void shutdown() {
 		nodeRoles.values().forEach(role -> {
 			role.stop();
 		});

@@ -6,11 +6,10 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-import com.googlecode.objectify.Key;
-import com.re.paas.api.annotations.BlockerTodo;
-import com.re.paas.api.annotations.Note;
-import com.re.paas.api.annotations.PlatformInternal;
-import com.re.paas.api.annotations.Todo;
+import com.re.paas.api.annotations.develop.BlockerTodo;
+import com.re.paas.api.annotations.develop.Note;
+import com.re.paas.api.annotations.develop.PlatformInternal;
+import com.re.paas.api.annotations.develop.Todo;
 import com.re.paas.api.classes.ClientRBRef;
 import com.re.paas.api.classes.ClientResources;
 import com.re.paas.api.classes.FluentArrayList;
@@ -33,22 +32,21 @@ import com.re.paas.api.sentences.SubjectEntity;
 import com.re.paas.api.utils.Dates;
 import com.re.paas.internal.core.keys.ConfigKeys;
 import com.re.paas.internal.core.keys.MetricKeys;
-import com.re.paas.internal.entites.BaseUserEntity;
-import com.re.paas.internal.entites.UserFormValueEntity;
 import com.re.paas.internal.fusion.functionalities.AuthFunctionalities;
-import com.re.paas.internal.fusion.functionalities.RoleFunctionalities;
 import com.re.paas.internal.fusion.functionalities.UserFunctionalities;
 import com.re.paas.internal.fusion.services.impl.Unexposed;
 import com.re.paas.internal.models.errors.UserAccountError;
 import com.re.paas.internal.models.helpers.EntityHelper;
 import com.re.paas.internal.models.listables.IndexedNameTypes;
+import com.re.paas.internal.models.tables.users.BaseUserEntity;
+import com.re.paas.internal.models.tables.users.UserFormValueEntity;
 import com.re.paas.internal.realms.AdminRealm;
 import com.re.paas.internal.sentences.ObjectTypes;
 import com.re.paas.internal.sentences.SubjectTypes;
 
 @Todo("stop storing passwords as plain text, hash it instead")
 @Model(dependencies = RoleModel.class)
-public class BaseUserModel implements BaseModel {
+public class BaseUserModel extends BaseModel {
 
 	@Override
 	public String path() {

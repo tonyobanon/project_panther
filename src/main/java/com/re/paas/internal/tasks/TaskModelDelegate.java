@@ -4,7 +4,7 @@ import java.util.Map;
 
 import com.google.common.collect.Maps;
 import com.re.paas.api.classes.ClientRBRef;
-import com.re.paas.api.spi.DelegateInitResult;
+import com.re.paas.api.runtime.spi.DelegateInitResult;
 import com.re.paas.api.tasks.AbstractTaskModelDelegate;
 import com.re.paas.api.tasks.TaskImage;
 import com.re.paas.api.utils.ClassUtils;

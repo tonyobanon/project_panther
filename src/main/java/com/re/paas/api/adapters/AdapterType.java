@@ -19,13 +19,13 @@ public enum AdapterType {
 	CACHE(AbstractCacheAdapterDelegate.class), DATABASE(AbstractDatabaseAdapterDelegate.class),
 	FILE_SYSTEM(AbstractFileSystemAdapterDelegate.class), CRYPTO(AbstractCryptoAdapterDelegate.class);
 
-	private final Class<? extends AbstractAdapterDelegate<? extends Adapter>> delegateType;
+	private final Class<? extends AbstractAdapterDelegate<?, ? extends Adapter<?>>> delegateType;
 
-	private AdapterType(Class<? extends AbstractAdapterDelegate<? extends Adapter>> delegateType) {
+	private AdapterType(Class<? extends AbstractAdapterDelegate<?, ? extends Adapter<?>>> delegateType) {
 		this.delegateType = delegateType;
 	}
 
-	public Class<? extends AbstractAdapterDelegate<? extends Adapter>> getDelegateType() {
+	public Class<? extends AbstractAdapterDelegate<?, ? extends Adapter<?>>> getDelegateType() {
 		return delegateType;
 	}
 

@@ -2,6 +2,8 @@ package com.re.paas.internal.infra.filesystem;
 
 import java.io.IOException;
 import java.net.URI;
+import java.nio.channels.AsynchronousFileChannel;
+import java.nio.channels.FileChannel;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.file.AccessMode;
 import java.nio.file.CopyOption;
@@ -9,10 +11,10 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.DirectoryStream.Filter;
 import java.nio.file.FileStore;
 import java.nio.file.FileSystem;
+import java.nio.file.FileSystemNotFoundException;
 import java.nio.file.LinkOption;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileAttribute;
 import java.nio.file.attribute.FileAttributeView;
@@ -21,13 +23,15 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.LockSupport;
 import java.util.concurrent.locks.ReentrantLock;
 
+import com.re.paas.api.annotations.ProtectionContext;
 import com.re.paas.api.classes.Exceptions;
 import com.re.paas.api.infra.filesystem.AbstractFileSystemProvider;
-import com.re.paas.api.threadsecurity.ThreadSecurity;
+import com.re.paas.api.runtime.ThreadSecurity;
 import com.re.paas.internal.Platform;
 import com.re.paas.internal.utils.ObjectUtils;
 
@@ -45,10 +49,24 @@ public class FileSystemProviderImpl extends AbstractFileSystemProvider {
 	private static Map<Long, Thread> activeTransactions = Collections.synchronizedMap(new HashMap<>());
 
 	private static final String basePath = "/" + Platform.getPlatformPrefix() + "/appdata";
-	private static FileSystemProvider provider;
 
-	public static void setProvider(FileSystemProvider provider) {
-		FileSystemProviderImpl.provider = provider;
+	private static FileSystemProvider provider;
+	private static FileSystem fs;
+
+	@ProtectionContext(allowJdkAccess = true)
+	public FileSystemProviderImpl(FileSystemProvider provider) {
+		this(provider.getFileSystem(URI.create("file:///")));
+	}
+
+	@ProtectionContext
+	public FileSystemProviderImpl(FileSystem fs) {
+		setFileSystem(fs);
+	}
+
+	@ProtectionContext
+	public static void setFileSystem(FileSystem fs) {
+		FileSystemProviderImpl.provider = fs.provider();
+		FileSystemProviderImpl.fs = fs;		
 	}
 
 	@Override
@@ -57,45 +75,29 @@ public class FileSystemProviderImpl extends AbstractFileSystemProvider {
 	}
 
 	@Override
+	public FileSystem newFileSystem(Path path, Map<String, ?> env) throws IOException {
+		return newFileSystem(path.toUri(), env);
+	}
+
+	@Override
 	public FileSystem newFileSystem(URI uri, Map<String, ?> env) throws IOException {
-
-		FileSystemProvider provider = getProvider();
-
-		referenceCount.addAndGet(1);
-
-		FileSystem fs = null;
-		try {
-			fs = provider.newFileSystem(transformUri(uri), env);
-			referenceCount.decrementAndGet();
-		} catch (IOException e) {
-			referenceCount.decrementAndGet();
-			throw e;
-		}
-
-		return fs;
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	public FileSystem getFileSystem(URI uri) {
-
-		FileSystemProvider provider = getProvider();
-
-		referenceCount.addAndGet(1);
-
-		FileSystem fs = null;
-		try {
-			fs = provider.getFileSystem(transformUri(uri));
-			referenceCount.decrementAndGet();
-		} catch (Exception e) {
-			referenceCount.decrementAndGet();
-			throw e;
+		if (fs == null) {
+			Exceptions.throwRuntime(new FileSystemNotFoundException(uri.toString()));
 		}
-
-		return fs;
+		return new FileSystemImpl(this);
 	}
 
 	@Override
 	public Path getPath(URI uri) {
+		
+		if(!uri.getScheme().equals("file")) {
+			Exceptions.throwRuntime(new IllegalArgumentException("URI scheme is not \"file\""));
+		}
 
 		FileSystemProvider provider = getProvider();
 
@@ -103,15 +105,36 @@ public class FileSystemProviderImpl extends AbstractFileSystemProvider {
 
 		Path p = null;
 		try {
-			p = provider.getPath(transformUri(uri));
+			p = provider.getPath(transform(uri));
 			referenceCount.decrementAndGet();
 		} catch (Exception e) {
 			referenceCount.decrementAndGet();
 			throw e;
 		}
 
-		return p;
+		return new PathImpl(new FileSystemImpl(this), p);
 	}
+	
+
+	@Override
+	public Path readSymbolicLink(Path link) throws IOException {
+
+		FileSystemProvider provider = getProvider();
+
+		referenceCount.addAndGet(1);
+
+		Path p = null;
+		try {
+			p = provider.readSymbolicLink(transform(link));
+			referenceCount.decrementAndGet();
+		} catch (IOException e) {
+			referenceCount.decrementAndGet();
+			throw e;
+		}
+
+		return new PathImpl(new FileSystemImpl(this), p);
+	}
+
 
 	@Override
 	public SeekableByteChannel newByteChannel(Path path, Set<? extends OpenOption> options, FileAttribute<?>... attrs)
@@ -123,7 +146,7 @@ public class FileSystemProviderImpl extends AbstractFileSystemProvider {
 
 		SeekableByteChannel c = null;
 		try {
-			c = provider.newByteChannel(transformPath(path), options, attrs);
+			c = provider.newByteChannel(transform(path), options, attrs);
 			referenceCount.decrementAndGet();
 		} catch (IOException e) {
 			referenceCount.decrementAndGet();
@@ -142,7 +165,7 @@ public class FileSystemProviderImpl extends AbstractFileSystemProvider {
 
 		DirectoryStream<Path> ds = null;
 		try {
-			ds = provider.newDirectoryStream(transformPath(dir), filter);
+			ds = provider.newDirectoryStream(transform(dir), filter);
 			referenceCount.decrementAndGet();
 		} catch (IOException e) {
 			referenceCount.decrementAndGet();
@@ -160,7 +183,7 @@ public class FileSystemProviderImpl extends AbstractFileSystemProvider {
 		referenceCount.addAndGet(1);
 
 		try {
-			provider.createDirectory(transformPath(dir), attrs);
+			provider.createDirectory(transform(dir), attrs);
 			referenceCount.decrementAndGet();
 		} catch (IOException e) {
 			referenceCount.decrementAndGet();
@@ -176,7 +199,7 @@ public class FileSystemProviderImpl extends AbstractFileSystemProvider {
 		referenceCount.addAndGet(1);
 
 		try {
-			provider.delete(transformPath(path));
+			provider.delete(transform(path));
 			referenceCount.decrementAndGet();
 		} catch (IOException e) {
 			referenceCount.decrementAndGet();
@@ -192,7 +215,7 @@ public class FileSystemProviderImpl extends AbstractFileSystemProvider {
 		referenceCount.addAndGet(1);
 
 		try {
-			provider.copy(transformPath(source), transformPath(target), options);
+			provider.copy(transform(source), transform(target), options);
 			referenceCount.decrementAndGet();
 		} catch (IOException e) {
 			referenceCount.decrementAndGet();
@@ -208,7 +231,7 @@ public class FileSystemProviderImpl extends AbstractFileSystemProvider {
 		referenceCount.addAndGet(1);
 
 		try {
-			provider.move(transformPath(source), transformPath(target), options);
+			provider.move(transform(source), transform(target), options);
 			referenceCount.decrementAndGet();
 		} catch (IOException e) {
 			referenceCount.decrementAndGet();
@@ -225,7 +248,7 @@ public class FileSystemProviderImpl extends AbstractFileSystemProvider {
 
 		Boolean b = null;
 		try {
-			b = provider.isSameFile(transformPath(path), transformPath(path2));
+			b = provider.isSameFile(transform(path), transform(path2));
 			referenceCount.decrementAndGet();
 		} catch (IOException e) {
 			referenceCount.decrementAndGet();
@@ -244,7 +267,7 @@ public class FileSystemProviderImpl extends AbstractFileSystemProvider {
 
 		Boolean b = null;
 		try {
-			b = provider.isHidden(transformPath(path));
+			b = provider.isHidden(transform(path));
 			referenceCount.decrementAndGet();
 		} catch (IOException e) {
 			referenceCount.decrementAndGet();
@@ -263,7 +286,7 @@ public class FileSystemProviderImpl extends AbstractFileSystemProvider {
 
 		FileStore fs = null;
 		try {
-			fs = provider.getFileStore(transformPath(path));
+			fs = provider.getFileStore(transform(path));
 			referenceCount.decrementAndGet();
 		} catch (IOException e) {
 			referenceCount.decrementAndGet();
@@ -281,7 +304,7 @@ public class FileSystemProviderImpl extends AbstractFileSystemProvider {
 		referenceCount.addAndGet(1);
 
 		try {
-			provider.checkAccess(transformPath(path), modes);
+			provider.checkAccess(transform(path), modes);
 			referenceCount.decrementAndGet();
 		} catch (IOException e) {
 			referenceCount.decrementAndGet();
@@ -298,7 +321,7 @@ public class FileSystemProviderImpl extends AbstractFileSystemProvider {
 
 		V fav = null;
 		try {
-			fav = provider.getFileAttributeView(transformPath(path), type, options);
+			fav = provider.getFileAttributeView(transform(path), type, options);
 			referenceCount.decrementAndGet();
 		} catch (Exception e) {
 			referenceCount.decrementAndGet();
@@ -318,7 +341,7 @@ public class FileSystemProviderImpl extends AbstractFileSystemProvider {
 
 		A ra = null;
 		try {
-			ra = provider.readAttributes(transformPath(path), type, options);
+			ra = provider.readAttributes(transform(path), type, options);
 			referenceCount.decrementAndGet();
 		} catch (IOException e) {
 			referenceCount.decrementAndGet();
@@ -337,7 +360,7 @@ public class FileSystemProviderImpl extends AbstractFileSystemProvider {
 
 		Map<String, Object> ra = null;
 		try {
-			ra = provider.readAttributes(transformPath(path), attributes, options);
+			ra = provider.readAttributes(transform(path), attributes, options);
 			referenceCount.decrementAndGet();
 		} catch (IOException e) {
 			referenceCount.decrementAndGet();
@@ -354,7 +377,7 @@ public class FileSystemProviderImpl extends AbstractFileSystemProvider {
 
 		referenceCount.addAndGet(1);
 		try {
-			provider.setAttribute(transformPath(path), attribute, value, options);
+			provider.setAttribute(transform(path), attribute, value, options);
 			referenceCount.decrementAndGet();
 		} catch (IOException e) {
 			referenceCount.decrementAndGet();
@@ -362,26 +385,110 @@ public class FileSystemProviderImpl extends AbstractFileSystemProvider {
 		}
 	}
 
-	private FileSystemProvider getProvider() {
+	@Override
+	public void createLink(Path link, Path existing) throws IOException {
+		FileSystemProvider provider = getProvider();
+
+		referenceCount.addAndGet(1);
+		try {
+			provider.createLink(transform(link), transform(existing));
+			referenceCount.decrementAndGet();
+		} catch (IOException e) {
+			referenceCount.decrementAndGet();
+			throw e;
+		}
+	}
+
+	@Override
+	public void createSymbolicLink(Path link, Path target, FileAttribute<?>... attrs) throws IOException {
+		FileSystemProvider provider = getProvider();
+
+		referenceCount.addAndGet(1);
+		try {
+			provider.createSymbolicLink(transform(link), transform(target), attrs);
+			referenceCount.decrementAndGet();
+		} catch (IOException e) {
+			referenceCount.decrementAndGet();
+			throw e;
+		}
+	}
+
+	@Override
+	public AsynchronousFileChannel newAsynchronousFileChannel(Path path, Set<? extends OpenOption> options,
+			ExecutorService executor, FileAttribute<?>... attrs) throws IOException {
+
+		FileSystemProvider provider = getProvider();
+
+		referenceCount.addAndGet(1);
+
+		AsynchronousFileChannel afc = null;
+		try {
+			afc = provider.newAsynchronousFileChannel(transform(path), options, executor, attrs);
+			referenceCount.decrementAndGet();
+		} catch (IOException e) {
+			referenceCount.decrementAndGet();
+			throw e;
+		}
+
+		return afc;
+	}
+
+	@Override
+	public FileChannel newFileChannel(Path path, Set<? extends OpenOption> options, FileAttribute<?>... attrs)
+			throws IOException {
+
+		FileSystemProvider provider = getProvider();
+
+		referenceCount.addAndGet(1);
+
+		FileChannel fc = null;
+		try {
+			fc = provider.newFileChannel(transform(path), options, attrs);
+			referenceCount.decrementAndGet();
+		} catch (IOException e) {
+			referenceCount.decrementAndGet();
+			throw e;
+		}
+
+		return fc;
+	}
+
+	/**
+	 * This returns the underlying provider
+	 * 
+	 * @return
+	 */
+	FileSystemProvider getProvider() {
 
 		// If the current context is a transaction, then it is guaranteed that the lock
 		// will not be acquired before the transaction completes
 		boolean hasTransaction = activeTransactions.containsKey(Thread.currentThread().getId());
 
 		if (!hasTransaction) {
-			// If there is a pending swap, the thread need to wait until the swap operation completes
+			// If there is a pending swap, the thread need to wait until the swap operation
+			// completes
 			checkPendingSwap();
 		}
- 
+
 		return provider;
 	}
-
-	private static final Path transformPath(Path path) {
-		return Paths.get(basePath).resolve(ThreadSecurity.getAppId()).resolve(path);
+	
+	FileSystem getFileSystem() {
+		return fs;
 	}
 
-	private static final URI transformUri(URI uri) {
-		return URI.create(basePath).resolve(ThreadSecurity.getAppId()).resolve(uri);
+	private final Path transform(Path path) {
+
+		if (!(path instanceof PathImpl)) {
+			Exceptions.throwRuntime(new SecurityException("Unrecognized path: " + path.toString()));
+		}
+
+		// This is required inorder to avoid a ProviderMismatchException
+		return getProvider().getPath(path.toUri());
+	}
+
+	final URI transform(URI uri) {
+		return URI.create(getProvider().getScheme() + "://" + basePath + "/" + ThreadSecurity.getAppId() + uri.getPath());
 	}
 
 	public static FileSystemProviderState getState() {
@@ -451,4 +558,10 @@ public class FileSystemProviderImpl extends AbstractFileSystemProvider {
 	public Integer getReferenceCount() {
 		return referenceCount.get();
 	}
+
+	@Override
+	public String toString() {
+		return "tony";
+	}
+
 }

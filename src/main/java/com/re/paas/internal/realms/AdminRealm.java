@@ -11,7 +11,7 @@ import com.re.paas.internal.fusion.functionalities.UserApplicationFunctionalitie
 import com.re.paas.internal.models.listables.IndexedNameTypes;
 import com.re.paas.internal.sentences.ObjectTypes;
 
-public final class AdminRealm implements Realm {
+public final class AdminRealm extends Realm {
 
 	@Override
 	public String name() {
@@ -47,5 +47,4 @@ public final class AdminRealm implements Realm {
 				.setReviewFunctionality(UserApplicationFunctionalities.REVIEW_ADMIN_APPLICATION)
 				.setIndexedNameType(IndexedNameTypes.ADMIN_APPLICATION);
 	}
-
 }

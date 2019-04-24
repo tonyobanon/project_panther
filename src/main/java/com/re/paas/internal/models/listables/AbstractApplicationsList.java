@@ -6,17 +6,16 @@ import java.util.List;
 import java.util.Map;
 
 import com.re.paas.api.classes.FluentHashMap;
+import com.re.paas.api.classes.IndexedNameSpec;
 import com.re.paas.api.listable.Listable;
 import com.re.paas.api.listable.ListingFilter;
 import com.re.paas.api.listable.ListingType;
-import com.re.paas.api.models.classes.IndexedNameSpec;
 import com.re.paas.api.realms.Realm;
 import com.re.paas.internal.classes.ApplicationStatus;
 import com.re.paas.internal.classes.spec.BaseApplicationSpec;
-import com.re.paas.internal.entites.ApplicationEntity;
 import com.re.paas.internal.models.ApplicationModel;
 import com.re.paas.internal.models.RoleModel;
-import com.re.paas.internal.users.RoleRealm;
+import com.re.paas.internal.models.tables.users.ApplicationEntity;
 
 public abstract class AbstractApplicationsList extends Listable<BaseApplicationSpec> {
 

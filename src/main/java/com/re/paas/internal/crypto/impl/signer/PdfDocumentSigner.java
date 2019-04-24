@@ -14,7 +14,6 @@ import org.apache.pdfbox.pdmodel.interactive.digitalsignature.ExternalSigningSup
 import org.apache.pdfbox.pdmodel.interactive.digitalsignature.PDSignature;
 import org.apache.pdfbox.pdmodel.interactive.digitalsignature.SignatureInterface;
 
-import com.re.paas.api.cryto.KeyStoreProperties;
 import com.re.paas.internal.core.keys.ConfigKeys;
 import com.re.paas.internal.models.ConfigModel;
 import com.re.paas.internal.models.LocationModel;

@@ -28,10 +28,10 @@ import com.re.paas.apps.rex.classes.spec.PropertySpec;
 import com.re.paas.apps.rex.classes.spec.PropertyType;
 import com.re.paas.apps.rex.classes.spec.PropertyUpdateSpec;
 import com.re.paas.apps.rex.functionality.PropertyFunctionalities;
+import com.re.paas.apps.rex.models.BasePropertyModel;
 import com.re.paas.internal.classes.Json;
 import com.re.paas.internal.classes.spec.ClientSignature;
 import com.re.paas.internal.fusion.services.impl.FusionHelper;
-import com.re.paas.internal.models.BasePropertyModel;
 
 public class BasePropertyService extends BaseService {
 	@Override

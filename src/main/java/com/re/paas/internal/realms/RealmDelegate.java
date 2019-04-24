@@ -2,13 +2,14 @@ package com.re.paas.internal.realms;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
 
-import com.re.paas.api.annotations.BlockerTodo;
+import com.re.paas.api.annotations.develop.BlockerTodo;
 import com.re.paas.api.classes.Exceptions;
 import com.re.paas.api.classes.PlatformException;
 import com.re.paas.api.forms.AbstractField;
@@ -22,14 +23,14 @@ import com.re.paas.api.fusion.services.Functionality;
 import com.re.paas.api.logging.Logger;
 import com.re.paas.api.realms.AbstractRealmDelegate;
 import com.re.paas.api.realms.Realm;
-import com.re.paas.api.spi.DelegateInitResult;
-import com.re.paas.api.spi.DelegateSpec;
-import com.re.paas.api.spi.SpiTypes;
+import com.re.paas.api.runtime.spi.DelegateInitResult;
+import com.re.paas.api.runtime.spi.DelegateSpec;
+import com.re.paas.api.runtime.spi.SpiType;
 import com.re.paas.api.utils.ClassUtils;
 import com.re.paas.api.utils.Utils;
 import com.re.paas.internal.errors.RealmError;
 
-@DelegateSpec(dependencies = { SpiTypes.FUNCTIONALITY })
+@DelegateSpec(dependencies = { SpiType.FUNCTIONALITY })
 public class RealmDelegate extends AbstractRealmDelegate {
 
 	private static final String REFERENCE_DELIMETER = " -> ";
@@ -75,10 +76,11 @@ public class RealmDelegate extends AbstractRealmDelegate {
 	}
 
 	@Override
-	protected void remove(List<Class<Realm>> classes) {
+	protected List<Class<Realm>> remove(List<Class<Realm>> classes) {
 		classes.forEach(c -> {
 			removeRealm(ClassUtils.createInstance(c));
 		});
+		return Collections.emptyList();
 	}
 
 	@Override

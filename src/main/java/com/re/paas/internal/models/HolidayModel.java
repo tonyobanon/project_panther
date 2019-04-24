@@ -14,7 +14,7 @@ import org.apache.http.client.fluent.Content;
 import org.apache.http.client.fluent.Request;
 
 import com.googlecode.objectify.cmd.QueryKeys;
-import com.re.paas.api.annotations.BlockerBlockerTodo;
+import com.re.paas.api.annotations.develop.BlockerBlockerTodo;
 import com.re.paas.api.classes.ClientRBRef;
 import com.re.paas.api.classes.Exceptions;
 import com.re.paas.api.classes.FluentHashMap;
@@ -31,18 +31,14 @@ import com.re.paas.internal.classes.FormSectionType;
 import com.re.paas.internal.classes.spec.PublicHolidaySpec;
 import com.re.paas.internal.classes.spec.TokenCredentials;
 import com.re.paas.internal.core.keys.ConfigKeys;
-import com.re.paas.internal.entites.locations.PublicHolidayEntity;
 import com.re.paas.internal.models.helpers.CacheHelper;
 import com.re.paas.internal.models.helpers.EntityHelper;
+import com.re.paas.internal.models.tables.locations.PublicHolidayTable;
 import com.re.paas.internal.realms.AdminRealm;
-import com.re.paas.internal.users.RoleRealm;
 import com.re.paas.internal.utils.BackendObjectMarshaller;
 
-import io.vertx.core.json.JsonArray;
-import io.vertx.core.json.JsonObject;
-
 @Model(dependencies = { RBModel.class })
-public class HolidayModel implements BaseModel {
+public class HolidayModel extends BaseModel {
 
 	private static SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
 	private static TokenCredentials credentials = null;
@@ -153,8 +149,8 @@ public class HolidayModel implements BaseModel {
 
 	protected static void addHolidaysToCache() {
 
-		QueryKeys<PublicHolidayEntity> keys = ofy().load().type(PublicHolidayEntity.class).keys();
-		ofy().load().type(PublicHolidayEntity.class).ids(keys).forEach((k, v) -> {
+		QueryKeys<PublicHolidayTable> keys = ofy().load().type(PublicHolidayTable.class).keys();
+		ofy().load().type(PublicHolidayTable.class).ids(keys).forEach((k, v) -> {
 
 			CacheHelper.addToList(CacheType.PERSISTENT, getCacheKey(v.getCountry(), v.getDate()),
 					getCacheValue(v.getName(), v.isPublic()));
@@ -165,7 +161,7 @@ public class HolidayModel implements BaseModel {
 
 		List<PublicHolidaySpec> holidays = getHolidays(country);
 
-		List<PublicHolidayEntity> entities = new ArrayList<>(holidays.size());
+		List<PublicHolidayTable> entities = new ArrayList<>(holidays.size());
 		holidays.forEach(h -> {
 			entities.add(EntityHelper.fromObjectModel(h));
 		});

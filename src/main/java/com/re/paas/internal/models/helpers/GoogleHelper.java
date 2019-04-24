@@ -6,10 +6,9 @@ import java.nio.file.Path;
 
 import com.google.auth.Credentials;
 import com.google.auth.oauth2.ServiceAccountCredentials;
-import com.re.paas.api.annotations.BlockerTodo;
+import com.re.paas.api.annotations.develop.BlockerTodo;
 import com.re.paas.api.classes.Exceptions;
 import com.re.paas.api.logging.Logger;
-import com.re.paas.internal.classes.AppDirectory;
 
 @BlockerTodo("Think of what to do with this, since we are going hybrid cloud")
 public class GoogleHelper {
@@ -28,7 +27,7 @@ public class GoogleHelper {
 
 		Credentials googleCredentials = null;
 		try {
-			Path path = AppDirectory.getPath("application_data/rems-11ab32e9d8b0.json");
+			Path path = null; // Use resource path
 			googleCredentials = ServiceAccountCredentials
 					.fromStream(Files.newInputStream(path));
 		} catch (IOException e) {

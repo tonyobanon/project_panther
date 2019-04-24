@@ -6,7 +6,8 @@ import java.util.concurrent.atomic.AtomicReferenceArray;
 import java.util.concurrent.locks.LockSupport;
 import java.util.concurrent.locks.ReentrantLock;
 
-import com.re.paas.api.annotations.Prototype;
+import com.re.paas.api.annotations.develop.BlockerTodo;
+import com.re.paas.api.annotations.develop.Prototype;
 import com.re.paas.api.clustering.NodeRegistry;
 import com.re.paas.api.clustering.protocol.Client;
 import com.re.paas.api.clustering.protocol.ClientFactory;
@@ -124,6 +125,7 @@ public class ClientFactoryImpl implements ClientFactory {
 	 *                   
 	 * @return {@link Integer} The new 
 	 */
+	@BlockerTodo("See comments")
 	private static int resizeClientArrays(Short nodeId, double multiplier) {
 
 		if (!rotationEnabled()) {
@@ -133,9 +135,10 @@ public class ClientFactoryImpl implements ClientFactory {
 		int length = clients.get(nodeId).length();
 		int newLength = (int) (length * multiplier);
 
-		if (newLength > Short.MAX_VALUE) {
+		if (newLength > Constants.MAX_TRANSACTION_COUNT) {
+			
 			// Add Flag to indicate that this nodeId can no longer scale up
-			newLength = Short.MAX_VALUE;
+			newLength = Constants.MAX_TRANSACTION_COUNT;
 		}
 
 		clients.set(nodeId, ObjectUtils.cloneArrayReference(clients.get(nodeId), newLength));
@@ -171,7 +174,7 @@ public class ClientFactoryImpl implements ClientFactory {
 		if (rotationEnabled()) {
 			
 			Stack<Short> stack = new Stack<>();
-			stack.ensureCapacity(Short.MAX_VALUE - getMaxRotatedClients());
+			stack.ensureCapacity(Constants.MAX_TRANSACTION_COUNT - getMaxRotatedClients() > 0 ? getMaxRotatedClients() : 0);
 
 			unusedClientIndexes.set(nodeId, stack);
 
@@ -241,7 +244,7 @@ public class ClientFactoryImpl implements ClientFactory {
 		Short clientIndex = clientIndexes.get(nodeId);
 		Short len = (short) (clientIndex + 1);
 
-		if (len > Short.MAX_VALUE) {
+		if (len > Constants.MAX_TRANSACTION_COUNT) {
 
 			if (rotationEnabled()) {
 

@@ -4,7 +4,7 @@ import java.util.List;
 
 import com.re.paas.api.fusion.server.RoutingContext;
 import com.re.paas.api.fusion.services.Functionality;
-import com.re.paas.api.spi.SpiDelegate;
+import com.re.paas.api.runtime.spi.SpiDelegate;
 
 public abstract class AbstractUIComponentDelegate extends SpiDelegate<AbstractComponent> { 
 

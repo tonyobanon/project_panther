@@ -4,15 +4,19 @@ import java.io.InputStream;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Type;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.Callable;
 import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -20,13 +24,13 @@ import java.util.regex.Pattern;
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Lists;
-import com.re.paas.api.annotations.BlockerTodo;
-import com.re.paas.api.annotations.Todo;
+import com.re.paas.api.annotations.develop.BlockerTodo;
+import com.re.paas.api.annotations.develop.Todo;
 import com.re.paas.api.app_provisioning.AppClassLoader;
 import com.re.paas.api.classes.Exceptions;
-import com.re.paas.api.threadsecurity.ThreadSecurity;
+import com.re.paas.api.runtime.ThreadSecurity;
 import com.re.paas.internal.Application;
-import com.re.paas.internal.app_provisioning.AppProvisioner;
+import com.re.paas.internal.runtime.spi.AppProvisioner;
 
 public class ClassUtils<T> {
 
@@ -37,19 +41,33 @@ public class ClassUtils<T> {
 	private static final Pattern GENERIC_TYPE_PATTERN = Pattern
 			.compile("((?<=\\Q<\\E)" + classNamePattern + "(\\Q, \\E" + classNamePattern + ")*" + "(?=\\Q>\\E\\z)){1}");
 
-	public static <T> T createInstance(String name) {
-
-		try {
-
-			@SuppressWarnings("unchecked")
-			Class<? extends T> clazz = (Class<? extends T>) Class.forName(name);
-			T o = createInstance(clazz);
-
-			return o;
-
-		} catch (ClassNotFoundException e) {
-			throw new RuntimeException(e);
+	public static boolean isMethodOverrriden(final Method myMethod) {
+		Class<?> declaringClass = myMethod.getDeclaringClass();
+		if (declaringClass.equals(Object.class)) {
+			return false;
 		}
+		try {
+			declaringClass.getSuperclass().getMethod(myMethod.getName(), myMethod.getParameterTypes());
+			return true;
+		} catch (NoSuchMethodException e) {
+			for (Class<?> iface : declaringClass.getInterfaces()) {
+				try {
+					iface.getMethod(myMethod.getName(), myMethod.getParameterTypes());
+					return true;
+				} catch (NoSuchMethodException ignored) {
+
+				}
+			}
+			return false;
+		}
+	}
+
+	public static <T> T createInstance(String name) {
+		@SuppressWarnings("unchecked")
+		Class<? extends T> clazz = (Class<? extends T>) forName(name);
+		T o = createInstance(clazz);
+
+		return o;
 	}
 
 	public static <T> Class<? extends T> forName(String name, ClassLoader cl) {
@@ -59,6 +77,22 @@ public class ClassUtils<T> {
 			Class<? extends T> o = (Class<? extends T>) cl.loadClass(name);
 			return o;
 		} catch (ClassNotFoundException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	/**
+	 * Invokes a callable
+	 * 
+	 * @param name
+	 * @param cl
+	 * @return
+	 */
+	public static void call(Class<?> target, ClassLoader cl) {
+		Class<? extends Callable<?>> clazz = forName(target.getName(), cl);
+		try {
+			createInstance(clazz).call();
+		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
 	}
@@ -121,7 +155,7 @@ public class ClassUtils<T> {
 		return classLoader.getResourceAsStream(name);
 
 	}
-	
+
 	@Todo("Add support for multi-depth generic hierarchies")
 	@BlockerTodo("Split using proper regex not ', '")
 	/**
@@ -131,7 +165,7 @@ public class ClassUtils<T> {
 		List<Class<?>> result = Lists.newArrayList();
 
 		String typeName = t.getTypeName();
-		
+
 		Matcher m = GENERIC_TYPE_PATTERN.matcher(typeName);
 
 		boolean b = m.find();
@@ -195,7 +229,7 @@ public class ClassUtils<T> {
 	}
 
 	public static String getPackageName(String className) {
-		List<String> parts = Splitter.on(DOT_PATTERN).splitToList(className);
+		List<String> parts = new ArrayList<>(Splitter.on(DOT_PATTERN).splitToList(className));
 		parts.remove(parts.size() - 1);
 		return Joiner.on(".").join(parts);
 	}
@@ -215,7 +249,7 @@ public class ClassUtils<T> {
 		if (cl instanceof AppClassLoader) {
 			appId = ((AppClassLoader) cl).getAppId();
 		} else {
-			appId = AppProvisioner.get().defaultAppId();
+			appId = AppProvisioner.DEFAULT_APP_ID;
 		}
 
 		return appId + "#" + clazz.getName();
@@ -238,7 +272,7 @@ public class ClassUtils<T> {
 
 		ClassLoader cl = null;
 
-		if (prov.defaultAppId().equals(appId)) {
+		if (AppProvisioner.DEFAULT_APP_ID.equals(appId)) {
 			cl = Application.class.getClassLoader();
 		} else {
 			cl = prov.getClassloader(appId);
@@ -286,6 +320,46 @@ public class ClassUtils<T> {
 
 		return appId.equals(cl.getAppId());
 	}
+	
+	public static Object getFieldValue(Class<?> clazz, String name) {
+		return getFieldValue(clazz, null, name);
+	}
+
+	public static Object getFieldValue(Class<?> clazz, Object instance, String name) {
+		try {
+
+			Field f = clazz.getDeclaredField(name);
+			f.setAccessible(true);
+			
+			return f.get(instance);
+
+		} catch (NoSuchFieldException | SecurityException | IllegalArgumentException | IllegalAccessException e) {
+			Exceptions.throwRuntime(e);
+			return null;
+		}
+	}
+
+	public static void updateField(Class<?> clazz, String name, Object value) {
+		updateField(clazz, null, name, value);
+	}
+
+	public static void updateField(Class<?> clazz, Object instance, String name, Object value) {
+
+		try {
+
+			Field f = clazz.getDeclaredField(name);
+			f.setAccessible(true);
+			
+            Field modifiersField = Field.class.getDeclaredField( "modifiers" );
+            modifiersField.setAccessible( true );
+            modifiersField.setInt(f, f.getModifiers() & ~Modifier.FINAL );
+
+			f.set(instance, value);
+
+		} catch (NoSuchFieldException | SecurityException | IllegalArgumentException | IllegalAccessException e) {
+			Exceptions.throwRuntime(e);
+		}
+	}
 
 	/**
 	 * This implementation may change in the future
@@ -305,8 +379,8 @@ public class ClassUtils<T> {
 	 * @param classes
 	 * @return
 	 */
-	public static <T> List<Class<? extends T>> reshuffleByDepth(Class<T> classType, List<Class<? extends T>> classes,
-			boolean highestFirst) {
+	public static <T> ArrayList<Class<? extends T>> reshuffleByDepth(Class<T> classType,
+			Collection<Class<? extends T>> classes, boolean highestFirst) {
 
 		Map<Class<? extends T>, Integer> classDepths = new HashMap<>();
 
@@ -322,7 +396,7 @@ public class ClassUtils<T> {
 
 		classDepths.entrySet().stream().sorted(comparator).forEachOrdered(x -> sortedMap.add(x.getKey()));
 
-		return sortedMap;
+		return new ArrayList<>(sortedMap);
 	}
 
 	@SuppressWarnings("unchecked")
@@ -334,7 +408,13 @@ public class ClassUtils<T> {
 			return currentDepth;
 		}
 
-		return getInheritanceDepth(currentDepth++, classType, (Class<? extends T>) clazz.getSuperclass());
+		Class<? extends T> parent = (Class<? extends T>) clazz.getSuperclass();
+
+		if (parent == null) {
+			return currentDepth;
+		}
+
+		return getInheritanceDepth(currentDepth++, classType, parent);
 	}
 
 	public static <T> boolean isDirectChild(Class<T> classType, Class<? extends T> clazz) {
@@ -351,6 +431,16 @@ public class ClassUtils<T> {
 			}
 		}
 		return false;
+	}
+
+	public static String getAppId(Class<?> clazz) {
+		ClassLoader cl = clazz.getClassLoader();
+
+		if (cl instanceof AppClassLoader) {
+			return ((AppClassLoader) cl).getAppId();
+		} else {
+			return AppProvisioner.DEFAULT_APP_ID;
+		}
 	}
 
 	public static boolean isTrusted(Class<?> c) {
@@ -379,10 +469,8 @@ public class ClassUtils<T> {
 			@SuppressWarnings("unchecked")
 			Class<? extends T> cl = (Class<? extends T>) c;
 			consumer.accept(cl);
-		} while (
-					(!c.getSuperclass().equals(Object.class)) && 
-					(!c.getSuperclass().equals(superClass)) && 
-					(c = c.getSuperclass()) != null);
+		} while ((!c.getSuperclass().equals(Object.class)) && (!c.getSuperclass().equals(superClass))
+				&& (c = c.getSuperclass()) != null);
 
 	}
 }

@@ -1,32 +1,30 @@
 package com.re.paas.internal.infra.cache;
 
+import com.re.paas.api.adapters.LoadPhase;
 import com.re.paas.api.infra.cache.AbstractCacheAdapterDelegate;
-import com.re.paas.api.infra.cache.CacheAdapter;
 import com.re.paas.api.infra.cache.CacheFactory;
 
 public class CacheAdapterDelegate extends AbstractCacheAdapterDelegate {
 
 	private static CacheFactory<String, Object> factory;
-	
+
 	@Override
-	public Object load() {
-		return getCacheFactory(true) != null;
+	public Object load(LoadPhase phase) {
+		getCacheFactory(true);
+		return true;
 	}
 
 	@Override
-	public CacheFactory<String, Object> getCacheFactory(boolean load) {
-		
-		if(factory != null && !load) {
+	public CacheFactory<String, Object> getCacheFactory(boolean loadConfigFile) {
+
+		if (factory != null && !loadConfigFile) {
 			return factory;
 		}
-		
-		CacheAdapterConfig config = (CacheAdapterConfig) getConfig();
-		
-		CacheAdapter adapter = getAdapter(config.getAdapterName());
-		CacheFactory<String, Object> factory = adapter.cacheFactory(config.getFields());
-		
+
+		CacheFactory<String, Object> factory = getAdapter().cacheFactory(getConfig().getFields());
+
 		CacheAdapterDelegate.factory = factory;
 		return factory;
 	}
-	
+
 }

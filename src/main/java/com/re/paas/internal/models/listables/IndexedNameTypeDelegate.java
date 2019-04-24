@@ -1,15 +1,16 @@
 package com.re.paas.internal.models.listables;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.re.paas.api.annotations.BlockerTodo;
+import com.re.paas.api.annotations.develop.BlockerTodo;
 import com.re.paas.api.listable.AbstractIndexedNameTypeDelegate;
 import com.re.paas.api.listable.AbstractListableDelegate;
 import com.re.paas.api.listable.IndexedNameType;
 import com.re.paas.api.listable.Listable;
-import com.re.paas.api.spi.DelegateInitResult;
+import com.re.paas.api.runtime.spi.DelegateInitResult;
 
 @BlockerTodo("Make good use of the resource maps, where namepaces are stored")
 public class IndexedNameTypeDelegate extends AbstractIndexedNameTypeDelegate {
@@ -29,8 +30,9 @@ public class IndexedNameTypeDelegate extends AbstractIndexedNameTypeDelegate {
 	}
 
 	@Override
-	protected void remove(List<Class<IndexedNameType>> classes) {
+	protected List<Class<IndexedNameType>> remove(List<Class<IndexedNameType>> classes) {
 		classes.forEach(this::removeIndexedNameType);
+		return Collections.emptyList();
 	}
 
 	private void addIndexedNameType(Class<IndexedNameType> c) {

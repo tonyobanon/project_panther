@@ -12,6 +12,10 @@ public abstract class BaseEvent implements Serializable {
 	public static <T extends BaseEvent> void one(Class<T> eventType, Consumer<T> consumer) {
 		AbstractEventDelegate.getInstance().one(eventType, consumer);
 	}
+	
+	public static void dispatch(BaseEvent evt) {
+		AbstractEventDelegate.getInstance().dispatch(evt);
+	}
 
 	public String getEventId() {
 		return eventId;
