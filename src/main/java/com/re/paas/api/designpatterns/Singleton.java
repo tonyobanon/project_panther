@@ -4,7 +4,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.re.paas.api.runtime.ThreadSecurity;
+import com.re.paas.api.runtime.ClassLoaderSecurity;
 import com.re.paas.api.runtime.spi.SpiDelegateHandler;
 import com.re.paas.api.utils.ClassUtils;
 
@@ -44,7 +44,7 @@ public class Singleton {
 
 		String name = ClassUtils.toString(type);
 		
-		if (!ThreadSecurity.hasTrust()) {
+		if (!ClassLoaderSecurity.hasTrust()) {
 			
 			if(singletons.containsKey(name)) {
 				throw new SecurityException(name + " is already registered");

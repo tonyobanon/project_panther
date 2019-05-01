@@ -28,8 +28,7 @@ import com.re.paas.api.annotations.develop.BlockerTodo;
 import com.re.paas.api.annotations.develop.Todo;
 import com.re.paas.api.app_provisioning.AppClassLoader;
 import com.re.paas.api.classes.Exceptions;
-import com.re.paas.api.runtime.ThreadSecurity;
-import com.re.paas.internal.Application;
+import com.re.paas.api.runtime.ClassLoaderSecurity;
 import com.re.paas.internal.runtime.spi.AppProvisioner;
 
 public class ClassUtils<T> {
@@ -234,6 +233,21 @@ public class ClassUtils<T> {
 		return Joiner.on(".").join(parts);
 	}
 
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
 	/**
 	 * This function generates a name that can be used to identify this class
 	 * uniquely accross the platform
@@ -264,7 +278,6 @@ public class ClassUtils<T> {
 	 */
 	public static <T> Class<? extends T> forName(String name) {
 
-		AppProvisioner prov = AppProvisioner.get();
 		String[] parts = HASH_PATTERN.split(name);
 
 		String appId = parts[0];
@@ -273,16 +286,16 @@ public class ClassUtils<T> {
 		ClassLoader cl = null;
 
 		if (AppProvisioner.DEFAULT_APP_ID.equals(appId)) {
-			cl = Application.class.getClassLoader();
+			cl = ClassLoader.getSystemClassLoader();
 		} else {
-			cl = prov.getClassloader(appId);
+			cl = AppProvisioner.get().getClassloader(appId);
 		}
 
 		return forName(className, cl);
 	}
 
 	/**
-	 * This function determines whether the current thread is allowed to access the
+	 * This function determines whether the current context is allowed to access the
 	 * specified class
 	 * 
 	 * @param clazz
@@ -290,37 +303,51 @@ public class ClassUtils<T> {
 	 */
 	public static boolean isAccessible(Class<?> clazz) {
 
-		if (ThreadSecurity.hasTrust()) {
+		if (ClassLoaderSecurity.hasTrust()) {
 			return true;
 		}
 
-		AppClassLoader cl = (AppClassLoader) Thread.currentThread().getContextClassLoader();
+		// If this is a platform class, allow access
+		if (clazz.getClassLoader().equals(ClassLoader.getSystemClassLoader())) {
+			return true;
+		}
+
+		// Since it's not, allow if the app is the owner
+
+		AppClassLoader cl = (AppClassLoader) ClassLoaderSecurity.class.getClassLoader();
 		return cl == clazz.getClassLoader();
 	}
 
 	/**
-	 * This function determines whether the current thread is allowed to access the
-	 * specified class
-	 * 
-	 * @param name This is the name that was returned from a call to
-	 *             {@link ClassUtils#toString(Class)}
+	 * This method should only be used for SPI classes
+	 * @param clazz
 	 * @return
 	 */
-	public static boolean isAccessible(String name) {
+	public static String getAppId(Class<?> clazz) {
+		ClassLoader cl = clazz.getClassLoader();
 
-		if (ThreadSecurity.hasTrust()) {
-			// No need moving on, since an appId is required down the line
-			return true;
+		if (cl instanceof AppClassLoader) {
+			return ((AppClassLoader) cl).getAppId();
+		} else {
+			return AppProvisioner.DEFAULT_APP_ID;
 		}
-
-		String[] parts = HASH_PATTERN.split(name);
-
-		String appId = parts[0];
-		AppClassLoader cl = (AppClassLoader) Thread.currentThread().getContextClassLoader();
-
-		return appId.equals(cl.getAppId());
 	}
+
+	public static boolean isTrusted(Class<?> c) {
+		boolean isTrusted = !(c.getClassLoader() instanceof AppClassLoader);
+		return isTrusted;
+	}
+
 	
+	
+	
+	
+	
+	
+	
+	
+	
+
 	public static Object getFieldValue(Class<?> clazz, String name) {
 		return getFieldValue(clazz, null, name);
 	}
@@ -330,7 +357,7 @@ public class ClassUtils<T> {
 
 			Field f = clazz.getDeclaredField(name);
 			f.setAccessible(true);
-			
+
 			return f.get(instance);
 
 		} catch (NoSuchFieldException | SecurityException | IllegalArgumentException | IllegalAccessException e) {
@@ -349,10 +376,10 @@ public class ClassUtils<T> {
 
 			Field f = clazz.getDeclaredField(name);
 			f.setAccessible(true);
-			
-            Field modifiersField = Field.class.getDeclaredField( "modifiers" );
-            modifiersField.setAccessible( true );
-            modifiersField.setInt(f, f.getModifiers() & ~Modifier.FINAL );
+
+			Field modifiersField = Field.class.getDeclaredField("modifiers");
+			modifiersField.setAccessible(true);
+			modifiersField.setInt(f, f.getModifiers() & ~Modifier.FINAL);
 
 			f.set(instance, value);
 
@@ -431,21 +458,6 @@ public class ClassUtils<T> {
 			}
 		}
 		return false;
-	}
-
-	public static String getAppId(Class<?> clazz) {
-		ClassLoader cl = clazz.getClassLoader();
-
-		if (cl instanceof AppClassLoader) {
-			return ((AppClassLoader) cl).getAppId();
-		} else {
-			return AppProvisioner.DEFAULT_APP_ID;
-		}
-	}
-
-	public static boolean isTrusted(Class<?> c) {
-		boolean isTrusted = !(c.getClassLoader() instanceof AppClassLoader);
-		return isTrusted;
 	}
 
 	/**

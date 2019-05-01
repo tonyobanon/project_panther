@@ -5,6 +5,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 
+import com.re.paas.api.annotations.develop.PlatformInternal;
 import com.re.paas.api.classes.SingleThreadExecutor;
 import com.re.paas.api.classes.ThreadContext;
 import com.re.paas.api.logging.LogPipeline;
@@ -56,12 +57,13 @@ public class DefaultLogger extends Logger {
 	}
 
 	@Override
-	public void verboseMode(VerboseLevel verboseLevel) {
+	public Logger verboseMode(VerboseLevel verboseLevel) {
 		verboseMode(verboseLevel.toString());
+		return this;
 	}
 
 	@Override
-	public void verboseMode(String verboseLevel) {
+	public Logger verboseMode(String verboseLevel) {
 
 		VerboseLevel level = null;
 
@@ -121,8 +123,11 @@ public class DefaultLogger extends Logger {
 		default:
 			throw new IllegalArgumentException("Unrecognized verbose level");
 		}
+		
+		return this;
 	}
 
+	@PlatformInternal
 	public static void setPipeline(LogPipeline pipeline) {
 		logPipeline = pipeline;
 	}
@@ -307,7 +312,7 @@ public class DefaultLogger extends Logger {
 		String[] lines = msg.split("\\n");
 
 		String[] result = new String[lines.length];
-		result[0] = "[" + Dates.now().toString() + "]" + " " + "[" + level.name() + "]" + " " + "[" + namespace + "]"
+		result[0] = "[" + Dates.now().toString() + "]" + " " + "[" + level.name() + "]" + (namespace != null ? " " + "[" + namespace + "]" : "")
 				+ " " + "[" + lines[0] + "]";
 
 		if (lines.length > 1) {
@@ -316,9 +321,5 @@ public class DefaultLogger extends Logger {
 			}
 		}
 		return result;
-	}
-
-	static {
-		setPipeline(LogPipeline.from(System.out, System.err));
 	}
 }

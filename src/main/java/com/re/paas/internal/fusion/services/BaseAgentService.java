@@ -32,7 +32,7 @@ public class BaseAgentService extends BaseService {
 	@FusionEndpoint(uri = "/list-agent-organization-names", requestParams = {
 			"territory" }, method = HttpMethod.GET, 
 					functionality = AgentOrganizationFunctionalities.Constants.LIST_AGENT_ORGANIZATION_NAMES)
-	public void listAgentOrganizationNames(RoutingContext ctx) {
+	public static void listAgentOrganizationNames(RoutingContext ctx) {
 
 		String territory = ctx.request().getParam("territory");
 
@@ -44,7 +44,7 @@ public class BaseAgentService extends BaseService {
 	@FusionEndpoint(uri = "/get-agent-organization", requestParams = {
 			"id" }, method = HttpMethod.GET, 
 					functionality =  AgentOrganizationFunctionalities.Constants.VIEW_AGENT_ORGANIZATION)
-	public void getAgentOrganization(RoutingContext ctx) {
+	public static void getAgentOrganization(RoutingContext ctx) {
 
 		Long id = Long.parseLong(ctx.request().getParam("id"));
 
@@ -56,7 +56,7 @@ public class BaseAgentService extends BaseService {
 	@FusionEndpoint(uri = "/get-agents", bodyParams = {
 			"ids" }, method = HttpMethod.POST, 
 					functionality = AgentFunctionalities.Constants.VIEW_AGENT)
-	public void getAgents(RoutingContext ctx) {
+	public static void getAgents(RoutingContext ctx) {
 
 		JsonObject body = ctx.getBodyAsJson();
 
@@ -72,7 +72,7 @@ public class BaseAgentService extends BaseService {
 	@FusionEndpoint(uri = "/new-agent-organization-message", bodyParams = {
 			"spec" }, method = HttpMethod.PUT, 
 					functionality = AgentOrganizationFunctionalities.Constants.CREATE_AGENT_ORGANIZATION_MESSAGES)
-	public void newAgentOrganizationMessage(RoutingContext ctx) {
+	public static void newAgentOrganizationMessage(RoutingContext ctx) {
 
 		JsonObject body = ctx.getBodyAsJson();
 
@@ -91,7 +91,7 @@ public class BaseAgentService extends BaseService {
 	@FusionEndpoint(uri = "/update-agent-organization-message", requestParams = { "id",
 			"resolution" }, method = HttpMethod.POST, 
 			functionality = AgentOrganizationFunctionalities.Constants.UPDATE_AGENT_ORGANIZATION_MESSAGES)
-	public void updateAgentOrganizationMessage(RoutingContext ctx) {
+	public static void updateAgentOrganizationMessage(RoutingContext ctx) {
 
 		Long principal = FusionHelper.getUserId(ctx.request());
 
@@ -104,7 +104,7 @@ public class BaseAgentService extends BaseService {
 	@FusionEndpoint(uri = "/delete-agent-organization-message", requestParams = {
 			"id" }, method = HttpMethod.DELETE, 
 					functionality = AgentOrganizationFunctionalities.Constants.DELETE_AGENT_ORGANIZATION_MESSAGES)
-	public void deleteAgentOrganizationMessage(RoutingContext ctx) {
+	public static void deleteAgentOrganizationMessage(RoutingContext ctx) {
 
 		Long principal = FusionHelper.getUserId(ctx.request());
 
@@ -116,7 +116,7 @@ public class BaseAgentService extends BaseService {
 	@FusionEndpoint(uri = "/get-agent-organization-message", requestParams = {
 			"id" }, method = HttpMethod.GET, 
 					functionality = AgentOrganizationFunctionalities.Constants.VIEW_AGENT_ORGANIZATION_MESSAGE)
-	public void getAgentOrganizationMessage(RoutingContext ctx) {
+	public static void getAgentOrganizationMessage(RoutingContext ctx) {
 
 		Long principal = FusionHelper.getUserId(ctx.request());
 
@@ -130,7 +130,7 @@ public class BaseAgentService extends BaseService {
 	@FusionEndpoint(uri = "/new-agent-organization-whistleblow-message", bodyParams = {
 			"spec" }, method = HttpMethod.PUT, 
 					functionality = AgentOrganizationFunctionalities.Constants.CREATE_AGENT_ORGANIZATION_WHISTLEBLOW_MESSAGES)
-	public void newAgentOrganizationWhistleblowMessage(RoutingContext ctx) {
+	public static void newAgentOrganizationWhistleblowMessage(RoutingContext ctx) {
 
 		JsonObject body = ctx.getBodyAsJson();
 
@@ -149,7 +149,7 @@ public class BaseAgentService extends BaseService {
 	@FusionEndpoint(uri = "/update-agent-organization-whistleblow-message", requestParams = { "id",
 			"resolution" }, method = HttpMethod.POST, 
 			functionality = AgentOrganizationFunctionalities.Constants.UPDATE_AGENT_ORGANIZATION_WHISTLEBLOW_MESSAGES)
-	public void updateAgentOrganizationWhistleblowMessage(RoutingContext ctx) {
+	public static void updateAgentOrganizationWhistleblowMessage(RoutingContext ctx) {
 
 		Long principal = FusionHelper.getUserId(ctx.request());
 
@@ -162,7 +162,7 @@ public class BaseAgentService extends BaseService {
 	@FusionEndpoint(uri = "/delete-agent-organization-whistleblow-message", requestParams = {
 			"id" }, method = HttpMethod.DELETE, 
 					functionality = AgentOrganizationFunctionalities.Constants.DELETE_AGENT_ORGANIZATION_WHISTLEBLOW_MESSAGES)
-	public void deleteAgentOrganizationWhistleblowMessage(RoutingContext ctx) {
+	public static void deleteAgentOrganizationWhistleblowMessage(RoutingContext ctx) {
 
 		Long principal = FusionHelper.getUserId(ctx.request());
 
@@ -174,7 +174,7 @@ public class BaseAgentService extends BaseService {
 	@FusionEndpoint(uri = "/get-agent-organization-whistleblow-message", requestParams = {
 			"id" }, method = HttpMethod.GET, 
 					functionality = AgentOrganizationFunctionalities.Constants.VIEW_AGENT_ORGANIZATION_WHISTLEBLOW_MESSAGE)
-	public void getAgentOrganizationWhistleblowMessage(RoutingContext ctx) {
+	public static void getAgentOrganizationWhistleblowMessage(RoutingContext ctx) {
 
 		Long principal = FusionHelper.getUserId(ctx.request());
 
@@ -189,7 +189,7 @@ public class BaseAgentService extends BaseService {
 	@FusionEndpoint(uri = "/new-agent-organization-review", bodyParams = {
 			"spec" }, method = HttpMethod.PUT, 
 					functionality = AgentOrganizationFunctionalities.Constants.CREATE_AGENT_ORGANIZATION_REVIEW)
-	public void newAgentOrganizationReview(RoutingContext ctx) {
+	public static void newAgentOrganizationReview(RoutingContext ctx) {
 
 		JsonObject body = ctx.getBodyAsJson();
 
@@ -207,7 +207,7 @@ public class BaseAgentService extends BaseService {
 	@FusionEndpoint(uri = "/delete-agent-organization-review", requestParams = {
 			"id" }, method = HttpMethod.DELETE, 
 					functionality = AgentOrganizationFunctionalities.Constants.DELETE_AGENT_ORGANIZATION_REVIEWS)
-	public void deleteAgentOrganizationReview(RoutingContext ctx) {
+	public static void deleteAgentOrganizationReview(RoutingContext ctx) {
 
 		Long principal = FusionHelper.getUserId(ctx.request());
 

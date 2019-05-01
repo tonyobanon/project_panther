@@ -2,17 +2,17 @@ package com.re.paas.internal.runtime;
 
 import com.re.paas.api.annotations.develop.BlockerTodo;
 import com.re.paas.api.runtime.Invokable;
-import com.re.paas.api.runtime.ThreadSecurity;
+import com.re.paas.api.runtime.ClassLoaderSecurity;
 
-public class ThreadSecurityImpl extends ThreadSecurity {
+public class ClassLoaderSecurityImpl extends ClassLoaderSecurity {
 
 	private ClassLoader mainClassloader;
 
-	public ThreadSecurityImpl() {
-		this(ThreadSecurityImpl.class.getClassLoader());
+	public ClassLoaderSecurityImpl() {
+		this(ClassLoaderSecurityImpl.class.getClassLoader());
 	}
 
-	public ThreadSecurityImpl(ClassLoader cl) {
+	public ClassLoaderSecurityImpl(ClassLoader cl) {
 		mainClassloader = cl;
 	}
 

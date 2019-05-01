@@ -4,8 +4,9 @@ import java.util.Date;
 
 import com.googlecode.objectify.annotation.Cache;
 import com.googlecode.objectify.annotation.Entity;
-import com.googlecode.objectify.annotation.Id;
 import com.googlecode.objectify.condition.IfNotEmpty;
+
+import nonapi.io.github.classgraph.json.Id;
 
 @Entity
 @Cache

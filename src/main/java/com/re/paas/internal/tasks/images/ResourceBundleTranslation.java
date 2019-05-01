@@ -30,7 +30,7 @@ public class ResourceBundleTranslation extends TaskImage {
 		AbstractServiceDelegate serviceDelegate = BaseService.getDelegate();
 
 		return new FluentArrayList<AbstractField>().with(new CompositeField("target_country", ClientRBRef.get("country"))
-				.setItemsSource(serviceDelegate.getFunctionalityRoute(LocationFunctionalities.GET_COUNTRY_NAMES).get(0))
+				.setItemsSource(serviceDelegate.getFunctionalityService(LocationFunctionalities.GET_COUNTRY_NAMES).get(0))
 				.setSortOrder(1).setIsDefault(true));
 	}
 

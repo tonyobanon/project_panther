@@ -18,9 +18,9 @@ public abstract class Logger {
 	
 	public abstract Logger setNamespace(Class<?> clazz, String context);
 	
-	public abstract void verboseMode(VerboseLevel verboseLevel);
+	public abstract Logger verboseMode(VerboseLevel verboseLevel);
 
-	public abstract void verboseMode(String verboseLevel);
+	public abstract Logger verboseMode(String verboseLevel);
 
 	public abstract void debug(String msg);
 

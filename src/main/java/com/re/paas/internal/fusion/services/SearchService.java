@@ -34,7 +34,7 @@ public class SearchService extends BaseService {
 	@FusionEndpoint(uri = "/new-list-context", bodyParams = { "type", "pageSize", "listingFilters",
 			"order" }, method = HttpMethod.PUT, 
 			functionality = SearchFunctionalities.Constants.PERFORM_LIST_OPERATION)
-	public void newListContext(RoutingContext ctx) {
+	public static void newListContext(RoutingContext ctx) {
 
 		JsonObject body = ctx.getBodyAsJson();
 
@@ -69,7 +69,7 @@ public class SearchService extends BaseService {
 	@FusionEndpoint(uri = "/new-search-context", bodyParams = { "type", "phrase",
 			"pageSize" }, method = HttpMethod.PUT, 
 			functionality = SearchFunctionalities.Constants.PERFORM_LIST_OPERATION)
-	public void newSearchContext(RoutingContext ctx) {
+	public static void newSearchContext(RoutingContext ctx) {
 
 		JsonObject body = ctx.getBodyAsJson();
 
@@ -87,7 +87,7 @@ public class SearchService extends BaseService {
 	@FusionEndpoint(uri = "/clear-cache", requestParams = {
 			"type" }, method = HttpMethod.DELETE, 
 					functionality = PlatformFunctionalities.Constants.MANAGE_SYSTEM_CACHES)
-	public void clearSearchCache(RoutingContext ctx) {
+	public static void clearSearchCache(RoutingContext ctx) {
 		ListingType type = ListingType.from(Integer.parseInt(ctx.request().getParam("type")));
 		SearchModel.clearCache(type);
 	}
@@ -95,7 +95,7 @@ public class SearchService extends BaseService {
 	@FusionEndpoint(uri = "/has-cursor", requestParams = { "moveType",
 			"contextKey" }, method = HttpMethod.GET, 
 			functionality = SearchFunctionalities.Constants.PERFORM_LIST_OPERATION)
-	public void hasListingCursor(RoutingContext ctx) {
+	public static void hasListingCursor(RoutingContext ctx) {
 
 		Long userId = FusionHelper.getUserId(ctx.request());
 
@@ -109,7 +109,7 @@ public class SearchService extends BaseService {
 	@FusionEndpoint(uri = "/is-context-available", requestParams = {
 			"contextKey" }, method = HttpMethod.GET, 
 					functionality = SearchFunctionalities.Constants.PERFORM_LIST_OPERATION)
-	public void isListingContextAvailable(RoutingContext ctx) {
+	public static void isListingContextAvailable(RoutingContext ctx) {
 
 		String contextKey = ctx.request().getParam("contextKey");
 
@@ -120,7 +120,7 @@ public class SearchService extends BaseService {
 	@FusionEndpoint(uri = "/next-results", requestParams = { "moveType",
 			"contextKey" }, method = HttpMethod.GET, 
 			functionality = SearchFunctionalities.Constants.PERFORM_LIST_OPERATION)
-	public void nextListingResults(RoutingContext ctx) {
+	public static void nextListingResults(RoutingContext ctx) {
 
 		Long userId = FusionHelper.getUserId(ctx.request());
 
@@ -134,7 +134,7 @@ public class SearchService extends BaseService {
 
 	@FusionEndpoint(uri = "/get-searchable-lists", method = HttpMethod.GET, 
 			functionality = SearchFunctionalities.Constants.GET_SEARCHABLE_LISTS)
-	public void getSearchableList(RoutingContext ctx) {
+	public static void getSearchableList(RoutingContext ctx) {
 
 		Long userId = FusionHelper.getUserId(ctx.request());
 

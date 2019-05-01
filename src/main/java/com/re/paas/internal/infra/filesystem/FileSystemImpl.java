@@ -1,7 +1,6 @@
 package com.re.paas.internal.infra.filesystem;
 
 import java.io.IOException;
-import java.net.URI;
 import java.nio.file.FileStore;
 import java.nio.file.FileSystem;
 import java.nio.file.Path;
@@ -13,7 +12,7 @@ import java.util.Set;
 
 public class FileSystemImpl extends FileSystem {
 
-	private final FileSystemProviderImpl provider;
+	final FileSystemProviderImpl provider;
 	private final FileSystem fs;
 	
 	FileSystemImpl(FileSystemProviderImpl provider) {
@@ -63,16 +62,7 @@ public class FileSystemImpl extends FileSystem {
 
 	@Override
 	public Path getPath(String first, String... more) {
-		
-		// Create a URI
-		URI uri = URI.create("file:///").resolve(first);
-		
-		for(String m : more) {
-			uri.resolve(m);
-		}
-		
-		Path p = new PathImpl(this, this.provider.getPath(uri));
-		return p;
+		return new PathImpl(this, this.fs.getPath(UriHelper.transform(this, first, more)));
 	}
 
 	@Override

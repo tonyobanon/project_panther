@@ -11,10 +11,10 @@ import java.util.Map;
 
 import com.google.common.collect.Maps;
 import com.re.paas.api.annotations.develop.BlockerBlockerTodo;
-import com.re.paas.api.annotations.develop.BlockerTodo;
 import com.re.paas.api.annotations.develop.Prototype;
 import com.re.paas.api.app_provisioning.AppClassLoader;
 import com.re.paas.api.classes.Exceptions;
+import com.re.paas.api.runtime.ClassLoaderSecurity;
 import com.re.paas.api.utils.ClassUtils;
 import com.re.paas.internal.classes.AppDirectory;
 
@@ -35,15 +35,18 @@ public class AppClassLoaderImpl extends AppClassLoader {
 
 	private final String[] appDependencies;
 
-	public AppClassLoaderImpl(ClassLoader parent, Path path, String appId) {
-		this(parent, path, appId, null);
+	public AppClassLoaderImpl(ClassLoader parent, String appId) {
+		this(parent, appId, null);
 	}
 
-	public AppClassLoaderImpl(ClassLoader parent, Path path, String appId, String[] appDependencies) {
+	public AppClassLoaderImpl(ClassLoader parent, String appId, String[] appDependencies) {
 		super(parent);
 		this.appId = appId;
-		this.path = path;
+		this.path = AppProvisionerImpl.getAppBasePath().resolve(appId).resolve("classes");
 		this.appDependencies = appDependencies;
+
+		// Load ThreadSecurity class into the classloader
+		ClassLoaderSecurity.load(this);
 	}
 
 	public URL getResource(String name) {
@@ -123,8 +126,16 @@ public class AppClassLoaderImpl extends AppClassLoader {
 		return c;
 	}
 
-	@BlockerTodo("Verify that Jdk9 still throws a ClassNotFoundException, which is almost useless")
-	@BlockerTodo("Implement for other delegation types")
+	@Override
+	public Class<?>[] load(Class<?>... classes) throws ClassNotFoundException {
+		Class<?>[] r = new Class<?>[classes.length];
+		for(int i = 0; i < classes.length; i++) {
+			Class<?> c = this.loadClass(classes[i].getName());
+			r[i] = c;
+		}
+		return r;
+	}
+	
 
 	@Override
 	public Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
@@ -196,30 +207,29 @@ public class AppClassLoaderImpl extends AppClassLoader {
 	@BlockerBlockerTodo("Add support for nested classes, as this may not work in that scenario")
 	private byte[] loadClassFromDisk(String className) {
 
-		Path path = this.path.resolve(className.replace(".", "/") + ".class");
+		Path path = AppDirectory.getBasePath().resolve(className.replace(".", "/") + ".class");
 
 		if (!Files.exists(path)) {
 
-			// Check the path of the parent classloader
-
-			path = AppDirectory.getBasePath().resolve(className.replace(".", "/") + ".class");
+			path = this.path.resolve(className.replace(".", "/") + ".class");
 
 			if (!Files.exists(path)) {
 				return null;
 			}
-			
 		}
 
 		try {
 
 			// read class
-			InputStream is = Files.newInputStream(path);
+			InputStream in = Files.newInputStream(path);
 			ByteArrayOutputStream byteSt = new ByteArrayOutputStream();
 			// write into byte
 			int len = 0;
-			while ((len = is.read()) != -1) {
+			while ((len = in.read()) != -1) {
 				byteSt.write(len);
 			}
+			
+			in.close();
 			// convert into byte array
 			return byteSt.toByteArray();
 

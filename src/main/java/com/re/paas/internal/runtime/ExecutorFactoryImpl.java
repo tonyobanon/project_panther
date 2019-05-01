@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -118,9 +119,7 @@ public class ExecutorFactoryImpl extends ExecutorFactory implements EventListene
 	}
 
 	@Override
-	public <R, T> CompletableFuture<T> execute(Invokable<R> task) {
-
-		CompletableFuture<T> r = new CompletableFuture<>();
+	public <R> CompletableFuture<R> execute(Invokable<R> task) {
 
 		if (free.isEmpty()) {
 			Exceptions.throwRuntime(new ComputeException("No executor(s) available to run this task"));
@@ -133,18 +132,26 @@ public class ExecutorFactoryImpl extends ExecutorFactory implements EventListene
 
 		markAsUsed(executorId);
 
-		r.thenApply((p) -> {
+		CompletableFuture<R> r = new CompletableFuture<>();
+		
+		try {
+			
+		executor.submit(() -> {
+			
+			Permissions.init();
+			R result = task.call();
+			Permissions.clear();
 
-			return executor.submit(() -> {
-
-				Permissions.init();
-				R result = task.call();
-				Permissions.clear();
-
-				markAsFree(executorId);
-				return result;
-			});
-		});
+			markAsFree(executorId);
+			
+			r.complete(result);
+			return null;
+			
+		}).get();
+		
+		} catch (NullPointerException | InterruptedException | ExecutionException e) {
+			Exceptions.throwRuntime(e);
+		}
 
 		return r;
 	}

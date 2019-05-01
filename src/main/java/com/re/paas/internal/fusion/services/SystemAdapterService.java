@@ -39,7 +39,7 @@ public class SystemAdapterService extends BaseService {
 	}
 
 	@FusionEndpoint(uri = "types", functionality = SystemAdapterFunctionalities.Constants.GET_TYPES)
-	public void getTypes(RoutingContext ctx) {
+	public static void getTypes(RoutingContext ctx) {
 
 		JsonArray res = new JsonArray();
 
@@ -51,7 +51,7 @@ public class SystemAdapterService extends BaseService {
 	}
 
 	@FusionEndpoint(uri = "descriptions", functionality = SystemAdapterFunctionalities.Constants.GET_DESCRIPTIONS)
-	public void getDescriptions(RoutingContext ctx) {
+	public static void getDescriptions(RoutingContext ctx) {
 
 		AdapterType type = AdapterType.from(ctx.request().getParam("type"));
 
@@ -74,7 +74,7 @@ public class SystemAdapterService extends BaseService {
 	}
 
 	@FusionEndpoint(uri = "parameters", functionality = SystemAdapterFunctionalities.Constants.GET_PARAMETERS, affinity = ServiceAffinity.MASTER_ONLY)
-	public void getParameters(RoutingContext ctx) {
+	public static void getParameters(RoutingContext ctx) {
 
 		AdapterType type = AdapterType.from(ctx.request().getParam("type"));
 		String adapterName = ctx.request().getParam("name");
@@ -89,7 +89,7 @@ public class SystemAdapterService extends BaseService {
 	}
 
 	@FusionEndpoint(uri = "configure", method = HttpMethod.POST, functionality = SystemAdapterFunctionalities.Constants.CONFIGURE, affinity = ServiceAffinity.MASTER_ONLY)
-	public void configure(RoutingContext ctx) {
+	public static void configure(RoutingContext ctx) {
 
 		JsonObject body = ctx.getBodyAsJson();
 

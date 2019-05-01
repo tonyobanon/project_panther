@@ -33,7 +33,7 @@ public class FormService extends BaseService {
 
 	@FusionEndpoint(uri = "/new-application-form-section", bodyParams = { "name", "description",
 			"realm" }, method = HttpMethod.PUT, functionality = UserApplicationFunctionalities.Constants.MANAGE_APPLICATION_FORMS)
-	public void newApplicationFormSection(RoutingContext ctx) {
+	public static void newApplicationFormSection(RoutingContext ctx) {
 
 		JsonObject body = ctx.getBodyAsJson();
 
@@ -47,7 +47,7 @@ public class FormService extends BaseService {
 
 	@FusionEndpoint(uri = "/new-system-configuration-section", bodyParams = { "name", "description",
 			"realm" }, method = HttpMethod.PUT, functionality = PlatformFunctionalities.Constants.MANAGE_SYSTEM_CONFIGURATION_FORM)
-	public void newSystemConfigurationSection(RoutingContext ctx) {
+	public static void newSystemConfigurationSection(RoutingContext ctx) {
 
 		JsonObject body = ctx.getBodyAsJson();
 
@@ -61,7 +61,7 @@ public class FormService extends BaseService {
 
 	@FusionEndpoint(uri = "/list-application-form-sections", requestParams = {
 			"realm" }, functionality = FormFunctionalities.Constants.VIEW_APPLICATION_FORM)
-	public void listApplicationFormSections(RoutingContext ctx) {
+	public static void listApplicationFormSections(RoutingContext ctx) {
 
 		Realm roleRealm = Realm.get(ctx.request().getParam("realm"));
 		
@@ -70,7 +70,7 @@ public class FormService extends BaseService {
 	}
 
 	@FusionEndpoint(uri = "/list-system-configuration-sections", functionality = PlatformFunctionalities.Constants.VIEW_SYSTEM_CONFIGURATION)
-	public void listSystemConfigurationSections(RoutingContext ctx) {
+	public static void listSystemConfigurationSections(RoutingContext ctx) {
 
 		List<Section> sections = FormModel.listSections(FormSectionType.SYSTEM_CONFIGURATION, null);
 		ctx.response().write(Json.getGson().toJson(sections)).end();
@@ -78,7 +78,7 @@ public class FormService extends BaseService {
 
 	@FusionEndpoint(uri = "/list-application-form-fields", requestParams = {
 			"sectionId" }, functionality = FormFunctionalities.Constants.VIEW_APPLICATION_FORM)
-	public void listApplicationFormFields(RoutingContext ctx) {
+	public static void listApplicationFormFields(RoutingContext ctx) {
 
 		String sectionId = ctx.request().getParam("sectionId");
 
@@ -88,7 +88,7 @@ public class FormService extends BaseService {
 
 	@FusionEndpoint(uri = "/list-application-form-field-names", requestParams = {
 			"sectionId" }, functionality = FormFunctionalities.Constants.VIEW_APPLICATION_FORM)
-	public void listApplicationFormFieldNames(RoutingContext ctx) {
+	public static void listApplicationFormFieldNames(RoutingContext ctx) {
 
 		String sectionId = ctx.request().getParam("sectionId");
 
@@ -98,7 +98,7 @@ public class FormService extends BaseService {
 
 	@FusionEndpoint(uri = "/list-all-application-form-fields", bodyParams = {
 			"sectionIds" }, method = HttpMethod.POST, functionality = FormFunctionalities.Constants.VIEW_APPLICATION_FORM)
-	public void listAllApplicationFormFields(RoutingContext ctx) {
+	public static void listAllApplicationFormFields(RoutingContext ctx) {
 
 		JsonObject body = ctx.getBodyAsJson();
 
@@ -112,7 +112,7 @@ public class FormService extends BaseService {
 
 	@FusionEndpoint(uri = "/list-system-configuration-fields", requestParams = {
 			"sectionId" }, functionality = PlatformFunctionalities.Constants.VIEW_SYSTEM_CONFIGURATION)
-	public void listSystemConfigurationFields(RoutingContext ctx) {
+	public static void listSystemConfigurationFields(RoutingContext ctx) {
 
 		String sectionId = ctx.request().getParam("sectionId");
 
@@ -122,7 +122,7 @@ public class FormService extends BaseService {
 
 	@FusionEndpoint(uri = "/list-system-configuration-field-names", requestParams = {
 			"sectionId" }, functionality = PlatformFunctionalities.Constants.VIEW_SYSTEM_CONFIGURATION)
-	public void listSystemConfigurationFieldNames(RoutingContext ctx) {
+	public static void listSystemConfigurationFieldNames(RoutingContext ctx) {
 
 		String sectionId = ctx.request().getParam("sectionId");
 
@@ -132,7 +132,7 @@ public class FormService extends BaseService {
 
 	@FusionEndpoint(uri = "/list-all-system-configuration-fields", bodyParams = {
 			"sectionIds" }, method = HttpMethod.POST, functionality = PlatformFunctionalities.Constants.VIEW_SYSTEM_CONFIGURATION)
-	public void listAllSystemConfigurationFields(RoutingContext ctx) {
+	public static void listAllSystemConfigurationFields(RoutingContext ctx) {
 
 		JsonObject body = ctx.getBodyAsJson();
 
@@ -146,7 +146,7 @@ public class FormService extends BaseService {
 
 	@FusionEndpoint(uri = "/delete-application-form-section", requestParams = {
 			"sectionId" }, method = HttpMethod.DELETE, functionality = UserApplicationFunctionalities.Constants.MANAGE_APPLICATION_FORMS)
-	public void deleteApplicationFormSection(RoutingContext ctx) {
+	public static void deleteApplicationFormSection(RoutingContext ctx) {
 
 		String sectionId = ctx.request().getParam("sectionId");
 		FormModel.deleteSection(sectionId, FormSectionType.APPLICATION_FORM);
@@ -154,7 +154,7 @@ public class FormService extends BaseService {
 
 	@FusionEndpoint(uri = "/delete-system-configuration-section", requestParams = {
 			"sectionId" }, method = HttpMethod.DELETE, functionality = PlatformFunctionalities.Constants.MANAGE_SYSTEM_CONFIGURATION_FORM)
-	public void deleteSystemConfigurationSection(RoutingContext ctx) {
+	public static void deleteSystemConfigurationSection(RoutingContext ctx) {
 
 		String sectionId = ctx.request().getParam("sectionId");
 		FormModel.deleteSection(sectionId, FormSectionType.SYSTEM_CONFIGURATION);
@@ -162,7 +162,7 @@ public class FormService extends BaseService {
 
 	@FusionEndpoint(uri = "/delete-application-form-field", requestParams = {
 			"fieldId" }, method = HttpMethod.DELETE, functionality = UserApplicationFunctionalities.Constants.MANAGE_APPLICATION_FORMS)
-	public void deleteApplicationFormField(RoutingContext ctx) {
+	public static void deleteApplicationFormField(RoutingContext ctx) {
 
 		String fieldId = ctx.request().getParam("fieldId");
 		FormModel.deleteField(FormSectionType.APPLICATION_FORM, fieldId);
@@ -170,7 +170,7 @@ public class FormService extends BaseService {
 
 	@FusionEndpoint(uri = "/delete-system-configuration-field", requestParams = {
 			"fieldId" }, method = HttpMethod.DELETE, functionality = PlatformFunctionalities.Constants.MANAGE_SYSTEM_CONFIGURATION_FORM)
-	public void deleteSystemConfigurationField(RoutingContext ctx) {
+	public static void deleteSystemConfigurationField(RoutingContext ctx) {
 
 		String fieldId = ctx.request().getParam("fieldId");
 		FormModel.deleteField(FormSectionType.SYSTEM_CONFIGURATION, fieldId);
@@ -178,7 +178,7 @@ public class FormService extends BaseService {
 
 	@FusionEndpoint(uri = "/create-application-form-simple-field", bodyParams = { "sectionId",
 			"spec" }, method = HttpMethod.PUT, functionality = UserApplicationFunctionalities.Constants.MANAGE_APPLICATION_FORMS)
-	public void newApplicationFormSimpleField(RoutingContext ctx) {
+	public static void newApplicationFormSimpleField(RoutingContext ctx) {
 
 		JsonObject body = ctx.getBodyAsJson();
 
@@ -192,7 +192,7 @@ public class FormService extends BaseService {
 
 	@FusionEndpoint(uri = "/create-application-form-composite-field", bodyParams = { "sectionId",
 			"spec" }, method = HttpMethod.PUT, functionality = UserApplicationFunctionalities.Constants.MANAGE_APPLICATION_FORMS)
-	public void newApplicationFormCompositeField(RoutingContext ctx) {
+	public static void newApplicationFormCompositeField(RoutingContext ctx) {
 
 		JsonObject body = ctx.getBodyAsJson();
 
@@ -207,7 +207,7 @@ public class FormService extends BaseService {
 
 	@FusionEndpoint(uri = "/create-system-configuration-simple-field", bodyParams = { "sectionId",
 			"spec" }, method = HttpMethod.PUT, functionality = PlatformFunctionalities.Constants.MANAGE_SYSTEM_CONFIGURATION_FORM)
-	public void newSystemConfigurationSimpleField(RoutingContext ctx) {
+	public static void newSystemConfigurationSimpleField(RoutingContext ctx) {
 
 		JsonObject body = ctx.getBodyAsJson();
 
@@ -221,7 +221,7 @@ public class FormService extends BaseService {
 
 	@FusionEndpoint(uri = "/create-system-configuration-composite-field", bodyParams = { "sectionId",
 			"spec" }, method = HttpMethod.PUT, functionality = PlatformFunctionalities.Constants.MANAGE_SYSTEM_CONFIGURATION_FORM)
-	public void newSystemConfigurationCompositeField(RoutingContext ctx) {
+	public static void newSystemConfigurationCompositeField(RoutingContext ctx) {
 
 		JsonObject body = ctx.getBodyAsJson();
 
@@ -236,7 +236,7 @@ public class FormService extends BaseService {
 
 	@FusionEndpoint(uri = "/get-application-form-field-ids", requestParams = {
 			"realm" }, functionality = FormFunctionalities.Constants.GET_FORM_FIELD_IDS)
-	public void getApplicationFormFieldIds(RoutingContext ctx) {
+	public static void getApplicationFormFieldIds(RoutingContext ctx) {
 		
 		Realm roleRealm = Realm.get(ctx.request().getParam("realm"));
 

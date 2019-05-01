@@ -12,17 +12,16 @@ import java.util.function.Consumer;
 
 import com.re.paas.api.annotations.develop.BlockerBlockerTodo;
 import com.re.paas.api.annotations.develop.BlockerTodo;
-import com.re.paas.api.app_provisioning.AppClassLoader;
 import com.re.paas.api.classes.Exceptions;
 import com.re.paas.api.classes.KeyValuePair;
 import com.re.paas.api.designpatterns.Singleton;
 import com.re.paas.api.infra.cache.AbstractCacheAdapterDelegate;
 import com.re.paas.api.infra.cache.CacheFactory;
 import com.re.paas.api.logging.Logger;
-import com.re.paas.api.runtime.ExecutorFactory;
 import com.re.paas.api.runtime.spi.BaseSPILocator;
 import com.re.paas.api.runtime.spi.DelegateInitResult;
 import com.re.paas.api.runtime.spi.DelegateSpec;
+import com.re.paas.api.runtime.spi.SpiBase;
 import com.re.paas.api.runtime.spi.SpiDelegate;
 import com.re.paas.api.runtime.spi.SpiDelegateHandler;
 import com.re.paas.api.runtime.spi.SpiType;
@@ -30,6 +29,9 @@ import com.re.paas.api.runtime.spi.TypeClassification;
 import com.re.paas.api.utils.ClassUtils;
 import com.re.paas.internal.classes.AppDirectory;
 import com.re.paas.internal.infra.cache.CacheBackedMap;
+import com.re.paas.internal.runtime.security.Secure;
+import com.re.paas.internal.runtime.security.Secure.Factor;
+import com.re.paas.internal.runtime.security.Secure.IdentityStrategy;
 
 public class SpiDelegateHandlerImpl implements SpiDelegateHandler {
 
@@ -59,6 +61,7 @@ public class SpiDelegateHandlerImpl implements SpiDelegateHandler {
 	}
 
 	@BlockerTodo("use DelegateInitResult as returned by the delegate's init function")
+	@BlockerTodo("If redis is the backing cache for delegate resource maps, then we need to clear it when starting")
 	static void start(String dependants, String appId, SpiType[] types) {
 
 		for (SpiType type : types) {
@@ -238,8 +241,7 @@ public class SpiDelegateHandlerImpl implements SpiDelegateHandler {
 		}
 
 		// Start delegate
-		DelegateInitResult r = (DelegateInitResult) ExecutorFactory.get().execute(delegate::init, isTrusted,
-				isTrusted ? null : (AppClassLoader) delegateClass.getClassLoader()).join();
+		DelegateInitResult r = delegate.init();
 		
 		return r;
 	}
@@ -250,6 +252,10 @@ public class SpiDelegateHandlerImpl implements SpiDelegateHandler {
 	}
 
 	@Override
+	@Secure(factor = Factor.CLASSLOADER_SECURITY, identityStrategy = IdentityStrategy.SAME, allowed = {
+			SpiDelegate.class })
+	@Secure(factor = Factor.CLASSLOADER_SECURITY, identityStrategy = IdentityStrategy.SINGLETON, allowed = {
+			SpiBase.class })
 	public Map<Object, Object> getResources(SpiType type) {
 		return resources.get(type);
 	}

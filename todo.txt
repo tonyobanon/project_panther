@@ -1,7 +1,29 @@
 
-I introduced a system property "bootstage.scanProtectionContext"
-to bypass constraint in ThreadSecurity.setInstance(..)
-When adding the permission sets, this should be taken note of
+
+App Watching
+
+Rewrite RedisCacahe, as the Futures were not designed properly
+
+Implement a package convention where app java packages
+begin with a prefix perculiar to that app, because
+
+1. We may set a platform class to FIND_FIRST but the
+   AppClassLoader may load a malicious class instead
+   
+2. If two apps have similar class names, AppClassLoader.addDelegationType(..)
+   may be called for one of them, say during service registration..
+   and this will apply to the other
+
+
+CodeSecurity does not scan for apps classpath
+
+
+Manage how the LoggerFactory uses an
+execution factory to output log data
+
+
+Create a mechanism to manage threads created from
+untrusted apps
 
 ///////////////////////////
 

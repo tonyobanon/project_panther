@@ -14,7 +14,7 @@ import com.re.paas.api.annotations.develop.Todo;
 import com.re.paas.api.classes.Exceptions;
 import com.re.paas.api.logging.Logger;
 import com.re.paas.api.logging.LoggerFactory;
-import com.re.paas.api.runtime.ThreadSecurity;
+import com.re.paas.api.runtime.ClassLoaderSecurity;
 import com.re.paas.api.utils.ClassUtils;
 import com.re.paas.api.utils.Utils;
 import com.re.paas.internal.classes.ClasspathScanner;
@@ -32,89 +32,91 @@ public class Permissions {
 	public static final short DENY = -2;
 
 	private static Boolean[][] defaultPermissions;
-	private static ThreadLocal<Boolean[][]> userDefinedPermissions = ThreadLocal.withInitial(() -> {return null;});
+	private static ThreadLocal<Boolean[][]> userDefinedPermissions = ThreadLocal.withInitial(() -> {
+		return null;
+	});
 
 	private static Map<String, BasePermission> permissionsClasses = new HashMap<>();
-	
-	static ThreadLocal<Boolean> bypass = ThreadLocal.withInitial(() -> {return false;});
 
+	static ThreadLocal<Boolean> bypass = ThreadLocal.withInitial(() -> {
+		return false;
+	});
+	
 	static boolean isAllowed(Permission permission) {
 		
 		LOG.trace("Checking permission " + permission.toString());
-		
-		if(bypass.get()) {
+
+		if (bypass.get()) {
 			LOG.trace("Bypass is enabled, hence returning true");
 			return true;
 		}
 		
+
 		BasePermission perm = permissionsClasses.get(permission.getClass().getName());
-		
-		if(perm == null) {
-			//No permission set exists for this class
+
+		if (perm == null) {
+			// No permission set exists for this class
 			return true;
 		}
-		
+
 		String context = null;
 		List<String> parts = Splitter.on(Permissions.DOT_PATTERN).limit(2).splitToList(permission.getName());
-		
+
 		if (parts.size() > 1) {
 			context = parts.get(1);
 		}
-		
+
 		Short index = perm.getIndex(permission.getName(), permission.getActions(), context);
-		
+
 		LOG.trace("Received an index of " + index);
-		
-		if(index == DENY || index == ALLOW) {
+
+		if (index == DENY || index == ALLOW) {
 			LOG.trace(index == DENY ? "Denying" : "Allowing" + " permission");
 		}
-		
+
 		// return if index is neither accept or deny
-		if(index == DENY) {
+		if (index == DENY) {
 			return false;
-		} else if(index == ALLOW) {
+		} else if (index == ALLOW) {
 			return true;
 		}
-		
-		if(ThreadSecurity.hasTrust()) {
+
+		if (ClassLoaderSecurity.hasTrust()) {
 			LOG.trace("Current context has trust, hence returning true");
 			return true;
 		}
-		
+
 		// Check if there are any user defined permissions on this
-		
+
 		Boolean[][] permissions = Permissions.userDefinedPermissions.get();
-		
+
 		LOG.trace("Checking if permission is allowed for thread: " + Thread.currentThread().getName());
-		
-		if(permissions == null) {
+
+		if (permissions == null) {
 			init();
 		}
-		
+
 		Boolean allowed = permissions[perm.getBaseIndex()][index];
-		
-		if(allowed != null) {
+
+		if (allowed != null) {
 			LOG.trace("Is permission allowed: " + allowed);
 			return allowed;
 		}
-		
+
 		allowed = defaultPermissions[perm.getBaseIndex()][index];
-		
-		LOG.trace("Is permission allowed: " + allowed);
 		return allowed;
 	}
-	
+
 	public static void clear() {
 		LOG.debug("Clearing permission set for thread: " + Thread.currentThread().getName());
-		 userDefinedPermissions.set(null);
+		userDefinedPermissions.set(null);
 	}
-	
 
 	@BlockerTodo("Implement comments")
 	public static void init() {
-		
+
 		LOG.debug("Inititalizing permission set for thread: " + Thread.currentThread().getName());
-		
+
 		// Initialize userDefinedPermissions
 
 		Boolean[][] permissions = new Boolean[defaultPermissions.length][];
@@ -125,12 +127,15 @@ public class Permissions {
 
 		userDefinedPermissions.set(permissions);
 
-		String appId = ThreadSecurity.getAppId();	
+		String appId = ClassLoaderSecurity.getAppId();
 
 		// TODO Based on appId, fetch user-defined permissions and set on
 		// <userDefinedPermissions>
+		
+		
 
 		registerThread(Thread.currentThread(), appId);
+
 	}
 
 	@BlockerTodo("Implement")
@@ -147,15 +152,13 @@ public class Permissions {
 	}
 
 	/**
-	 * Associate a thread with a particular appId.
-	 * <br>
-	 * <b>Implementation Notes:</b>
-	 * <br>
+	 * Associate a thread with a particular appId. <br>
+	 * <b>Implementation Notes:</b> <br>
 	 * The platform needs to maintain thread references for each application. Please
 	 * find a way to map threads to their relevant app ids. You can also start a job
 	 * that patrols the collection inorder to find threads that are dead. e.g using
 	 * Thread.isAlive(), to know whether to remove. This will help me to achieve
-	 * updatePermissions(...)
+	 * this{@link #update(Integer, Integer, Boolean)}xw
 	 * 
 	 * @param t
 	 * @param appId
@@ -166,7 +169,7 @@ public class Permissions {
 	}
 
 	public static void scan() {
-		
+
 		LOG.debug("Scanning permission sets");
 
 		final List<Integer> pIndexes = new ArrayList<>();

@@ -18,8 +18,6 @@ import com.re.paas.api.app_provisioning.AppClassLoader;
 import com.re.paas.api.classes.Exceptions;
 import com.re.paas.api.events.BaseEvent;
 import com.re.paas.api.logging.Logger;
-import com.re.paas.api.runtime.ExecutorFactory;
-import com.re.paas.api.runtime.ExecutorFactoryConfig;
 import com.re.paas.api.runtime.spi.SpiBase;
 import com.re.paas.api.runtime.spi.SpiDelegate;
 import com.re.paas.api.runtime.spi.SpiDelegateHandler;
@@ -164,8 +162,6 @@ public class SpiBaseImpl implements SpiBase {
 
 	@BlockerBlockerTodo("See comments")
 	public void start(String appId) {
-		
-		ExecutorFactory.create("default", new ExecutorFactoryConfig(ExecutorFactory.MAX_THREAD_COUNT));
 
 		if (appId.equals(AppProvisioner.DEFAULT_APP_ID)) {
 

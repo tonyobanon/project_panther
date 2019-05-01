@@ -30,7 +30,7 @@ public class RolesService extends BaseService {
 
 	@FusionEndpoint(uri = "/new-role", bodyParams = { "roleName",
 			"realm" }, method = HttpMethod.PUT, functionality = RoleFunctionalities.Constants.MANAGE_ROLES)
-	public void newRole(RoutingContext ctx) {
+	public static void newRole(RoutingContext ctx) {
 
 		JsonObject body = ctx.getBodyAsJson();
 
@@ -42,14 +42,14 @@ public class RolesService extends BaseService {
 
 	@FusionEndpoint(uri = "/role", requestParams = {
 			"roleName" }, method = HttpMethod.DELETE, functionality = RoleFunctionalities.Constants.MANAGE_ROLES)
-	public void deleteRole(RoutingContext ctx) {
+	public static void deleteRole(RoutingContext ctx) {
 		String roleName = ctx.request().getParam("roleName");
 		RoleModel.deleteRole(roleName);
 	}
 
 	@FusionEndpoint(uri = "/list", requestParams = {
 			"realm" }, method = HttpMethod.GET, functionality = RoleFunctionalities.Constants.LIST_ROLES)
-	public void listRoles(RoutingContext ctx) {
+	public static void listRoles(RoutingContext ctx) {
 
 		Realm realm = Realm.get(ctx.request().getParam("realm"));
 
@@ -60,7 +60,7 @@ public class RolesService extends BaseService {
 
 	@FusionEndpoint(uri = "/user-count", bodyParams = {
 			"roleNames" }, method = HttpMethod.POST, functionality = RoleFunctionalities.Constants.MANAGE_ROLES)
-	public void getUsersCount(RoutingContext ctx) {
+	public static void getUsersCount(RoutingContext ctx) {
 
 		JsonObject body = ctx.getBodyAsJson();
 		List<String> names = Json.getGson().fromJson(body.getJsonArray("roleNames").encode(),
@@ -73,7 +73,7 @@ public class RolesService extends BaseService {
 
 	@FusionEndpoint(uri = "/does-user-role-allow", bodyParams = {
 			"functionalities" }, method = HttpMethod.POST, functionality = RoleFunctionalities.Constants.GET_ROLE_FUNCTIONALITIES)
-	public void doesUserRoleAllow(RoutingContext ctx) {
+	public static void doesUserRoleAllow(RoutingContext ctx) {
 
 		Long principal = FusionHelper.getUserId(ctx.request());
 
@@ -97,7 +97,7 @@ public class RolesService extends BaseService {
 	}
 
 	@FusionEndpoint(uri = "/realms", method = HttpMethod.GET, functionality = RoleFunctionalities.Constants.GET_ROLE_REALMS)
-	public void listRealms(RoutingContext ctx) {
+	public static void listRealms(RoutingContext ctx) {
 		Map<String, String> roles = RoleModel.listRoles();
 		ctx.response().write(Json.getGson().toJson(roles));
 	}
@@ -107,7 +107,7 @@ public class RolesService extends BaseService {
 	 */
 	@FusionEndpoint(uri = "/realm-functionalities", requestParams = {
 			"realm" }, functionality = RoleFunctionalities.Constants.GET_REALM_FUNCTIONALITIES)
-	public void getRealmFunctionalities(RoutingContext ctx) {
+	public static void getRealmFunctionalities(RoutingContext ctx) {
 		String roleName = ctx.request().getParam("role");
 		Realm realm = RoleModel.getRealm(roleName);
 		String json = Json.getGson().toJson(RoleModel.getRealmFunctionalities(realm));
@@ -119,7 +119,7 @@ public class RolesService extends BaseService {
 	 */
 	@FusionEndpoint(uri = "/functionalities", requestParams = {
 			"roleName" }, functionality = RoleFunctionalities.Constants.GET_ROLE_FUNCTIONALITIES)
-	public void getRoleFunctionalities(RoutingContext ctx) {
+	public static void getRoleFunctionalities(RoutingContext ctx) {
 
 		String roleName = ctx.request().getParam("roleName");
 		List<String> e = RoleModel.getRoleFunctionalities(roleName);
@@ -132,7 +132,7 @@ public class RolesService extends BaseService {
 
 	@FusionEndpoint(uri = "/update-spec", bodyParams = { "roleName", "functionality",
 			"action" }, method = HttpMethod.POST, functionality = RoleFunctionalities.Constants.MANAGE_ROLES)
-	public void updateRoleSpec(RoutingContext ctx) {
+	public static void updateRoleSpec(RoutingContext ctx) {
 
 		JsonObject body = ctx.getBodyAsJson();
 
@@ -147,7 +147,7 @@ public class RolesService extends BaseService {
 
 	@FusionEndpoint(uri = "/default-role", requestParams = {
 			"realm" }, functionality = RoleFunctionalities.Constants.MANAGE_ROLES)
-	public void getDefaultRole(RoutingContext ctx) {
+	public static void getDefaultRole(RoutingContext ctx) {
 		Realm roleRealm = Realm.get(ctx.request().getParam("realm"));
 		String role = RoleModel.getDefaultRole(roleRealm);
 		ctx.response().write(role);
@@ -155,7 +155,7 @@ public class RolesService extends BaseService {
 
 	@FusionEndpoint(uri = "/get-role-realm", requestParams = {
 			"role" }, functionality = RoleFunctionalities.Constants.GET_ROLE_REALMS)
-	public void getRoleRealm(RoutingContext ctx) {
+	public static void getRoleRealm(RoutingContext ctx) {
 		String roleName = ctx.request().getParam("role");
 		Realm realm = RoleModel.getRealm(roleName);
 		ctx.response().write(Json.getGson().toJson(realm));

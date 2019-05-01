@@ -24,14 +24,14 @@ public class RoutingContextImpl implements RoutingContext {
 
 	private final HttpServerRequest request;
 	private final HttpServerResponse response;
-	
+
 	private final Session<String, Object> session;
 
 	RoutingContextImpl(HttpServletRequest req, HttpServletResponse resp) {
 
 		this.request = new HttpServerRequestImpl(req);
 		this.response = new HttpServerResponseImpl(resp);
-		
+
 		this.session = new SessionImpl(this);
 	}
 

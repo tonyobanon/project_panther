@@ -22,6 +22,8 @@ import com.re.paas.api.classes.FluentHashMap;
 import com.re.paas.api.classes.IndexedNameSpec;
 import com.re.paas.api.classes.ResourceException;
 import com.re.paas.api.forms.SizeSpec;
+import com.re.paas.api.infra.database.document.Database;
+import com.re.paas.api.infra.database.document.Table;
 import com.re.paas.api.listable.IndexedNameType;
 import com.re.paas.api.listable.ListingFilter;
 import com.re.paas.api.logging.Logger;
@@ -392,7 +394,7 @@ public class ApplicationModel extends BaseModel {
 
 	@ModelMethod(functionality = UserApplicationFunctionalities.Constants.UPDATE_APPLICATION)
 	public static Map<String, String> getFieldValues(Long applicationId) {
-
+	
 		Map<String, String> result = new FluentHashMap<>();
 
 		Realm realm = RoleModel.getRealm(getApplicationRole(applicationId));

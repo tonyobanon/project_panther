@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 
 import com.re.paas.api.classes.ThreadContext;
 import com.re.paas.api.fusion.server.BaseService;
@@ -11,7 +12,6 @@ import com.re.paas.api.fusion.server.Cookie;
 import com.re.paas.api.fusion.server.HttpMethod;
 import com.re.paas.api.fusion.server.HttpStatusCodes;
 import com.re.paas.api.fusion.server.Route;
-import com.re.paas.api.fusion.server.RouteHandler;
 import com.re.paas.api.fusion.server.RoutingContext;
 import com.re.paas.api.fusion.server.ServiceAuthenticator;
 import com.re.paas.api.fusion.services.AbstractServiceDelegate;
@@ -50,7 +50,7 @@ public class Handlers {
 
 		Route route = new Route(uri, method);
 
-		Functionality functionality = BaseService.getDelegate().getRouteFunctionality(route);
+		Functionality functionality = BaseService.getDelegate().getServiceFunctionality(route);
 
 		if (functionality == null || !functionality.requiresBasicAuth()) {
 			return;
@@ -96,16 +96,15 @@ public class Handlers {
 		Handlers.customAuthenticators.put(uri, customAuthenticator);
 	}
 
-	static RouteHandler defaultTailHandler() {
-		return new RouteHandler(ctx -> {
+	static Consumer<RoutingContext> defaultTailHandler() {
+		return (ctx -> {
 			// Remove thread local data
 			ThreadContext.clear();
-		}, false);
+		});
 	}
 
-	static RouteHandler defaultHeadHandler() {
-
-		return new RouteHandler(ctx -> {
+	static Consumer<RoutingContext> defaultHeadHandler() {
+		return (ctx -> {
 
 			// Note: container pools request threads, we need to create new LocalThread
 			// context
@@ -131,7 +130,7 @@ public class Handlers {
 			// Add these variables from session to thread local context
 			FusionHelper.addRealmVariablesToContext(FusionHelper.getRealmVariablesFromSession(ctx));
 
-		}, false);
+		});
 	}
 
 }

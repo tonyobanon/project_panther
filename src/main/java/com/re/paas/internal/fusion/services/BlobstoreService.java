@@ -23,9 +23,9 @@ public class BlobstoreService extends BaseService {
 		return "/blobstore";
 	}
 
-	@FusionEndpoint(uri = "/save", method = HttpMethod.PUT, isBlocking = true, enableMultipart = true, 
+	@FusionEndpoint(uri = "/save", method = HttpMethod.PUT, enableMultipart = true, 
 			functionality = BlobFunctionalities.Constants.SAVE_BINARY_DATA)
-	public void saveBlob(RoutingContext ctx) {
+	public static void saveBlob(RoutingContext ctx) {
 		List<String> blobIds = new ArrayList<>();
 		ctx.fileUploads().forEach(f -> {
 			try {
@@ -41,7 +41,7 @@ public class BlobstoreService extends BaseService {
 	@FusionEndpoint(uri = "/get", requestParams = {
 			"blobId" }, createXhrClient = false, cache = true, 
 					functionality = BlobFunctionalities.Constants.GET_BINARY_DATA)
-	public void getBlob(RoutingContext ctx) {
+	public static void getBlob(RoutingContext ctx) {
 		
 		String blobId = ctx.request().getParam("blobId");
 		BlobSpec blob = BlobStoreModel.get(blobId);
@@ -54,14 +54,14 @@ public class BlobstoreService extends BaseService {
 
 	@FusionEndpoint(uri = "/delete", requestParams = { "blobId" }, 
 			functionality = BlobFunctionalities.Constants.MANAGE_BINARY_DATA)
-	public void deleteBlob(RoutingContext ctx) {
+	public static void deleteBlob(RoutingContext ctx) {
 		String blobId = ctx.request().getParam("blobId");
 		BlobStoreModel.delete(blobId);
 	}
 
 	@FusionEndpoint(uri = "/list", 
 			functionality = BlobFunctionalities.Constants.MANAGE_BINARY_DATA)
-	public void list(RoutingContext ctx) {
+	public static void list(RoutingContext ctx) {
 		List<BlobSpec> entries = BlobStoreModel.list();
 		ctx.response().write(Json.getGson().toJson(entries)).end();
 	}

@@ -53,6 +53,7 @@ public class RuntimePermissions implements BasePermission {
 
 		case PermissionNames.MODIFY_THREAD_GROUP:
 
+			
 			/**
 			 * No execution context is permitted to modify it's thread group, and this
 			 * includes directly creating new threads. The helper method should be used

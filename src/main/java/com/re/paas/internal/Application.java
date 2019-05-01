@@ -4,6 +4,7 @@ import java.lang.reflect.InvocationTargetException;
 
 import com.re.paas.api.utils.ClassUtils;
 import com.re.paas.internal.infra.filesystem.FileSystemProviders;
+import com.re.paas.internal.runtime.security.CodeSecurity;
 
 public class Application {
 
@@ -15,7 +16,7 @@ public class Application {
 
 	public static void main(String[] args) throws ClassNotFoundException, InstantiationException,
 			IllegalAccessException, IllegalArgumentException, InvocationTargetException, SecurityException, NoSuchMethodException {
-		 
+		
 		// Load custom file system provider
 		FileSystemProviders.init();
 		

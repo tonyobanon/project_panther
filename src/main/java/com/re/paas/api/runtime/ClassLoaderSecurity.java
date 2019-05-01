@@ -4,27 +4,27 @@ import java.lang.reflect.InvocationTargetException;
 
 import com.re.paas.api.app_provisioning.AppClassLoader;
 import com.re.paas.api.classes.Exceptions;
-import com.re.paas.internal.runtime.ThreadSecurityImpl;
+import com.re.paas.internal.runtime.ClassLoaderSecurityImpl;
 import com.re.paas.internal.runtime.spi.AppProvisionerImpl;
 
 
-public abstract class ThreadSecurity {
+public abstract class ClassLoaderSecurity {
 
-	private static ThreadSecurity instance;
+	private static ClassLoaderSecurity instance;
 
-	public static ThreadSecurity getInstance() {
+	public static ClassLoaderSecurity getInstance() {
 		return instance;
 	}
 
-	public static void setInstance(ThreadSecurity instance) {
-		if (ThreadSecurity.instance == null) {
-			ThreadSecurity.instance = instance;
+	public static void setInstance(ClassLoaderSecurity instance) {
+		if (ClassLoaderSecurity.instance == null) {
+			ClassLoaderSecurity.instance = instance;
 		}
 	}
 
 	public static String getAppId() {
 
-		ClassLoader cl = ThreadSecurity.class.getClassLoader();
+		ClassLoader cl = ClassLoaderSecurity.class.getClassLoader();
 		String appId = AppProvisionerImpl.DEFAULT_APP_ID;
 
 		if (cl instanceof AppClassLoader) {
@@ -39,7 +39,7 @@ public abstract class ThreadSecurity {
 	}
 
 	/**
-	 * This loads the {@link ThreadSecurity} class into the specified 
+	 * This loads the {@link ClassLoaderSecurity} class into the specified 
 	 * {@link AppClassLoader}
 	 */
 	public static void load(AppClassLoader cl) {
@@ -47,18 +47,18 @@ public abstract class ThreadSecurity {
 		try {
 
 			@SuppressWarnings("unchecked")
-			Class<ThreadSecurityImpl> tscImpl = (Class<ThreadSecurityImpl>) cl
-					.loadClass(ThreadSecurityImpl.class.getName());
+			Class<ClassLoaderSecurityImpl> tscImpl = (Class<ClassLoaderSecurityImpl>) cl
+					.loadClass(ClassLoaderSecurityImpl.class.getName());
 
 			@SuppressWarnings("unchecked")
-			Class<ThreadSecurity> tsc = (Class<ThreadSecurity>) cl.loadClass(ThreadSecurity.class.getName());
+			Class<ClassLoaderSecurity> tsc = (Class<ClassLoaderSecurity>) cl.loadClass(ClassLoaderSecurity.class.getName());
 
 			tsc.getDeclaredMethod("setInstance", tsc).invoke(null,
 					/**
 					 * Instantiate a custom instance
 					 */
-					tscImpl.getDeclaredConstructor(ClassLoader.class, Boolean.class)
-							.newInstance(ClassLoader.getSystemClassLoader(), false));
+					tscImpl.getDeclaredConstructor(ClassLoader.class)
+							.newInstance(ClassLoader.getSystemClassLoader()));
 
 		} catch (ClassNotFoundException | IllegalAccessException | IllegalArgumentException | InvocationTargetException
 				| NoSuchMethodException | SecurityException | InstantiationException e) {

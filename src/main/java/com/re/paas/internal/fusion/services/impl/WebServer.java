@@ -1,6 +1,8 @@
 package com.re.paas.internal.fusion.services.impl;
 
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.List;
@@ -23,31 +25,32 @@ import org.eclipse.jetty.server.SslConnectionFactory;
 import org.eclipse.jetty.server.handler.AbstractHandler;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 
-import com.google.common.collect.ImmutableList;
-import com.re.paas.api.annotations.develop.PlatformInternal;
+import com.re.paas.api.annotations.develop.BlockerTodo;
 import com.re.paas.api.app_provisioning.AppClassLoader;
+import com.re.paas.api.classes.Exceptions;
 import com.re.paas.api.cryto.CryptoAdapter;
 import com.re.paas.api.cryto.KeyStoreProperties;
 import com.re.paas.api.cryto.SSLContext;
 import com.re.paas.api.fusion.server.BaseService;
 import com.re.paas.api.fusion.server.HttpMethod;
 import com.re.paas.api.fusion.server.Route;
-import com.re.paas.api.fusion.server.RouteHandler;
 import com.re.paas.api.fusion.server.RoutingContext;
+import com.re.paas.api.fusion.server.ServiceDescriptor;
 import com.re.paas.api.fusion.services.AbstractServiceDelegate;
 import com.re.paas.api.fusion.ui.AbstractComponent;
 import com.re.paas.api.logging.Logger;
-import com.re.paas.api.runtime.Consumer;
 import com.re.paas.api.runtime.ExecutorFactory;
 import com.re.paas.api.runtime.Invokable;
 import com.re.paas.internal.Platform;
+import com.re.paas.internal.runtime.security.Secure;
 import com.re.paas.internal.runtime.spi.AppProvisioner;
 
+@BlockerTodo("Optimize the way requests are handled, as the current impl is thread expensive.")
 public class WebServer {
 
 	private static Server server;
 
-	@PlatformInternal
+	@Secure
 	public static void start(ServerOptions options) {
 
 		Logger.get().info("Launching embedded web server ..");
@@ -120,12 +123,12 @@ public class WebServer {
 		Logger.get().info("Server started successfully..");
 	}
 
-	@PlatformInternal
+	@Secure
 	public static Server getServer() {
 		return server;
 	}
 
-	@PlatformInternal
+	@Secure
 	public static void stop() {
 
 		Logger.get().info("Stopping embedded web server ..");
@@ -164,65 +167,38 @@ public class WebServer {
 			// Based on the path, we need to determine the application that owns it
 			String appId = path.split("/")[1];
 
+			AppClassLoader cl = !appId.equals(AppProvisioner.DEFAULT_APP_ID)
+					? AppProvisioner.get().getClassloader(appId)
+					: null;
+
 			// Find all matching handlers
 
-			List<RouteHandler> handlers = new ArrayList<>();
-
-			// Add default head handler
-			handlers.addAll(ImmutableList.of(Handlers.defaultHeadHandler()));
+			List<ServiceDescriptor> sDescriptors = new ArrayList<>();
 
 			// Matching all paths and methods
-			handlers.addAll(serviceDelegate.getRouteHandlers(new Route()));
+			sDescriptors.add(serviceDelegate.getServiceDescriptor(new Route()));
 
 			// Matching only current method
-			handlers.addAll(serviceDelegate.getRouteHandlers(new Route().setMethod(method)));
+			sDescriptors.add(serviceDelegate.getServiceDescriptor(new Route().setMethod(method)));
 
 			// Matching only current path
-			handlers.addAll(serviceDelegate.getRouteHandlers(new Route().setUri(path)));
+			sDescriptors.add(serviceDelegate.getServiceDescriptor(new Route().setUri(path)));
 
 			// Matching current path and method
-			handlers.addAll(serviceDelegate.getRouteHandlers(new Route().setMethod(method).setUri(path)));
+			sDescriptors.add(serviceDelegate.getServiceDescriptor(new Route().setMethod(method).setUri(path)));
 
-			// Add default tail handler
-			handlers.addAll(ImmutableList.of(Handlers.defaultTailHandler()));
+			Handlers.defaultHeadHandler().accept(ctx);
 
-			// Recursively call each handler
+			for (ServiceDescriptor sDescriptor : sDescriptors) {
 
-			for (RouteHandler handler : handlers) {
+				boolean b = handleRequest(cl, sDescriptor, ctx);
 
-				// Create exception catching mechanism
-
-				try {
-
-					Consumer<RoutingContext> o = handler.getHandler();
-
-					Invokable<Void> i = () -> {
-						try {
-							AppClassLoader cl = AppProvisioner.get().getClassloader(appId);
-							Class<?> consumerClazz = cl.loadClass(Consumer.class.getName());
-
-							consumerClazz.getDeclaredMethod("accept", Object.class).invoke(o, ctx);
-							return null;
-							
-						} catch (Exception e) {
-							throw new RuntimeException(e);
-						}
-					};
-					
-					ExecutorFactory.get().execute(i);
-
-				} catch (Exception e) {
-					ctx.response().setStatusCode(HttpServletResponse.SC_INTERNAL_SERVER_ERROR).end(
-							com.re.paas.internal.fusion.services.impl.ResponseUtil.toResponse(ErrorHelper.getError(e)));
-					break;
-				}
-
-				// Check if response is ended
-
-				if (ctx.response().ended()) {
+				if ((!b) || ctx.response().ended()) {
 					break;
 				}
 			}
+
+			Handlers.defaultTailHandler().accept(ctx);
 
 			if (!ctx.response().ended()) {
 				ctx.response().end();
@@ -241,5 +217,49 @@ public class WebServer {
 				handleWeb(target, baseRequest, request, response);
 			}
 		}
+
+		private static boolean handleRequest(AppClassLoader cl, ServiceDescriptor sDescriptor, RoutingContext ctx) {
+
+			try {
+
+				Invokable<Void> i = () -> {
+
+					try {
+
+						if (cl != null) {
+
+							Class<?> clazz = cl.loadClass(RoutingContextHandler.class.getName());
+
+							Class<?>[] argumentTypes = new Class<?>[] { ServiceDescriptor.class, RoutingContext.class };
+							Method m = clazz.getDeclaredMethod("handle", argumentTypes);
+
+							m.invoke(null, sDescriptor, ctx);
+
+						} else {
+							RoutingContextHandler.handle(sDescriptor, ctx);
+						}
+
+					} catch (ClassNotFoundException | NoSuchMethodException | SecurityException | IllegalAccessException
+							| IllegalArgumentException | InvocationTargetException e) {
+						Exceptions.throwRuntime(e);
+					}
+
+					return null;
+				};
+
+				ExecutorFactory.get().execute(i)
+						// Not scalable, why wait
+						.join();
+
+			} catch (Exception e) {
+				ctx.response().setStatusCode(HttpServletResponse.SC_INTERNAL_SERVER_ERROR).end(
+						com.re.paas.internal.fusion.services.impl.ResponseUtil.toResponse(ErrorHelper.getError(e)));
+				return false;
+			}
+
+			return true;
+		}
+
 	}
+
 }

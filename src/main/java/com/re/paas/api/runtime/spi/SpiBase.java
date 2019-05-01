@@ -1,7 +1,7 @@
 package com.re.paas.api.runtime.spi;
 
-import com.re.paas.api.annotations.ProtectionContext;
 import com.re.paas.api.designpatterns.Singleton;
+import com.re.paas.internal.runtime.security.Secure;
 import com.re.paas.internal.runtime.spi.AppProvisioner;
 
 public interface SpiBase {
@@ -14,16 +14,16 @@ public interface SpiBase {
 		start(AppProvisioner.DEFAULT_APP_ID);	
 	}
 	
-	@ProtectionContext
+	@Secure
 	public void start(String appId);
 
-	@ProtectionContext
+	@Secure
 	public void stop();
 
-	@ProtectionContext
+	@Secure
 	public Boolean stop(String appId);
 	
-	@ProtectionContext
+	@Secure
 	public boolean canStop(String appId);
 
 }

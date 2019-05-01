@@ -1,7 +1,8 @@
-package com.re.paas.api.annotations;
+package com.re.paas.internal.runtime.security;
 
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
+import java.lang.StackWalker.StackFrame;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Repeatable;
 import java.lang.annotation.Retention;
@@ -12,26 +13,27 @@ import java.util.function.Function;
 
 /**
  * 
- * @author anthonyanyanwu
- *
- */
-@Retention(RUNTIME)
-@Target({ElementType.METHOD, ElementType.CONSTRUCTOR})
-@Repeatable(ProtectionContext.List.class)
-/**
- * This annotation should be used on non-final classes
+ * This annotation should be used on methods to enable access control <br>
+ * <br>
+ * 
+ * ImplNotes:<br>
+ * This annotation should be used on non-final elements <br>
  * 
  * @author anthonyanyanwu
  *
  */
-public @interface ProtectionContext {
+@Retention(RUNTIME)
+@Target({ ElementType.METHOD, ElementType.CONSTRUCTOR })
+@Repeatable(Secure.List.class)
+
+public @interface Secure {
 
 	/**
-	 * The factor determine the code instruction(s) that is automatically inlined
-	 * into the function
+	 * The factor determine the criteria to use to allow invocation
+	 * 
 	 * @return
 	 */
-	Factor factor() default Factor.THREAD_SECURITY;
+	Factor factor() default Factor.CLASSLOADER_SECURITY;
 
 	Class<?>[] allowed() default {};
 
@@ -44,17 +46,22 @@ public @interface ProtectionContext {
 	 * 
 	 * @return
 	 */
-	boolean allowInternal() default true;
-	
+	boolean allowInternalAccess() default true;
+
 	boolean allowJdkAccess() default false;
 
-	Class<? extends Function<CustomValidatorContext, Boolean>> customValidator() default ProtectionContext.DefaultValidator.class;
-	
+	Class<DefaultValidator> customValidator() default DefaultValidator.class;
+
 	public static enum Factor {
-		THREAD_SECURITY, CALLER
+		CLASSLOADER_SECURITY, CALLER
 	}
 
 	public static enum IdentityStrategy {
+		/**
+		 * If the allowed class is same as the caller class
+		 */
+		SAME,
+		
 		/**
 		 * If the allowed class is assignable from caller class is a subtype
 		 */
@@ -69,32 +76,38 @@ public @interface ProtectionContext {
 	@Retention(RetentionPolicy.RUNTIME)
 	@Target(ElementType.METHOD)
 	@interface List {
-		ProtectionContext[] value();
+		Secure[] value();
 	}
-	
+
 	public static class CustomValidatorContext {
-		
-		private final Class<?> caller;
-		private final Method method;
-		private final Object[] parameters;
-		
-		public CustomValidatorContext(Class<?> caller, Method method, Object[] parameters) {
+
+		private final StackFrame source;
+		private final Method target;
+		private final Object[] arguments;
+		private final Secure ctx;
+
+		public CustomValidatorContext(StackFrame source, Method target, Object[] arguments, Secure ctx) {
 			super();
-			this.caller = caller;
-			this.method = method;
-			this.parameters = parameters;
+			this.source = source;
+			this.target = target;
+			this.arguments = arguments;
+			this.ctx = ctx;
 		}
 
-		public Class<?> getCaller() {
-			return caller;
+		public StackFrame getSource() {
+			return source;
 		}
 
-		public Method getMethod() {
-			return method;
+		public Method getTarget() {
+			return target;
 		}
 
-		public Object[] getParameters() {
-			return parameters;
+		public Object[] getArguments() {
+			return arguments;
+		}
+
+		public Secure getCtx() {
+			return ctx;
 		}
 	}
 
@@ -104,5 +117,5 @@ public @interface ProtectionContext {
 			return true;
 		}
 	}
-	
+
 }

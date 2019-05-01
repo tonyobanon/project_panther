@@ -5,9 +5,10 @@ import java.util.List;
 
 import com.googlecode.objectify.annotation.Cache;
 import com.googlecode.objectify.annotation.Entity;
-import com.googlecode.objectify.annotation.Id;
 import com.googlecode.objectify.condition.IfTrue;
 import com.re.paas.api.classes.FluentArrayList;
+
+import nonapi.io.github.classgraph.json.Id;
 
 @Cache
 @Entity

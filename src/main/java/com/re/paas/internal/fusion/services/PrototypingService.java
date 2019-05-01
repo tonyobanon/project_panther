@@ -13,7 +13,7 @@ public String uri() {
 	return "/prototyping";
 }
 	@FusionEndpoint(uri = "/create-mocks", functionality = PlatformFunctionalities.Constants.ADD_SYSTEM_MOCK_DATA)
-	public void createMocks(RoutingContext ctx) {
+	public static void createMocks(RoutingContext ctx) {
 		PrototypingModel.addMocks();
 	}
 	

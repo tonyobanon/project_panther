@@ -22,7 +22,6 @@ import com.re.paas.api.classes.PlatformException;
 import com.re.paas.api.infra.database.document.Database;
 import com.re.paas.api.infra.database.document.Table;
 import com.re.paas.api.logging.Logger;
-import com.re.paas.api.runtime.ThreadSecurity;
 import com.re.paas.api.runtime.spi.BaseSPILocator;
 import com.re.paas.api.runtime.spi.ClassIdentityType;
 import com.re.paas.api.runtime.spi.SpiBase;
@@ -42,7 +41,7 @@ public class AppProvisionerImpl implements AppProvisioner {
 
 	public static final String APP_BUNDLES_COLLECTION = "app_bundles";
 
-	private static Map<String, AppClassLoader> appClassloaders = Collections
+	public static Map<String, AppClassLoader> appClassloaders = Collections
 			.synchronizedMap(new HashMap<String, AppClassLoader>());
 
 	static Map<String, JsonObject> appConfig = Collections.synchronizedMap(new HashMap<String, JsonObject>());
@@ -59,7 +58,7 @@ public class AppProvisionerImpl implements AppProvisioner {
 		}
 	}
 
-	private static Path getAppBasePath() {
+	static Path getAppBasePath() {
 		return basePath;
 	}
 
@@ -72,9 +71,14 @@ public class AppProvisionerImpl implements AppProvisioner {
 		// Extract to app directory
 
 		// Ensure that all dependencies are available
+		
+		
 
 		Path path = null; // directory that now has app artifact, sequel to extraction
 
+		
+		
+		
 		String appId = path.getFileName().toString();
 
 		readConfiguration(path);
@@ -180,10 +184,7 @@ public class AppProvisionerImpl implements AppProvisioner {
 		appConfig.put(appId, config);
 
 		// Create classloader
-		AppClassLoader cl = AppClassLoader.get(path.resolve("classes"), appId, getAppDependencies(appId));
-
-		// Load ThreadSecurity class into the classloader
-		ThreadSecurity.load(cl);
+		AppClassLoader cl = AppClassLoader.get(appId, getAppDependencies(appId));
 
 		// Save classloader
 		appClassloaders.put(appId, cl);

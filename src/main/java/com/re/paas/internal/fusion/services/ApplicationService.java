@@ -28,7 +28,7 @@ public class ApplicationService extends BaseService {
 
 	@FusionEndpoint(uri = "/create-application", bodyParams = {
 			"roleName" }, method = HttpMethod.PUT, functionality = UserApplicationFunctionalities.Constants.CREATE_APPLICATION)
-	public void createApplication(RoutingContext ctx) {
+	public static void createApplication(RoutingContext ctx) {
 
 		JsonObject body = ctx.getBodyAsJson();
 
@@ -43,7 +43,7 @@ public class ApplicationService extends BaseService {
 
 	@FusionEndpoint(uri = "/update-application", bodyParams = { "applicationId",
 			"values" }, method = HttpMethod.POST, functionality = UserApplicationFunctionalities.Constants.UPDATE_APPLICATION)
-	public void updateApplication(RoutingContext ctx) {
+	public static void updateApplication(RoutingContext ctx) {
 
 		JsonObject body = ctx.getBodyAsJson();
 
@@ -55,7 +55,7 @@ public class ApplicationService extends BaseService {
 
 	@FusionEndpoint(uri = "/submit-application", bodyParams = {
 			"applicationId" }, method = HttpMethod.PUT, functionality = UserApplicationFunctionalities.Constants.SUBMIT_APPLICATION)
-	public void submitApplication(RoutingContext ctx) {
+	public static void submitApplication(RoutingContext ctx) {
 
 		JsonObject body = ctx.getBodyAsJson();
 
@@ -66,7 +66,7 @@ public class ApplicationService extends BaseService {
 
 	@FusionEndpoint(uri = "/get-application-role", requestParams = {
 			"applicationId" }, functionality = UserApplicationFunctionalities.Constants.VIEW_APPLICATION_FORM)
-	public void getApplicationRole(RoutingContext ctx) {
+	public static void getApplicationRole(RoutingContext ctx) {
 
 		Long applicationId = Long.parseLong(ctx.request().getParam("applicationId"));
 		String roleName = ApplicationModel.getApplicationRole(applicationId);
@@ -76,7 +76,7 @@ public class ApplicationService extends BaseService {
 
 	@FusionEndpoint(uri = "/get-pdf-questionnaire", requestParams = {
 			"roleName" }, functionality = UserApplicationFunctionalities.Constants.DOWNLOAD_QUESTIONNAIRE)
-	public void getPDFQuestionnaire(RoutingContext ctx) {
+	public static void getPDFQuestionnaire(RoutingContext ctx) {
 
 		String roleName = ctx.request().getParam("roleName");
 		String blobId = ApplicationModel.getPDFQuestionnaire(roleName);
@@ -86,7 +86,7 @@ public class ApplicationService extends BaseService {
 
 	@FusionEndpoint(uri = "/get-field-values", requestParams = {
 			"applicationId" }, functionality = UserApplicationFunctionalities.Constants.UPDATE_APPLICATION)
-	public void getApplicationFieldValues(RoutingContext ctx) {
+	public static void getApplicationFieldValues(RoutingContext ctx) {
 
 		Long principal = FusionHelper.getUserId(ctx.request());
 		Long applicationId = Long.parseLong(ctx.request().getParam("applicationId"));
@@ -106,7 +106,7 @@ public class ApplicationService extends BaseService {
 
 	@FusionEndpoint(uri = "/get-consolidated-field-values", requestParams = {
 			"applicationId" }, functionality = UserApplicationFunctionalities.Constants.UPDATE_APPLICATION)
-	public void getConsolidatedApplicationFieldValues(RoutingContext ctx) {
+	public static void getConsolidatedApplicationFieldValues(RoutingContext ctx) {
 
 		Long applicationId = Long.parseLong(ctx.request().getParam("applicationId"));
 
@@ -117,7 +117,7 @@ public class ApplicationService extends BaseService {
 
 	@FusionEndpoint(uri = "/accept-agent-organization-application", bodyParams = {
 			"applicationId" }, method = HttpMethod.POST, functionality = AgentOrganizationFunctionalities.Constants.REVIEW_ORGANIZATION_ADMIN_APPLICATION)
-	public void acceptAgentOrganizationApplication(RoutingContext ctx) {
+	public static void acceptAgentOrganizationApplication(RoutingContext ctx) {
 
 		JsonObject body = ctx.getBodyAsJson();
 
@@ -133,7 +133,7 @@ public class ApplicationService extends BaseService {
 
 	@FusionEndpoint(uri = "/accept-agent-application", bodyParams = {
 			"applicationId" }, method = HttpMethod.POST, functionality = AgentFunctionalities.Constants.REVIEW_AGENT_APPLICATION)
-	public void acceptAgentApplication(RoutingContext ctx) {
+	public static void acceptAgentApplication(RoutingContext ctx) {
 
 		JsonObject body = ctx.getBodyAsJson();
 
@@ -149,7 +149,7 @@ public class ApplicationService extends BaseService {
 
 	@FusionEndpoint(uri = "/accept-admin-application", bodyParams = {
 			"applicationId" }, method = HttpMethod.POST, functionality = UserApplicationFunctionalities.Constants.REVIEW_ADMIN_APPLICATION)
-	public void acceptAdminApplication(RoutingContext ctx) {
+	public static void acceptAdminApplication(RoutingContext ctx) {
 
 		JsonObject body = ctx.getBodyAsJson();
 
@@ -164,7 +164,7 @@ public class ApplicationService extends BaseService {
 	}
 
 	@FusionEndpoint(uri = "/get-decline-reasons", functionality = AgentOrganizationFunctionalities.Constants.REVIEW_ORGANIZATION_ADMIN_APPLICATION)
-	public void getApplicationDeclineReasons(RoutingContext ctx) {
+	public static void getApplicationDeclineReasons(RoutingContext ctx) {
 
 		Map<Integer, Object> result = ApplicationModel.getApplicationDeclineReasons();
 		ctx.response().write(GsonFactory.getInstance().toJson(result));
@@ -172,7 +172,7 @@ public class ApplicationService extends BaseService {
 
 	@FusionEndpoint(uri = "/decline-agent-organization-application", bodyParams = { "applicationId",
 			"reason" }, method = HttpMethod.PUT, functionality = AgentOrganizationFunctionalities.Constants.REVIEW_ORGANIZATION_ADMIN_APPLICATION)
-	public void declineAgentOrganizationApplication(RoutingContext ctx) {
+	public static void declineAgentOrganizationApplication(RoutingContext ctx) {
 
 		JsonObject body = ctx.getBodyAsJson();
 
@@ -187,7 +187,7 @@ public class ApplicationService extends BaseService {
 
 	@FusionEndpoint(uri = "/decline-application", bodyParams = { "applicationId",
 			"reason" }, method = HttpMethod.PUT, functionality = UserApplicationFunctionalities.Constants.REVIEW_ADMIN_APPLICATION)
-	public void declineAdminApplication(RoutingContext ctx) {
+	public static void declineAdminApplication(RoutingContext ctx) {
 		
 		JsonObject body = ctx.getBodyAsJson();
 		

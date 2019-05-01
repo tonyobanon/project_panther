@@ -39,7 +39,7 @@ public class UserService extends BaseService {
 
 	@FusionEndpoint(uri = "/authenticateUser", headerParams = { "email", "pass", "rem" }, requestParams = { "idType",
 			"returnUrl" }, functionality = UserFunctionalities.Constants.AUTHENTICATE)
-	public void authenticateUser(RoutingContext ctx) {
+	public static void authenticateUser(RoutingContext ctx) {
 
 		LoginIdType type = LoginIdType.from(Integer.parseInt(ctx.request().getParam("idType")));
 
@@ -110,7 +110,7 @@ public class UserService extends BaseService {
 
 	@FusionEndpoint(uri = "/get-own-profile", 
 			functionality = UserFunctionalities.Constants.VIEW_OWN_PROFILE)
-	public void getOwnProfile(RoutingContext ctx) {
+	public static void getOwnProfile(RoutingContext ctx) {
 
 		Long userId = FusionHelper.getUserId(ctx.request());
 
@@ -126,7 +126,7 @@ public class UserService extends BaseService {
 
 	@FusionEndpoint(uri = "/get-own-avatar", 
 			functionality = UserFunctionalities.Constants.VIEW_OWN_PROFILE)
-	public void getOwnAvatar(RoutingContext ctx) {
+	public static void getOwnAvatar(RoutingContext ctx) {
 		Long userId = FusionHelper.getUserId(ctx.request());
 		String image = BaseUserModel.getAvatar(userId);
 		ctx.response().write(new JsonObject().put("image", image).encode());
@@ -135,7 +135,7 @@ public class UserService extends BaseService {
 	@FusionEndpoint(uri = "/get-user-avatar", requestParams = {
 			"userId" }, 
 			functionality = UserFunctionalities.Constants.MANAGE_USER_ACCOUNTS)
-	public void geUserAvatar(RoutingContext ctx) {
+	public static void geUserAvatar(RoutingContext ctx) {
 		Long userId = Long.parseLong(ctx.request().getParam("userId"));
 		String image = BaseUserModel.getAvatar(userId);
 		ctx.response().write(new JsonObject().put("image", image).encode());
@@ -143,7 +143,7 @@ public class UserService extends BaseService {
 
 	@FusionEndpoint(uri = "/get-own-role", 
 			functionality = UserFunctionalities.Constants.VIEW_OWN_PROFILE)
-	public void getOwnRole(RoutingContext ctx) {
+	public static void getOwnRole(RoutingContext ctx) {
 		Long userId = FusionHelper.getUserId(ctx.request());
 		String role = BaseUserModel.getRole(userId);
 		ctx.response().write(new JsonObject().put("role", role).encode());
@@ -152,7 +152,7 @@ public class UserService extends BaseService {
 	@FusionEndpoint(uri = "/get-user-role", requestParams = {
 			"userId" }, 
 			functionality = UserFunctionalities.Constants.MANAGE_USER_ACCOUNTS)
-	public void geUserRole(RoutingContext ctx) {
+	public static void geUserRole(RoutingContext ctx) {
 		Long userId = Long.parseLong(ctx.request().getParam("userId"));
 		String role = BaseUserModel.getRole(userId);
 		ctx.response().write(new JsonObject().put("role", role).encode());
@@ -161,7 +161,7 @@ public class UserService extends BaseService {
 	@FusionEndpoint(uri = "/update-own-email", bodyParams = {
 			"email" }, method = HttpMethod.POST, 
 					functionality = UserFunctionalities.Constants.MANAGE_OWN_PROFILE)
-	public void updateOwnEmail(RoutingContext ctx) {
+	public static void updateOwnEmail(RoutingContext ctx) {
 
 		Long userId = FusionHelper.getUserId(ctx.request());
 
@@ -175,7 +175,7 @@ public class UserService extends BaseService {
 	@FusionEndpoint(uri = "/update-user-email", bodyParams = { "userId",
 			"email" }, method = HttpMethod.POST, 
 			functionality = UserFunctionalities.Constants.MANAGE_USER_ACCOUNTS)
-	public void updateUserEmail(RoutingContext ctx) {
+	public static void updateUserEmail(RoutingContext ctx) {
 
 		JsonObject body = ctx.getBodyAsJson();
 
@@ -191,7 +191,7 @@ public class UserService extends BaseService {
 	@FusionEndpoint(uri = "/update-own-phone", bodyParams = {
 			"phone" }, method = HttpMethod.POST, 
 					functionality = UserFunctionalities.Constants.MANAGE_OWN_PROFILE)
-	public void updateOwnPhone(RoutingContext ctx) {
+	public static void updateOwnPhone(RoutingContext ctx) {
 
 		Long userId = FusionHelper.getUserId(ctx.request());
 
@@ -205,7 +205,7 @@ public class UserService extends BaseService {
 	@FusionEndpoint(uri = "/update-user-phone", bodyParams = { "userId",
 			"phone" }, method = HttpMethod.POST, 
 			functionality = UserFunctionalities.Constants.MANAGE_USER_ACCOUNTS)
-	public void updateUserPhone(RoutingContext ctx) {
+	public static void updateUserPhone(RoutingContext ctx) {
 
 		JsonObject body = ctx.getBodyAsJson();
 
@@ -221,7 +221,7 @@ public class UserService extends BaseService {
 	@FusionEndpoint(uri = "/update-own-password", bodyParams = { "current",
 			"newPassword" }, method = HttpMethod.POST, 
 			functionality = UserFunctionalities.Constants.MANAGE_OWN_PROFILE)
-	public void updateOwnPassword(RoutingContext ctx) {
+	public static void updateOwnPassword(RoutingContext ctx) {
 
 		Long userId = FusionHelper.getUserId(ctx.request());
 
@@ -236,7 +236,7 @@ public class UserService extends BaseService {
 	@FusionEndpoint(uri = "/update-user-password", bodyParams = { "userId", "current",
 			"newPassword" }, method = HttpMethod.POST, 
 			functionality = UserFunctionalities.Constants.MANAGE_USER_ACCOUNTS)
-	public void updateUserPassword(RoutingContext ctx) {
+	public static void updateUserPassword(RoutingContext ctx) {
 
 		JsonObject body = ctx.getBodyAsJson();
 
@@ -253,7 +253,7 @@ public class UserService extends BaseService {
 	@FusionEndpoint(uri = "/update-own-avatar", bodyParams = {
 			"blobId" }, method = HttpMethod.POST, 
 					functionality = UserFunctionalities.Constants.MANAGE_OWN_PROFILE)
-	public void updateOwnAvatar(RoutingContext ctx) {
+	public static void updateOwnAvatar(RoutingContext ctx) {
 
 		Long userId = FusionHelper.getUserId(ctx.request());
 
@@ -267,7 +267,7 @@ public class UserService extends BaseService {
 	@FusionEndpoint(uri = "/update-user-avatar", bodyParams = { "userId",
 			"blobId" }, method = HttpMethod.POST, 
 			functionality = UserFunctionalities.Constants.MANAGE_USER_ACCOUNTS)
-	public void updateUserAvatar(RoutingContext ctx) {
+	public static void updateUserAvatar(RoutingContext ctx) {
 
 		JsonObject body = ctx.getBodyAsJson();
 
@@ -283,7 +283,7 @@ public class UserService extends BaseService {
 	@FusionEndpoint(uri = "/update-role", bodyParams = { "userId",
 			"role" }, method = HttpMethod.POST, 
 			functionality = UserFunctionalities.Constants.MANAGE_USER_ACCOUNTS)
-	public void updateUserRole(RoutingContext ctx) {
+	public static void updateUserRole(RoutingContext ctx) {
 
 		JsonObject body = ctx.getBodyAsJson();
 
@@ -299,7 +299,7 @@ public class UserService extends BaseService {
 	@FusionEndpoint(uri = "/get-person-name", requestParams = { "userId",
 			"full" }, 
 			functionality = UserFunctionalities.Constants.GET_PERSON_NAMES)
-	public void getPersonName(RoutingContext ctx) {
+	public static void getPersonName(RoutingContext ctx) {
 
 		Long userId = null;
 
@@ -319,7 +319,7 @@ public class UserService extends BaseService {
 	@FusionEndpoint(uri = "/get-user-profile", requestParams = {
 			"userId" }, 
 			functionality = UserFunctionalities.Constants.GET_USER_PROFILE)
-	public void getUserProfile(RoutingContext ctx) {
+	public static void getUserProfile(RoutingContext ctx) {
 
 		Long principal = FusionHelper.getUserId(ctx.request());
 		Long userId = Long.parseLong(ctx.request().getParam("userId"));
@@ -344,7 +344,7 @@ public class UserService extends BaseService {
 	@FusionEndpoint(uri = "/get-suggested-profiles", requestParams = {
 			"userId" }, 
 			functionality = UserFunctionalities.Constants.GET_USER_PROFILE)
-	public void getSuggestedProfiles(RoutingContext ctx) {
+	public static void getSuggestedProfiles(RoutingContext ctx) {
 
 		Long principal = FusionHelper.getUserId(ctx.request());
 		Long userId = Long.parseLong(ctx.request().getParam("userId"));
@@ -357,7 +357,7 @@ public class UserService extends BaseService {
 	@FusionEndpoint(uri = "/can-access-user-profile", requestParams = {
 			"userId" }, 
 			functionality = UserFunctionalities.Constants.GET_USER_PROFILE)
-	public void canAccessUserProfile(RoutingContext ctx) {
+	public static void canAccessUserProfile(RoutingContext ctx) {
 
 		Long principal = FusionHelper.getUserId(ctx.request());
 		Long userId = Long.parseLong(ctx.request().getParam("userId"));

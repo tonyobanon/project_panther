@@ -26,7 +26,7 @@ public class ResourceBundleService extends BaseService {
 
 	@FusionEndpoint(uri = "/get-available-countries", 
 			functionality = LocationFunctionalities.Constants.GET_AVAILABLE_COUNTRIES)
-	public void getAvailableCountries(RoutingContext ctx) {
+	public static void getAvailableCountries(RoutingContext ctx) {
 
 		// K: locale, V: name, code
 		Map<String, JsonObject> result = new HashMap<>();
@@ -52,7 +52,7 @@ public class ResourceBundleService extends BaseService {
 	@FusionEndpoint(uri = "/get-rb-entry", bodyParams = {
 			"keys" }, method = HttpMethod.POST, 
 					functionality = LocationFunctionalities.Constants.GET_RESOURCE_BUNDLE_ENTRIES)
-	public void getRbEntry(RoutingContext ctx) {
+	public static void getRbEntry(RoutingContext ctx) {
 
 		Map<String, Object> keys = ctx.getBodyAsJson().getJsonObject("keys").getMap();
 		Map<String, String> result = new HashMap<>();

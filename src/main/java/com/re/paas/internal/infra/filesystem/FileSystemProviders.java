@@ -5,15 +5,15 @@ import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.spi.FileSystemProvider;
 
-import com.re.paas.api.annotations.ProtectionContext;
 import com.re.paas.api.utils.ClassUtils;
-import com.re.paas.internal.Interceptor;
+import com.re.paas.internal.runtime.security.MethodInterceptor;
+import com.re.paas.internal.runtime.security.Secure;
 
 public class FileSystemProviders {
 
 	private static FileSystem internalFs;
 
-	@ProtectionContext
+	@Secure
 	public static void init() {
 		System.setProperty("java.nio.file.spi.DefaultFileSystemProvider", FileSystemProviderImpl.class.getName());
 
@@ -37,10 +37,10 @@ public class FileSystemProviders {
 	/**
 	 * Reload the Jvm file system. This should be called after scanning protection
 	 * context, because we need to update the default file system class with the
-	 * transformed version that contains an indirection to {@link Interceptor} (if
+	 * transformed version that contains an indirection to {@link MethodInterceptor} (if
 	 * any exists)
 	 */
-	@ProtectionContext
+	@Secure
 	public static void reload() {
 
 		// At this point, we are sure that FileSystems.getDefault().getClass() ==
@@ -59,7 +59,7 @@ public class FileSystemProviders {
 	 * 
 	 * @return
 	 */
-	@ProtectionContext
+	@Secure
 	public static FileSystem getInternal() {
 		return internalFs;
 	}

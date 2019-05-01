@@ -28,11 +28,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.LockSupport;
 import java.util.concurrent.locks.ReentrantLock;
 
-import com.re.paas.api.annotations.ProtectionContext;
 import com.re.paas.api.classes.Exceptions;
 import com.re.paas.api.infra.filesystem.AbstractFileSystemProvider;
-import com.re.paas.api.runtime.ThreadSecurity;
-import com.re.paas.internal.Platform;
+import com.re.paas.internal.runtime.security.Secure;
 import com.re.paas.internal.utils.ObjectUtils;
 
 /**
@@ -48,25 +46,27 @@ public class FileSystemProviderImpl extends AbstractFileSystemProvider {
 	private static AtomicInteger referenceCount = new AtomicInteger(0);
 	private static Map<Long, Thread> activeTransactions = Collections.synchronizedMap(new HashMap<>());
 
-	private static final String basePath = "/" + Platform.getPlatformPrefix() + "/appdata";
-
 	private static FileSystemProvider provider;
 	private static FileSystem fs;
+	
+	public FileSystemProviderImpl() {
+		this(provider);
+	}
 
-	@ProtectionContext(allowJdkAccess = true)
+	@Secure(allowJdkAccess = true, allowInternalAccess=false)
 	public FileSystemProviderImpl(FileSystemProvider provider) {
 		this(provider.getFileSystem(URI.create("file:///")));
 	}
 
-	@ProtectionContext
+	@Secure
 	public FileSystemProviderImpl(FileSystem fs) {
 		setFileSystem(fs);
 	}
 
-	@ProtectionContext
+	@Secure
 	public static void setFileSystem(FileSystem fs) {
 		FileSystemProviderImpl.provider = fs.provider();
-		FileSystemProviderImpl.fs = fs;		
+		FileSystemProviderImpl.fs = fs;
 	}
 
 	@Override
@@ -94,9 +94,9 @@ public class FileSystemProviderImpl extends AbstractFileSystemProvider {
 
 	@Override
 	public Path getPath(URI uri) {
-		
-		if(!uri.getScheme().equals("file")) {
-			Exceptions.throwRuntime(new IllegalArgumentException("URI scheme is not \"file\""));
+
+		if (uri.getScheme() == null || !uri.getScheme().equals(getScheme())) {
+			Exceptions.throwRuntime(new IllegalArgumentException("URI scheme is not \"" + getScheme() + "\""));
 		}
 
 		FileSystemProvider provider = getProvider();
@@ -105,7 +105,7 @@ public class FileSystemProviderImpl extends AbstractFileSystemProvider {
 
 		Path p = null;
 		try {
-			p = provider.getPath(transform(uri));
+			p = provider.getPath(UriHelper.transform(this, uri));
 			referenceCount.decrementAndGet();
 		} catch (Exception e) {
 			referenceCount.decrementAndGet();
@@ -114,7 +114,6 @@ public class FileSystemProviderImpl extends AbstractFileSystemProvider {
 
 		return new PathImpl(new FileSystemImpl(this), p);
 	}
-	
 
 	@Override
 	public Path readSymbolicLink(Path link) throws IOException {
@@ -134,7 +133,6 @@ public class FileSystemProviderImpl extends AbstractFileSystemProvider {
 
 		return new PathImpl(new FileSystemImpl(this), p);
 	}
-
 
 	@Override
 	public SeekableByteChannel newByteChannel(Path path, Set<? extends OpenOption> options, FileAttribute<?>... attrs)
@@ -472,7 +470,7 @@ public class FileSystemProviderImpl extends AbstractFileSystemProvider {
 
 		return provider;
 	}
-	
+
 	FileSystem getFileSystem() {
 		return fs;
 	}
@@ -485,10 +483,6 @@ public class FileSystemProviderImpl extends AbstractFileSystemProvider {
 
 		// This is required inorder to avoid a ProviderMismatchException
 		return getProvider().getPath(path.toUri());
-	}
-
-	final URI transform(URI uri) {
-		return URI.create(getProvider().getScheme() + "://" + basePath + "/" + ThreadSecurity.getAppId() + uri.getPath());
 	}
 
 	public static FileSystemProviderState getState() {

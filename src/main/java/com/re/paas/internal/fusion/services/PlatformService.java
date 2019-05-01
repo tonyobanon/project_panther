@@ -22,9 +22,9 @@ public class PlatformService extends BaseService {
 	}
 
 	@FusionEndpoint(uri = "/setup", bodyParams = {
-			"payload" }, method = HttpMethod.POST, isBlocking = true, 
+			"payload" }, method = HttpMethod.POST, 
 					functionality = PlatformFunctionalities.Constants.PLATFORM_INSTALLATION)
-	public void doSetup(RoutingContext context) {
+	public static void doSetup(RoutingContext context) {
 
 		try {
 

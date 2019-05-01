@@ -6,7 +6,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
-public interface HttpServerRequest {
+
+public interface HttpServerRequest extends Cloneable {
 
 	Map<String, Cookie> cookies();
 

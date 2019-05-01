@@ -17,7 +17,7 @@ public String uri() {
 }
 	@FusionEndpoint(uri = "/countryList",
 			functionality = LocationFunctionalities.Constants.GET_COUNTRY_NAMES)
-	public void getCountries(RoutingContext ctx) {
+	public static void getCountries(RoutingContext ctx) {
 		String json = (String) CacheAdapter.get(CacheKeys.COUNTRY_NAMES);
 		if (json != null) {
 			ctx.response().write(json);
@@ -31,7 +31,7 @@ public String uri() {
 
 	@FusionEndpoint(uri = "/currencyList",
 			functionality = LocationFunctionalities.Constants.GET_LOCATION_DATA)
-	public void getCurrencies(RoutingContext ctx) {
+	public static void getCurrencies(RoutingContext ctx) {
 		String json = (String) CacheAdapter.get(CacheKeys.CURRENCY_NAMES);
 		if (json != null) {
 			ctx.response().write(json);
@@ -45,7 +45,7 @@ public String uri() {
 
 	@FusionEndpoint(uri = "/localeList", requestParams = "countryCode",
 			functionality = LocationFunctionalities.Constants.GET_LOCATION_DATA)
-	public void getLocales(RoutingContext ctx) {
+	public static void getLocales(RoutingContext ctx) {
 
 		String countryCode = ctx.request().getParam("countryCode");
 
@@ -73,7 +73,7 @@ public String uri() {
 
 	@FusionEndpoint(uri = "/timezoneList",
 			functionality = LocationFunctionalities.Constants.GET_LOCATION_DATA)
-	public void getTimezones(RoutingContext ctx) {
+	public static void getTimezones(RoutingContext ctx) {
 		String json = (String) CacheAdapter.get(CacheKeys.TIMEZONES);
 		if (json != null) {
 			ctx.response().write(json);
@@ -87,7 +87,7 @@ public String uri() {
 
 	@FusionEndpoint(uri = "/territoryList", requestParams = "ctx",
 			functionality = LocationFunctionalities.Constants.GET_TERRITORY_NAMES)
-	public void getTerritories(RoutingContext ctx) {
+	public static void getTerritories(RoutingContext ctx) {
 		String countryCode = ctx.request().getParam("ctx");
 		String json = (String) CacheAdapter.get(CacheKeys.TERRITORIES_$COUNTRY.replace("$COUNTRY", countryCode));
 		if (json != null) {
@@ -102,7 +102,7 @@ public String uri() {
 
 	@FusionEndpoint(uri = "/cityList", requestParams = "ctx",
 			functionality = LocationFunctionalities.Constants.GET_CITY_NAMES)
-	public void getCities(RoutingContext ctx) {
+	public static void getCities(RoutingContext ctx) {
 		String territoryCode = ctx.request().getParam("ctx");
 		String json = (String) CacheAdapter.get(CacheKeys.CITIES_$TERRITORY.replace("$TERRITORY", territoryCode));
 		if (json != null) {
@@ -117,7 +117,7 @@ public String uri() {
 
 	@FusionEndpoint(uri = "/cityCoordinates", requestParams = "cityCode",
 			functionality = LocationFunctionalities.Constants.GET_LOCATION_DATA)
-	public void getCityCoordinates(RoutingContext ctx) {
+	public static void getCityCoordinates(RoutingContext ctx) {
 		String cityCode = ctx.request().getParam("cityCode");
 		String json = (String) CacheAdapter.get(CacheKeys.COORDINATES_$CITY.replace("$CITY", cityCode));
 		if (json != null) {
@@ -132,7 +132,7 @@ public String uri() {
 
 	@FusionEndpoint(uri = "/cityTimezone", requestParams = "cityCode",
 			functionality = LocationFunctionalities.Constants.GET_LOCATION_DATA)
-	public void getCityTimezone(RoutingContext ctx) {
+	public static void getCityTimezone(RoutingContext ctx) {
 		String cityCode = ctx.request().getParam("cityCode");
 		String json = (String) CacheAdapter.get(CacheKeys.TIMEZONE_$CITY.replace("$CITY", cityCode));
 		if (json != null) {
@@ -147,7 +147,7 @@ public String uri() {
 
 	@FusionEndpoint(uri = "/countryLanguages", requestParams = "countryCode",
 			functionality = LocationFunctionalities.Constants.GET_LOCATION_DATA)
-	public void getSpokenLanguages(RoutingContext ctx) {
+	public static void getSpokenLanguages(RoutingContext ctx) {
 		String countryCode = ctx.request().getParam("countryCode");
 		String json = (String) CacheAdapter.get(CacheKeys.SPOKEN_LANGUAGES_$COUNTRY.replace("$COUNTRY", countryCode));
 		if (json != null) {
@@ -162,7 +162,7 @@ public String uri() {
 
 	@FusionEndpoint(uri = "/currencyCode", requestParams = "countryCode",
 			functionality = LocationFunctionalities.Constants.GET_LOCATION_DATA)
-	public void getCurrencyCode(RoutingContext ctx) {
+	public static void getCurrencyCode(RoutingContext ctx) {
 		String countryCode = ctx.request().getParam("countryCode");
 		String json = (String) CacheAdapter.get(CacheKeys.CURRENCY_CODE_$COUNTRY.replace("$COUNTRY", countryCode));
 		if (json != null) {
@@ -178,7 +178,7 @@ public String uri() {
  
 	@FusionEndpoint(uri = "/currencyName", requestParams = "countryCode",
 			functionality = LocationFunctionalities.Constants.GET_LOCATION_DATA)
-	public void getCurrencyName(RoutingContext ctx) {
+	public static void getCurrencyName(RoutingContext ctx) {
 		String countryCode = ctx.request().getParam("countryCode");
 		String json = (String) CacheAdapter.get(CacheKeys.CURRENCY_NAME_$COUNTRY.replace("$COUNTRY", countryCode));
 		if (json != null) {
@@ -193,7 +193,7 @@ public String uri() {
 	
 	@FusionEndpoint(uri = "/country-dialing-code", requestParams = "countryCode",
 			functionality = LocationFunctionalities.Constants.GET_LOCATION_DATA)
-	public void getCountryDialingCode(RoutingContext ctx) {
+	public static void getCountryDialingCode(RoutingContext ctx) {
 		String countryCode = ctx.request().getParam("countryCode");
 		String json = (String) CacheAdapter.get(CacheKeys.DIALING_CODE_$COUNTRY.replace("$COUNTRY", countryCode));
 		if (json != null) {

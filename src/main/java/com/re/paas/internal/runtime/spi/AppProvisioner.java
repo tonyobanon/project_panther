@@ -4,9 +4,9 @@ import java.nio.file.Path;
 import java.util.Set;
 
 import com.google.gson.JsonObject;
-import com.re.paas.api.annotations.ProtectionContext;
 import com.re.paas.api.app_provisioning.AppClassLoader;
 import com.re.paas.api.designpatterns.Singleton;
+import com.re.paas.internal.runtime.security.Secure;
 
 public interface AppProvisioner {
 	
@@ -16,24 +16,24 @@ public interface AppProvisioner {
 		return Singleton.get(AppProvisioner.class);
 	}
 	
-	@ProtectionContext
+	@Secure
 	public boolean install(Path archive);
 
-	@ProtectionContext
+	@Secure
 	public void list();
 
-	@ProtectionContext
+	@Secure
 	public void start();
 
-	@ProtectionContext
+	@Secure
 	public void stop(String app);
 
-	@ProtectionContext
+	@Secure
 	public Set<String> listApps();
 
-	@ProtectionContext
+	@Secure
 	public AppClassLoader getClassloader(String appId);
 
-	@ProtectionContext
+	@Secure
 	public JsonObject getConfig(String appId);
 }

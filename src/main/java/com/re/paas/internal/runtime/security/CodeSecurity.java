@@ -1,8 +1,6 @@
-package com.re.paas.internal;
+package com.re.paas.internal.runtime.security;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.security.ProtectionDomain;
@@ -12,25 +10,21 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import com.re.paas.api.annotations.ProtectionContext;
 import com.re.paas.api.designpatterns.Singleton;
 import com.re.paas.api.logging.LoggerFactory;
-import com.re.paas.api.runtime.ThreadSecurity;
+import com.re.paas.api.runtime.ClassLoaderSecurity;
 import com.re.paas.internal.classes.ClasspathScanner;
 import com.re.paas.internal.jvmtools.annotations.AnnotationUtil;
 import com.re.paas.internal.jvmtools.classloaders.ClassLoaderUtil;
 import com.re.paas.internal.jvmtools.classloaders.CustomClassLoader;
 import com.re.paas.internal.logging.DefaultLoggerFactory;
-import com.re.paas.internal.runtime.ThreadSecurityImpl;
+import com.re.paas.internal.runtime.ClassLoaderSecurityImpl;
 
 import javassist.CannotCompileException;
 import javassist.ClassPool;
 import javassist.CtClass;
-import javassist.CtMethod;
 import javassist.NotFoundException;
-import javassist.bytecode.AnnotationsAttribute;
 import javassist.bytecode.BadBytecode;
-import javassist.bytecode.annotation.AnnotationsWriter;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.method.MethodDescription;
@@ -47,9 +41,8 @@ public class CodeSecurity {
 	private static final Map<Class<?>, Unloaded<?>> unloadeds = new HashMap<>(700);
 	private static final List<String> processedClasses = new ArrayList<String>(700);
 
-	
 	/**
-	 * This discovers methods with a {@link ProtectionContext}, and copies the
+	 * This discovers methods with a {@link Secure}, and copies the
 	 * annotation from the super class to the subclass
 	 * 
 	 * @throws ClassNotFoundException
@@ -62,7 +55,7 @@ public class CodeSecurity {
 
 		System.out.println("Scanning protection context ..");
 
-		ThreadSecurity.setInstance(new ThreadSecurityImpl());
+		ClassLoaderSecurity.setInstance(new ClassLoaderSecurityImpl());
 		Singleton.register(LoggerFactory.class, new DefaultLoggerFactory());
 
 		CustomClassLoader cl = new CustomClassLoader(true);
@@ -94,7 +87,7 @@ public class CodeSecurity {
 				// System.err.println(c.getName() + "#" + m.toString());
 
 				if ((!Modifier.isAbstract(m.getModifiers()))
-						|| !AnnotationUtil.hasAnnotation(m, ProtectionContext.class)) {
+						|| !AnnotationUtil.hasAnnotation(m, Secure.class)) {
 					continue;
 				}
 
@@ -151,7 +144,7 @@ public class CodeSecurity {
 								continue;
 							}
 
-							copyAnnotation(target, source, m, ProtectionContext.class);
+							AnnotationUtil.copyAnnotation(target, source, m, Secure.class);
 							transformed = true;
 						}
 
@@ -171,7 +164,7 @@ public class CodeSecurity {
 				// method(s) from <source>
 
 				for (Method m : methods) {
-					removeAnnotation(source, m, ProtectionContext.class);
+					AnnotationUtil.removeAnnotation(source, m, Secure.class);
 				}
 
 				// Ingest the transformed class back into the classloader pool
@@ -184,8 +177,7 @@ public class CodeSecurity {
 		}
 
 		// Create a new classloader, where bytebuddy-instrumented classes will be
-		// finally
-		// injected. This classloader will become the Jvm system classloader
+		// finally injected. This classloader will become the Jvm system classloader
 
 		CustomClassLoader scl = new CustomClassLoader(false);
 
@@ -214,7 +206,7 @@ public class CodeSecurity {
 								}
 
 								for (AnnotationDescription a : target.getDeclaredAnnotations()) {
-									if (a.getAnnotationType().getTypeName().equals(ProtectionContext.class.getName())) {
+									if (a.getAnnotationType().getTypeName().equals(Secure.class.getName())) {
 										return true;
 									}
 								}
@@ -245,11 +237,10 @@ public class CodeSecurity {
 							}
 						};
 
-						unloaded = new ByteBuddy().with(AnnotationRetention.ENABLED).rebase(c, locator)
-								.method(matcher)
-								.intercept(MethodDelegation.to(Interceptor.class).andThen(SuperMethodCall.INSTANCE))
+						unloaded = new ByteBuddy().with(AnnotationRetention.ENABLED).rebase(c, locator).method(matcher)
+								.intercept(MethodDelegation.to(MethodInterceptor.class).andThen(SuperMethodCall.INSTANCE))
 								.constructor(matcher)
-								.intercept(MethodDelegation.to(Interceptor.class).andThen(SuperMethodCall.INSTANCE))
+								.intercept(MethodDelegation.to(MethodInterceptor.class).andThen(SuperMethodCall.INSTANCE))
 								.make();
 
 					} catch (Error | TypeNotPresentException e) {
@@ -265,20 +256,21 @@ public class CodeSecurity {
 		// classloader, since it's no needed anymore
 		cl.prune();
 
-		// Since, we are now ready to load classes into the system
-		// classloader, we need to reset the ThreadSecurity instance
-		// because the current instance uses the former classloader
-
+		// Recursively load classes into the classloader based on their hierarchy
 		for (Entry<Class<?>, Unloaded<?>> e : unloadeds.entrySet()) {
 			load(scl, e.getKey(), e.getValue());
 		}
 
 		// Dynamically set the Jvm system class loader
-		// As a repercussion, future calls to (~ ClassLoader.getSystemClassLoader() 
+
+		// Here are the following repercussions of doing this:,
+
+		// 1. Future calls to (~ ClassLoader.getSystemClassLoader()
 		// instanceof CustomClassLoader) will always return false
 		// This is because the Jvm does not allow dynamic casts for the system
 		// class loader. What the Jvm does not know is that we changed it :)
-
+		
+		
 		ClassLoaderUtil.setSystemClassLoder(scl);
 	}
 
@@ -326,123 +318,12 @@ public class CodeSecurity {
 		return null;
 	}
 
-	/**
-	 * 
-	 * @param target The target class to be transformed
-	 * @param source The source class from where we read the annotation
-	 * @param method The method from where we read the annotation
-	 * @throws NotFoundException
-	 * @throws BadBytecode
-	 * @throws CannotCompileException
-	 * @throws IOException
-	 * @throws Exception
-	 */
-	public static void copyAnnotation(CtClass target, CtClass source, Method method,
-			Class<? extends Annotation> annotationType)
-			throws NotFoundException, BadBytecode, CannotCompileException, IOException {
-
-		// If this method is already annotated with annotationType, remove
-		for (Annotation a : method.getDeclaredAnnotations()) {
-			if (a.annotationType().getName().equals(annotationType.getName())) {
-				removeAnnotation(target, method, a.annotationType());
-			}
-		}
-
-		// Create an array of CtClass instances for the method param types
-		Class<?>[] paramsTypes = method.getParameterTypes();
-		List<CtClass> paramsTypesCT = new ArrayList<>();
-
-		for (Class<?> cl : paramsTypes) {
-			paramsTypesCT.add(source.getClassPool().get(cl.getName()));
-		}
-
-		// Get annotation bytes from the source method
-		CtMethod sourceMethod = source.getDeclaredMethod(method.getName(),
-				paramsTypesCT.toArray(new CtClass[paramsTypesCT.size()]));
-
-		CtMethod targetMethod = target.getDeclaredMethod(method.getName(),
-				paramsTypesCT.toArray(new CtClass[paramsTypesCT.size()]));
-
-		AnnotationsAttribute sourceAnnotationsAttr = new AnnotationsAttribute(source.getClassFile().getConstPool(),
-				AnnotationsAttribute.visibleTag, sourceMethod.getAttribute(AnnotationsAttribute.visibleTag));
-
-		AnnotationsAttribute targetAnnotationsAttr = new AnnotationsAttribute(target.getClassFile().getConstPool(),
-				AnnotationsAttribute.visibleTag, targetMethod.getAttribute(AnnotationsAttribute.visibleTag));
-
-		for (javassist.bytecode.annotation.Annotation a : sourceAnnotationsAttr.getAnnotations()) {
-
-			if (a.getTypeName().equals(annotationType.getName())) {
-
-				ByteArrayOutputStream output = new ByteArrayOutputStream();
-				int numAnnotations = 1;
-
-				if (targetAnnotationsAttr.get() != null) {
-					numAnnotations += targetAnnotationsAttr.numAnnotations();
-				}
-
-				AnnotationsWriter writer = new AnnotationsWriter(output, target.getClassFile().getConstPool());
-
-				writer.numAnnotations(numAnnotations);
-
-				if (targetAnnotationsAttr.get() != null) {
-					for (javassist.bytecode.annotation.Annotation a2 : targetAnnotationsAttr.getAnnotations()) {
-						a2.write(writer);
-					}
-				}
-
-				writer.annotation("L" + annotationType.getName().replace(".", "/") + ";",
-						a.getMemberNames() != null ? a.getMemberNames().size() : 0);
-
-				if (a.getMemberNames() != null) {
-					for (String name : a.getMemberNames()) {
-						writer.memberValuePair(name); // element_value_pair
-						a.getMemberValue(name).write(writer);
-					}
-				}
-
-				writer.close();
-				byte[] attribute_info = output.toByteArray();
-				targetAnnotationsAttr.set(attribute_info);
-			}
-		}
-
-		// Add annotation to method info
-		targetMethod.getMethodInfo().addAttribute(targetAnnotationsAttr);
-	}
-
-	public static void removeAnnotation(CtClass clazz, Method method, Class<? extends Annotation> annotationType)
-			throws NotFoundException, BadBytecode, CannotCompileException {
-
-		// Create an array of CtClass instances for the method param types
-		Class<?>[] paramsTypes = method.getParameterTypes();
-		List<CtClass> paramsTypesCT = new ArrayList<>();
-
-		for (Class<?> cl : paramsTypes) {
-			paramsTypesCT.add(clazz.getClassPool().get(cl.getName()));
-		}
-
-		// Get annotation bytes from the source method
-		CtMethod sourceMethod = clazz.getDeclaredMethod(method.getName(),
-				paramsTypesCT.toArray(new CtClass[paramsTypesCT.size()]));
-
-		// Removes the specified annotation type from sourceAnnotationsAttr
-
-		AnnotationsAttribute sourceAnnotationsAttr = new AnnotationsAttribute(clazz.getClassFile().getConstPool(),
-				AnnotationsAttribute.visibleTag, sourceMethod.getAttribute(AnnotationsAttribute.visibleTag));
-
-		sourceAnnotationsAttr.removeAnnotation(annotationType.getName());
-
-		// Add annotation to method info
-		sourceMethod.getMethodInfo().addAttribute(sourceAnnotationsAttr);
-	}
-
 	private static ClasspathScanner<Object> newClasspathScanner(ClassLoader cl) {
 		return (ClasspathScanner<Object>) newClasspathScanner(cl, Object.class);
 	}
 
 	private static <T> ClasspathScanner<T> newClasspathScanner(ClassLoader cl, Class<T> type) {
-		return new ClasspathScanner<>("", type).setClassLoader(cl)
-				.setLoadAbstractClasses(true);
+		return new ClasspathScanner<>("", type).setClassLoader(cl).setLoadAbstractClasses(true);
 	}
 
 }

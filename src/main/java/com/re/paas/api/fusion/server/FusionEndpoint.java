@@ -35,5 +35,4 @@ public @interface FusionEndpoint {
 	Class<? extends ServiceAuthenticator> customAuthenticator() default DefaultServiceAuthenticator.class;
 
 	ServiceAffinity affinity() default ServiceAffinity.DISTRIBUTED;
-	
 }

@@ -18,34 +18,34 @@ public class ActivityStreamService extends BaseService {
 	
 	@FusionEndpoint(uri = "/set-timeline", requestParams = { "timeline" }, method = HttpMethod.POST,
 			functionality = PlatformFunctionalities.Constants.MANAGE_ACTIVITY_STREAM)
-	public void setActivityStreamTimeline(RoutingContext ctx) {
+	public static void setActivityStreamTimeline(RoutingContext ctx) {
 		ActivitityStreamTimeline timeline = ActivitityStreamTimeline.from(Integer.parseInt(ctx.request().getParam("timeline")));
 		ActivityStreamModel.setActivityTimeline(timeline);
 	}
 	        
 	@FusionEndpoint(uri = "/get-timeline",
 			functionality = PlatformFunctionalities.Constants.MANAGE_ACTIVITY_STREAM)
-	public void getActivityStreamTimeline(RoutingContext ctx) {
+	public static void getActivityStreamTimeline(RoutingContext ctx) {
 		ActivitityStreamTimeline timeline = ActivityStreamModel.getActivityTimeline();
 		ctx.response().write(new JsonObject().put("timeline", timeline.getValue()).encode()); 
 	}  
 	         
 	@FusionEndpoint(uri = "/is-enabled", 
 			functionality = PlatformFunctionalities.Constants.MANAGE_ACTIVITY_STREAM)
-	public void isActivityStreamEnabled(RoutingContext ctx) {
+	public static void isActivityStreamEnabled(RoutingContext ctx) {
 		Boolean isEnabled = ActivityStreamModel.isEnabled();
 		ctx.response().write(new JsonObject().put("isEnabled", isEnabled).encode());
 	}    
 	 
 	@FusionEndpoint(uri = "/disable", method = HttpMethod.POST, 
 			functionality = PlatformFunctionalities.Constants.MANAGE_ACTIVITY_STREAM)
-	public void disableActivityStream(RoutingContext ctx) {
+	public static void disableActivityStream(RoutingContext ctx) {
 		ActivityStreamModel.disable(); 
 	}
 	
 	@FusionEndpoint(uri = "/enable", method = HttpMethod.POST,
 			functionality = PlatformFunctionalities.Constants.MANAGE_ACTIVITY_STREAM)
-	public void enableActivityStream(RoutingContext ctx) {
+	public static void enableActivityStream(RoutingContext ctx) {
 		ActivityStreamModel.enable();
 	}
 	

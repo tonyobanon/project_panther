@@ -82,5 +82,6 @@ dependencies {
    	implementation "net.bytebuddy:byte-buddy:1.9.12"
 	implementation "org.javassist:javassist:3.24.1-GA"
 	
+	implementation "io.github.classgraph:classgraph:4.8.27"
 }
 

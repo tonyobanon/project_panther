@@ -4,11 +4,11 @@ import java.net.InetAddress;
 import java.util.Map;
 
 import com.re.paas.api.annotations.Final;
-import com.re.paas.api.annotations.ProtectionContext;
 import com.re.paas.api.clustering.classes.ClusterCredentials;
 import com.re.paas.api.designpatterns.Singleton;
 import com.re.paas.api.runtime.spi.Resource;
 import com.re.paas.api.runtime.spi.SpiType;
+import com.re.paas.internal.runtime.security.Secure;
 
 public interface CloudEnvironment extends Resource {
 
@@ -16,7 +16,7 @@ public interface CloudEnvironment extends Resource {
 
 	Boolean enabled();
 
-	@ProtectionContext
+	@Secure
 	Boolean applies();
 
 	Boolean isProduction();
@@ -43,13 +43,13 @@ public interface CloudEnvironment extends Resource {
 	
 	Integer wkaPort();
 
-	@ProtectionContext
+	@Secure
 	Map<String, String> getInstanceTags();
 
-	@ProtectionContext
+	@Secure
 	ClusterCredentials credentials();
 
-	@ProtectionContext
+	@Secure
 	AbstractProviderHandler providerDelegate();
 
 	static AbstractCloudEnvironmentDelegate getDelegate() {

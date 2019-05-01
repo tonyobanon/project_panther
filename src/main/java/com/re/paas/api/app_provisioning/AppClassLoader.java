@@ -3,17 +3,16 @@ package com.re.paas.api.app_provisioning;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.function.BiConsumer;
 
-import com.re.paas.api.annotations.ProtectionContext;
 import com.re.paas.api.annotations.develop.BlockerTodo;
 import com.re.paas.api.designpatterns.Factory;
 import com.re.paas.api.logging.Logger;
 import com.re.paas.api.logging.LoggerFactory;
-import com.re.paas.api.runtime.Consumer;
 import com.re.paas.api.runtime.Invokable;
-import com.re.paas.api.runtime.ThreadSecurity;
-import com.re.paas.internal.runtime.ThreadSecurityImpl;
+import com.re.paas.api.runtime.ClassLoaderSecurity;
+import com.re.paas.internal.fusion.services.impl.RoutingContextHandler;
+import com.re.paas.internal.runtime.ClassLoaderSecurityImpl;
+import com.re.paas.internal.runtime.security.Secure;
 
 @BlockerTodo("In static block, scan for @ApplicationInstrinsic type, inorder to set a delegation model of DelegationType.FIND_FIRST")
 public abstract class AppClassLoader extends ClassLoader {
@@ -40,18 +39,25 @@ public abstract class AppClassLoader extends ClassLoader {
 		return delegateType;
 	}
 
-	public static AppClassLoader get(Path path, String appId, String[] dependencies) {
-		return Factory.get(AppClassLoader.class, new Object[] { path, appId, dependencies });
+	@Secure	
+	public static void addDelegationType(String classname, DelegationType delegateType) {
+		delegateTypes.put(classname, delegateType);
 	}
 
-	@ProtectionContext
+	public static AppClassLoader get(String appId, String[] dependencies) {
+		return Factory.get(AppClassLoader.class, new Object[] { appId, dependencies });
+	}
+	
+	public abstract Class<?>[] load(Class<?>...classes) throws ClassNotFoundException;
+
+	@Secure
 	public abstract Path getPath();
 
 	public abstract String getAppId();
 
 	public abstract boolean isStopping();
 
-	@ProtectionContext
+	@Secure
 	public abstract void setStopping(boolean isStopping);
 
 	public static enum DelegationType {
@@ -62,11 +68,11 @@ public abstract class AppClassLoader extends ClassLoader {
 
 		LOG.debug("Scanning for @ApplicationInstrinsic types");
 
-		delegateTypes.put(ThreadSecurity.class.getName(), DelegationType.FIND_FIRST);
-		delegateTypes.put(ThreadSecurityImpl.class.getName(), DelegationType.FIND_FIRST);
+		addDelegationType(ClassLoaderSecurity.class.getName(), DelegationType.FIND_FIRST);
+		addDelegationType(ClassLoaderSecurityImpl.class.getName(), DelegationType.FIND_FIRST);
 
-		delegateTypes.put(Invokable.class.getName(), DelegationType.FIND_FIRST);
-		delegateTypes.put(Consumer.class.getName(), DelegationType.FIND_FIRST);
-		delegateTypes.put(BiConsumer.class.getName(), DelegationType.FIND_FIRST);
+		addDelegationType(Invokable.class.getName(), DelegationType.FIND_FIRST);
+		
+		addDelegationType(RoutingContextHandler.class.getName(), DelegationType.FIND_FIRST);
 	}
 }

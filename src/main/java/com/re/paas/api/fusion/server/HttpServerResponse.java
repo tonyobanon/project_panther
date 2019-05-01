@@ -2,7 +2,7 @@ package com.re.paas.api.fusion.server;
 
 import java.util.Map;
 
-public interface HttpServerResponse {
+public interface HttpServerResponse extends Cloneable {
 
 	Map<String, Cookie> cookies();
 	

@@ -3,17 +3,21 @@ package com.re.paas.api.classes;
 import com.re.paas.api.annotations.develop.BlockerTodo;
 import com.re.paas.api.errors.Error;
 import com.re.paas.api.logging.Logger;
+import com.re.paas.api.logging.LoggerFactory;
+import com.re.paas.internal.Platform;
 
 @BlockerTodo("Add metrics to indicate application error counts")
 public class Exceptions {
+	
+	private static final Logger LOG = LoggerFactory.get().getLog(Exceptions.class);
 
 	private static void output(String header, String body, boolean isFatal) {
 
 		String o = "\n" + (header != null ? header : "") + body != null ? "\n" + body : "";
 		if (isFatal) {
-			Logger.get().fatal(o);
+			LOG.fatal(o);
 		} else {
-			Logger.get().error(o);
+			LOG.error(o);
 		}
 	}
 
@@ -26,7 +30,9 @@ public class Exceptions {
 		String header = message != null ? message : t.getMessage();
 		String body = getStackTrace(recurseCause(t));
 
-		output(header, body, true);
+		if(!Platform.isDevMode()) {
+			output(header, body, true);
+		}
 		throw new RuntimeException(t);
 	}
 	

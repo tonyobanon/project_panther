@@ -42,7 +42,7 @@ public class BasePropertyService extends BaseService {
 	@FusionEndpoint(uri = "/set-city-features", bodyParams = {
 			"spec" }, method = HttpMethod.PUT, 
 					functionality = PropertyFunctionalities.Constants.SET_CITY_FEATURES)
-	public void setCityFeatutures(RoutingContext ctx) {
+	public static void setCityFeatutures(RoutingContext ctx) {
 
 		JsonObject body = ctx.getBodyAsJson();
 
@@ -55,7 +55,7 @@ public class BasePropertyService extends BaseService {
 	@FusionEndpoint(uri = "/get-city-features", requestParams = {
 			"id" }, method = HttpMethod.GET, 
 					functionality = PropertyFunctionalities.Constants.GET_CITY_FEATURES)
-	public void getCityFeatutures(RoutingContext ctx) {
+	public static void getCityFeatutures(RoutingContext ctx) {
 
 		Integer id = Integer.parseInt(ctx.request().getParam("id"));
 		CityFeaturesSpec spec = BasePropertyModel.getCityFeatutures(id);
@@ -66,7 +66,7 @@ public class BasePropertyService extends BaseService {
 	@FusionEndpoint(uri = "/new-property-type-feature", bodyParams = { "type",
 			"features" }, method = HttpMethod.PUT, 
 			functionality = PropertyFunctionalities.Constants.CREATE_PROPERTY_TYPE_FEATURES)
-	public void newPropertyTypeFeature(RoutingContext ctx) {
+	public static void newPropertyTypeFeature(RoutingContext ctx) {
 
 		JsonObject body = ctx.getBodyAsJson();
 
@@ -81,7 +81,7 @@ public class BasePropertyService extends BaseService {
 	@FusionEndpoint(uri = "/delete-property-type-feature", bodyParams = {
 			"ids" }, method = HttpMethod.PUT, 
 					functionality = PropertyFunctionalities.Constants.DELETE_PROPERTY_TYPE_FEATURES)
-	public void deletePropertyTypeFeature(RoutingContext ctx) {
+	public static void deletePropertyTypeFeature(RoutingContext ctx) {
 
 		JsonObject body = ctx.getBodyAsJson();
 
@@ -95,7 +95,7 @@ public class BasePropertyService extends BaseService {
 	@FusionEndpoint(uri = "/list-property-type-features", requestParams = {
 			"type" }, method = HttpMethod.GET, 
 					functionality = PropertyFunctionalities.Constants.LIST_PROPERTY_TYPE_FEATURES)
-	public void listPropertyTypeFeatures(RoutingContext ctx) {
+	public static void listPropertyTypeFeatures(RoutingContext ctx) {
 
 		PropertyType type = PropertyType.from(Integer.parseInt(ctx.request().getParam("type")));
 		Map<Long, ClientRBRef> result = BasePropertyModel.listPropertyTypeFeatures(type);
@@ -106,7 +106,7 @@ public class BasePropertyService extends BaseService {
 	@FusionEndpoint(uri = "/new-property-creation-request", bodyParams = {
 			"spec" }, method = HttpMethod.PUT, 
 					functionality = PropertyFunctionalities.Constants.CREATE_PROPERTY_CREATION_REQUEST)
-	public void newPropertyCreationRequest(RoutingContext ctx) {
+	public static void newPropertyCreationRequest(RoutingContext ctx) {
 
 		JsonObject body = ctx.getBodyAsJson();
 		Long principal = FusionHelper.getUserId(ctx.request());
@@ -120,7 +120,7 @@ public class BasePropertyService extends BaseService {
 	@FusionEndpoint(uri = "/new-property-update-request", bodyParams = {
 			"spec" }, method = HttpMethod.POST, 
 					functionality = PropertyFunctionalities.Constants.CREATE_PROPERTY_UPDATE_REQUEST)
-	public void newPropertyUpdateRequest(RoutingContext ctx) {
+	public static void newPropertyUpdateRequest(RoutingContext ctx) {
 
 		JsonObject body = ctx.getBodyAsJson();
 		Long principal = FusionHelper.getUserId(ctx.request());
@@ -134,7 +134,7 @@ public class BasePropertyService extends BaseService {
 	@FusionEndpoint(uri = "/accept-property-request", requestParams = {
 			"id" }, method = HttpMethod.POST, 
 					functionality = PropertyFunctionalities.Constants.REVIEW_PROPERTY_REQUEST)
-	public void acceptPropertyRequest(RoutingContext ctx) {
+	public static void acceptPropertyRequest(RoutingContext ctx) {
 
 		Long principal = FusionHelper.getUserId(ctx.request());
 
@@ -146,7 +146,7 @@ public class BasePropertyService extends BaseService {
 	@FusionEndpoint(uri = "/decline-property-request", requestParams = {
 			"id" }, method = HttpMethod.POST, 
 					functionality = PropertyFunctionalities.Constants.REVIEW_PROPERTY_REQUEST)
-	public void declinePropertyRequest(RoutingContext ctx) {
+	public static void declinePropertyRequest(RoutingContext ctx) {
 
 		Long principal = FusionHelper.getUserId(ctx.request());
 
@@ -158,7 +158,7 @@ public class BasePropertyService extends BaseService {
 	@FusionEndpoint(uri = "/new-property-deletion-request", requestParams = {
 			"id" }, method = HttpMethod.DELETE, 
 					functionality = PropertyFunctionalities.Constants.CREATE_PROPERTY_DELETION_REQUEST)
-	public void newPropertyDeletionRequest(RoutingContext ctx) {
+	public static void newPropertyDeletionRequest(RoutingContext ctx) {
 
 		Long principal = FusionHelper.getUserId(ctx.request());
 
@@ -170,7 +170,7 @@ public class BasePropertyService extends BaseService {
 	@FusionEndpoint(uri = "/set-property-description", bodyParams = { "id",
 			"description" }, method = HttpMethod.POST, 
 			functionality = PropertyFunctionalities.Constants.CREATE_PROPERTY_UPDATE_REQUEST)
-	public void setPropertyDescription(RoutingContext ctx) {
+	public static void setPropertyDescription(RoutingContext ctx) {
 
 		Long principal = FusionHelper.getUserId(ctx.request());
 
@@ -186,7 +186,7 @@ public class BasePropertyService extends BaseService {
 	@FusionEndpoint(uri = "/get-property-description", requestParams = {
 			"id" }, method = HttpMethod.GET, 
 					functionality = PropertyFunctionalities.Constants.VIEW_PROPERTY)
-	public void getPropertyDescription(RoutingContext ctx) {
+	public static void getPropertyDescription(RoutingContext ctx) {
 
 		Long id = Long.parseLong(ctx.request().getParam("id"));
 
@@ -198,7 +198,7 @@ public class BasePropertyService extends BaseService {
 	@FusionEndpoint(uri = "/set-property-poi", bodyParams = {
 			"spec" }, method = HttpMethod.POST, 
 					functionality = PropertyFunctionalities.Constants.CREATE_PROPERTY_UPDATE_REQUEST)
-	public void setPropertyPOI(RoutingContext ctx) {
+	public static void setPropertyPOI(RoutingContext ctx) {
 
 		Long principal = FusionHelper.getUserId(ctx.request());
 
@@ -213,7 +213,7 @@ public class BasePropertyService extends BaseService {
 	@FusionEndpoint(uri = "/get-property-poi", requestParams = {
 			"id" }, method = HttpMethod.GET, 
 					functionality = PropertyFunctionalities.Constants.VIEW_PROPERTY)
-	public void getPropertyPOI(RoutingContext ctx) {
+	public static void getPropertyPOI(RoutingContext ctx) {
 
 		Long id = Long.parseLong(ctx.request().getParam("id"));
 
@@ -225,7 +225,7 @@ public class BasePropertyService extends BaseService {
 	@FusionEndpoint(uri = "/add-property-floor-plan", bodyParams = { "propertyId",
 			"spec" }, method = HttpMethod.POST, 
 			functionality = PropertyFunctionalities.Constants.CREATE_PROPERTY_UPDATE_REQUEST)
-	public void addPropertyFloorPlan(RoutingContext ctx) {
+	public static void addPropertyFloorPlan(RoutingContext ctx) {
 
 		Long principal = FusionHelper.getUserId(ctx.request());
 
@@ -243,7 +243,7 @@ public class BasePropertyService extends BaseService {
 	@FusionEndpoint(uri = "/remove-property-floor-plan", requestParams = { "propertyId",
 			"id" }, method = HttpMethod.DELETE, 
 			functionality = PropertyFunctionalities.Constants.CREATE_PROPERTY_UPDATE_REQUEST)
-	public void removePropertyFloorPlan(RoutingContext ctx) {
+	public static void removePropertyFloorPlan(RoutingContext ctx) {
 
 		Long principal = FusionHelper.getUserId(ctx.request());
 
@@ -256,7 +256,7 @@ public class BasePropertyService extends BaseService {
 	@FusionEndpoint(uri = "/get-property-floor-plan", bodyParams = {
 			"ids" }, method = HttpMethod.PUT, 
 					functionality = PropertyFunctionalities.Constants.VIEW_PROPERTY)
-	public void getPropertyFloorPlan(RoutingContext ctx) {
+	public static void getPropertyFloorPlan(RoutingContext ctx) {
 
 		JsonObject body = ctx.getBodyAsJson();
 
@@ -271,7 +271,7 @@ public class BasePropertyService extends BaseService {
 	@FusionEndpoint(uri = "/add-to-user-saved-list", requestParams = { "userId",
 			"propertyId" }, method = HttpMethod.PUT, 
 			functionality = PropertyFunctionalities.Constants.ADD_TO_USER_SAVED_LIST)
-	public void addToUserSavedList(RoutingContext ctx) {
+	public static void addToUserSavedList(RoutingContext ctx) {
 
 		Long principal = FusionHelper.getUserId(ctx.request());
 
@@ -284,7 +284,7 @@ public class BasePropertyService extends BaseService {
 	@FusionEndpoint(uri = "/add-to-own-saved-list", requestParams = {
 			"propertyId" }, method = HttpMethod.PUT, 
 					functionality = PropertyFunctionalities.Constants.ADD_TO_OWN_SAVED_LIST)
-	public void addToOwnSavedList(RoutingContext ctx) {
+	public static void addToOwnSavedList(RoutingContext ctx) {
 
 		Long principal = FusionHelper.getUserId(ctx.request());
 
@@ -296,7 +296,7 @@ public class BasePropertyService extends BaseService {
 	@FusionEndpoint(uri = "/remove-from-user-saved-list", requestParams = { "userId",
 			"propertyId" }, method = HttpMethod.DELETE, 
 			functionality = PropertyFunctionalities.Constants.REMOVE_FROM_USER_SAVED_LIST)
-	public void removeFromUserSavedList(RoutingContext ctx) {
+	public static void removeFromUserSavedList(RoutingContext ctx) {
 
 		Long principal = FusionHelper.getUserId(ctx.request());
 
@@ -309,7 +309,7 @@ public class BasePropertyService extends BaseService {
 	@FusionEndpoint(uri = "/remove-from-own-saved-list", requestParams = {
 			"propertyId" }, method = HttpMethod.DELETE, 
 					functionality = PropertyFunctionalities.Constants.REMOVE_FROM_OWN_SAVED_LIST)
-	public void removeFromOwnSavedList(RoutingContext ctx) {
+	public static void removeFromOwnSavedList(RoutingContext ctx) {
 
 		Long principal = FusionHelper.getUserId(ctx.request());
 
@@ -321,7 +321,7 @@ public class BasePropertyService extends BaseService {
 	@FusionEndpoint(uri = "/get-user-saved-list", requestParams = {
 			"userId" }, method = HttpMethod.GET, 
 					functionality = PropertyFunctionalities.Constants.GET_USER_SAVED_LIST)
-	public void getUserSavedList(RoutingContext ctx) {
+	public static void getUserSavedList(RoutingContext ctx) {
 
 		Long principal = FusionHelper.getUserId(ctx.request());
 
@@ -333,7 +333,7 @@ public class BasePropertyService extends BaseService {
 
 	@FusionEndpoint(uri = "/get-own-saved-list", requestParams = {}, method = HttpMethod.GET, 
 			functionality = PropertyFunctionalities.Constants.GET_OWN_SAVED_LIST)
-	public void getOwnSavedList(RoutingContext ctx) {
+	public static void getOwnSavedList(RoutingContext ctx) {
 
 		Long principal = FusionHelper.getUserId(ctx.request());
 
@@ -344,7 +344,7 @@ public class BasePropertyService extends BaseService {
 	@FusionEndpoint(uri = "/new-property-listing", bodyParams = { "contractType",
 			"spec" }, method = HttpMethod.PUT, 
 			functionality = PropertyFunctionalities.Constants.CREATE_PROPERTY_LISTING)
-	public void newPropertyListing(RoutingContext ctx) {
+	public static void newPropertyListing(RoutingContext ctx) {
 
 		JsonObject body = ctx.getBodyAsJson();
 
@@ -372,7 +372,7 @@ public class BasePropertyService extends BaseService {
 	@FusionEndpoint(uri = "/update-property-listing", bodyParams = { "contractType",
 			"spec" }, method = HttpMethod.POST, 
 			functionality = PropertyFunctionalities.Constants.UPDATE_PROPERTY_LISTING)
-	public void updatePropertyListing(RoutingContext ctx) {
+	public static void updatePropertyListing(RoutingContext ctx) {
 
 		JsonObject body = ctx.getBodyAsJson();
 
@@ -398,7 +398,7 @@ public class BasePropertyService extends BaseService {
 	@FusionEndpoint(uri = "/delete-property-listing", requestParams = {
 			"id" }, method = HttpMethod.DELETE, 
 					functionality = PropertyFunctionalities.Constants.DELETE_PROPERTY_LISTING)
-	public void deletePropertyListing(RoutingContext ctx) {
+	public static void deletePropertyListing(RoutingContext ctx) {
 
 		Long principal = FusionHelper.getUserId(ctx.request());
 
@@ -410,7 +410,7 @@ public class BasePropertyService extends BaseService {
 	@FusionEndpoint(uri = "/get-property-listings", requestParams = {
 			"propertyId" }, method = HttpMethod.GET, 
 					functionality = PropertyFunctionalities.Constants.GET_PROPERTY_LISTINGS)
-	public void getPropertyListings(RoutingContext ctx) {
+	public static void getPropertyListings(RoutingContext ctx) {
 
 		Long principal = FusionHelper.getUserId(ctx.request());
 
@@ -423,7 +423,7 @@ public class BasePropertyService extends BaseService {
 	@FusionEndpoint(uri = "/update-property-listing-availability-status", requestParams = { "id",
 			"status" }, method = HttpMethod.POST, 
 			functionality = PropertyFunctionalities.Constants.UPDATE_PROPERTY_LISTING_AVAILABILITY_STATUS)
-	public void updatePropertyListingAvailabilityStatus(RoutingContext ctx) {
+	public static void updatePropertyListingAvailabilityStatus(RoutingContext ctx) {
 
 		Long principal = FusionHelper.getUserId(ctx.request());
 
@@ -437,7 +437,7 @@ public class BasePropertyService extends BaseService {
 	@FusionEndpoint(uri = "/list-properties", bodyParams = { "criteria", "spec",
 			"pageSize" }, method = HttpMethod.POST, 
 			functionality = PropertyFunctionalities.Constants.LIST_PROPERTY)
-	public void listProperties(RoutingContext ctx) {
+	public static void listProperties(RoutingContext ctx) {
 
 		Long principal = FusionHelper.getUserId(ctx.request());
 
@@ -474,7 +474,7 @@ public class BasePropertyService extends BaseService {
 	@FusionEndpoint(uri = "/new-property-price-rule", bodyParams = {
 			"spec" }, method = HttpMethod.PUT, 
 					functionality = PropertyFunctionalities.Constants.CREATE_PROPERTY_PRICE_RULE)
-	public void newPropertyPriceRule(RoutingContext ctx) {
+	public static void newPropertyPriceRule(RoutingContext ctx) {
 
 		Long principal = FusionHelper.getUserId(ctx.request());
 
@@ -490,7 +490,7 @@ public class BasePropertyService extends BaseService {
 	@FusionEndpoint(uri = "/update-property-price-rule", bodyParams = { "id",
 			"spec" }, method = HttpMethod.POST, 
 			functionality = PropertyFunctionalities.Constants.UPDATE_PROPERTY_PRICE_RULE)
-	public void updatePropertyPriceRule(RoutingContext ctx) {
+	public static void updatePropertyPriceRule(RoutingContext ctx) {
 
 		Long principal = FusionHelper.getUserId(ctx.request());
 
@@ -507,7 +507,7 @@ public class BasePropertyService extends BaseService {
 	@FusionEndpoint(uri = "/delete-property-price-rule", requestParams = {
 			"id" }, method = HttpMethod.DELETE, 
 					functionality = PropertyFunctionalities.Constants.DELETE_PROPERTY_PRICE_RULE)
-	public void deletePropertyPriceRule(RoutingContext ctx) {
+	public static void deletePropertyPriceRule(RoutingContext ctx) {
 
 		Long principal = FusionHelper.getUserId(ctx.request());
 

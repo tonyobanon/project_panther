@@ -4,13 +4,13 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.re.paas.api.annotations.ProtectionContext;
-import com.re.paas.api.annotations.ProtectionContext.Factor;
 import com.re.paas.api.designpatterns.Singleton;
 import com.re.paas.api.forms.Section;
 import com.re.paas.api.fusion.services.Functionality;
 import com.re.paas.api.runtime.spi.AbstractResource;
 import com.re.paas.api.runtime.spi.SpiType;
+import com.re.paas.internal.runtime.security.Secure;
+import com.re.paas.internal.runtime.security.Secure.Factor;
 
 public abstract class Realm extends AbstractResource {
 
@@ -50,7 +50,7 @@ public abstract class Realm extends AbstractResource {
 
 	public abstract Section[] onboardingForm();
 
-	@ProtectionContext(allowed= {}, factor=Factor.CALLER, allowInternal=false)
+	@Secure(allowed= {}, factor=Factor.CALLER, allowInternalAccess=false)
 	public abstract Integer authority();
 
 	public  Map<String, String> getSuggestedProfiles(Long principal, Long userId) {

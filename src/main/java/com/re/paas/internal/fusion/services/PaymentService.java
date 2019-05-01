@@ -18,7 +18,7 @@ public class PaymentService extends BaseService {
 	 * @param ctx
 	 */
 	@FusionEndpoint(uri = BasePaymentModel.IPN_CALLBACK_URL, functionality = LocationFunctionalities.Constants.GET_AVAILABLE_COUNTRIES, createXhrClient = false)
-	public void notificationHook(RoutingContext ctx) {
+	public static void notificationHook(RoutingContext ctx) {
 
 	}
 }

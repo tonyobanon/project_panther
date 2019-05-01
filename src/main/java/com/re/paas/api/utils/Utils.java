@@ -436,7 +436,7 @@ public class Utils {
 	public static Integer mergeUnsigned(short s1, short s2) {
 		return ((s1 & 0xFFFF) << 16) | (s2 & 0xFFFF);
 	}
-
+	
 	public static boolean startsWith(String key, String... entries) {
 		for (String e : entries) {
 			if (key.startsWith(e)) {
@@ -446,6 +446,16 @@ public class Utils {
 		return false;
 	}
 
+	@SafeVarargs
+	public static <T> boolean equals(T key, T... entries) {
+		for (T e : entries) {
+			if (key.toString().equals(e.toString())) {
+				return true;
+			}
+		}
+		return false;
+	}
+	
 	public static boolean equals(String key, String... entries) {
 		for (String e : entries) {
 			if (key.equals(e)) {

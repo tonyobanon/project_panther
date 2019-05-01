@@ -107,7 +107,7 @@ public class FormFieldRepository {
 
 						String countryField = FormModel.newCompositeField(v,
 								(CompositeField) new CompositeField(ClientRBRef.get("country")).setItemsSource(
-										serviceDelegate.getFunctionalityRoute(LocationFunctionalities.GET_COUNTRY_NAMES)
+										serviceDelegate.getFunctionalityService(LocationFunctionalities.GET_COUNTRY_NAMES)
 												.get(0))
 										.setSortOrder(3).setIsDefault(true));
 						saveFieldId(k, FormField.COUNTRY, countryField);
@@ -117,7 +117,7 @@ public class FormFieldRepository {
 										(CompositeField) new CompositeField(ClientRBRef.get("state"))
 												.setItemsSource(
 														serviceDelegate
-																.getFunctionalityRoute(
+																.getFunctionalityService(
 																		LocationFunctionalities.GET_TERRITORY_NAMES)
 																.get(0))
 												.setContext(countryField).setSortOrder(4).setIsDefault(true));
@@ -126,7 +126,7 @@ public class FormFieldRepository {
 						String cityField = FormModel.newCompositeField(v,
 								(CompositeField) new CompositeField(ClientRBRef.get("city"))
 										.setItemsSource(serviceDelegate
-												.getFunctionalityRoute(LocationFunctionalities.GET_CITY_NAMES).get(0))
+												.getFunctionalityService(LocationFunctionalities.GET_CITY_NAMES).get(0))
 										.setContext(stateField).setSortOrder(5).setIsDefault(true));
 						saveFieldId(k, FormField.CITY, cityField);
 
@@ -191,7 +191,7 @@ public class FormFieldRepository {
 
 						String countryField = FormModel.newCompositeField(v,
 								(CompositeField) new CompositeField(ClientRBRef.get("country")).setItemsSource(
-										serviceDelegate.getFunctionalityRoute(LocationFunctionalities.GET_COUNTRY_NAMES)
+										serviceDelegate.getFunctionalityService(LocationFunctionalities.GET_COUNTRY_NAMES)
 												.get(0))
 										.setSortOrder(10).setIsDefault(true));
 						saveFieldId(k, FormField.ORGANIZATION_COUNTRY, countryField);
@@ -201,7 +201,7 @@ public class FormFieldRepository {
 										(CompositeField) new CompositeField(ClientRBRef.get("state"))
 												.setItemsSource(
 														serviceDelegate
-																.getFunctionalityRoute(
+																.getFunctionalityService(
 																		LocationFunctionalities.GET_TERRITORY_NAMES)
 																.get(0))
 												.setContext(countryField).setSortOrder(12).setIsDefault(true));
@@ -210,7 +210,7 @@ public class FormFieldRepository {
 						String cityField = FormModel.newCompositeField(v,
 								(CompositeField) new CompositeField(ClientRBRef.get("city"))
 										.setItemsSource(serviceDelegate
-												.getFunctionalityRoute(LocationFunctionalities.GET_CITY_NAMES).get(0))
+												.getFunctionalityService(LocationFunctionalities.GET_CITY_NAMES).get(0))
 										.setContext(stateField).setSortOrder(14).setIsDefault(true));
 						saveFieldId(k, FormField.ORGANIZATION_CITY, cityField);
 
@@ -228,7 +228,7 @@ public class FormFieldRepository {
 						.newCompositeField(v,
 								(CompositeField) new CompositeField(ClientRBRef.get("organization"))
 										.setItemsSource(serviceDelegate
-												.getFunctionalityRoute(
+												.getFunctionalityService(
 														AgentOrganizationFunctionalities.LIST_AGENT_ORGANIZATION_NAMES)
 												.get(0))
 										.setContext(cityField).setSortOrder(2).setIsDefault(true));

@@ -1,7 +1,6 @@
 package com.re.paas.internal.infra.filesystem;
 
 import java.nio.file.FileSystem;
-import java.nio.file.spi.FileSystemProvider;
 import java.util.function.BiConsumer;
 
 import com.re.paas.api.adapters.LoadPhase;
@@ -32,7 +31,7 @@ public class FileSystemAdapterDelegate extends AbstractFileSystemAdapterDelegate
 	}
 	
 	@Override
-	public void migrate(FileSystemProvider outgoing, BiConsumer<Integer, String> listener) {
+	public void migrate(FileSystem outgoing, BiConsumer<Integer, String> listener) {
 		
 	}
 

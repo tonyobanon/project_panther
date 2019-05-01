@@ -6,9 +6,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
-import com.re.paas.api.annotations.ProtectionContext;
-import com.re.paas.api.annotations.ProtectionContext.Factor;
-import com.re.paas.api.annotations.ProtectionContext.IdentityStrategy;
 import com.re.paas.api.annotations.develop.BlockerTodo;
 import com.re.paas.api.annotations.develop.PlatformInternal;
 import com.re.paas.api.classes.KeyValuePair;
@@ -16,6 +13,9 @@ import com.re.paas.api.logging.Logger;
 import com.re.paas.api.runtime.ExecutorFactory;
 import com.re.paas.api.utils.ClassUtils;
 import com.re.paas.api.utils.Utils;
+import com.re.paas.internal.runtime.security.Secure;
+import com.re.paas.internal.runtime.security.Secure.Factor;
+import com.re.paas.internal.runtime.security.Secure.IdentityStrategy;
 
 /**
  * Note: T must be non-parameterized, since
@@ -28,7 +28,7 @@ import com.re.paas.api.utils.Utils;
  * {@link ExecutorFactory#execute(com.re.paas.api.app_provisioning.AppClassLoader, Boolean, Runnable)}
  * is used when running code from resource classes</li>
  */
-@ProtectionContext
+@Secure
 public abstract class SpiDelegate<T> {
 
 	private static final Logger LOG = Logger.get(SpiDelegate.class);
@@ -82,9 +82,8 @@ public abstract class SpiDelegate<T> {
 		Object o = getAll(type.getKey()).get(namespace);
 		if (o instanceof Class) {
 			return ClassUtils.createInstance((Class<T>) o);
-		} else {
-			return o;
 		}
+		return o;
 	}
 
 	protected final boolean hasKey(String namespace) {
@@ -111,8 +110,8 @@ public abstract class SpiDelegate<T> {
 	 * Since any thread can access {@link #getAll()}, we need to enforce some
 	 * security constraints on threads
 	 */
-	@ProtectionContext(factor = Factor.CALLER, allowed = {
-			AbstractResource.class }, identityStrategy = IdentityStrategy.ASSIGNABLE, allowInternal = false)
+	@Secure(factor = Factor.CALLER, allowed = {
+			AbstractResource.class }, identityStrategy = IdentityStrategy.ASSIGNABLE, allowInternalAccess = false)
 	private static final void checkNamespaceAccess(String namespace) {
 		if (namespace.startsWith(EXT_PREFIX)) {
 
@@ -144,8 +143,8 @@ public abstract class SpiDelegate<T> {
 		return type;
 	}
 
-	@ProtectionContext(factor = Factor.CALLER, allowed = {
-			SpiDelegateHandler.class }, identityStrategy = IdentityStrategy.SINGLETON, allowInternal = false)
+	@Secure(factor = Factor.CALLER, allowed = {
+			SpiDelegateHandler.class }, identityStrategy = IdentityStrategy.SINGLETON, allowInternalAccess = false)
 	public final SpiDelegate<T> setType(KeyValuePair<SpiType, Class<?>> type) {
 		this.type = type;
 		return this;
@@ -188,18 +187,18 @@ public abstract class SpiDelegate<T> {
 	 * This unloads all classes that have been previously loaded by this delegate
 	 */
 	@BlockerTodo("Make abstract, and implement across all delegates")
-	@ProtectionContext
+	@Secure
 	public void unload() {
 	}
 
-	@ProtectionContext(factor = Factor.CALLER, allowed = {
-			SpiDelegateHandler.class }, identityStrategy = IdentityStrategy.SINGLETON, allowInternal = false)
+	@Secure(factor = Factor.CALLER, allowed = {
+			SpiDelegateHandler.class }, identityStrategy = IdentityStrategy.SINGLETON, allowInternalAccess = false)
 	public final void add0(List<Class<?>> classes) {
 		add(Utils.toGenericList((classes)));
 	}
 
-	@ProtectionContext(factor = Factor.CALLER, allowed = {
-			SpiBase.class }, identityStrategy = IdentityStrategy.SINGLETON, allowInternal = false)
+	@Secure(factor = Factor.CALLER, allowed = {
+			SpiBase.class }, identityStrategy = IdentityStrategy.SINGLETON, allowInternalAccess = false)
 	public final List<Class<T>> remove0(List<Class<?>> classes) {
 		return remove(Utils.toGenericList(classes));
 	}

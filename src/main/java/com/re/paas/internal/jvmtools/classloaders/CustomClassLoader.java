@@ -14,15 +14,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.BiConsumer;
 
-
 public class CustomClassLoader extends ClassLoader {
 
 	private static final ClassLoader scl = ClassLoader.getSystemClassLoader();
 
 	private final Boolean pool;
 
-	private final Map<String, Class<?>> classes = new HashMap<>();
-	private final Map<String, byte[]> classBytes = new HashMap<>();
+	private final Map<String, Class<?>> _classes = new HashMap<>();
+	private final Map<String, byte[]> _classBytes = new HashMap<>();
 
 	private BiConsumer<Class<?>, byte[]> onFindListener;
 
@@ -53,7 +52,7 @@ public class CustomClassLoader extends ClassLoader {
 	public final Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
 
 		if (this.pool) {
-			Class<?> clazz = classes.get(name);
+			Class<?> clazz = _classes.get(name);
 			if (clazz != null) {
 				return clazz;
 			}
@@ -115,13 +114,13 @@ public class CustomClassLoader extends ClassLoader {
 
 	public void ingest(Class<?> clazz, byte[] bytecode) {
 		// System.out.println("Ingesting " + c.getName() + " into classloader pool");
-		this.classes.put(clazz.getName(), clazz);
-		this.classBytes.put(clazz.getName(), bytecode);
+		this._classes.put(clazz.getName(), clazz);
+		this._classBytes.put(clazz.getName(), bytecode);
 	}
 
 	public void prune() {
-		classes.clear();
-		classBytes.clear();
+		_classes.clear();
+		_classBytes.clear();
 	}
 
 	public Class<?> defineNewClass(String name, byte[] b, int off, int len, ProtectionDomain pd) {
@@ -135,25 +134,25 @@ public class CustomClassLoader extends ClassLoader {
 	 * @return
 	 */
 	public List<Class<?>> getClasses() {
-		return new ArrayList<>(classes.values());
+		return new ArrayList<>(_classes.values());
 	}
 
 	public Map<String, Class<?>> getClassesMap() {
-		return classes;
+		return _classes;
 	}
 
 	public Class<?> getClass(String name) {
-		return classes.get(name);
+		return _classes.get(name);
 	}
 
 	public byte[] getClassBytes(String name) {
-		return classBytes.get(name);
+		return _classBytes.get(name);
 	}
 
 	private File getClassFile(String className) {
 		return new File(path.resolve(className.replace(".", "/") + ".class"));
 	}
-	
+
 	public URI getPath() {
 		return path;
 	}

@@ -2,7 +2,7 @@ package com.re.paas.internal.runtime.permissions;
 
 import java.util.PropertyPermission;
 
-import com.re.paas.api.runtime.ThreadSecurity;
+import com.re.paas.api.runtime.ClassLoaderSecurity;
 import com.re.paas.internal.runtime.Permissions;
 
 public class PropertyPermissions implements BasePermission {
@@ -19,7 +19,17 @@ public class PropertyPermissions implements BasePermission {
 
 	@Override
 	public Short getIndex(String name, String actions, String context) {
-		return name.startsWith(prefix()) ? Permissions.ALLOW : Permissions.DENY;
+		
+		if(actions.equals("write")) {
+			return name.startsWith(prefix()) ? Permissions.ALLOW : Permissions.DENY;
+		};
+		
+		switch(name) {
+			case "sun.reflect.debugModuleAccessChecks":
+				return Permissions.ALLOW;
+		}
+		
+		return Permissions.DENY;
 	}
 
 	@Override
@@ -32,7 +42,7 @@ public class PropertyPermissions implements BasePermission {
 	 * @return
 	 */
 	private static String prefix() {
-		String appId = ThreadSecurity.getAppId();
+		String appId = ClassLoaderSecurity.getAppId();
 		return appId != null ? "app." + appId + ".props." : "";
 	}
 }

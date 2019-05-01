@@ -1,18 +1,15 @@
 package com.re.paas.internal;
 
 import java.io.File;
+import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.net.InetAddress;
-import java.net.URI;
-import java.nio.file.FileSystems;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.security.Security;
 import java.util.concurrent.Callable;
 
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
-import com.re.paas.api.annotations.develop.BlockerTodo;
 import com.re.paas.api.annotations.develop.PlatformInternal;
 import com.re.paas.api.app_provisioning.AppClassLoader;
 import com.re.paas.api.clustering.NodeRegistry;
@@ -21,14 +18,16 @@ import com.re.paas.api.clustering.protocol.Server;
 import com.re.paas.api.designpatterns.Factory;
 import com.re.paas.api.designpatterns.Singleton;
 import com.re.paas.api.infra.cloud.CloudEnvironment;
+import com.re.paas.api.logging.LogPipeline;
 import com.re.paas.api.logging.LoggerFactory;
 import com.re.paas.api.networking.AddressResolver;
 import com.re.paas.api.runtime.ExecutorFactory;
 import com.re.paas.api.runtime.ExecutorFactoryConfig;
-import com.re.paas.api.runtime.ThreadSecurity;
+import com.re.paas.api.runtime.ClassLoaderSecurity;
 import com.re.paas.api.runtime.spi.SpiBase;
 import com.re.paas.api.runtime.spi.SpiDelegateHandler;
 import com.re.paas.api.runtime.spi.SpiLocatorHandler;
+import com.re.paas.api.runtime.spi.SpiType;
 import com.re.paas.api.utils.Base64;
 import com.re.paas.api.utils.JsonParser;
 import com.re.paas.internal.clustering.DefaultNodeRegistry;
@@ -37,14 +36,17 @@ import com.re.paas.internal.clustering.protocol.ServerImpl;
 import com.re.paas.internal.compute.Scheduler;
 import com.re.paas.internal.fusion.services.impl.ServerOptions;
 import com.re.paas.internal.fusion.services.impl.WebServer;
-import com.re.paas.internal.infra.filesystem.FileSystemProviderImpl;
+import com.re.paas.internal.infra.database.DatabaseAdapterDelegate;
 import com.re.paas.internal.infra.filesystem.FileSystemProviders;
+import com.re.paas.internal.jvmtools.annotations.AnnotationUtil;
+import com.re.paas.internal.logging.DefaultLogger;
 import com.re.paas.internal.logging.DefaultLoggerFactory;
 import com.re.paas.internal.networking.AddressResolverImpl;
 import com.re.paas.internal.runtime.ExecutorFactoryImpl;
 import com.re.paas.internal.runtime.Permissions;
 import com.re.paas.internal.runtime.SecurityManagerImpl;
-import com.re.paas.internal.runtime.ThreadSecurityImpl;
+import com.re.paas.internal.runtime.security.Secure;
+import com.re.paas.internal.runtime.ClassLoaderSecurityImpl;
 import com.re.paas.internal.runtime.spi.AppClassLoaderImpl;
 import com.re.paas.internal.runtime.spi.AppProvisioner;
 import com.re.paas.internal.runtime.spi.AppProvisionerImpl;
@@ -55,16 +57,22 @@ import com.re.paas.internal.utils.Base64Impl;
 import com.re.paas.internal.utils.JsonParserImpl;
 
 public class AppDelegate implements Callable<Void> {
-
-	@BlockerTodo("Move these definitions to a config file")
+	
 	private static void addPlatformObjects() {
 
 		FileSystemProviders.init();
-		ThreadSecurity.setInstance(new ThreadSecurityImpl());
+		ClassLoaderSecurity.setInstance(new ClassLoaderSecurityImpl());
 
 		// Register Singletons
 
 		Singleton.register(LoggerFactory.class, new DefaultLoggerFactory());
+		
+		if (Platform.isDevMode()) {
+			DefaultLogger.setPipeline(LogPipeline.from(System.out, System.err));
+		} else {
+			// Todo: Create proper mechanism for logging on production
+		}
+
 		Singleton.register(AppProvisioner.class, new AppProvisionerImpl());
 		Singleton.register(SpiBase.class, new SpiBaseImpl());
 		Singleton.register(SpiLocatorHandler.class, new SPILocatorHandlerImpl());
@@ -79,12 +87,14 @@ public class AppDelegate implements Callable<Void> {
 
 		// Register factories
 
-		Factory.register(AppClassLoader.class, p -> new AppClassLoaderImpl(ClassLoader.getSystemClassLoader(),
-				(Path) p[0], (String) p[1], (String[]) p[2]));
+		Factory.register(AppClassLoader.class,
+				p -> new AppClassLoaderImpl(ClassLoader.getSystemClassLoader(), (String) p[0], (String[]) p[1]));
 		Factory.register(Server.class, p -> new ServerImpl((InetAddress) p[0], (Integer) p[1]));
 
 		Factory.register(ExecutorFactory.class,
 				p -> new ExecutorFactoryImpl((String) p[0], (ExecutorFactoryConfig) p[1]));
+
+		ExecutorFactory.create(new ExecutorFactoryConfig(ExecutorFactory.MAX_THREAD_COUNT));
 	}
 
 	@Override
@@ -102,29 +112,31 @@ public class AppDelegate implements Callable<Void> {
 
 		// Reload file system
 		FileSystemProviders.reload();
-		
-		Path p = FileSystems.getDefault().provider().getPath(URI.create("file:///xyz")).toAbsolutePath();
-		
-		System.out.println(p.getClass());
-		System.out.println(p.toString());
-		
 
-		if (true) {
-			return;
-		}
+		// Scan permission sets
+		Permissions.scan();
+
+		// TODO Allow users to specify custom security provider
+		Security.addProvider(new BouncyCastleProvider());
 
 		// Add Jvm shutdown hook
 		Runtime.getRuntime().addShutdownHook(new Thread(() -> {
 			stop();
 		}));
 
-		Permissions.scan();
-
+		// Set security manager
 		System.setSecurityManager(new SecurityManagerImpl());
-
-		// TODO Allow users to specify custom security provider
-		Security.addProvider(new BouncyCastleProvider());
-
+		
+		Method m = SpiDelegateHandlerImpl.class.getDeclaredMethod("getResources", SpiType.class);
+		
+		for(Annotation a : AnnotationUtil.getAnnotations(m, Secure.class)) {
+			System.out.println(a);
+		}
+		
+		if (true) {
+			return;
+		}
+		
 		if (!Platform.isSafeMode()) {
 
 			// Discover application(s)

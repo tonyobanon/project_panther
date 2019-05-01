@@ -2,10 +2,10 @@ package com.re.paas.api.runtime;
 
 import java.util.concurrent.CompletableFuture;
 
-import com.re.paas.api.annotations.ProtectionContext;
 import com.re.paas.api.concurrency.ExecutorFactoryStats;
 import com.re.paas.api.designpatterns.Factory;
 import com.re.paas.api.runtime.spi.SpiBase;
+import com.re.paas.internal.runtime.security.Secure;
 
 public abstract class ExecutorFactory {
 
@@ -16,6 +16,10 @@ public abstract class ExecutorFactory {
 		return instance;
 	}
 
+	public static ExecutorFactory create(ExecutorFactoryConfig config) {
+		return create("default", config);
+	}
+	
 	/**
 	 * This is invoke when {@link SpiBase} is being started. Any call to this
 	 * function in the future has no side effect
@@ -31,22 +35,22 @@ public abstract class ExecutorFactory {
 		return instance;
 	}
 
-	@ProtectionContext
+	@Secure
 	public abstract void onComputeQuotaExceeded(ComputeQuotaExceededEvent evt);
 
 	public abstract String getName();
 
-	public abstract <R, T> CompletableFuture<T> execute(Invokable<R> task);
+	public abstract <R> CompletableFuture<R> execute(Invokable<R> task);
 
-	@ProtectionContext
+	@Secure
 	public abstract void shutdown();
 
 	public abstract boolean isShutdown();
 
-	@ProtectionContext
+	@Secure
 	public abstract void upgradePool();
 
-	@ProtectionContext
+	@Secure
 	public abstract boolean downgradePool();
 
 	public abstract ExecutorFactoryStats getStatistics();

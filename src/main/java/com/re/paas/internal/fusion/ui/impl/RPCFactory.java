@@ -26,7 +26,7 @@ public class RPCFactory {
 	@BlockerTodo("Verify that none of the parameters are javascript reserved keywords")
 	public static String generateXHRClient(BaseService service, Method method, FusionEndpoint endpoint, Route route) {
 
-		Functionality functionality = BaseService.getDelegate().getRouteFunctionality(route);
+		Functionality functionality = BaseService.getDelegate().getServiceFunctionality(route);
 
 		StringBuilder clientFunction = new StringBuilder();
 
