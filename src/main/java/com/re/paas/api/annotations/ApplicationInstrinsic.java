@@ -6,7 +6,7 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
-import com.re.paas.api.app_provisioning.AppClassLoader;
+import com.re.paas.api.apps.AppClassLoader;
 
 /**
  * This annotation specifies that a type should be defined inside {@link AppClassLoader}

@@ -11,6 +11,7 @@ import com.re.paas.api.fusion.server.BaseService;
 import com.re.paas.api.fusion.server.Cookie;
 import com.re.paas.api.fusion.server.FusionEndpoint;
 import com.re.paas.api.fusion.server.HttpMethod;
+import com.re.paas.api.fusion.server.JsonArray;
 import com.re.paas.api.fusion.server.JsonObject;
 import com.re.paas.api.fusion.server.RoutingContext;
 import com.re.paas.api.fusion.ui.AbstractUIComponentDelegate;
@@ -25,7 +26,6 @@ import com.re.paas.internal.core.keys.CacheValues;
 import com.re.paas.internal.fusion.functionalities.UserFunctionalities;
 import com.re.paas.internal.fusion.services.impl.FusionHelper;
 import com.re.paas.internal.models.BaseUserModel;
-import com.re.paas.internal.models.LocationModel;
 import com.re.paas.internal.models.UserModel;
 
 
@@ -59,7 +59,7 @@ public class UserService extends BaseService {
 				break;
 			case PHONE:
 				Long phone = Long.parseLong(ctx.request().getHeader("phone"));
-				userId = BaseUserModel.loginByPhone(phone, pass);
+				userId = BaseUserModel.loginByPhone(phone.toString(), pass);
 				break;
 			}
 
@@ -90,7 +90,7 @@ public class UserService extends BaseService {
 			// Perform Http Redirect
 
 			ctx.response().setStatusCode(HttpServletResponse.SC_FOUND);
-			ctx.response().putHeader(getLocationHeader(), returnUrl);
+			ctx.response().putHeader("X-Location", returnUrl);
 
 		} catch (PlatformException e) {
 			ctx.response().setStatusCode(HttpServletResponse.SC_UNAUTHORIZED);
@@ -113,12 +113,16 @@ public class UserService extends BaseService {
 	public static void getOwnProfile(RoutingContext ctx) {
 
 		Long userId = FusionHelper.getUserId(ctx.request());
-
+		@SuppressWarnings("unchecked")
+		List<String> projections = new JsonArray(ctx.request().getParam("projections")).getList();
+		
 		String json = (String) CacheAdapter.get(CacheKeys.USER_PROFILE_$USER.replace("$USER", userId.toString()));
 		if (json != null) {
 			ctx.response().write(json);
 		} else {
-			json = Json.getGson().toJson(BaseUserModel.getProfile(userId));
+			
+			json = Json.getGson().toJson(BaseUserModel.getProfile(userId, projections.toArray(new String[projections.size()])));
+			
 			CacheAdapter.put(CacheKeys.USER_PROFILE_$USER.replace("$USER", userId.toString()), json);
 			ctx.response().write(json);
 		}
@@ -196,7 +200,7 @@ public class UserService extends BaseService {
 		Long userId = FusionHelper.getUserId(ctx.request());
 
 		JsonObject body = ctx.getBodyAsJson();
-		Long phone = Long.parseLong(body.getString("phone"));
+		String phone = body.getString("phone");
 
 		BaseUserModel.updatePhone(null, userId, phone);
 		CacheAdapter.del(CacheKeys.USER_PROFILE_$USER.replace("$USER", userId.toString()));
@@ -212,7 +216,7 @@ public class UserService extends BaseService {
 		Long principal = FusionHelper.getUserId(ctx.request());
 
 		Long userId = body.getLong("userId");
-		Long phone = Long.parseLong(body.getString("phone"));
+		String phone = body.getString("phone");
 
 		BaseUserModel.updatePhone(principal, userId, phone);
 		CacheAdapter.del(CacheKeys.USER_PROFILE_$USER.replace("$USER", userId.toString()));
@@ -323,17 +327,15 @@ public class UserService extends BaseService {
 
 		Long principal = FusionHelper.getUserId(ctx.request());
 		Long userId = Long.parseLong(ctx.request().getParam("userId"));
+		@SuppressWarnings("unchecked")
+		List<String> projections = new JsonArray(ctx.request().getParam("projections")).getList();
 
 		String json = (String) CacheAdapter.get(CacheKeys.USER_PROFILE_$USER.replace("$USER", userId.toString()));
 		if (json != null) {
 			ctx.response().write(json);
 		} else {
 
-			UserProfileSpec spec = BaseUserModel.getProfile(principal, userId);
-			spec.setCityName(LocationModel.getCityName(spec.getCity().toString()))
-					.setTerritoryName(LocationModel.getTerritoryName(spec.getTerritory()))
-					.setCountryName(LocationModel.getCountryName(spec.getCountry()))
-					.setCountryDialingCode(LocationModel.getCountryDialingCode(spec.getCountry()));
+			UserProfileSpec spec = BaseUserModel.getProfile(principal, userId, projections.toArray(new String[projections.size()]));
 
 			json = Json.getGson().toJson(spec);
 			CacheAdapter.put(CacheKeys.USER_PROFILE_$USER.replace("$USER", userId.toString()), json);

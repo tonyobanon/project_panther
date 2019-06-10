@@ -7,7 +7,7 @@ import com.re.paas.internal.caching.CacheAdapter;
 import com.re.paas.internal.classes.Json;
 import com.re.paas.internal.core.keys.CacheKeys;
 import com.re.paas.internal.fusion.functionalities.LocationFunctionalities;
-import com.re.paas.internal.models.LocationModel;
+import com.re.paas.internal.locations.LocationModel;
 
 
 public class LocationService extends BaseService {

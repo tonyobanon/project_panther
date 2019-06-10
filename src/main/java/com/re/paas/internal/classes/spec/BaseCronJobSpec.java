@@ -2,7 +2,7 @@ package com.re.paas.internal.classes.spec;
 
 import java.util.Date;
 
-import com.re.paas.internal.classes.CronInterval;
+import com.re.paas.internal.classes.TaskInterval;
 import com.re.paas.internal.classes.CronType;
 
 public class BaseCronJobSpec {
@@ -11,7 +11,7 @@ public class BaseCronJobSpec {
 	
 	String name;
 	
-	CronInterval interval;
+	TaskInterval interval;
 
 	CronType cronType;
 	
@@ -43,11 +43,11 @@ public class BaseCronJobSpec {
 		return this;
 	}
 
-	public CronInterval getInterval() {
+	public TaskInterval getInterval() {
 		return interval;
 	}
 
-	public BaseCronJobSpec setInterval(CronInterval interval) {
+	public BaseCronJobSpec setInterval(TaskInterval interval) {
 		this.interval = interval;
 		return this;
 	}

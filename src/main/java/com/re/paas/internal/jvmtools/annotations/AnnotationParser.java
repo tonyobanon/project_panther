@@ -26,7 +26,7 @@ public final class AnnotationParser {
     private AnnotationParser() {
         // private
     }
-
+    
     /**
      * Parse the annotation class.
      *
@@ -56,6 +56,7 @@ public final class AnnotationParser {
 
         return new JavaAnnotation<>( annotationType, defaultValueByMember, typeByMember );
     }
+   
 
     /**
      * Create an annotation of the given type with the provided values.

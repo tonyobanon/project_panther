@@ -2,7 +2,7 @@ package com.re.paas.internal.billing;
 
 import java.util.Date;
 
-public class CardInfo extends BaseCardInfo{
+public class CardInfo extends BaseCardInfo {
 
 	private String cardNumber;
 	private String cardHolder;

@@ -10,7 +10,11 @@ public enum Gender {
 		this.value = value;
 	}
 
-	public static Gender from(int value) {
+	public static Gender from(Integer value) {
+		
+		if (value == null) {
+			return null;
+		}
 
 		switch (value) {
 

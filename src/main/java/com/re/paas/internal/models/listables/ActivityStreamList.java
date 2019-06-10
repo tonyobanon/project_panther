@@ -16,7 +16,7 @@ import com.re.paas.internal.fusion.functionalities.PlatformFunctionalities;
 import com.re.paas.internal.models.BaseUserModel;
 import com.re.paas.internal.models.RoleModel;
 import com.re.paas.internal.models.helpers.EntityHelper;
-import com.re.paas.internal.models.tables.ActivityStreamTable;
+import com.re.paas.internal.tables.defs.base.ActivityStreamTable;
 
 public class ActivityStreamList extends Listable<ActivitySpec> {
 

@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.re.paas.api.infra.database.document.Item;
+import com.re.paas.api.infra.database.modelling.BaseTable;
 
 public class BatchGetItemResult {
 
@@ -17,6 +18,10 @@ public class BatchGetItemResult {
 
 	public Map<String, List<Item>> getResponses() {
 		return responses;
+	}
+	
+	public List<Item> getResponses(Class<? extends BaseTable> table) {
+		return getResponses().get(table.getSimpleName());
 	}
 
 	public BatchGetItemResult setResponses(Map<String, List<Item>> responses) {

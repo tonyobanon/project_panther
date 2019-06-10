@@ -1,19 +1,19 @@
 package com.re.paas.internal;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Map;
 
-import com.re.paas.api.annotations.develop.BlockerTodo;
 import com.re.paas.api.classes.Exceptions;
 import com.re.paas.api.utils.Utils;
 import com.re.paas.internal.infra.filesystem.FileSystemProviders;
 
 public class Platform {
 
-	private static Boolean isInstalled = false;
+	private static Boolean isInstalled = null;
 	
 	private static final String PLATFORM_PACKAGE = "com.re.paas";
 
@@ -35,7 +35,9 @@ public class Platform {
 		return PLATFORM_PACKAGE;
 	}
 	
+	
 	public static void readFlags(String[] args) {
+		
 		Map<String, Boolean> jvmFlags = Utils.getFlags(args);
 
 		if (jvmFlags.get("safe") != null && jvmFlags.get("safe").booleanValue() == true) {
@@ -68,8 +70,13 @@ public class Platform {
 		return env == null || !env.equals("development");
 	}
 
-	@BlockerTodo("Write logic to determine if Platform is installed")
 	public static Boolean isInstalled() {
+		
+		if (isInstalled == null) {
+			Path p = getResourcePath().resolve(".installed");
+			isInstalled = Files.exists(p); 
+		}
+		
 		return isInstalled;
 	}
 
@@ -102,7 +109,7 @@ public class Platform {
 	}
 
 	public static Path getBaseDir() {
-		return Paths.get("/", getPlatformPrefix());
+		return Paths.get(File.separator, getPlatformPrefix());
 	}
 
 	public static String[] getAccessForbiddenClasses() {

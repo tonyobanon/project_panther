@@ -37,7 +37,7 @@ import com.re.paas.internal.fusion.functionalities.SearchFunctionalities;
 import com.re.paas.internal.models.errors.ListablesError;
 import com.re.paas.internal.models.helpers.CacheHelper;
 import com.re.paas.internal.models.helpers.EntityUtils;
-import com.re.paas.internal.models.tables.IndexedNameTable;
+import com.re.paas.internal.tables.defs.base.IndexedNameTable;
 
 @BlockerTodo("Cleanup of listing contexts is poorly done, and this could be expensive")
 

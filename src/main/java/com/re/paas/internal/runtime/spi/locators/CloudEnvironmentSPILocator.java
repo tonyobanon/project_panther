@@ -8,10 +8,6 @@ import com.re.paas.api.runtime.spi.SpiDelegate;
 import com.re.paas.api.runtime.spi.SpiType;
 
 public class CloudEnvironmentSPILocator extends BaseSPILocator {
- 
-	public CloudEnvironmentSPILocator() {
-		addTypeSuffix("Environment");
-	}
 	
 	@Override
 	public SpiType spiType() {

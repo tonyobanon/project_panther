@@ -3,12 +3,14 @@ package com.re.paas.internal.tasks;
 import java.util.Map;
 
 import com.google.common.collect.Maps;
+import com.re.paas.api.annotations.develop.BlockerTodo;
 import com.re.paas.api.classes.ClientRBRef;
 import com.re.paas.api.runtime.spi.DelegateInitResult;
 import com.re.paas.api.tasks.AbstractTaskModelDelegate;
 import com.re.paas.api.tasks.TaskImage;
 import com.re.paas.api.utils.ClassUtils;
 
+@BlockerTodo("This needs to be fleshed out properly.. Also, ow are the parameters stored/loaded across invocations")
 public class TaskModelDelegate extends AbstractTaskModelDelegate {
 
 	@Override
@@ -19,9 +21,10 @@ public class TaskModelDelegate extends AbstractTaskModelDelegate {
 		});
 		return DelegateInitResult.SUCCESS;
 	}
-	
+
 	@Override
 	public Map<String, ClientRBRef> getTaskModelNames() {
+
 		Map<String, ClientRBRef> result = Maps.newHashMap();
 		getAll().values().forEach((v) -> {
 			TaskImage m = (TaskImage) v;
@@ -29,7 +32,7 @@ public class TaskModelDelegate extends AbstractTaskModelDelegate {
 		});
 		return result;
 	}
-	
+
 	@Override
 	public TaskImage getTaskModel(String name) {
 		return (TaskImage) super.get(name);

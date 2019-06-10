@@ -9,10 +9,6 @@ import com.re.paas.api.runtime.spi.SpiType;
 
 public class UIComponentLocator extends BaseSPILocator {
 
-	public UIComponentLocator() {
-		addTypeSuffix("Component");
-	}
-	
 	@Override
 	public SpiType spiType() {
 		return SpiType.UI_COMPONENT;

@@ -5,15 +5,15 @@ import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.spi.FileSystemProvider;
 
+import com.re.paas.api.runtime.MethodMeta;
 import com.re.paas.api.utils.ClassUtils;
 import com.re.paas.internal.runtime.security.MethodInterceptor;
-import com.re.paas.internal.runtime.security.Secure;
 
 public class FileSystemProviders {
 
 	private static FileSystem internalFs;
 
-	@Secure
+	@MethodMeta
 	public static void init() {
 		System.setProperty("java.nio.file.spi.DefaultFileSystemProvider", FileSystemProviderImpl.class.getName());
 
@@ -40,7 +40,7 @@ public class FileSystemProviders {
 	 * transformed version that contains an indirection to {@link MethodInterceptor} (if
 	 * any exists)
 	 */
-	@Secure
+	@MethodMeta
 	public static void reload() {
 
 		// At this point, we are sure that FileSystems.getDefault().getClass() ==
@@ -59,7 +59,7 @@ public class FileSystemProviders {
 	 * 
 	 * @return
 	 */
-	@Secure
+	@MethodMeta
 	public static FileSystem getInternal() {
 		return internalFs;
 	}

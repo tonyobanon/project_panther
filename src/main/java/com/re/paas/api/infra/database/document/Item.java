@@ -10,9 +10,11 @@ import static com.re.paas.internal.utils.BinaryUtils.copyBytesFrom;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
+import java.time.DateTimeException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -157,7 +159,7 @@ public class Item {
      *             if the attribute value is null or not a valid representation
      *             of a {@code BigDecimal}.
      */
-    public short getShort(String attrName) {
+    public Short getShort(String attrName) {
         BigDecimal bd = getNumber(attrName);
         if (bd == null)
             throw new NumberFormatException
@@ -178,7 +180,7 @@ public class Item {
      *             if the attribute value is null or not a valid representation
      *             of a {@code BigDecimal}.
      */
-    public int getInt(String attrName) {
+    public Integer getInt(String attrName) {
         BigDecimal bd = getNumber(attrName);
         if (bd == null)
             throw new NumberFormatException
@@ -199,7 +201,7 @@ public class Item {
      *             if the attribute value is null or not a valid representation
      *             of a {@code BigDecimal}.
      */
-    public long getLong(String attrName) {
+    public Long getLong(String attrName) {
         BigDecimal bd = getNumber(attrName);
         if (bd == null)
             throw new NumberFormatException
@@ -220,7 +222,7 @@ public class Item {
      *             if the attribute value is null or not a valid representation
      *             of a {@code BigDecimal}.
      */
-    public float getFloat(String attrName) {
+    public Float getFloat(String attrName) {
         BigDecimal bd = getNumber(attrName);
         if (bd == null)
             throw new NumberFormatException
@@ -241,12 +243,33 @@ public class Item {
      *             if the attribute value is null or not a valid representation
      *             of a {@code BigDecimal}.
      */
-    public double getDouble(String attrName) {
+    public Double getDouble(String attrName) {
         BigDecimal bd = getNumber(attrName);
         if (bd == null)
             throw new NumberFormatException
                 ("value of " + attrName + " is null");
         return bd.doubleValue();
+    }
+    
+    /**
+     * Returns the value of the specified attribute in the current item as a
+     * <code>double</code>.
+     *
+     * @see #isNull(String) #isNull(String) to check if the attribute value is
+     *      null.
+     * @see #isPresent(String) #isPresent(String) to check if the attribute
+     *      value is present.
+     *
+     * @throws NumberFormatException
+     *             if the attribute value is null or not a valid representation
+     *             of a {@code BigDecimal}.
+     */
+    public Date getDate(String attrName) {
+        Long l = getLong(attrName);
+        if (l == null)
+            throw new DateTimeException
+                ("value of " + attrName + " is null");
+        return new Date(l);
     }
 
     /**
@@ -273,9 +296,9 @@ public class Item {
      * Sets the value of the specified attribute in the current item to the
      * given value.
      */
-    public Item withInt(String attrName, int val) {
+    public Item withInt(String attrName, Integer val) {
         ItemUtils.checkInvalidAttrName(attrName);
-        return withNumber(attrName, Integer.valueOf(val));
+        return withNumber(attrName, val);
     }
 
     /**
@@ -291,36 +314,45 @@ public class Item {
      * Sets the value of the specified attribute in the current item to the
      * given value.
      */
-    public Item withShort(String attrName, short val) {
+    public Item withShort(String attrName, Short val) {
         ItemUtils.checkInvalidAttrName(attrName);
-        return withNumber(attrName, Short.valueOf(val));
+        return withNumber(attrName, val);
     }
 
     /**
      * Sets the value of the specified attribute in the current item to the
      * given value.
      */
-    public Item withFloat(String attrName, float val) {
+    public Item withFloat(String attrName, Float val) {
         ItemUtils.checkInvalidAttrName(attrName);
-        return withNumber(attrName, Float.valueOf(val));
+        return withNumber(attrName, val);
     }
 
     /**
      * Sets the value of the specified attribute in the current item to the
      * given value.
      */
-    public Item withDouble(String attrName, double val) {
+    public Item withDouble(String attrName, Double val) {
         ItemUtils.checkInvalidAttrName(attrName);
-        return withNumber(attrName, Double.valueOf(val));
+        return withNumber(attrName, val);
     }
 
     /**
      * Sets the value of the specified attribute in the current item to the
      * given value.
      */
-    public Item withLong(String attrName, long val) {
+    public Item withLong(String attrName, Long val) {
         ItemUtils.checkInvalidAttrName(attrName);
-        return withNumber(attrName, Long.valueOf(val));
+        return withNumber(attrName, val);
+    }
+    
+    /**
+     * Sets the value of the specified attribute in the current item to the
+     * given value.
+     */
+    public Item withDate(String attrName, Date val) {
+        ItemUtils.checkInvalidAttrName(attrName);
+        return withLong(attrName, val.getTime());
     }
 
     /**
@@ -898,7 +930,7 @@ public class Item {
     public Item withJSON(String attrName, String json) {
         ItemUtils.checkInvalidAttribute(attrName, json);
         attributes.put(attrName,
-            valueConformer.transform(jsonParser.fromJsonString(json, Object.class)));
+            valueConformer.transform(jsonParser.fromJson(json, Object.class)));
         return this;
     }
 
@@ -915,7 +947,7 @@ public class Item {
     public String getJSON(String attrName) {
         ItemUtils.checkInvalidAttrName(attrName);
         Object val = attributes.get(attrName);
-        return val == null ? null : jsonParser.toJsonString(val);
+        return val == null ? null : jsonParser.toJson(val);
     }
 
     /**
@@ -931,7 +963,7 @@ public class Item {
     public String getJSONPretty(String attrName) {
         ItemUtils.checkInvalidAttrName(attrName);
         Object val = attributes.get(attrName);
-        return val == null ? null : jsonParser.toJsonPrettyString(val);
+        return val == null ? null : jsonParser.toPrettyJson(val);
     }
 
     /**
@@ -1228,7 +1260,7 @@ public class Item {
             return null;
         @SuppressWarnings("unchecked")
         Map<String, Object> map = (Map<String, Object>)
-            valueConformer.transform(jsonParser.fromJsonString(json, Map.class));
+            valueConformer.transform(jsonParser.fromJson(json, Map.class));
         return fromMap(map);
     }
 
@@ -1237,7 +1269,7 @@ public class Item {
      * base-64 encoded in the resultant string.
      */
     public String toJSON() {
-        return jsonParser.toJsonString(this.attributes);
+        return jsonParser.toJson(this.attributes);
     }
 
     /**
@@ -1359,7 +1391,7 @@ public class Item {
      * become base-64 encoded in the resultant string.
      */
     public String toJSONPretty() {
-        return jsonParser.toJsonPrettyString(this.attributes);
+        return jsonParser.toPrettyJson(this.attributes);
     }
 
     @Override

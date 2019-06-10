@@ -105,5 +105,4 @@ public class ErrorSpiDelegate extends AbstractErrorSpiDelegate {
 		});
 		return Collections.emptyList();
 	}
-	
 }

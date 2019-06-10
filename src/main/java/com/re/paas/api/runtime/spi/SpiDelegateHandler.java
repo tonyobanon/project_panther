@@ -4,9 +4,9 @@ import java.util.Map;
 import java.util.function.Consumer;
 
 import com.re.paas.api.designpatterns.Singleton;
-import com.re.paas.internal.runtime.security.Secure;
-import com.re.paas.internal.runtime.security.Secure.Factor;
-import com.re.paas.internal.runtime.security.Secure.IdentityStrategy;
+import com.re.paas.api.runtime.MethodMeta;
+import com.re.paas.api.runtime.MethodMeta.Factor;
+import com.re.paas.api.runtime.MethodMeta.IdentityStrategy;
 
 
 public interface SpiDelegateHandler {
@@ -15,18 +15,21 @@ public interface SpiDelegateHandler {
 		return Singleton.get(SpiDelegateHandler.class);
 	}
 
-	@Secure
+	@MethodMeta(factor = Factor.CALLER, identityStrategy = IdentityStrategy.SINGLETON, allowed = {
+			SpiBase.class })
+	@MethodMeta(factor = Factor.CALLER, identityStrategy = IdentityStrategy.SINGLETON, allowed = {
+			SpiLocatorHandler.class })
 	Map<SpiType, SpiDelegate<?>> getDelegates();
 
 	
-	@Secure(factor = Factor.CALLER, identityStrategy = IdentityStrategy.SAME, allowed = {
+	@MethodMeta(factor = Factor.CALLER, identityStrategy = IdentityStrategy.SAME, allowed = {
 			SpiDelegate.class })
-	@Secure(factor = Factor.CALLER, identityStrategy = IdentityStrategy.SINGLETON, allowed = {
+	@MethodMeta(factor = Factor.CALLER, identityStrategy = IdentityStrategy.SINGLETON, allowed = {
 			SpiBase.class })
 	Map<Object, Object> getResources(SpiType type);
 
 	
-	@Secure(factor = Factor.CALLER, identityStrategy = IdentityStrategy.SAME, allowed = {
+	@MethodMeta(factor = Factor.CALLER, identityStrategy = IdentityStrategy.SAME, allowed = {
 			SpiDelegate.class })
 	void forEach(SpiType type, Consumer<Class<?>> consumer);
 

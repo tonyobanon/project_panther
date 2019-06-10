@@ -9,8 +9,6 @@ import com.re.paas.api.forms.Section;
 import com.re.paas.api.fusion.services.Functionality;
 import com.re.paas.api.runtime.spi.AbstractResource;
 import com.re.paas.api.runtime.spi.SpiType;
-import com.re.paas.internal.runtime.security.Secure;
-import com.re.paas.internal.runtime.security.Secure.Factor;
 
 public abstract class Realm extends AbstractResource {
 
@@ -42,7 +40,7 @@ public abstract class Realm extends AbstractResource {
 	 * @param realm
 	 * @return
 	 */
-	static boolean isBaseRealm(Realm realm) {
+	public static boolean isBaseRealm(Realm realm) {
 		return Arrays.asList(realm.getClass().getInterfaces()).contains(Realm.class);
 	}
 
@@ -50,7 +48,6 @@ public abstract class Realm extends AbstractResource {
 
 	public abstract Section[] onboardingForm();
 
-	@Secure(allowed= {}, factor=Factor.CALLER, allowInternalAccess=false)
 	public abstract Integer authority();
 
 	public  Map<String, String> getSuggestedProfiles(Long principal, Long userId) {

@@ -1,6 +1,7 @@
 package com.re.paas.internal.runtime.spi;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
@@ -11,20 +12,11 @@ import java.util.Map;
 
 import com.google.common.collect.Maps;
 import com.re.paas.api.annotations.develop.BlockerBlockerTodo;
-import com.re.paas.api.annotations.develop.Prototype;
-import com.re.paas.api.app_provisioning.AppClassLoader;
+import com.re.paas.api.apps.AppClassLoader;
 import com.re.paas.api.classes.Exceptions;
 import com.re.paas.api.runtime.ClassLoaderSecurity;
 import com.re.paas.api.utils.ClassUtils;
-import com.re.paas.internal.classes.AppDirectory;
 
-/**
- * <b>Internal Implementation guidelines:</b>
- * <li>...</li>
- * 
- * @author Tony
- */
-@Prototype
 public class AppClassLoaderImpl extends AppClassLoader {
 
 	private final Map<String, Class<?>> loadedClasses = Maps.newHashMap();
@@ -42,7 +34,7 @@ public class AppClassLoaderImpl extends AppClassLoader {
 	public AppClassLoaderImpl(ClassLoader parent, String appId, String[] appDependencies) {
 		super(parent);
 		this.appId = appId;
-		this.path = AppProvisionerImpl.getAppBasePath().resolve(appId).resolve("classes");
+		this.path = AppProvisionerImpl.getAppBasePath().resolve(appId);
 		this.appDependencies = appDependencies;
 
 		// Load ThreadSecurity class into the classloader
@@ -60,7 +52,7 @@ public class AppClassLoaderImpl extends AppClassLoader {
 	@Override
 	protected URL findResource(String name) {
 		try {
-			return path.resolve(name).toUri().toURL();
+			return path.resolve("resources").resolve(name).toUri().toURL();
 		} catch (MalformedURLException e) {
 			return (URL) Exceptions.throwRuntime(e);
 		}
@@ -129,13 +121,12 @@ public class AppClassLoaderImpl extends AppClassLoader {
 	@Override
 	public Class<?>[] load(Class<?>... classes) throws ClassNotFoundException {
 		Class<?>[] r = new Class<?>[classes.length];
-		for(int i = 0; i < classes.length; i++) {
+		for (int i = 0; i < classes.length; i++) {
 			Class<?> c = this.loadClass(classes[i].getName());
 			r[i] = c;
 		}
 		return r;
 	}
-	
 
 	@Override
 	public Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
@@ -207,11 +198,11 @@ public class AppClassLoaderImpl extends AppClassLoader {
 	@BlockerBlockerTodo("Add support for nested classes, as this may not work in that scenario")
 	private byte[] loadClassFromDisk(String className) {
 
-		Path path = AppDirectory.getBasePath().resolve(className.replace(".", "/") + ".class");
+		Path path = ClassLoaders.getClassPath().resolve(className.replace(".", File.separator) + ".class");
 
 		if (!Files.exists(path)) {
 
-			path = this.path.resolve(className.replace(".", "/") + ".class");
+			path = this.path.resolve("classes").resolve(className.replace(".", File.separator) + ".class");
 
 			if (!Files.exists(path)) {
 				return null;
@@ -228,7 +219,7 @@ public class AppClassLoaderImpl extends AppClassLoader {
 			while ((len = in.read()) != -1) {
 				byteSt.write(len);
 			}
-			
+
 			in.close();
 			// convert into byte array
 			return byteSt.toByteArray();
@@ -258,5 +249,4 @@ public class AppClassLoaderImpl extends AppClassLoader {
 	static {
 		registerAsParallelCapable();
 	}
-
 }

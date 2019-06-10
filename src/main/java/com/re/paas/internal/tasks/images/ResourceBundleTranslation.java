@@ -10,6 +10,7 @@ import com.re.paas.api.forms.CompositeField;
 import com.re.paas.api.fusion.server.BaseService;
 import com.re.paas.api.fusion.services.AbstractServiceDelegate;
 import com.re.paas.api.tasks.TaskImage;
+import com.re.paas.internal.classes.TaskInterval;
 import com.re.paas.internal.fusion.functionalities.LocationFunctionalities;
 
 public class ResourceBundleTranslation extends TaskImage {
@@ -37,11 +38,16 @@ public class ResourceBundleTranslation extends TaskImage {
 	@Override
 	public TaskExecutionOutcome call() {
 
-		String country = getParameters().get("target_country");
+		//String country = getParameters().get("target_country");
 
 		// Do some stuff
 
 		return TaskExecutionOutcome.SUCCESS;
+	}
+
+	@Override
+	public TaskInterval interval() {
+		return TaskInterval.EVERY_DAY;
 	}
 
 }

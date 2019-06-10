@@ -1,8 +1,9 @@
 package com.re.paas.api.runtime.spi;
 
+import java.util.Collection;
+
 import com.re.paas.api.designpatterns.Singleton;
-import com.re.paas.internal.runtime.security.Secure;
-import com.re.paas.internal.runtime.spi.AppProvisioner;
+import com.re.paas.api.runtime.MethodMeta;
 
 public interface SpiBase {
 	
@@ -10,20 +11,13 @@ public interface SpiBase {
 		return Singleton.get(SpiBase.class);
 	}
 	
-	public default void start() {
-		start(AppProvisioner.DEFAULT_APP_ID);	
-	}
-	
-	@Secure
-	public void start(String appId);
+	@MethodMeta
+	public void start(Collection<String> apps);
 
-	@Secure
+	@MethodMeta
 	public void stop();
 
-	@Secure
+	@MethodMeta
 	public Boolean stop(String appId);
-	
-	@Secure
-	public boolean canStop(String appId);
 
 }

@@ -12,6 +12,8 @@ public interface Server {
 	
 	void start();
 	
+	Boolean isOpen();
+	
 	void stop();
 	
 	InetAddress host();

@@ -7,25 +7,25 @@ import com.re.paas.api.infra.database.document.PrimaryKey;
 import com.re.paas.api.infra.database.model.ReturnValue;
 
 public final class DeleteItemSpec extends BaseSpec {
-	
+
 	private PrimaryKey primaryKey;
-    private String returnValues;
-    
-    private final String conditionExpression;
+	private String returnValues;
 
-    private final Map<String, String> nameMap;
-    private final Map<String, Object> valueMap;
+	private final String conditionExpression;
 
-    DeleteItemSpec(ExpressionSpecBuilder builder) {
-        SubstitutionContext context = new SubstitutionContext();
-        this.conditionExpression = builder.buildConditionExpression(context);
-        final Map<String, String> nameMap = context.getNameMap();
-        this.nameMap = nameMap == null ? null : Collections.unmodifiableMap(nameMap);
-        Map<String, Object> valueMap = context.getValueMap();
-        this.valueMap = valueMap == null ? null : Collections.unmodifiableMap(valueMap);
-    }
-   
-    public PrimaryKey getPrimaryKey() {
+	private final Map<String, String> nameMap;
+	private final Map<String, Object> valueMap;
+
+	DeleteItemSpec(ExpressionSpecBuilder builder) {
+		SubstitutionContext context = new SubstitutionContext();
+		this.conditionExpression = builder.buildConditionExpression(context);
+		final Map<String, String> nameMap = context.getNameMap();
+		this.nameMap = nameMap == null ? null : Collections.unmodifiableMap(nameMap);
+		Map<String, Object> valueMap = context.getValueMap();
+		this.valueMap = valueMap == null ? null : Collections.unmodifiableMap(valueMap);
+	}
+
+	public PrimaryKey getPrimaryKey() {
 		return primaryKey;
 	}
 
@@ -35,33 +35,38 @@ public final class DeleteItemSpec extends BaseSpec {
 	}
 
 	public String getReturnValues() {
-        return this.returnValues;
-    }
+		return this.returnValues;
+	}
 
-    public DeleteItemSpec withReturnValues(ReturnValue returnValues) {
-    	this.returnValues = returnValues.toString();
-        return this;
-    }
+	public DeleteItemSpec withReturnValues(ReturnValue returnValues) {
+		this.returnValues = returnValues.toString();
+		return this;
+	}
 
-    /**
-     * Returns the condition expression; or null if there is none.
-     */
-    public final String getConditionExpression() {
-        return conditionExpression;
-    }
+	/**
+	 * Returns the condition expression; or null if there is none.
+	 */
+	public final String getConditionExpression() {
+		return conditionExpression;
+	}
 
-    /**
-     * Returns the name map which is unmodifiable; or null if there is none.
-     */
-    @Override
-    public final Map<String, String> getNameMap() {
-        return nameMap;
-    }
+	/**
+	 * Returns the name map which is unmodifiable; or null if there is none.
+	 */
+	@Override
+	public final Map<String, String> getNameMap() {
+		return nameMap;
+	}
 
-    /**
-     * Returns the value map which is unmodifiable; or null if there is none.
-     */
-    public final Map<String, Object> getValueMap() {
-        return valueMap;
-    }
+	/**
+	 * Returns the value map which is unmodifiable; or null if there is none.
+	 */
+	public final Map<String, Object> getValueMap() {
+		return valueMap;
+	}
+
+	public static DeleteItemSpec forKey(String hashKeyName, Object hashKeyValue) {
+		return new ExpressionSpecBuilder().buildForDeleteItem()
+				.setPrimaryKey(new PrimaryKey(hashKeyName, hashKeyValue));
+	}
 }

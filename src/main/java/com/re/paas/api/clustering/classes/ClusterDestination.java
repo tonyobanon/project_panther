@@ -8,9 +8,14 @@ public enum ClusterDestination {
 
 	private Object destination;
 
-
 	public Object getDestination() {
 		return destination;
+	}
+	
+	public <T> T getDestination(Class<T> clazz) {
+		@SuppressWarnings("unchecked")
+		T t = (T) destination;
+		return t;
 	}
 
 	public ClusterDestination setDestination(Short nodeId) {

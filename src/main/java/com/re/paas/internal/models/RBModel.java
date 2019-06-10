@@ -30,7 +30,7 @@ import com.re.paas.internal.caching.CacheType;
 import com.re.paas.internal.classes.ResourceScanner;
 import com.re.paas.internal.fusion.functionalities.RoleFunctionalities;
 import com.re.paas.internal.models.helpers.CacheHelper;
-import com.re.paas.internal.models.tables.RBEntryTable;
+import com.re.paas.internal.tables.defs.base.RBEntryTable;
 import com.re.paas.internal.utils.LocaleUtils;
 
 public class RBModel extends BaseModel {

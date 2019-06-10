@@ -429,20 +429,6 @@ public final class ExpressionSpecBuilder {
 	}
 
 	/**
-	 * Fluent API to add the given attribute to the list of projection of a request.
-	 * For example:
-	 * 
-	 * <pre class="brush: java">
-	 * builder.addProjection("binarySetAttribute").addProjection("listAttr[0]").addProjection("mapAttr.name")
-	 * 		.addProjection("stringSetAttr");
-	 * </pre>
-	 */
-	public ExpressionSpecBuilder addProjection(String path) {
-		projections.add(new PathOperand(path));
-		return this;
-	}
-
-	/**
 	 * Fluent API to add the given attributes to the list of projection of a
 	 * request. For example:
 	 * 
@@ -450,9 +436,9 @@ public final class ExpressionSpecBuilder {
 	 * builder.addProjections("binarySetAttribute", "listAttr[0]", "mapAttr.name", "stringSetAttr");
 	 * </pre>
 	 */
-	public ExpressionSpecBuilder addProjections(String... paths) {
+	public ExpressionSpecBuilder addProjection(String... paths) {
 		for (String path : paths)
-			addProjection(path);
+			projections.add(new PathOperand(path));
 		return this;
 	}
 
@@ -485,7 +471,7 @@ public final class ExpressionSpecBuilder {
 	}
 
 	/**
-	 * Builds and returns the update expression to be used in a dynamodb request; or
+	 * Builds and returns the update expression to be used in a db request; or
 	 * null if there is none.
 	 */
 	String buildUpdateExpression(SubstitutionContext context) {
@@ -509,7 +495,7 @@ public final class ExpressionSpecBuilder {
 	}
 
 	/**
-	 * Builds and returns the projection expression to be used in a dynamodb GetItem
+	 * Builds and returns the projection expression to be used in a GetItem
 	 * request; or null if there is none.
 	 */
 	String buildProjectionExpression(SubstitutionContext context) {
@@ -525,7 +511,7 @@ public final class ExpressionSpecBuilder {
 	}
 
 	/**
-	 * Builds and returns the condition expression to be used in a dynamodb request;
+	 * Builds and returns the condition expression to be used in a DB request;
 	 * or null if there is none.
 	 */
 	String buildConditionExpression(SubstitutionContext context) {
@@ -533,7 +519,7 @@ public final class ExpressionSpecBuilder {
 	}
 
 	/**
-	 * Builds and returns the key condition expression to be used in a dynamodb
+	 * Builds and returns the key condition expression to be used in a DB
 	 * query request; or null if there is none.
 	 */
 	String buildKeyConditionExpression(SubstitutionContext context) {
@@ -997,6 +983,10 @@ public final class ExpressionSpecBuilder {
 	public static N N(String path) {
 		return new N(path);
 	}
+	
+	public static D D(String path) {
+		return new D(path);
+	}
 
 	/**
 	 * Creates a path operand that refers to a <a href=
@@ -1092,5 +1082,9 @@ public final class ExpressionSpecBuilder {
 	 */
 	public static <T> ParenthesizedCondition __(Condition condition) {
 		return parenthesize(condition);
+	}
+
+	public static ExpressionSpecBuilder addProjections(ExpressionSpecBuilder expressionSpecBuilder, String path) {
+		return expressionSpecBuilder.addProjection(path);
 	}
 }

@@ -1,14 +1,16 @@
 package com.re.paas.internal.models;
 
-import static com.googlecode.objectify.ObjectifyService.ofy;
+import static com.re.paas.api.infra.database.document.xspec.ExpressionSpecBuilder.D;
+import static com.re.paas.api.infra.database.document.xspec.ExpressionSpecBuilder.N;
+import static com.re.paas.api.infra.database.document.xspec.ExpressionSpecBuilder.S;
 
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Collection;
-import java.util.Date;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.function.BiConsumer;
@@ -20,10 +22,19 @@ import com.re.paas.api.classes.Exceptions;
 import com.re.paas.api.classes.FluentArrayList;
 import com.re.paas.api.classes.FluentHashMap;
 import com.re.paas.api.classes.IndexedNameSpec;
+import com.re.paas.api.classes.KeyValuePair;
 import com.re.paas.api.classes.ResourceException;
 import com.re.paas.api.forms.SizeSpec;
 import com.re.paas.api.infra.database.document.Database;
+import com.re.paas.api.infra.database.document.Item;
 import com.re.paas.api.infra.database.document.Table;
+import com.re.paas.api.infra.database.document.xspec.DeleteItemSpec;
+import com.re.paas.api.infra.database.document.xspec.ExpressionSpecBuilder;
+import com.re.paas.api.infra.database.document.xspec.GetItemSpec;
+import com.re.paas.api.infra.database.document.xspec.PutItemSpec;
+import com.re.paas.api.infra.database.document.xspec.UpdateItemSpec;
+import com.re.paas.api.infra.database.model.BatchWriteItemRequest;
+import com.re.paas.api.infra.database.model.WriteRequest;
 import com.re.paas.api.listable.IndexedNameType;
 import com.re.paas.api.listable.ListingFilter;
 import com.re.paas.api.logging.Logger;
@@ -51,14 +62,18 @@ import com.re.paas.internal.classes.FormSectionType;
 import com.re.paas.internal.core.keys.ConfigKeys;
 import com.re.paas.internal.documents.pdf.gen.PDFForm;
 import com.re.paas.internal.fusion.functionalities.UserApplicationFunctionalities;
+import com.re.paas.internal.locations.LocationModel;
 import com.re.paas.internal.models.helpers.FormFactory;
 import com.re.paas.internal.models.helpers.FormFieldRepository;
 import com.re.paas.internal.models.helpers.FormFieldRepository.FormField;
 import com.re.paas.internal.models.listables.IndexedNameTypes;
-import com.re.paas.internal.models.tables.users.ApplicationEntity;
-import com.re.paas.internal.models.tables.users.ApplicationFormValueEntity;
-import com.re.paas.internal.models.tables.users.DeclinedApplicationEntity;
 import com.re.paas.internal.sentences.SubjectTypes;
+import com.re.paas.internal.tables.defs.users.ApplicationFormValueTable;
+import com.re.paas.internal.tables.defs.users.ApplicationTable;
+import com.re.paas.internal.tables.defs.users.DeclinedApplicationTable;
+import com.re.paas.internal.tables.spec.users.ApplicationFormValueTableSpec;
+import com.re.paas.internal.tables.spec.users.ApplicationTableSpec;
+import com.re.paas.internal.tables.spec.users.DeclinedApplicationTableSpec;
 import com.re.paas.internal.utils.FrontendObjectMarshaller;
 
 @Model(dependencies = { ConfigModel.class, FormModel.class })
@@ -84,11 +99,7 @@ public class ApplicationModel extends BaseModel {
 			for (String realmName : delegate.getRealmNames()) {
 
 				Realm realm = delegate.getRealm(realmName);
-				String blobId = generatePDFQuestionnaire(realm);
-
-				ConfigModel.put(ConfigKeys.$REALM_APPLICATION_FORM_BLOB_ID.replace("$REALM", realm.name()), blobId);
-
-				Logger.get().debug("Generated Questionnaire for " + realm.toString() + " with blob-id: " + blobId);
+				generatePDFQuestionnaire(realm);
 			}
 		}
 	}
@@ -107,10 +118,16 @@ public class ApplicationModel extends BaseModel {
 	@ModelMethod(functionality = UserApplicationFunctionalities.Constants.CREATE_APPLICATION)
 	public static Long newApplication(String role) {
 
+		Table t = Database.get().getTable(ApplicationTable.class);
+
+		Item i = new Item().with(ApplicationTableSpec.ROLE, role)
+				.with(ApplicationTableSpec.STATUS, ApplicationStatus.CREATED.getValue())
+				.with(ApplicationTableSpec.DATE_CREATED, Dates.now())
+				.with(ApplicationTableSpec.DATE_UPDATED, Dates.now());
+
 		// Create application with status of CREATED
 
-		Long applicationId = ofy().save().entity(new ApplicationEntity().setRole(role)
-				.setStatus(ApplicationStatus.CREATED.getValue()).setDateCreated(Dates.now())).now().getId();
+		Long applicationId = t.putItem(PutItemSpec.forItem(i)).getItem().getLong(ApplicationTableSpec.ID);
 
 		// Update cached list index
 
@@ -138,23 +155,33 @@ public class ApplicationModel extends BaseModel {
 
 		validateApplicationValues(applicationId, realm, values);
 
-		ApplicationFormValueEntity e = new ApplicationFormValueEntity().setApplicationId(applicationId)
-				.setFieldId(FormFieldRepository.getFieldId(realm, FormField.PREFERRED_LOCALE))
-				.setValue(LocaleModel.getUserLocale()).setDateUpdated(Dates.now());
-
-		ofy().save().entity(e);
-
 		// Delete old values
 		deleteFieldValuesForApplication(applicationId);
 
+		Table t = Database.get().getTable(ApplicationFormValueTable.class);
+
+		Item i = new Item().with(ApplicationFormValueTableSpec.APPLICATION_ID, applicationId)
+				.with(ApplicationFormValueTableSpec.FIELD_ID,
+						FormFieldRepository.getFieldId(realm, FormField.PREFERRED_LOCALE))
+				.with(ApplicationFormValueTableSpec.VALUE, LocaleModel.getUserLocale())
+				.with(ApplicationFormValueTableSpec.DATE_UPDATED, Dates.now());
+
+		t.putItem(PutItemSpec.forItem(i));
+
+		BatchWriteItemRequest entries = new BatchWriteItemRequest();
+
 		// Save values
-		List<ApplicationFormValueEntity> entries = new FluentArrayList<>();
 		values.forEach((k, v) -> {
-			entries.add(new ApplicationFormValueEntity().setApplicationId(applicationId).setFieldId(k)
-					.setValue(v.toString()).setDateUpdated(new Date()));
+
+			Item e = new Item().with(ApplicationFormValueTableSpec.APPLICATION_ID, applicationId)
+					.with(ApplicationFormValueTableSpec.FIELD_ID, k)
+					.with(ApplicationFormValueTableSpec.VALUE, v.toString())
+					.with(ApplicationFormValueTableSpec.DATE_UPDATED, Dates.now());
+
+			entries.addRequestItem(ApplicationFormValueTableSpec.class, new WriteRequest(PutItemSpec.forItem(e)));
 		});
 
-		ofy().save().entities(entries).now();
+		Database.get().batchWriteItem(entries);
 
 		// Update Application ref, if necessary
 		String refField = applicationSpec.getListingRefField();
@@ -311,21 +338,18 @@ public class ApplicationModel extends BaseModel {
 	}
 
 	@ModelMethod(functionality = UserApplicationFunctionalities.Constants.DOWNLOAD_QUESTIONNAIRE)
-	public static String getPDFQuestionnaire(String role) {
-
+	public static InputStream getPDFQuestionnaire(String role) {
 		Realm realm = RoleModel.getRealm(role);
-
-		String blobId = (String) ConfigModel
-				.get(ConfigKeys.$REALM_APPLICATION_FORM_BLOB_ID.replace("$REALM", realm.toString()));
-
-		if (blobId == null) {
-			return generatePDFQuestionnaire(realm);
+		try {
+			InputStream in = Files.newInputStream(getFormPath(realm));
+			return in;
+		} catch (IOException e) {
+			Exceptions.throwRuntime(e);
+			return null;
 		}
-
-		return blobId;
 	}
 
-	private static String generatePDFQuestionnaire(Realm realm) {
+	private static void generatePDFQuestionnaire(Realm realm) {
 
 		String orgenizationName = ConfigModel.get(ConfigKeys.ORGANIZATION_NAME);
 
@@ -343,101 +367,84 @@ public class ApplicationModel extends BaseModel {
 
 		// Generate using default locale
 
-		File tmp = FormFactory.toPDF(LocaleModel.defaultLocale(), new SizeSpec(4), new SizeSpec(5), new SizeSpec(3),
-				form);
+		FormFactory.toPDF(LocaleModel.defaultLocale(), new SizeSpec(4), new SizeSpec(5), new SizeSpec(3),
+				form, getFormPath(realm));
 
-		Logger.get().debug("Saving questionairre form for " + realm.name() + " to " + tmp.toString());
-
-		try {
-
-			String blobId = BlobStoreModel.save(new FileInputStream(tmp));
-
-			ConfigModel.put(ConfigKeys.$REALM_APPLICATION_FORM_BLOB_ID.replace("$REALM", realm.toString()), blobId);
-
-			return blobId;
-
-		} catch (IOException e) {
-			Exceptions.throwRuntime(e);
-			return null;
-		}
+		Logger.get().debug("Saving questionairre form for " + realm.name());
 	}
+	
+	private static Path getFormPath(Realm realm) {
+		return Paths.get("/forms/application", "/" + realm.name() + ".pdf");
+	}
+	
 
 	public static Map<String, String> getFieldValues(Long applicationId, Collection<String> fieldIds) {
 
 		Map<String, String> result = new FluentHashMap<>();
 
-		fieldIds.forEach(fieldId -> {
+		Collection<Item> items = Database.get().getTable(ApplicationFormValueTable.class)
+				.getIndex(ApplicationFormValueTableSpec.APPLICATION_INDEX)
+				.all(ApplicationFormValueTableSpec.APPLICATION_ID, applicationId.toString(),
+						ApplicationFormValueTableSpec.FIELD_ID, fieldIds.toArray(new String[fieldIds.size()]),
+						ApplicationFormValueTableSpec.VALUE);
 
-			ApplicationFormValueEntity e = ofy().load().type(ApplicationFormValueEntity.class)
-					.filter("fieldId = ", fieldId).filter("applicationId = ", applicationId.toString()).first().now();
-
-			result.put(fieldId, e != null ? e.getValue() : null);
+		items.forEach(i -> {
+			result.put(i.getString(ApplicationFormValueTableSpec.FIELD_ID),
+					i.getString(ApplicationFormValueTableSpec.VALUE));
 		});
+
 		return result;
 	}
 
 	@ModelMethod(functionality = UserApplicationFunctionalities.Constants.VIEW_APPLICATION_FORM)
 	public static String getApplicationRole(Long id) {
-		ApplicationEntity e = ofy().load().type(ApplicationEntity.class).id(id).safe();
-		return e.getRole();
+		Item i = Database.get().getTable(ApplicationTable.class)
+				.getItem(GetItemSpec.forKey(ApplicationTableSpec.ID, id, ApplicationTableSpec.ROLE));
+		return i.getString(ApplicationTableSpec.ROLE);
 	}
 
 	private static String getApplicationRef(Long id) {
-		ApplicationEntity e = ofy().load().type(ApplicationEntity.class).id(id).safe();
-		return e.getRef();
+		Item i = Database.get().getTable(ApplicationTable.class)
+				.getItem(GetItemSpec.forKey(ApplicationTableSpec.ID, id, ApplicationTableSpec.REF));
+		return i.getString(ApplicationTableSpec.REF);
 	}
 
 	private static ApplicationStatus getApplicationStatus(Long id) {
-		ApplicationEntity e = ofy().load().type(ApplicationEntity.class).id(id).safe();
-		return ApplicationStatus.from(e.getStatus());
+		Item i = Database.get().getTable(ApplicationTable.class)
+				.getItem(GetItemSpec.forKey(ApplicationTableSpec.ID, id, ApplicationTableSpec.STATUS));
+		return ApplicationStatus.from(i.getInt(ApplicationTableSpec.STATUS));
 	}
 
 	@ModelMethod(functionality = UserApplicationFunctionalities.Constants.UPDATE_APPLICATION)
 	public static Map<String, String> getFieldValues(Long applicationId) {
-	
-		Map<String, String> result = new FluentHashMap<>();
-
-		Realm realm = RoleModel.getRealm(getApplicationRole(applicationId));
-
-		Collection<String> fieldIds = FormModel.listAllFieldKeys(FormSectionType.APPLICATION_FORM, realm).keySet();
-
-		fieldIds.forEach(fieldId -> {
-
-			ApplicationFormValueEntity e = ofy().load().type(ApplicationFormValueEntity.class)
-					.filter("fieldId = ", fieldId).filter("applicationId = ", applicationId.toString()).first().now();
-
-			result.put(fieldId, e != null ? e.getValue() : null);
-
-		});
-		return result;
+		return getFieldValues(applicationId, false);
 	}
 
-	@ModelMethod(functionality = {})
-	public static Map<String, String> getConsolidatedFieldValues(Long applicationId) {
-
-		Map<String, String> result = new FluentHashMap<>();
+	@ModelMethod(functionality = UserApplicationFunctionalities.Constants.UPDATE_APPLICATION)
+	public static Map<String, String> getFieldValues(Long applicationId, Boolean consolidate) {
 
 		Realm realm = RoleModel.getRealm(getApplicationRole(applicationId));
 
-		Map<FormField, String> fieldTypes = FormFieldRepository.getFieldIds(realm);
-		Map<String, FormField> invertedFieldTypes = new HashMap<>(fieldTypes.size());
-
-		fieldTypes.forEach((k, v) -> {
-			invertedFieldTypes.put(v, k);
-		});
-
 		Collection<String> fieldIds = FormModel.listAllFieldKeys(FormSectionType.APPLICATION_FORM, realm).keySet();
 
-		fieldIds.forEach(fieldId -> {
+		Map<String, String> result = getFieldValues(applicationId, fieldIds);
 
-			ApplicationFormValueEntity e = ofy().load().type(ApplicationFormValueEntity.class)
-					.filter("fieldId = ", fieldId).filter("applicationId = ", applicationId.toString()).first().now();
+		if (consolidate) {
 
-			FormField fieldType = invertedFieldTypes.get(fieldId);
+			Map<FormField, String> fieldTypes = FormFieldRepository.getFieldIds(realm);
+			Map<String, FormField> invertedFieldTypes = new HashMap<>(fieldTypes.size());
 
-			result.put(fieldId, e != null ? getConsolidatedFieldValue(fieldType, e.getValue()) : null);
+			fieldTypes.forEach((k, v) -> {
+				invertedFieldTypes.put(v, k);
+			});
 
-		});
+			result.entrySet().stream().map(e -> {
+				FormField fieldType = invertedFieldTypes.get(e.getKey());
+				return e != null ? new KeyValuePair<>(e.getKey(), getConsolidatedFieldValue(fieldType, e.getValue()))
+						: e;
+			});
+		}
+
 		return result;
 	}
 
@@ -447,7 +454,7 @@ public class ApplicationModel extends BaseModel {
 
 		case CITY:
 		case ORGANIZATION_CITY:
-			return LocationModel.getCityName(value);
+			return LocationModel.getCityName(Integer.parseInt(value));
 		case COUNTRY:
 		case ORGANIZATION_COUNTRY:
 			return LocationModel.getCountryName(value);
@@ -475,27 +482,23 @@ public class ApplicationModel extends BaseModel {
 
 	protected static void deleteFieldValues(String fieldId) {
 
-		List<Key<ApplicationFormValueEntity>> keys = new FluentArrayList<>();
+		Table t = Database.get().getTable(ApplicationFormValueTable.class);
 
-		ofy().load().type(ApplicationFormValueEntity.class).filter("fieldId = ", fieldId).forEach(e -> {
-			keys.add(Key.create(ApplicationFormValueEntity.class, e.getId()));
-		});
+		DeleteItemSpec spec = new ExpressionSpecBuilder()
+				.withCondition(S(ApplicationFormValueTableSpec.FIELD_ID).eq(fieldId)).buildForDeleteItem();
 
-		ofy().delete().keys(keys).now();
+		t.deleteItem(spec);
 	}
 
 	private static void deleteFieldValuesForApplication(Long applicationId) {
 
-		// Delete form values
+		Table t = Database.get().getTable(ApplicationFormValueTable.class);
 
-		List<Key<?>> keys = new FluentArrayList<>();
+		DeleteItemSpec spec = new ExpressionSpecBuilder()
+				.withCondition(S(ApplicationFormValueTableSpec.APPLICATION_ID).eq(applicationId.toString()))
+				.buildForDeleteItem();
 
-		ofy().load().type(ApplicationFormValueEntity.class).filter("applicationId = ", applicationId.toString())
-				.forEach(e -> {
-					keys.add(Key.create(ApplicationFormValueEntity.class, e.getId()));
-				});
-
-		ofy().delete().keys(keys).now();
+		t.deleteItem(spec);
 	}
 
 	private static void updateApplicationRef(Long applicationId, String ref) {
@@ -504,21 +507,23 @@ public class ApplicationModel extends BaseModel {
 			return;
 		}
 
-		ApplicationEntity e = ofy().load().type(ApplicationEntity.class).id(applicationId).safe();
+		Table t = Database.get().getTable(ApplicationTable.class);
 
-		e.setRef(ref);
-		e.setDateUpdated(Dates.now());
+		UpdateItemSpec spec = new ExpressionSpecBuilder().withCondition(N(ApplicationTableSpec.ID).eq(applicationId))
+				.addUpdate(S(ApplicationTableSpec.REF).set(ref))
+				.addUpdate(D(ApplicationTableSpec.DATE_UPDATED).set(Dates.now())).buildForUpdate();
 
-		ofy().save().entity(e).now();
+		t.updateItem(spec);
 	}
 
 	private static void updateApplicationStatus(Long applicationId, ApplicationStatus status) {
-		ApplicationEntity e = ofy().load().type(ApplicationEntity.class).id(applicationId).safe();
+		Table t = Database.get().getTable(ApplicationTable.class);
 
-		e.setStatus(status.getValue());
-		e.setDateUpdated(Dates.now());
+		UpdateItemSpec spec = new ExpressionSpecBuilder().withCondition(N(ApplicationTableSpec.ID).eq(applicationId))
+				.addUpdate(N(ApplicationTableSpec.STATUS).set(status.getValue()))
+				.addUpdate(D(ApplicationTableSpec.DATE_UPDATED).set(Dates.now())).buildForUpdate();
 
-		ofy().save().entity(e).now();
+		t.updateItem(spec);
 	}
 
 	@ModelMethod(functionality = {})
@@ -605,9 +610,14 @@ public class ApplicationModel extends BaseModel {
 
 		// Create new declined application
 
-		DeclinedApplicationEntity e = new DeclinedApplicationEntity().setApplicationId(applicationId)
-				.setStaffId(principal).setReason(reason.getValue()).setDateCreated(Dates.now());
-		ofy().save().entity(e);
+		Table t = Database.get().getTable(DeclinedApplicationTable.class);
+
+		Item i = new Item().with(DeclinedApplicationTableSpec.APPLICATION_ID, applicationId)
+				.with(DeclinedApplicationTableSpec.STAFF_ID, principal)
+				.with(DeclinedApplicationTableSpec.REASON, reason.getValue())
+				.with(DeclinedApplicationTableSpec.DATE_CREATED, Dates.now());
+
+		t.putItem(PutItemSpec.forItem(i));
 
 		String role = getApplicationRole(applicationId);
 		Realm realm = RoleModel.getRealm(role);
@@ -667,20 +677,17 @@ public class ApplicationModel extends BaseModel {
 		return new UserProfileSpec()
 
 				.setFirstName(values.get(keys.get(FormField.FIRST_NAME)))
-				.setLastName(values.get(keys.get(FormField.LAST_NAME)))
-				.setImage(values.get(keys.get(FormField.IMAGE)))
+				.setLastName(values.get(keys.get(FormField.LAST_NAME))).setImage(values.get(keys.get(FormField.IMAGE)))
 
 				.setMiddleName(values.get(keys.get(FormField.MIDDLE_NAME)))
 				.setDateOfBirth(FrontendObjectMarshaller.unmarshalDate(values.get(keys.get(FormField.DATE_OF_BIRTH))))
 				.setGender(Gender.from(Integer.parseInt(values.get(keys.get(FormField.GENDER)))))
 				.setEmail(values.get(keys.get(FormField.EMAIL)).toString())
-				.setPassword(values.get(keys.get(FormField.PASSWORD)))
 
 				.setAddress(values.get(keys.get(FormField.ADDRESS)))
-				.setPhone(Long.parseLong(values.get(keys.get(FormField.PHONE_NUMBER))))
+				.setPhone(values.get(keys.get(FormField.PHONE_NUMBER)))
 				.setCity(Integer.parseInt(values.get(keys.get(FormField.CITY))))
-				.setTerritory(values.get(keys.get(FormField.STATE)))
-				.setCountry(values.get(keys.get(FormField.COUNTRY)))
+				.setTerritory(values.get(keys.get(FormField.STATE))).setCountry(values.get(keys.get(FormField.COUNTRY)))
 
 				.setFacebookProfile(values.get(keys.get(FormField.FACEBOOK_PROFILE)))
 				.setTwitterProfile(values.get(keys.get(FormField.TWITTER_PROFILE)))
@@ -690,20 +697,16 @@ public class ApplicationModel extends BaseModel {
 				.setPreferredLocale(values.get(keys.get(FormField.PREFERRED_LOCALE)));
 	}
 
-	private static String getApplicantAvatar(Long applicationId, Realm realm) {
-		return getApplicantAvatar(applicationId, realm, null);
-	}
-
-	private static String getApplicantAvatar(Long applicationId, Realm realm, Map<String, String> fieldValues) {
-
-		String imageField = FormFieldRepository.getFieldId(realm, FormFieldRepository.FormField.IMAGE);
-
-		if (fieldValues == null) {
-			fieldValues = getFieldValues(applicationId, new FluentArrayList<String>().with(imageField));
-		}
-
-		return fieldValues.get(imageField);
-	}
+//	private static String getApplicantAvatar(Long applicationId, Realm realm, Map<String, String> fieldValues) {
+//
+//		String imageField = FormFieldRepository.getFieldId(realm, FormFieldRepository.FormField.IMAGE);
+//
+//		if (fieldValues == null) {
+//			fieldValues = getFieldValues(applicationId, new FluentArrayList<String>().with(imageField));
+//		}
+//
+//		return fieldValues.get(imageField);
+//	}
 
 	private static Boolean isMaleApplicant(Long applicationId, Realm realm) {
 		return isMaleApplicant(applicationId, realm, null);

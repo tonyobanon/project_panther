@@ -63,7 +63,6 @@ public class MasterNodeRole extends AbstractMasterNodeRole {
 
 		NodeRegistry registry = NodeRegistry.get();
 
-		if (registry.isAutoScalingEnabled()) {
 
 			/*
 			 * Set up Cloud Providers It should be noted that any invalid credentials
@@ -72,8 +71,6 @@ public class MasterNodeRole extends AbstractMasterNodeRole {
 			 * started
 			 * 
 			 */
-
-		}
 
 		// Assign nodeId
 		registry.setNodeId(nextNodeId());
@@ -86,7 +83,7 @@ public class MasterNodeRole extends AbstractMasterNodeRole {
 		new NodeEventListener().onNodeJoin(new NodeJoinEvent().withNodes(Lists.newArrayList(spec)));
 
 		// Notify NodeRole Delegate
-		AbstractEventDelegate.getInstance().dispatch(new RoleStartCompleteEvent(true));
+		AbstractEventDelegate.getInstance().dispatch(new RoleStartCompleteEvent(true), false);
 	}
 
 	@Override
@@ -135,8 +132,8 @@ public class MasterNodeRole extends AbstractMasterNodeRole {
 		// Add cluster credentials
 		ClusterCredentials clusterCredentials = env.credentials();
 
-		tags.put(ClusterCredentials.CLUSTER_ACCESS_KEY_TAG, clusterCredentials.getAccessKey());
-		tags.put(ClusterCredentials.CLUSTER_SECRET_KEY_TAG, clusterCredentials.getSecretKey());
+		tags.put(Tags.CLUSTER_ACCESS_KEY_TAG, clusterCredentials.getAccessKey());
+		tags.put(Tags.CLUSTER_SECRET_KEY_TAG, clusterCredentials.getSecretKey());
 
 		NodeProvisioningResult result = new NodeProvisioningResult();
 

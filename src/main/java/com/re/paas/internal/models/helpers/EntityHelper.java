@@ -52,7 +52,7 @@ import com.re.paas.internal.billing.CardInfo;
 import com.re.paas.internal.billing.CseTokenInfo;
 import com.re.paas.internal.billing.InvoiceItem;
 import com.re.paas.internal.billing.InvoicePaymentSpec;
-import com.re.paas.internal.billing.InvoicePaymentStatus;
+import com.re.paas.internal.billing.PaymentStatus;
 import com.re.paas.internal.billing.InvoiceSpec;
 import com.re.paas.internal.billing.InvoiceStatus;
 import com.re.paas.internal.classes.spec.ActivitySpec;
@@ -61,18 +61,18 @@ import com.re.paas.internal.classes.spec.PaymentOptions;
 import com.re.paas.internal.classes.spec.PriceRuleOperator;
 import com.re.paas.internal.classes.spec.PublicHolidaySpec;
 import com.re.paas.internal.classes.spec.YearlyPaymentPeriod;
-import com.re.paas.internal.models.tables.ActivityStreamTable;
-import com.re.paas.internal.models.tables.BlobTable;
-import com.re.paas.internal.models.tables.IndexedNameTable;
-import com.re.paas.internal.models.tables.forms.FormCompositeFieldTable;
-import com.re.paas.internal.models.tables.forms.FormSimpleFieldTable;
-import com.re.paas.internal.models.tables.locations.PublicHolidayTable;
-import com.re.paas.internal.models.tables.payments.CardTable;
-import com.re.paas.internal.models.tables.payments.InvoiceItemTable;
-import com.re.paas.internal.models.tables.payments.InvoicePaymentHistoryTable;
-import com.re.paas.internal.models.tables.payments.InvoicePaymentTable;
-import com.re.paas.internal.models.tables.payments.InvoiceTable;
-import com.re.paas.internal.models.tables.users.BaseUserEntity;
+import com.re.paas.internal.tables.defs.base.ActivityStreamTable;
+import com.re.paas.internal.tables.defs.base.BlobTable;
+import com.re.paas.internal.tables.defs.base.IndexedNameTable;
+import com.re.paas.internal.tables.defs.forms.FormCompositeFieldTable;
+import com.re.paas.internal.tables.defs.forms.FormSimpleFieldTable;
+import com.re.paas.internal.tables.defs.locations.PublicHolidayTable;
+import com.re.paas.internal.tables.defs.payments.CardTable;
+import com.re.paas.internal.tables.defs.payments.InvoiceItemTable;
+import com.re.paas.internal.tables.defs.payments.InvoicePaymentHistoryTable;
+import com.re.paas.internal.tables.defs.payments.InvoicePaymentTable;
+import com.re.paas.internal.tables.defs.payments.InvoiceTable;
+import com.re.paas.internal.tables.defs.users.BaseUserTable;
 
 public class EntityHelper {
 
@@ -169,7 +169,7 @@ public class EntityHelper {
 		return o;
 	}
 
-	public static UserProfileSpec toObjectModel(BaseUserEntity entity) {
+	public static UserProfileSpec toObjectModel(BaseUserTable entity) {
 
 		UserProfileSpec o = new UserProfileSpec()
 				.setApplicationId(entity.getApplicationId())
@@ -187,9 +187,9 @@ public class EntityHelper {
 		return o;
 	}
 
-	public static BaseUserEntity fromObjectModel(String role, Long principal, UserProfileSpec spec) {
+	public static BaseUserTable fromObjectModel(String role, Long principal, UserProfileSpec spec) {
 
-		BaseUserEntity o = new BaseUserEntity()
+		BaseUserTable o = new BaseUserTable()
 
 				.setApplicationId(spec.getApplicationId())
 				.setEmail(spec.getEmail()).setPassword(spec.getPassword()).setFirstName(spec.getFirstName())
@@ -576,18 +576,6 @@ public class EntityHelper {
 
 	public static CardTable fromObjectModel(Long accountId, BaseCardInfo spec) {
 
-		CardTable e = new CardTable().setAccountId(accountId);
-
-		if (spec instanceof CardInfo) {
-			CardInfo info = (CardInfo) spec;
-			e.setCardHolder(info.getCardHolder()).setCardNumber(info.getCardNumber()).setCvc(info.getCvc())
-					.setExpiryMonth(info.getExpiryMonth()).setExpiryYear(info.getExpiryYear());
-		} else {
-			CseTokenInfo info = (CseTokenInfo) spec;
-			e.setCseToken(info.getCseToken()).setCardSuffix(info.getCardSuffix());
-		}
-
-		return e;
 	}
 
 	public static BaseCardInfo toObjectModel(CardTable entity) {
@@ -627,7 +615,8 @@ public class EntityHelper {
 
 	public static InvoiceSpec toObjectModel(InvoiceTable entity) {
 
-		InvoiceSpec o = new InvoiceSpec().setId(entity.getId()).setAccountId(entity.getAccountId())
+		InvoiceSpec o = new InvoiceSpec().setId(entity.getId())
+				.setAccountId(entity.getAccountId())
 				.setStatus(InvoiceStatus.from(entity.getStatus())).setStartDate(entity.getStartDate())
 				.setEndDate(entity.getEndDate()).setCurrency(entity.getCurrency()).setTotalDue(entity.getTotalDue())
 				.setComment(entity.getComment()).setDateCreated(entity.getDateCreated())
@@ -654,7 +643,7 @@ public class EntityHelper {
 				.setInvoiceId(entity.getInvoiceId())
 				.setMerchantReference(entity.getMerchantReference())
 				.setExtReference(entity.getExtReference())
-				.setStatus(InvoicePaymentStatus.from(entity.getStatus()))
+				.setStatus(PaymentStatus.from(entity.getStatus()))
 				.setMessage(entity.getMessage())
 				.setDateCreated(entity.getDateCreated())
 				.setDateUpdated(entity.getDateUpdated());
@@ -681,7 +670,7 @@ public class EntityHelper {
 		InvoicePaymentSpec o = new InvoicePaymentSpec()
 				.setInvoiceId(entity.getInvoiceId())
 				.setExtReference(entity.getExtReference())
-				.setStatus(InvoicePaymentStatus.from(entity.getStatus()))
+				.setStatus(PaymentStatus.from(entity.getStatus()))
 				.setPreviousStatus(entity.getPreviousStatus())
 				.setOverwritten(entity.getIsOverwritten())
 				.setReconciled(entity.isReconciled())

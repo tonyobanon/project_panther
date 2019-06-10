@@ -10,7 +10,7 @@ import java.util.concurrent.atomic.AtomicReferenceArray;
 import java.util.concurrent.locks.ReentrantLock;
 
 import com.re.paas.api.annotations.develop.BlockerTodo;
-import com.re.paas.api.app_provisioning.AppClassLoader;
+import com.re.paas.api.apps.AppClassLoader;
 
 public class ObjectUtils {
 

@@ -10,6 +10,7 @@ import com.re.paas.api.infra.database.model.BatchWriteItemRequest;
 import com.re.paas.api.infra.database.model.TableDefinition;
 import com.re.paas.api.infra.database.model.TableDescription;
 import com.re.paas.api.infra.database.model.TableUpdate;
+import com.re.paas.api.infra.database.modelling.BaseTable;
 import com.re.paas.api.infra.database.textsearch.TextSearch;
 
 @BlockerTodo
@@ -29,7 +30,7 @@ public interface Database {
 	
 	Table getTable(String name);
 	
-	default Table getTable(Class<?> clazz) {
+	default Table getTable(Class<? extends BaseTable> clazz) {
 		return getTable(clazz.getSimpleName());
 	}
 

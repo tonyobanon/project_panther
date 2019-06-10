@@ -60,7 +60,7 @@ import com.re.paas.apps.rex.models.tables.PropertyTable;
 import com.re.paas.apps.rex.models.tables.UserSavedListTable;
 import com.re.paas.internal.caching.CacheAdapter;
 import com.re.paas.internal.caching.CacheType;
-import com.re.paas.internal.classes.CronInterval;
+import com.re.paas.internal.classes.TaskInterval;
 import com.re.paas.internal.classes.spec.ClientSignature;
 import com.re.paas.internal.classes.spec.ClientSignatureType;
 import com.re.paas.internal.classes.spec.MultiplierType;
@@ -70,11 +70,11 @@ import com.re.paas.internal.core.keys.ConfigKeys;
 import com.re.paas.internal.emailing.EmailMessageTemplate;
 import com.re.paas.internal.emailing.EmailingModel;
 import com.re.paas.internal.fusion.functionalities.RoleFunctionalities;
+import com.re.paas.internal.locations.LocationModel;
 import com.re.paas.internal.models.BaseUserModel;
 import com.re.paas.internal.models.ConfigModel;
 import com.re.paas.internal.models.CurrencyModel;
 import com.re.paas.internal.models.LocaleModel;
-import com.re.paas.internal.models.LocationModel;
 import com.re.paas.internal.models.RBModel;
 import com.re.paas.internal.models.SearchModel;
 import com.re.paas.internal.models.TaskModel;
@@ -83,7 +83,7 @@ import com.re.paas.internal.models.helpers.EntityHelper;
 import com.re.paas.internal.models.helpers.EntityUtils;
 import com.re.paas.internal.models.helpers.SearchHelper;
 import com.re.paas.internal.models.listables.IndexedNameTypes;
-import com.re.paas.internal.models.tables.users.BaseUserEntity;
+import com.re.paas.internal.tables.defs.users.BaseUserTable;
 import com.re.paas.internal.utils.BackendObjectMarshaller;
 import com.re.paas.internal.utils.RBUtils;
 
@@ -214,7 +214,7 @@ public class BasePropertyModel extends BaseModel {
 		AgentOrganizationTable aoe = ofy().load().type(AgentOrganizationTable.class).id(p.getAgentOrganization())
 				.safe();
 		Long agentOrganizationAdmin = aoe.getAdmin();
-		BaseUserEntity e = BaseUserModel.get(agentOrganizationAdmin);
+		BaseUserTable e = BaseUserModel.get(agentOrganizationAdmin);
 
 		Map<String, Object> templateVariables = FluentHashMap.forValueMap()
 				.with("recipientName", BaseUserModel.getPersonName(agentOrganizationAdmin, false))
@@ -312,7 +312,7 @@ public class BasePropertyModel extends BaseModel {
 		AgentOrganizationTable aoe = ofy().load().type(AgentOrganizationTable.class).id(u.getAgentOrganization())
 				.safe();
 		Long agentOrganizationAdmin = aoe.getAdmin();
-		BaseUserEntity e = BaseUserModel.get(agentOrganizationAdmin);
+		BaseUserTable e = BaseUserModel.get(agentOrganizationAdmin);
 
 		Map<String, Object> templateVariables = FluentHashMap.forValueMap()
 				.with("recipientName", BaseUserModel.getPersonName(agentOrganizationAdmin, false))
@@ -360,7 +360,7 @@ public class BasePropertyModel extends BaseModel {
 		AgentOrganizationTable aoe = ofy().load().type(AgentOrganizationTable.class).id(p.getAgentOrganization())
 				.safe();
 		Long agentOrganizationAdmin = aoe.getAdmin();
-		BaseUserEntity e = BaseUserModel.get(agentOrganizationAdmin);
+		BaseUserTable e = BaseUserModel.get(agentOrganizationAdmin);
 
 		Map<String, Object> templateVariables = FluentHashMap.forValueMap()
 				.with("recipientName", BaseUserModel.getPersonName(agentOrganizationAdmin, false))
@@ -409,7 +409,7 @@ public class BasePropertyModel extends BaseModel {
 		AgentOrganizationTable aoe = ofy().load().type(AgentOrganizationTable.class).id(p.getAgentOrganization())
 				.safe();
 		Long agentOrganizationAdmin = aoe.getAdmin();
-		BaseUserEntity e = BaseUserModel.get(agentOrganizationAdmin);
+		BaseUserTable e = BaseUserModel.get(agentOrganizationAdmin);
 
 		Map<String, Object> templateVariables = FluentHashMap.forValueMap()
 				.with("recipientName", BaseUserModel.getPersonName(agentOrganizationAdmin, false))
@@ -507,7 +507,7 @@ public class BasePropertyModel extends BaseModel {
 
 		String taskName = ClientRBRef.get("deletion_task").toString() + HtmlCharacterEntities.SPACE
 				+ ClientRBRef.get("for").toString() + HtmlCharacterEntities.SPACE + p.getTitle();
-		CronInterval interval = CronInterval.EVERY_DAY;
+		TaskInterval interval = TaskInterval.EVERY_DAY;
 
 		CronJob task = CronJob.get(() -> {
 			com.re.paas.apps.rex.models.BasePropertyModel.deleteProperty(principal, p.getId());
@@ -521,7 +521,7 @@ public class BasePropertyModel extends BaseModel {
 		LocalDate executionTime = TaskModel.getNextExecutionTime(interval);
 		AgentOrganizationTable aoe = ofy().load().type(AgentOrganizationTable.class).id(agentOrganization).safe();
 		Long agentOrganizationAdmin = aoe.getAdmin();
-		BaseUserEntity e = BaseUserModel.get(agentOrganizationAdmin);
+		BaseUserTable e = BaseUserModel.get(agentOrganizationAdmin);
 
 		Map<String, Object> templateVariables = FluentHashMap.forValueMap()
 				.with("recipientName", BaseUserModel.getPersonName(agentOrganizationAdmin, false))

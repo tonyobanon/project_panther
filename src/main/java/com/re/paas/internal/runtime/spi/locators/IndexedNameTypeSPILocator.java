@@ -8,10 +8,6 @@ import com.re.paas.api.runtime.spi.SpiDelegate;
 import com.re.paas.api.runtime.spi.SpiType;
 
 public class IndexedNameTypeSPILocator extends BaseSPILocator {
-
-	public IndexedNameTypeSPILocator() {
-		addTypeSuffix("NameTypes");
-	}
 	
 	@Override
 	public SpiType spiType() {

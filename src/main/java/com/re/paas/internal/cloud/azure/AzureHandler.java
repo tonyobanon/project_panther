@@ -6,6 +6,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Map;
 import java.util.regex.Pattern;
 
@@ -31,17 +33,18 @@ import com.re.paas.api.infra.cloud.AbstractProviderHandler;
 import com.re.paas.api.infra.cloud.CloudEnvironment;
 import com.re.paas.api.infra.cloud.InstanceCredential;
 import com.re.paas.api.infra.cloud.Tags;
-import com.re.paas.internal.classes.AppDirectory;
 import com.re.paas.internal.cloud.KVPair;
 import com.re.paas.internal.clustering.classes.Utils;
 import com.re.paas.internal.crypto.impl.CryptoUtils;
 import com.re.paas.internal.errors.ClusteringError;
 import com.re.paas.internal.networking.IPAddresses;
+import com.re.paas.internal.runtime.spi.ClassLoaders;
 
 public class AzureHandler extends AbstractProviderHandler {
 
-	private static Pattern VMID_PATTERN = Pattern.compile("(\\p{Alnum}){8}-(\\p{Alnum}){4}-(\\p{Alnum}){4}-(\\p{Alnum}){4}-(\\p{Alnum}){12}");
-	
+	private static Pattern VMID_PATTERN = Pattern
+			.compile("(\\p{Alnum}){8}-(\\p{Alnum}){4}-(\\p{Alnum}){4}-(\\p{Alnum}){4}-(\\p{Alnum}){12}");
+
 	@Override
 	public String getInstanceId() {
 
@@ -71,8 +74,9 @@ public class AzureHandler extends AbstractProviderHandler {
 
 			try {
 
-				InputStream in = AppDirectory.getBaseClassloader()
-						.getResourceAsStream("cloud_providers/azure/AzureVMIDReader.ps1");
+				Path p = ClassLoaders.getClassPath().resolve("cloud_providers")
+						.resolve("azure").resolve("AzureVMIDReader.ps1");
+				InputStream in = Files.newInputStream(p);
 
 				File psFile = File.createTempFile("AzureVMIDReader", ".ps1");
 				FileOutputStream out = new FileOutputStream(psFile);
@@ -120,14 +124,14 @@ public class AzureHandler extends AbstractProviderHandler {
 
 		InstanceProfile profile = null;
 		NodeRegistry nodeRegistry = NodeRegistry.get();
-		
+
 		CloudEnvironment env = CloudEnvironment.get();
-		
+
 		try {
 
 			// ** Validate Instance Type Spec
 			String vmSizeType = env.getInstanceTags().get(AzureTags.AZURE_VIRTUAL_MACHINE_SIZE_TYPE);
-			
+
 			if ((!AzureHelper.isValidVMSizeType(vmSizeType)) && (!vmSizeType.equals(NodeInstanceType.INHERIT.name()))
 					&& (!vmSizeType.equals(NodeInstanceType.DYNAMIC.name()))) {
 
@@ -141,7 +145,7 @@ public class AzureHandler extends AbstractProviderHandler {
 
 			// ** Validate Region
 			String region = env.getInstanceTags().get(Tags.REGION);
-			
+
 			if (region != null) {
 				if (!AzureHelper.isValidRegion(region)) {
 					Exceptions.throwRuntime(PlatformException.get(ClusteringError.REGION_HAS_INCORRECT_FORMAT, region));
@@ -224,12 +228,12 @@ public class AzureHandler extends AbstractProviderHandler {
 
 		return profile;
 	}
-	
+
 	@Override
 	public InstanceCredential startVM(Boolean master, Map<String, String> tags) {
 
 		InstanceProfile iProfile = getInstanceProfile();
-		
+
 		// Generate clusterNodeId
 		String clusterNodeId = Utils.newSecureRandom();
 
@@ -239,7 +243,6 @@ public class AzureHandler extends AbstractProviderHandler {
 		String privateIp;
 		Boolean associatePublicIp;
 		String subnetId;
-	
 
 		if (master) {
 
@@ -309,8 +312,7 @@ public class AzureHandler extends AbstractProviderHandler {
 				keypair = new RSAKeyPair();
 
 				withCreate = withOS.withStoredLinuxImage(iProfile.getImage()).withRootUsername(username)
-						.withRootPassword(password)
-						.withSsh(CryptoUtils.asString("RSA", keypair.getPublicKey()))
+						.withRootPassword(password).withSsh(CryptoUtils.asString("RSA", keypair.getPublicKey()))
 						.withComputerName(resourceName);
 
 				break;
@@ -327,13 +329,13 @@ public class AzureHandler extends AbstractProviderHandler {
 			default:
 				break;
 			}
-			
+
 			WithCreate vmCreate = withCreate.withSize(iProfile.getInstanceTypeSpec());
-			
+
 			tags.forEach((k, v) -> {
 				vmCreate.withTag(k, v);
 			});
-			
+
 			VirtualMachine vm = vmCreate.create();
 
 			instanceId = vm.vmId();
@@ -343,21 +345,21 @@ public class AzureHandler extends AbstractProviderHandler {
 			return credential;
 
 		} catch (CloudException e) {
-			
+
 			Exceptions.throwRuntime(PlatformException.get(ClusteringError.ERROR_OCCURED_WHILE_MAKING_SERVICE_CALL,
 					AzureHelper.name(), e.getMessage()));
-		
+
 		} catch (Exception e) {
 			Exceptions.throwRuntime(e);
 		}
-		
+
 		return null;
 	}
-	
+
 	@Override
 	public void stopVM(String instanceId) {
 		// TODO Auto-generated method stub
-		
+
 	}
 
 }

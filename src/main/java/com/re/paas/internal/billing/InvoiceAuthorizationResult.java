@@ -3,14 +3,16 @@ package com.re.paas.internal.billing;
 public class InvoiceAuthorizationResult {
 
 	private boolean isSuccess;
+	private String message;
+	
 	private String authCode;
 	
 	private boolean isRedirectShopper;
 	private String redirectUrl;
 	
 	
-	public static InvoiceAuthorizationResult failed(String authCode) {
-		return new InvoiceAuthorizationResult();
+	public static InvoiceAuthorizationResult failed(String message) {
+		return new InvoiceAuthorizationResult().setIsSuccess(false).setMessage(message);
 	}
 	
 	public static InvoiceAuthorizationResult success(String authCode) {
@@ -27,6 +29,15 @@ public class InvoiceAuthorizationResult {
 
 	public InvoiceAuthorizationResult setIsSuccess(boolean isSuccess) {
 		this.isSuccess = isSuccess;
+		return this;
+	}
+
+	public String getMessage() {
+		return message;
+	}
+
+	public InvoiceAuthorizationResult setMessage(String message) {
+		this.message = message;
 		return this;
 	}
 

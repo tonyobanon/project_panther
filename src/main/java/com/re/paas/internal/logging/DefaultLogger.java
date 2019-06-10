@@ -38,7 +38,7 @@ public class DefaultLogger extends Logger {
 	private boolean isTraceEnabled;
 
 	public DefaultLogger() {
-		verboseMode(VerboseLevel.TRACE.toString());
+		verboseMode(VerboseLevel.DEBUG.toString());
 		this.namespace = defaultNamespace;
 	}
 	
@@ -198,6 +198,7 @@ public class DefaultLogger extends Logger {
 	}
 
 	private static void logDelegate(VerboseLevel level, String namespace, String message) {
+		
 		SingleThreadExecutor.execute(() -> {
 				String[] lines = format(namespace, message, level);
 

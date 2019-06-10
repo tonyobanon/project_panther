@@ -6,6 +6,7 @@ import com.re.paas.api.models.Model;
 import com.re.paas.api.models.classes.InstallOptions;
 import com.re.paas.apps.rex.models.BaseAgentModel;
 import com.re.paas.internal.emailing.EmailingModel;
+import com.re.paas.internal.locations.LocationModel;
 
 @Model(dependencies = { ActivityStreamModel.class, ApplicationModel.class, BaseUserModel.class, BlobStoreModel.class,
 		ConfigModel.class, ConfigurationModel.class, BaseAgentModel.class, EmailingModel.class,

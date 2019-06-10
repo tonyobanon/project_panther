@@ -1,21 +1,21 @@
 package com.re.paas.internal.classes;
 
 import java.text.DateFormat;
-import java.util.HashMap;
 import java.util.Map;
 
 import com.google.gson.FieldNamingPolicy;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonDeserializer;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 import com.google.gson.JsonSerializer;
+import com.re.paas.api.annotations.develop.BlockerTodo;
+import com.re.paas.api.fusion.server.JsonObject;
 import com.re.paas.api.logging.Logger;
 import com.re.paas.api.logging.LoggerFactory;
 import com.re.paas.api.runtime.spi.ClassIdentityType;
 import com.re.paas.api.utils.ClassUtils;
 
+@BlockerTodo("Use the JsonParse.get() instead of calling this directly")
 public class Json {
 
 	private static final Logger LOG = LoggerFactory.get().getLog(Json.class);
@@ -48,50 +48,32 @@ public class Json {
 
 	private static void registerTypeAdapters(GsonBuilder builder, Class<?> typeAdapterClass) {
 
-		Class<?> type = ClassUtils.getGenericRefs(typeAdapterClass.getClassLoader(), typeAdapterClass.getGenericInterfaces()[0]).get(0);
+		Class<?> type = ClassUtils.getParameterizedClass(typeAdapterClass.getClassLoader(), typeAdapterClass.getGenericInterfaces()[0]).getGenericTypes().get(0).getType();
 		builder.registerTypeAdapter(type, ClassUtils.createInstance(typeAdapterClass));
 
 		LOG.debug("==== " + ClassUtils.toString(type) + ": " + ClassUtils.toString(typeAdapterClass) + "====");
 	}
 
+	@BlockerTodo("Make this method private")
 	public static Gson getGson() {
 		return instance;
 	}
 	
-	public static String toJson(Object o) {
+	public static <T> String toJson(T o) {
 		return instance.toJson(o);
 	}
 
 	public static <T> T fromJson(String json, Class<T> type) {
 		return instance.fromJson(json, type);
 	}
-
-	public static JsonObject parse(String obj) {
-		return new JsonParser().parse(obj).getAsJsonObject();
-	}
-
-	public static <V> Map<String, String> toMap(JsonObject obj) {
-
-		Map<String, String> entries = new HashMap<>(obj.size());
-		obj.entrySet().forEach((e) -> {
-			entries.put(e.getKey(), e.getValue().getAsString());
-		});
-		return entries;
-	}
 	
-	public static <V> Map<String, String> toMap(String obj) {
-		return toMap(parse(obj));
+	public static <T> T fromMap(Map<String, Object> map, Class<T> type) {
+		return fromJson(new JsonObject(map).toString(), type);
 	}
 
-	public static JsonObject fromMap(Map<String, String> map) {
-		
-		JsonObject obj = new JsonObject();
-		
-		map.forEach((k,v) -> {
-			obj.addProperty(k, k);
-		});
-		
-		return obj;
+	
+	public static <T, V> Map<String, Object> toMap(T obj) {
+		return new JsonObject(instance.toJson(obj)).getMap();
 	}
 	
 }

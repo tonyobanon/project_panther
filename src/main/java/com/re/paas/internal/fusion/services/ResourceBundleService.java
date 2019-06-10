@@ -10,7 +10,7 @@ import com.re.paas.api.fusion.server.HttpMethod;
 import com.re.paas.api.fusion.server.RoutingContext;
 import com.re.paas.internal.classes.Json;
 import com.re.paas.internal.fusion.functionalities.LocationFunctionalities;
-import com.re.paas.internal.models.LocationModel;
+import com.re.paas.internal.locations.LocationModel;
 import com.re.paas.internal.models.RBModel;
 import com.re.paas.internal.utils.LocaleUtils;
 

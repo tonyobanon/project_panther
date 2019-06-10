@@ -1,6 +1,8 @@
 package com.re.paas.api.infra.database.document.xspec;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -37,4 +39,12 @@ public final class GetItemsSpec extends BaseGetItemSpec {
 		super.setConsistentRead(consistentRead);
 		return this;
 	}
+	
+	public static GetItemsSpec forKeys(Collection<PrimaryKey> keys, String... projections) {
+		return forKeys(keys.toArray(new PrimaryKey[keys.size()]));
+	}
+	
+	public static GetItemsSpec forKeys(PrimaryKey... keys) {
+    	return new ExpressionSpecBuilder().buildForGetItems().setPrimaryKeys(Arrays.asList(keys));
+    }
 }

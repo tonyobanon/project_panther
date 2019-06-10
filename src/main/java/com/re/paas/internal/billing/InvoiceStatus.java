@@ -14,7 +14,7 @@ public enum InvoiceStatus {
 		this.isUpdatable = isUpdatable;
 	}
 
-	public static InvoiceStatus from(int value) {
+	public static InvoiceStatus from(Integer value) {
 
 		switch (value) {
 

@@ -9,10 +9,6 @@ import com.re.paas.api.runtime.spi.SpiType;
 
 public class CacheAdapterLocator extends BaseSPILocator {
 
-	public CacheAdapterLocator() {
-		addTypeSuffix("Adapter");
-	}
-	
 	@Override
 	public SpiType spiType() {
 		return SpiType.CACHE_ADAPTER;

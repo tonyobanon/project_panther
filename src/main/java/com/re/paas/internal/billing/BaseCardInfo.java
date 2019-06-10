@@ -7,5 +7,4 @@ public abstract class BaseCardInfo {
 	Long accountId;
 	Date dateCreated;
 
-
 }

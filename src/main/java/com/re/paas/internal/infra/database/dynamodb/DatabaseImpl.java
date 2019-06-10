@@ -72,4 +72,10 @@ public class DatabaseImpl implements Database {
 		return null;
 	}
 
+	@Override
+	public void load() {
+		// TODO Auto-generated method stub
+		
+	}
+
 }

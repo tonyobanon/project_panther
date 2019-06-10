@@ -15,7 +15,7 @@ import com.re.paas.internal.classes.ApplicationStatus;
 import com.re.paas.internal.classes.spec.BaseApplicationSpec;
 import com.re.paas.internal.models.ApplicationModel;
 import com.re.paas.internal.models.RoleModel;
-import com.re.paas.internal.models.tables.users.ApplicationEntity;
+import com.re.paas.internal.tables.defs.users.ApplicationTable;
 
 public abstract class AbstractApplicationsList extends Listable<BaseApplicationSpec> {
 
@@ -33,7 +33,7 @@ public abstract class AbstractApplicationsList extends Listable<BaseApplicationS
 
 			IndexedNameSpec nameSpec = ApplicationModel.getNameSpec(applicationId, realm);
 
-			ApplicationEntity e = ofy().load().type(ApplicationEntity.class).id(applicationId).safe();
+			ApplicationTable e = ofy().load().type(ApplicationTable.class).id(applicationId).safe();
 
 			BaseApplicationSpec spec = new BaseApplicationSpec().setId(applicationId).setRole(e.getRole())
 					.setStatus(ApplicationStatus.from(e.getStatus())).setNameSpec(nameSpec)

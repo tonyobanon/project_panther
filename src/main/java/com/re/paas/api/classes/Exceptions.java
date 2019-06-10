@@ -3,13 +3,13 @@ package com.re.paas.api.classes;
 import com.re.paas.api.annotations.develop.BlockerTodo;
 import com.re.paas.api.errors.Error;
 import com.re.paas.api.logging.Logger;
-import com.re.paas.api.logging.LoggerFactory;
 import com.re.paas.internal.Platform;
+import com.re.paas.internal.logging.DefaultLogger;
 
 @BlockerTodo("Add metrics to indicate application error counts")
 public class Exceptions {
 	
-	private static final Logger LOG = LoggerFactory.get().getLog(Exceptions.class);
+	private static final Logger LOG = new DefaultLogger();
 
 	private static void output(String header, String body, boolean isFatal) {
 

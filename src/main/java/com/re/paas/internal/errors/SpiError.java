@@ -22,7 +22,7 @@ public enum SpiError implements Error {
 
 	@Override
 	public String namespace() {
-		return "application";
+		return "spi";
 	}
 
 	public static SpiError from(int value) {

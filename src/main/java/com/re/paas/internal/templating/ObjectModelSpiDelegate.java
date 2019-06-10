@@ -12,7 +12,7 @@ import org.apache.velocity.app.VelocityEngine;
 import org.apache.velocity.runtime.RuntimeConstants;
 
 import com.google.common.collect.Maps;
-import com.re.paas.api.app_provisioning.AppClassLoader;
+import com.re.paas.api.apps.AppClassLoader;
 import com.re.paas.api.classes.Exceptions;
 import com.re.paas.api.runtime.spi.DelegateInitResult;
 import com.re.paas.api.templating.AbstractObjectModelSpiDelegate;

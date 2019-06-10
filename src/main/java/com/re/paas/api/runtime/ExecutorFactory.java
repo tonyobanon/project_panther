@@ -5,7 +5,6 @@ import java.util.concurrent.CompletableFuture;
 import com.re.paas.api.concurrency.ExecutorFactoryStats;
 import com.re.paas.api.designpatterns.Factory;
 import com.re.paas.api.runtime.spi.SpiBase;
-import com.re.paas.internal.runtime.security.Secure;
 
 public abstract class ExecutorFactory {
 
@@ -35,22 +34,19 @@ public abstract class ExecutorFactory {
 		return instance;
 	}
 
-	@Secure
-	public abstract void onComputeQuotaExceeded(ComputeQuotaExceededEvent evt);
-
 	public abstract String getName();
 
 	public abstract <R> CompletableFuture<R> execute(Invokable<R> task);
 
-	@Secure
+	@MethodMeta
 	public abstract void shutdown();
 
 	public abstract boolean isShutdown();
 
-	@Secure
+	@MethodMeta
 	public abstract void upgradePool();
 
-	@Secure
+	@MethodMeta
 	public abstract boolean downgradePool();
 
 	public abstract ExecutorFactoryStats getStatistics();

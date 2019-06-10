@@ -10,7 +10,7 @@ import com.re.paas.api.runtime.spi.SpiType;
 public abstract class BaseModel extends AbstractResource {
 	
 	public BaseModel() {
-		super(SpiType.NODE_ROLE);
+		super(SpiType.MODEL);
 	}
 	
 	public static AbstractModelDelegate getDelegate() {

@@ -1,6 +1,8 @@
 package com.re.paas.api.classes;
 
-public class KeyValuePair<K, V> {
+import java.util.Map.Entry;
+
+public class KeyValuePair<K, V> implements Entry<K, V> {
 
 	private K key;
 	private V value;
@@ -26,8 +28,8 @@ public class KeyValuePair<K, V> {
 		return value;
 	}
 
-	public KeyValuePair<K, V> setValue(V value) {
+	public V setValue(V value) {
 		this.value = value;
-		return this;
+		return value;
 	}
 }

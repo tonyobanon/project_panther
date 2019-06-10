@@ -116,5 +116,4 @@ public final class QuerySpec extends BaseSpec {
 		this.limit = limit;
 		return this;
 	}
-
 }

@@ -50,6 +50,10 @@ final class ParserInvocationHandler implements InvocationHandler {
         }
 
         final String member = method.getName();
+        return getValue(member);
+    }
+    
+    public Object getValue(String member) {
         Object value = values.get( member );
 
         if ( value == null ) {

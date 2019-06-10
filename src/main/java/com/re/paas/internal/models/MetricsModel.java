@@ -13,7 +13,7 @@ import com.re.paas.api.infra.cloud.CloudEnvironment;
 import com.re.paas.api.models.BaseModel;
 import com.re.paas.api.models.Model;
 import com.re.paas.api.models.classes.InstallOptions;
-import com.re.paas.internal.models.tables.MetricTable;
+import com.re.paas.internal.tables.defs.base.MetricTable;
 
 @Model(version = "0.0.3-rc.1+build.1")
 public class MetricsModel extends BaseModel {

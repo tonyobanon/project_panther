@@ -8,10 +8,6 @@ import com.re.paas.api.runtime.spi.SpiDelegate;
 import com.re.paas.api.runtime.spi.SpiType;
 
 public class FunctionalitySPILocator extends BaseSPILocator {
-
-	public FunctionalitySPILocator() {
-		addTypeSuffix("Functionalities");
-	}
 	
 	@Override
 	public SpiType spiType() {

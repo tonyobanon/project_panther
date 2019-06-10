@@ -42,7 +42,7 @@ public abstract class NodeRole extends AbstractResource {
 	
 	protected Boolean hasMasterTrait() {
 		String val = CloudEnvironment.get().getInstanceTags().get(Tags.MASTER_TAG);
-		return Boolean.getBoolean(val);
+		return Boolean.parseBoolean(val);
 	}
 	
 	public boolean applies() {

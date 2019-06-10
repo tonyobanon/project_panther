@@ -14,8 +14,8 @@ import com.re.paas.api.listable.SearchableUISpec;
 import com.re.paas.apps.rex.classes.spec.BaseAgentOrganizationSpec;
 import com.re.paas.apps.rex.functionality.AgentOrganizationFunctionalities;
 import com.re.paas.apps.rex.models.tables.AgentOrganizationTable;
+import com.re.paas.internal.locations.LocationModel;
 import com.re.paas.internal.models.BaseUserModel;
-import com.re.paas.internal.models.LocationModel;
 import com.re.paas.internal.models.RoleModel;
 
 public class AgentOrganizationList extends Listable<BaseAgentOrganizationSpec> {

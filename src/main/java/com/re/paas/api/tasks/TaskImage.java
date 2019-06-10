@@ -9,13 +9,14 @@ import com.re.paas.api.designpatterns.Singleton;
 import com.re.paas.api.forms.AbstractField;
 import com.re.paas.api.runtime.spi.AbstractResource;
 import com.re.paas.api.runtime.spi.SpiType;
+import com.re.paas.internal.classes.TaskInterval;
 
 public abstract class TaskImage extends AbstractResource implements Cloneable {
 	
 	private Map<String, String> parameters;
 	
 	public TaskImage() {
-		super(SpiType.TASK_IMAGE);
+		super(SpiType.TASK_MODEL);
 	}
 	
 	public static AbstractTaskModelDelegate getDelegate() {
@@ -38,5 +39,7 @@ public abstract class TaskImage extends AbstractResource implements Cloneable {
 	}
 
 	public abstract TaskExecutionOutcome call();
+	
+	public abstract TaskInterval interval();
 	
 }

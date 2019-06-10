@@ -1,6 +1,7 @@
 package com.re.paas.api.clustering.protocol;
 
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.util.concurrent.CompletableFuture;
 
 import com.re.paas.api.clustering.Function;
@@ -13,6 +14,10 @@ public interface Client {
 		return ClientFactory.get().getClient(registry.getWkaHost(), registry.getWkaInboundPort());
 	}
 
+	public static Client get(InetSocketAddress address) {
+		return ClientFactory.get().getClient(address.getAddress(), address.getPort());
+	}
+	
 	public static Client get(InetAddress host, Integer port) {
 		return ClientFactory.get().getClient(host, port);
 	}

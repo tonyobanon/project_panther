@@ -150,7 +150,7 @@ public class CustomClassLoader extends ClassLoader {
 	}
 
 	private File getClassFile(String className) {
-		return new File(path.resolve(className.replace(".", "/") + ".class"));
+		return new File(path.resolve(className.replace(".", File.separator) + ".class"));
 	}
 
 	public URI getPath() {

@@ -11,6 +11,7 @@ public class PaymentRequest {
 	private String customerEmail;
 	private Long customerId;
 	private String customerPhone;
+	private String customerLocale;
 	
 	private BaseCardInfo cardInfo;
 	private BillingAddress billingAddress;
@@ -66,6 +67,15 @@ public class PaymentRequest {
 
 	public PaymentRequest setCustomerPhone(String customerPhone) {
 		this.customerPhone = customerPhone;
+		return this;
+	}
+
+	public String getCustomerLocale() {
+		return customerLocale;
+	}
+
+	public PaymentRequest setCustomerLocale(String customerLocale) {
+		this.customerLocale = customerLocale;
 		return this;
 	}
 

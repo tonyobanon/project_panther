@@ -9,8 +9,8 @@ import com.re.paas.api.listable.SearchableUISpec;
 import com.re.paas.internal.fusion.functionalities.UserApplicationFunctionalities;
 import com.re.paas.internal.models.BaseUserModel;
 import com.re.paas.internal.models.RoleModel;
-import com.re.paas.internal.models.tables.users.ApplicationEntity;
 import com.re.paas.internal.realms.AdminRealm;
+import com.re.paas.internal.tables.defs.users.ApplicationTable;
 
 public class AdminApplicationsList extends AbstractApplicationsList {
 
@@ -28,8 +28,8 @@ public class AdminApplicationsList extends AbstractApplicationsList {
 	}
 
 	@Override
-	public Class<ApplicationEntity> entityType() {
-		return ApplicationEntity.class;
+	public Class<ApplicationTable> entityType() {
+		return ApplicationTable.class;
 	}
 
 	@Override

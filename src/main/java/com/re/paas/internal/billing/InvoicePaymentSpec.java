@@ -6,60 +6,52 @@ import com.re.paas.api.classes.ClientRBRef;
 
 public class InvoicePaymentSpec {
 
-	Long invoiceId;
+	String invoiceId;
 
-	Long merchantReference;
+	String reference;
 	
-	String extReference;
+	String gatewayReference;
 
-	InvoicePaymentStatus status;
+	PaymentStatus status;
 
 	ClientRBRef message;
 
-	String additionalInfo;
-	
-	Integer previousStatus;
-	
-	boolean isOverwritten;
-	
-	boolean isReconciled;
-	
 	Date dateCreated;
 
 	Date dateUpdated;
 
-	public Long getInvoiceId() {
+	public String getInvoiceId() {
 		return invoiceId;
 	}
 
-	public InvoicePaymentSpec setInvoiceId(Long invoiceId) {
+	public InvoicePaymentSpec setInvoiceId(String invoiceId) {
 		this.invoiceId = invoiceId;
 		return this;
 	}
 
-	public Long getMerchantReference() {
-		return merchantReference;
+	public String getReference() {
+		return reference;
 	}
 
-	public InvoicePaymentSpec setMerchantReference(Long merchantReference) {
-		this.merchantReference = merchantReference;
+	public InvoicePaymentSpec setReference(String reference) {
+		this.reference = reference;
 		return this;
 	}
 
-	public String getExtReference() {
-		return extReference;
+	public String getGatewayReference() {
+		return gatewayReference;
 	}
 
-	public InvoicePaymentSpec setExtReference(String extReference) {
-		this.extReference = extReference;
+	public InvoicePaymentSpec setGatewayReference(String gatewayReference) {
+		this.gatewayReference = gatewayReference;
 		return this;
 	}
 
-	public InvoicePaymentStatus getStatus() {
+	public PaymentStatus getStatus() {
 		return status;
 	}
 
-	public InvoicePaymentSpec setStatus(InvoicePaymentStatus status) {
+	public InvoicePaymentSpec setStatus(PaymentStatus status) {
 		this.status = status;
 		return this;
 	}
@@ -70,42 +62,6 @@ public class InvoicePaymentSpec {
 
 	public InvoicePaymentSpec setMessage(ClientRBRef message) {
 		this.message = message;
-		return this;
-	}
-
-	public String getAdditionalInfo() {
-		return additionalInfo;
-	}
-
-	public InvoicePaymentSpec setAdditionalInfo(String additionalInfo) {
-		this.additionalInfo = additionalInfo;
-		return this;
-	}
-
-	public Integer getPreviousStatus() {
-		return previousStatus;
-	}
-
-	public InvoicePaymentSpec setPreviousStatus(Integer previousStatus) {
-		this.previousStatus = previousStatus;
-		return this;
-	}
-
-	public boolean isOverwritten() {
-		return isOverwritten;
-	}
-
-	public InvoicePaymentSpec setOverwritten(boolean isOverwritten) {
-		this.isOverwritten = isOverwritten;
-		return this;
-	}
-
-	public boolean isReconciled() {
-		return isReconciled;
-	}
-
-	public InvoicePaymentSpec setReconciled(boolean isReconciled) {
-		this.isReconciled = isReconciled;
 		return this;
 	}
 
@@ -126,5 +82,4 @@ public class InvoicePaymentSpec {
 		this.dateUpdated = dateUpdated;
 		return this;
 	}
-
 }

@@ -23,9 +23,9 @@ import com.re.paas.apps.rex.realms.OrganizationAdminRealm;
 import com.re.paas.internal.fusion.functionalities.RoleFunctionalities;
 import com.re.paas.internal.models.errors.RolesError;
 import com.re.paas.internal.models.helpers.EntityUtils;
-import com.re.paas.internal.models.tables.users.BaseUserEntity;
-import com.re.paas.internal.models.tables.users.UserRoleEntity;
 import com.re.paas.internal.realms.AdminRealm;
+import com.re.paas.internal.tables.defs.users.BaseUserTable;
+import com.re.paas.internal.tables.defs.users.UserRoleTable;
 
 public class RoleModel extends BaseModel {
 
@@ -86,7 +86,12 @@ public class RoleModel extends BaseModel {
 
 	protected static void newRole(String name, Boolean isDefault, Realm realm) {
 		Logger.get().info("Creating role: " + name);
-		ofy().save().entity(new UserRoleEntity().setName(name).setIsDefault(isDefault).setRealm(realm.name())
+		
+		if(!isDefault) {
+			// set to null, to take advantage of sparse indexes
+		}
+		
+		ofy().save().entity(new UserRoleTable().setName(name).setIsDefault(isDefault).setRealm(realm.name())
 				.setSpec(new ArrayList<>()).setDateCreated(Dates.now())).now();
 	}
 
@@ -101,7 +106,7 @@ public class RoleModel extends BaseModel {
 			throw new PlatformException(RolesError.DEFAULT_ROLE_CANNOT_BE_DELETED);
 		}
 
-		ofy().delete().key(Key.create(UserRoleEntity.class, name)).now();
+		ofy().delete().key(Key.create(UserRoleTable.class, name)).now();
 	}
 
 	@ModelMethod(functionality = RoleFunctionalities.Constants.MANAGE_ROLES)
@@ -109,7 +114,7 @@ public class RoleModel extends BaseModel {
 
 		Map<String, String> result = new FluentHashMap<>();
 
-		ofy().load().type(UserRoleEntity.class).list().forEach(o -> {
+		ofy().load().type(UserRoleTable.class).list().forEach(o -> {
 			result.put(o.getName(), o.getRealm());
 		});
 
@@ -121,8 +126,8 @@ public class RoleModel extends BaseModel {
 
 		Collection<String> roles = new ArrayList<>();
 
-		Query<UserRoleEntity> query = ofy().load().type(UserRoleEntity.class).filter("realm =", realm.getValue());
-		for (UserRoleEntity role : query) {
+		Query<UserRoleTable> query = ofy().load().type(UserRoleTable.class).filter("realm =", realm.getValue());
+		for (UserRoleTable role : query) {
 
 			roles.add(role.getName());
 		}
@@ -134,7 +139,7 @@ public class RoleModel extends BaseModel {
 	public static Map<String, Integer> getUsersCount(List<String> names) {
 		Map<String, Integer> result = new FluentHashMap<>();
 		names.forEach(name -> {
-			Integer count = EntityUtils.query(BaseUserEntity.class, QueryFilter.get("role =", name)).size();
+			Integer count = EntityUtils.query(BaseUserTable.class, QueryFilter.get("role =", name)).size();
 			result.put(name, count);
 		});
 		return result;
@@ -162,7 +167,7 @@ public class RoleModel extends BaseModel {
 
 	private static Collection<String> fetchRoleFunctionalities(String name) {
 		List<String> result = new ArrayList<>();
-		UserRoleEntity entity = ofy().load().type(UserRoleEntity.class).id(name).safe();
+		UserRoleTable entity = ofy().load().type(UserRoleTable.class).id(name).safe();
 		entity.getSpec().forEach(f -> {
 			result.add(f);
 		});
@@ -182,7 +187,7 @@ public class RoleModel extends BaseModel {
 	@ModelMethod(functionality = RoleFunctionalities.Constants.MANAGE_ROLES)
 	private static void updateRoleSpec(String name, Boolean add, Functionality f, boolean updateDelegate) {
 
-		UserRoleEntity entity = ofy().load().type(UserRoleEntity.class).id(name).safe();
+		UserRoleTable entity = ofy().load().type(UserRoleTable.class).id(name).safe();
 		List<String> functions = entity.getSpec();
 
 		AbstractRealmDelegate delegate = Realm.getDelegate();
@@ -205,22 +210,22 @@ public class RoleModel extends BaseModel {
 
 	@ModelMethod(functionality = RoleFunctionalities.Constants.GET_ROLE_REALMS)
 	public static Realm getRealm(String name) {
-		UserRoleEntity entity = ofy().load().type(UserRoleEntity.class).id(name).safe();
+		UserRoleTable entity = ofy().load().type(UserRoleTable.class).id(name).safe();
 		return Realm.get(entity.getRealm());
 	}
 
 	@ModelMethod(functionality = RoleFunctionalities.Constants.MANAGE_ROLES)
 	public static String getDefaultRole(Realm realm) {
-		return ofy().load().type(UserRoleEntity.class).filter("realm = ", realm.name()).filter("isDefault", true)
+		return ofy().load().type(UserRoleTable.class).filter("realm = ", realm.name()).filter("isDefault", true)
 				.first().safe().getName();
 	}
 
 	private static boolean isRoleInUse(String name) {
-		return !EntityUtils.query(BaseUserEntity.class, QueryFilter.get("role =", name)).isEmpty();
+		return !EntityUtils.query(BaseUserTable.class, QueryFilter.get("role =", name)).isEmpty();
 	}
 
 	private static boolean isDefaultRole(String name) {
-		UserRoleEntity entity = ofy().load().type(UserRoleEntity.class).id(name).safe();
+		UserRoleTable entity = ofy().load().type(UserRoleTable.class).id(name).safe();
 		return entity.getIsDefault();
 	}
 

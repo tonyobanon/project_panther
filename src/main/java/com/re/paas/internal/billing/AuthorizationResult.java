@@ -2,27 +2,28 @@ package com.re.paas.internal.billing;
 
 public class AuthorizationResult {
 
-	private String extReference;
+	private String pspReference;
 
 	PaymentResultCode resultCode;
 
 	private String authCode;
 	private String refusalReason;
 
-	private boolean is3dSecureOffered;
+	private Boolean is3dSecureOffered;
 	private Authorise3dSecureRequest Authorise3dRequest;
 	
-	private boolean isError;
+	private Boolean isError;
 	private String errorMessage;
 	
 	
 
-	public String getExtReference() {
-		return extReference;
+
+	public String getPspReference() {
+		return pspReference;
 	}
 
-	public AuthorizationResult setExtReference(String extReference) {
-		this.extReference = extReference;
+	public AuthorizationResult setPspReference(String pspReference) {
+		this.pspReference = pspReference;
 		return this;
 	}
 
@@ -70,12 +71,12 @@ public class AuthorizationResult {
 		Authorise3dRequest = authorise3dRequest;
 		return this;
 	}
-
-	public boolean isError() {
+	
+	public Boolean getIsError() {
 		return isError;
 	}
 
-	public AuthorizationResult setError(boolean isError) {
+	public AuthorizationResult setIsError(Boolean isError) {
 		this.isError = isError;
 		return this;
 	}

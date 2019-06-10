@@ -1,4 +1,44 @@
+Scan to emsure that we are not unnecessarily using ReturnValue.ALL_NEW
 
+Table modeller should properly infer DB data types, i.e List<Long> == NS(Number Set)
+
+Functionalities
+Roles
+
+When DB.getTable() is called, add prefix based on appId
+
+Class Watching
+
+
+DB API:
+1. Add support for dates as an item attribute
+2. Allow primary keys to be auto generated
+3. Some attributes in BaseUserTable should be spinned off to SocialMediaHandlesTable
+
+
+Note: delegate of active types must ensure that
+they set thread context classloader before
+executing code from resource classes
+
+
+Break up Json Api from Fusion
+
+
+Create streamlined flow for Spi Locator/Delegates
+
+
+Flesh out DB Api and models
+
+
+Thread spinners: [
+	NodeRegistry
+	FileSystemProviderUtil
+	ExecutorFactory
+]
+
+
+
+Finish LocalEnvironment
 
 App Watching
 

@@ -29,13 +29,12 @@ import java.util.concurrent.Callable;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 import com.re.paas.api.annotations.develop.BlockerTodo;
 import com.re.paas.api.classes.ClientResources.HtmlCharacterEntities;
 import com.re.paas.api.classes.Exceptions;
 import com.re.paas.api.classes.TimeUnit;
+import com.re.paas.api.fusion.server.JsonArray;
+import com.re.paas.api.fusion.server.JsonObject;
 
 @BlockerTodo("Generate randoms ahead of time, to increase performance")
 @BlockerTodo("Also, scan for uses of SecureRandom, and do same")
@@ -73,11 +72,11 @@ public class Utils {
 	}
 
 	public static JsonObject getJson(String s) {
-		return new JsonParser().parse(s).getAsJsonObject();
+		return new JsonObject(s);
 	}
 
 	public static JsonArray getJsonArray(String s) {
-		return new JsonParser().parse(s).getAsJsonArray();
+		return new JsonArray(s);
 	}
 
 	public static Properties getProperties(InputStream in) {

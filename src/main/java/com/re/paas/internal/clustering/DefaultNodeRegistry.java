@@ -22,6 +22,7 @@ import com.re.paas.api.clustering.protocol.Server;
 import com.re.paas.api.events.BaseEvent;
 import com.re.paas.api.infra.cloud.CloudEnvironment;
 import com.re.paas.api.logging.Logger;
+import com.re.paas.api.runtime.MethodMeta;
 import com.re.paas.internal.Platform;
 import com.re.paas.internal.cloud.CloudEnvironmentAdapter;
 import com.re.paas.internal.clustering.classes.ServerStartEvent;
@@ -31,6 +32,8 @@ import com.re.paas.internal.compute.Scheduler;
 
 public class DefaultNodeRegistry implements NodeRegistry {
 
+	private static final Logger LOG = Logger.get(DefaultNodeRegistry.class);
+	
 	private static Short nodeId;
 
 	private static Short masterNodeId;
@@ -40,8 +43,6 @@ public class DefaultNodeRegistry implements NodeRegistry {
 	private static String clusterName;
 
 	private static Integer inboundPort;
-
-	private static Boolean autoScalingEnabled;
 
 	private static String cloudUniqueId;
 
@@ -53,8 +54,11 @@ public class DefaultNodeRegistry implements NodeRegistry {
 	private static Server server;
 
 	private static Map<Short, BaseNodeSpec> nodes = Maps.newHashMap();
+	
+	private static Boolean logClusterNodesAtIntervals = false;
 
 	@Override
+	@MethodMeta
 	public void setNodeId(Short nodeId) {
 		DefaultNodeRegistry.nodeId = nodeId;
 	}
@@ -65,6 +69,7 @@ public class DefaultNodeRegistry implements NodeRegistry {
 	}
 
 	@Override
+	@MethodMeta
 	public void setMasterNodeId(Short nodeId) {
 		masterNodeId = nodeId;
 	}
@@ -82,11 +87,6 @@ public class DefaultNodeRegistry implements NodeRegistry {
 	@Override
 	public Integer getInboundPort() {
 		return inboundPort;
-	}
-
-	@Override
-	public Boolean isAutoScalingEnabled() {
-		return autoScalingEnabled;
 	}
 
 	@Override
@@ -141,7 +141,7 @@ public class DefaultNodeRegistry implements NodeRegistry {
 		clusterName = env.clusterName();
 
 
-		Logger.get().info("Starting node on cluster: " + clusterName);
+		LOG.debug("Starting node on cluster: " + clusterName);
 
 		// Set node name
 		DefaultNodeRegistry.name = CloudEnvironmentAdapter.getResourceName();
@@ -149,34 +149,31 @@ public class DefaultNodeRegistry implements NodeRegistry {
 		// Get clustering address
 		Logger.get().info("Acquiring clustering address");
 		clusteringAddress = env.clusteringHost();
-		Logger.get().info("Using clustering address: " + CloudEnvironment.get().clusteringHost().getHostAddress());
+		LOG.debug("Using clustering address: " + CloudEnvironment.get().clusteringHost().getHostAddress());
 
 		// Set Inbound port
 		DefaultNodeRegistry.inboundPort = env.clusteringPort();
-		Logger.get().info("Using port: " + inboundPort);
-
-		autoScalingEnabled = CloudEnvironment.get().canAutoScale();
-		Logger.get().info("Auto Scaling is currently " + (autoScalingEnabled ? "enabled" : "disabled"));
+		LOG.debug("Using port: " + inboundPort);
 
 		// Request for Instance/VM Id
 		Logger.get().info("Requesting for Instance Id");
 		cloudUniqueId = CloudEnvironment.get().providerDelegate().getInstanceId();
-		Logger.get().info("Using Instance Id: " + cloudUniqueId);
+		LOG.debug("Using Instance Id: " + cloudUniqueId);
 
 		// Set WKA
 
 		wkaHost = env.wkaHost();
 		wkaInboundPort = env.wkaPort();
 
-		Logger.get().info("Using WKA: " + wkaHost.getHostAddress() + ":" + wkaInboundPort);
+		LOG.debug("Using WKA: " + wkaHost.getHostAddress() + ":" + wkaInboundPort);
 
-		if (true) {
+		if (logClusterNodesAtIntervals) {
 			Scheduler.getDefaultExecutor().scheduleWithFixedDelay((() -> {
-				Logger.get().debug(getNodesAsJson());
+				LOG.debug("Available cluster nodes: " + getNodesAsJson());
 			}), 1, 10, TimeUnit.SECONDS);
 		}
 
-		Logger.get().info("Starting Cluster server ..");
+		LOG.debug("Starting Cluster server ..");
 
 		CompletableFuture<Void> future = new CompletableFuture<>();
 
@@ -185,7 +182,7 @@ public class DefaultNodeRegistry implements NodeRegistry {
 		server.start();
 
 		BaseEvent.one(ServerStartEvent.class, evt -> {
-			Logger.get().info("Cluster server started on: " + evt.getServer().host());
+			Logger.get().debug("Cluster server started on: " + evt.getServer().host());
 			future.complete(null);
 		});
 
@@ -206,7 +203,7 @@ public class DefaultNodeRegistry implements NodeRegistry {
 			Exceptions.throwRuntime(e);
 		}
 
-		Logger.get().info("Requesting to leave the cluster ..");
+		LOG.info("Requesting to leave the cluster ..");
 
 		NodeLeaveResult result = Client.get(getMasterNodeId()).execute(MasterFunction.CLUSTER_LEAVE,
 				new NodeLeaveRequest(), NodeLeaveResult.class).join();
@@ -216,7 +213,9 @@ public class DefaultNodeRegistry implements NodeRegistry {
 		}
 
 		// stop cluster server
-		getServer().stop();
+		if(server.isOpen()) {
+			getServer().stop();
+		}
 	}
 
 	@Override
@@ -228,7 +227,7 @@ public class DefaultNodeRegistry implements NodeRegistry {
 	public String getNodesAsJson() {
 
 		StringBuilder sb = new StringBuilder();
-		sb.append("\n[");
+		sb.append("[");
 
 		List<BaseNodeSpec> v = Lists.newArrayList(getNodes().values());
 
@@ -249,14 +248,18 @@ public class DefaultNodeRegistry implements NodeRegistry {
 
 		}
 
-		sb.append("\n]");
+		sb.append("]");
 		return sb.toString();
 	}
 
 	private static String getTempFile() {
 
 		String tempFile = System.getProperty("java.io.tmpdir") + Platform.getPlatformPrefix() + "~"
-				+ CloudEnvironment.get().clusteringHost().getHostAddress().replace(".", "-") + ".tmp";
+				+ CloudEnvironment
+				.get()
+				.clusteringHost()
+				.getHostAddress()
+				.replace(".", "-") + ".tmp";
 
 		return tempFile;
 	}

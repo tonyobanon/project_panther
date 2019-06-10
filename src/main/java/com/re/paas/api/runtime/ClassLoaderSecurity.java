@@ -2,9 +2,9 @@ package com.re.paas.api.runtime;
 
 import java.lang.reflect.InvocationTargetException;
 
-import com.re.paas.api.app_provisioning.AppClassLoader;
+import com.re.paas.api.apps.AppClassLoader;
 import com.re.paas.api.classes.Exceptions;
-import com.re.paas.internal.runtime.ClassLoaderSecurityImpl;
+import com.re.paas.internal.runtime.security.ClassLoaderSecurityImpl;
 import com.re.paas.internal.runtime.spi.AppProvisionerImpl;
 
 

@@ -8,10 +8,6 @@ import com.re.paas.api.runtime.spi.SpiDelegate;
 import com.re.paas.api.runtime.spi.SpiType;
 
 public class ModelSPILocator extends BaseSPILocator {
-
-	public ModelSPILocator() {
-		addTypeSuffix("Model");
-	}
 	
 	@Override
 	public SpiType spiType() {

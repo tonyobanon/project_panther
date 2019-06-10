@@ -106,7 +106,7 @@ public class ClusterJoinFunction extends AbstractClusterFunction<NodeJoinRequest
 		IngestAdapterConfigRequest ingestRequest = new IngestAdapterConfigRequest();
 
 		for (AdapterType type : AdapterType.values()) {
-			AbstractAdapterDelegate<? extends Adapter> delegate = Singleton.get(type.getDelegateType());
+			AbstractAdapterDelegate<?, ? extends Adapter<?>> delegate = Singleton.get(type.getDelegateType());
 			AdapterConfig config = delegate.getConfig();
 			ingestRequest.addAdapterConfig(config);
 		}

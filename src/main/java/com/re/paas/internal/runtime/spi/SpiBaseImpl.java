@@ -1,78 +1,50 @@
 package com.re.paas.internal.runtime.spi;
 
+import static com.re.paas.internal.runtime.spi.SpiDelegateConfigHandler.Tier.PLATFORM;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonPrimitive;
-import com.re.paas.api.annotations.develop.BlockerBlockerTodo;
-import com.re.paas.api.annotations.develop.PlatformInternal;
-import com.re.paas.api.app_provisioning.AppClassLoader;
+import com.re.paas.api.annotations.develop.BlockerTodo;
+import com.re.paas.api.apps.AppClassLoader;
 import com.re.paas.api.classes.Exceptions;
 import com.re.paas.api.events.BaseEvent;
+import com.re.paas.api.fusion.server.JsonArray;
 import com.re.paas.api.logging.Logger;
+import com.re.paas.api.runtime.spi.BaseSPILocator;
 import com.re.paas.api.runtime.spi.SpiBase;
 import com.re.paas.api.runtime.spi.SpiDelegate;
 import com.re.paas.api.runtime.spi.SpiDelegateHandler;
 import com.re.paas.api.runtime.spi.SpiType;
-import com.re.paas.api.runtime.spi.TypeClassification;
 import com.re.paas.api.utils.ClassUtils;
 import com.re.paas.api.utils.Utils;
 import com.re.paas.internal.Platform;
 
 public class SpiBaseImpl implements SpiBase {
 
-	private static final Path basePath = Platform.getResourcePath().resolve("spi_config");
+	private static final Logger LOG = Logger.get(SpiBaseImpl.class);
 
-	private static final Path defaultDelegatesPath = basePath.resolve("default_delegates.json");
-	private static final Path availableDelegatesPath = basePath.resolve("available_delegates.json");
-	private static final Path trustedAppsPath = basePath.resolve("trusted_apps.json");
+	static final Path spiConfigBasePath = Platform.getResourcePath().resolve("spi_config");
 
-	private static JsonObject defaultDelegatesConfig;
-	private static JsonObject availableDelegatesConfig;
+	private static final Path trustedAppsPath = SpiBaseImpl.spiConfigBasePath.resolve("trusted_apps.json");
 	private static JsonArray trustedAppsConfig;
 
 	public SpiBaseImpl() {
 
 		createResourceFiles();
 
-		availableDelegatesConfig = Utils.getJson(availableDelegatesPath);
-		defaultDelegatesConfig = Utils.getJson(defaultDelegatesPath);
 		trustedAppsConfig = Utils.getJsonArray(trustedAppsPath);
 	}
 
 	private static void createResourceFiles() {
 
 		try {
-
-			if (!Files.exists(basePath)) {
-				Files.createDirectories(basePath);
-			}
-
-			if (!Files.exists(defaultDelegatesPath)) {
-				Files.createFile(defaultDelegatesPath);
-				Utils.saveString("{}", defaultDelegatesPath);
-			}
-
-			if (!Files.exists(availableDelegatesPath)) {
-				Files.createFile(availableDelegatesPath);
-
-				JsonObject contents = new JsonObject();
-
-				for (SpiType type : SpiType.values()) {
-					contents.add(type.toString(), new JsonArray());
-				}
-
-				Utils.saveString(contents.toString(), availableDelegatesPath);
-			}
-
 			if (!Files.exists(trustedAppsPath)) {
 				Files.createFile(trustedAppsPath);
 				Utils.saveString("[]", trustedAppsPath);
@@ -84,112 +56,49 @@ public class SpiBaseImpl implements SpiBase {
 
 	}
 
-	static boolean isTrusted(String appId) {
-		return trustedAppsConfig.contains(new JsonPrimitive(appId));
+	static boolean isAppTrusted(String appId) {
+		return trustedAppsConfig.contains(appId);
 	}
 
 	static void registerTrustedApp(String appId) {
 
-		if (!isTrusted(appId)) {
+		if (!isAppTrusted(appId)) {
 
 			trustedAppsConfig.add(appId);
 			Utils.saveString(trustedAppsConfig.toString(), trustedAppsPath);
 		}
 	}
 
-	static Class<? extends SpiDelegate<?>> getDefaultDelegate(SpiType type) {
+	public void start(Collection<String> apps) {
 
-		String key = type.toString();
+		LOG.debug("Discovering classes ..");
 
-		String value = defaultDelegatesConfig.has(key) ? defaultDelegatesConfig.get(key).getAsString() : null;
+		ClassLoader cl = ClassLoaders.getClassLoader();
+		SPILocatorHandlerImpl.start(cl, SpiType.values());
 
-		return value != null ? ClassUtils.forName(value) : null;
-	}
-
-	static synchronized void registerDefaultDelegate(SpiType type, Class<? extends SpiDelegate<?>> delegateClass) {
-
-		if (type.classification() == TypeClassification.ACTIVE && !isTrusted(ClassUtils.getAppId(delegateClass))) {
-			Exceptions.throwRuntime("Type: " + type.toString() + " requires a trusted delegate");
-		}
-
-		String key = type.toString();
-
-		String value = defaultDelegatesConfig.has(key) ? defaultDelegatesConfig.get(key).getAsString() : null;
-
-		if (value != null) {
-
-			if (value.equals(ClassUtils.toString(delegateClass))) {
-				// Entry already exists
-				return;
-			} else {
-				// Remove existing
-				defaultDelegatesConfig.remove(key);
-			}
-		}
-
-		defaultDelegatesConfig.addProperty(key, ClassUtils.toString(delegateClass));
-
-		Utils.saveString(defaultDelegatesConfig.toString(), defaultDelegatesPath);
-	}
-
-	/**
-	 * This returns the delegate classes as strings
-	 */
-	static List<Class<? extends SpiDelegate<?>>> getAvailableDelegates(SpiType type) {
-
-		JsonArray array = (JsonArray) availableDelegatesConfig.get(type.toString());
-		List<Class<? extends SpiDelegate<?>>> delegateClasses = new ArrayList<>(array.size());
-
-		array.forEach(e -> {
-			String className = e.getAsString();
-			delegateClasses.add(ClassUtils.createInstance(className));
+		apps.forEach(appId -> {
+			SPILocatorHandlerImpl.start(ClassLoaders.getClassLoader(appId), SpiType.values());
 		});
 
-		return delegateClasses;
+		LOG.debug("Transferring to delegates ..");
+
+		SpiDelegateHandlerImpl.start(cl, SpiType.values(), null);
+
+		BaseEvent.dispatch(new AppStartEvent(ClassLoaders.getId(cl), true));
 	}
 
-	static void registerAvailableDelegates(SpiType type, Class<? extends SpiDelegate<?>> delegateClass) {
-
-		JsonArray array = (JsonArray) availableDelegatesConfig.get(type.toString());
-		String className = ClassUtils.toString(delegateClass);
-
-		if (!array.contains(new JsonPrimitive(className))) {
-			array.add(className);
-		}
-
-		Utils.saveString(availableDelegatesConfig.toString(), availableDelegatesPath);
-	}
-
-	@BlockerBlockerTodo("See comments")
 	public void start(String appId) {
 
-		if (appId.equals(AppProvisioner.DEFAULT_APP_ID)) {
+		LOG.debug("Discovering classes ..");
 
-			// The entire platform is starting..
-			
-			// Call Marketplace to validate apps for this installation
+		ClassLoader cl = ClassLoaders.getClassLoader(appId);
+		SPILocatorHandlerImpl.start(cl, SpiType.values());
 
-			start0(appId);
+		LOG.debug("Transferring to delegates ..");
 
-			// Start apps
-			AppProvisioner.get().listApps().forEach(SpiBaseImpl::start0);
+		SpiDelegateHandlerImpl.start(cl, SpiType.values(), null);
 
-		} else {
-			start0(appId);
-		}
-	}
-
-	private static void start0(String appId) {
-
-		SPILocatorHandlerImpl.start(appId, SpiType.values());
-
-		SpiDelegateHandlerImpl.start(null, appId, SpiType.values());
-
-		if (!appId.equals(AppProvisioner.DEFAULT_APP_ID)) {
-			BaseEvent.dispatch(new AppStartEvent(appId, true));
-		}
-
-		SPILocatorHandlerImpl.reshuffleClasses();
+		BaseEvent.dispatch(new AppStartEvent(appId, true));
 	}
 
 	public void stop() {
@@ -201,121 +110,75 @@ public class SpiBaseImpl implements SpiBase {
 
 		ArrayList<SpiDelegate<?>> delegates = new ArrayList<>(len);
 
-		// We need to invert the map, then call destroy
+		// We need to invert the map
 		for (int i = len - 1; i >= 0; i--) {
 			delegates.add(i, it.next());
 		}
 
 		delegates.forEach(delegate -> {
+
+			// Indicate that delegate needs to be taken out of service
 			delegate.shutdown();
-			
-			Map<Object, Object> rMap = SpiDelegateHandler.get().getResources(delegate.getSpiType());
-			
-			if(!rMap.isEmpty()) {
-				rMap.clear();
-			}
-			
+
+			// Release resources used by this delegate
+			delegate.release();
 		});
 	}
 
 	public Boolean stop(String appId) {
 
-		if (!canStop(appId)) {
-			return false;
-		}
-
 		AppClassLoader cl = AppProvisioner.get().getClassloader(appId);
 		cl.setStopping(true);
 
-		Logger.get().info("Stopping application: " + appId);
-		return stop0(appId);
+		stop(cl);
+		return true;
 	}
 
-	/**
-	 * Behind the scenes, this method checks if this app has an Spi delegate/locator
-	 * that can be taken out of service and replaced with a similar delegate from
-	 * another app
-	 * 
-	 * @param appId
-	 * @return
-	 */
-	@PlatformInternal
-	public boolean canStop(String appId) {
+	@BlockerTodo("Process result of delegate.init()")
+	static void stop(ClassLoader cl) {
 
-		AppClassLoader cl = AppProvisioner.get().getClassloader(appId);
-		Map<SpiType, SpiDelegate<?>> delegates = SpiDelegateHandler.get().getDelegates();
+		String appId = ClassLoaders.getId(cl);
+
+		// Remove locator type suffixes
+		BaseSPILocator.removeTypeSuffixes(SpiType.values(), appId);
 
 		for (SpiType type : SpiType.values()) {
 
-			if (delegates.get(type).getClass().getClassLoader().equals(cl)) {
+			SpiDelegate<?> delegate = SpiDelegateHandlerImpl.delegates.get(type);
 
-				// Remove from defaults
+			// Remove app classes from locator map
+			List<Class<?>> classes = SPILocatorHandlerImpl.getSpiClasses().get(type).remove(appId);
 
-				// Call findDelegate()
+			// Unload app classes from current delegate
+			delegate.remove0(classes);
 
+			if (ClassUtils.getAppId(delegate.getClass()).equals(appId)) {
+
+				// Indicate that delegate needs to be taken out of service
+				delegate.shutdown();
+
+				// Release resources used by this delegate
+				delegate.release();
+
+				// If current delegate originates from app, use platform's version for now
+				delegate = ClassUtils.createInstance(SpiDelegateConfigHandler.get(type, PLATFORM));
+
+				delegate.init();
+
+				SpiDelegateHandlerImpl.delegates.put(type, delegate);
 			}
 		}
 
-		return true;
+		// Remove entries for <appId> in the resource validator cache
+		SpiDelegate.emptyResourceValidatorCache(appId);
 	}
 
-	private static Boolean stop0(String appId) {
-
-		Map<SpiType, SpiDelegate<?>> delegates = SpiDelegateHandler.get().getDelegates();
-		AppClassLoader cl = AppProvisioner.get().getClassloader(appId);
-
-		for (Entry<SpiType, Map<String, List<Class<?>>>> e : SPILocatorHandlerImpl.getSpiClasses().entrySet()) {
-
-			SpiType type = e.getKey();
-			Map<String, List<Class<?>>> allClasses = e.getValue();
-
-			assert cl.isStopping();
-
-			List<Class<?>> classes = allClasses.remove(appId);
-
-			if (classes == null || classes.isEmpty()) {
-				continue;
-			}
-
-			SpiDelegate<?> delegate = delegates.get(type);
-
-			List<Class<?>> usedClasses = Utils.fromGenericList(delegate.remove0(classes));
-
-			if (!usedClasses.isEmpty()) {
-
-				BaseEvent.dispatch(new AppStopEvent(appId, false).setReason(usedClasses));
-				return false;
-			}
-		}
-
-		SPILocatorHandlerImpl.getSpiClasses().forEach((type, allClasses) -> {
-
-			if (SPILocatorHandlerImpl.getDefaultLocators().get(type).getClass().getClassLoader().equals(cl)) {
-
-				// Start new locator
-				SPILocatorHandlerImpl.start(null, new SpiType[] { type });
-			}
-
-			SpiDelegate<?> delegate = delegates.get(type);
-
-			if (delegate.getClass().getClassLoader().equals(cl)) {
-				// Start new delegate
-				SpiDelegateHandlerImpl.start(null, null, new SpiType[] { type });
-			}
-		});
-
-		// Remove as trusted
-
-		BaseEvent.dispatch(new AppStopEvent(appId, true));
-		return true;
+	static void install(ClassLoader cl) {
+		SpiDelegateHandlerImpl.install(cl);
 	}
 
-	static String getLocatorConfigKey(SpiType type) {
-		return "platform.spi." + type.toString().toLowerCase() + ".locator";
-	}
-
-	static String getDelegateConfigKey(SpiType type) {
-		return "platform.spi." + type.toString().toLowerCase() + ".delegate";
+	static void uninstall(ClassLoader cl) {
+		SpiDelegateHandlerImpl.uninstall(cl);
 	}
 
 }

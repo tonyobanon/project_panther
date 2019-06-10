@@ -41,9 +41,6 @@ public class ConfigKeys {
 	public static final String INFOBIP_USERNAME_FIELD_ID = "INFOBIP_USERNAME_FIELD_ID";
 	public static final String INFOBIP_PASSWORD_FIELD_ID = "INFOBIP_PASSWORD_FIELD_ID";
 
-	
-	public static final String $REALM_APPLICATION_FORM_BLOB_ID = "$REALM_APPLICATION_FORM";
-
 	public static final String USER_COUNT_ARCHIVE = "USER_COUNT_ARCHIVE";
 	public static final String USER_COUNT_CURRENT = "USER_COUNT_CURRENT";
 	

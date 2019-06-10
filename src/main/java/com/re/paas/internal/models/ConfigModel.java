@@ -13,7 +13,7 @@ import com.re.paas.api.classes.ResourceException;
 import com.re.paas.api.models.BaseModel;
 import com.re.paas.api.models.classes.InstallOptions;
 import com.re.paas.internal.core.keys.ConfigKeys;
-import com.re.paas.internal.models.tables.ConfigTable;
+import com.re.paas.internal.tables.defs.base.ConfigTable;
 
 @Todo("Add functionality, that allow incremental updates to config parameters from the frontend, "
 		+ "i.e uploading a config file")

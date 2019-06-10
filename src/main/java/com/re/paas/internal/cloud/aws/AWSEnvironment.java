@@ -23,7 +23,7 @@ public class AWSEnvironment implements CloudEnvironmentAdapter {
 	}
 
 	@Override
-	public Boolean canAutoScale() {
+	public Boolean isClustered() {
 		return true;
 	}
 	

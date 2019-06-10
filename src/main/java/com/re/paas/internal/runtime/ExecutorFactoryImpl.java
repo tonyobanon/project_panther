@@ -16,8 +16,6 @@ import com.re.paas.api.annotations.develop.BlockerTodo;
 import com.re.paas.api.classes.Exceptions;
 import com.re.paas.api.concurrency.ExecutorFactoryStats;
 import com.re.paas.api.events.AbstractEventDelegate;
-import com.re.paas.api.events.EventListener;
-import com.re.paas.api.events.Subscribe;
 import com.re.paas.api.logging.Logger;
 import com.re.paas.api.logging.LoggerFactory;
 import com.re.paas.api.runtime.ComputeException;
@@ -26,9 +24,10 @@ import com.re.paas.api.runtime.ExecutorFactory;
 import com.re.paas.api.runtime.ExecutorFactoryConfig;
 import com.re.paas.api.runtime.Invokable;
 import com.re.paas.api.utils.Utils;
+import com.re.paas.internal.runtime.security.Permissions;
 
 @BlockerTodo("In this class, find alternative to HashMap and ArrayList for high performance")
-public class ExecutorFactoryImpl extends ExecutorFactory implements EventListener {
+public class ExecutorFactoryImpl extends ExecutorFactory {
 
 	private static final int defaultExponent = 5;
 	private static final int executorCountCheckInterval = 5000;
@@ -66,17 +65,6 @@ public class ExecutorFactoryImpl extends ExecutorFactory implements EventListene
 
 		this.upgradePool();
 		this.scheduleUpgrade();
-	}
-
-	@Override
-	@Subscribe
-	@BlockerTodo("We should not determine that a new node needs to be provisioned by merely looking at the thread count.")
-	public void onComputeQuotaExceeded(ComputeQuotaExceededEvent evt) {
-
-		// This is triggered, when this pool can no longer be upgraded
-		// We contact the master, requesting for a new node to be provisioned
-
-		// MasterNodeRole.getDelegate().getMasterRole().
 	}
 
 	private void scheduleUpgrade() {

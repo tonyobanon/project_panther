@@ -3,11 +3,17 @@ package com.re.paas.api.events;
 import java.io.Serializable;
 import java.util.function.Consumer;
 
+import com.re.paas.api.utils.Utils;
+
 public abstract class BaseEvent implements Serializable {
 
 	private static final long serialVersionUID = 1L;
 	
 	private String eventId;
+	
+	public BaseEvent() {
+		this.eventId = Utils.newShortRandom();
+	}
 	
 	public static <T extends BaseEvent> void one(Class<T> eventType, Consumer<T> consumer) {
 		AbstractEventDelegate.getInstance().one(eventType, consumer);

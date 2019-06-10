@@ -22,7 +22,7 @@ public enum NodeRoleError implements Error {
 
 	@Override
 	public String namespace() {
-		return "rex";
+		return "node-role";
 	}
 
 	public static NodeRoleError from(int value) {

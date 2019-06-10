@@ -9,10 +9,6 @@ import com.re.paas.api.templating.AbstractObjectModelSpiDelegate;
 import com.re.paas.api.templating.TemplateObjectModel;
 
 public class TemplateObjectModelSPILocator extends BaseSPILocator {
-
-	public TemplateObjectModelSPILocator() {
-		addTypeSuffix("Template");
-	}
 	
 	@Override
 	public SpiType spiType() {

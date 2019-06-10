@@ -6,9 +6,9 @@ import java.util.Map;
 import com.re.paas.api.annotations.Final;
 import com.re.paas.api.clustering.classes.ClusterCredentials;
 import com.re.paas.api.designpatterns.Singleton;
+import com.re.paas.api.runtime.MethodMeta;
 import com.re.paas.api.runtime.spi.Resource;
 import com.re.paas.api.runtime.spi.SpiType;
-import com.re.paas.internal.runtime.security.Secure;
 
 public interface CloudEnvironment extends Resource {
 
@@ -16,7 +16,7 @@ public interface CloudEnvironment extends Resource {
 
 	Boolean enabled();
 
-	@Secure
+	@MethodMeta
 	Boolean applies();
 
 	Boolean isProduction();
@@ -35,21 +35,20 @@ public interface CloudEnvironment extends Resource {
 	Integer clusteringPort();
 
 	InetAddress clusteringHost();
-	
 
-	Boolean canAutoScale();
+	Boolean isClustered();
 
 	InetAddress wkaHost();
 	
 	Integer wkaPort();
 
-	@Secure
+	@MethodMeta
 	Map<String, String> getInstanceTags();
 
-	@Secure
+	@MethodMeta
 	ClusterCredentials credentials();
 
-	@Secure
+	@MethodMeta
 	AbstractProviderHandler providerDelegate();
 
 	static AbstractCloudEnvironmentDelegate getDelegate() {

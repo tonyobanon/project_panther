@@ -4,7 +4,7 @@ import com.re.paas.api.annotations.develop.BlockerTodo;
 import com.re.paas.api.models.BaseModel;
 import com.re.paas.api.models.ModelMethod;
 import com.re.paas.api.models.classes.InstallOptions;
-import com.re.paas.internal.fusion.functionalities.RoleFunctionalities;
+import com.re.paas.internal.fusion.functionalities.PlatformFunctionalities;
 
 @BlockerTodo("Implement ASAP")
 public class ConfigurationModel extends BaseModel {
@@ -14,7 +14,7 @@ public class ConfigurationModel extends BaseModel {
 		return "core/configuration";
 	}
 	
-	@ModelMethod(functionality = RoleFunctionalities.VIEW_SYSTEM_CONFIGURATION)
+	@ModelMethod(functionality = PlatformFunctionalities.Constants.VIEW_SYSTEM_CONFIGURATION)
 	public static final void getAll() {
 		
 		//get all config entries that is marked as front-end

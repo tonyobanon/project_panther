@@ -109,7 +109,7 @@ public class TextSearchImpl implements TextSearch {
 	}
 
 	private static Stream<QueryResult> graphSearch(QuerySpec spec) {
-		return Database.get().getTable(MatrixSpec.TABLE_NAME).getIndex(MatrixSpec.MATRIX_INDEX).query(spec);
+		return Database.get().getTable(MatrixSpec.TABLE_NAME).getIndex(MatrixSpec.MATRIX_INDEX).result(spec);
 	}
 
 	/**

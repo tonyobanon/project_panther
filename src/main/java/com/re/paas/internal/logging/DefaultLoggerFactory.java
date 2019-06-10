@@ -8,11 +8,11 @@ public class DefaultLoggerFactory implements LoggerFactory {
 
 	@Override
 	public Logger getLog(Class<?> clazz) {
-		return new DefaultLogger().setNamespace(clazz.getSimpleName()).verboseMode(VerboseLevel.TRACE);
+		return new DefaultLogger().setNamespace(clazz.getSimpleName()).verboseMode(VerboseLevel.DEBUG);
 	}
 
 	@Override
 	public Logger getLog() {
-		return new DefaultLogger().verboseMode(VerboseLevel.TRACE);
+		return new DefaultLogger().verboseMode(VerboseLevel.DEBUG);
 	}
 }

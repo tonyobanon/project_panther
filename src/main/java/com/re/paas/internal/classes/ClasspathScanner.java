@@ -19,13 +19,13 @@ import java.util.regex.Pattern;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.google.common.collect.Lists;
-import com.re.paas.api.app_provisioning.AppClassLoader;
 import com.re.paas.api.classes.Exceptions;
 import com.re.paas.api.logging.Logger;
 import com.re.paas.api.runtime.spi.BaseSPILocator.ShuffleStrategy;
 import com.re.paas.api.runtime.spi.ClassIdentityType;
 import com.re.paas.api.utils.ClassUtils;
 import com.re.paas.api.utils.Utils;
+import com.re.paas.internal.runtime.spi.ClassLoaders;
 
 public class ClasspathScanner<T> {
 
@@ -111,7 +111,8 @@ public class ClasspathScanner<T> {
 
 		try {
 
-			Path basePath = getPath();
+			ClassLoader cl = this.cl != null ? this.cl : ClassLoaders.getClassLoader();
+			Path basePath = ClassLoaders.getClassPath(cl);
 
 			Files.walkFileTree(basePath, new SimpleFileVisitor<Path>() {
 				@Override
@@ -165,7 +166,7 @@ public class ClasspathScanner<T> {
 
 	}
 
-	public ArrayList<Class<? extends T>> scanClasses() {
+	public List<Class<? extends T>> scanClasses() {
 
 		if (classIdentityType == null || classType == null) {
 			return new ArrayList<>();
@@ -177,8 +178,8 @@ public class ClasspathScanner<T> {
 
 		try {
 
-			ClassLoader cl = this.cl != null ? this.cl : (ClassLoader) AppDirectory.getBaseClassloader();
-			Path basePath = getPath();
+			ClassLoader cl = this.cl != null ? this.cl : ClassLoaders.getClassLoader();
+			Path basePath = ClassLoaders.getClassPath(cl);
 
 			Files.walkFileTree(basePath, new SimpleFileVisitor<Path>() {
 				@SuppressWarnings("unchecked")
@@ -207,7 +208,6 @@ public class ClasspathScanner<T> {
 						// System.out.println(className);
 
 						Class<? extends T> clazz = null;
-	
 
 						try {
 							clazz = (Class<? extends T>) cl.loadClass(className);
@@ -218,20 +218,16 @@ public class ClasspathScanner<T> {
 						}
 
 						if (classType.equals(clazz)) {
-							LOG.debug("Skipping base type " + ClassUtils.toString(clazz));
+							LOG.trace("Skipping base type " + ClassUtils.toString(clazz));
 							return FileVisitResult.CONTINUE;
 						}
 
 						if (!loadAbstractClasses) {
 							if (Modifier.isAbstract(clazz.getModifiers())
 									|| Modifier.isInterface(clazz.getModifiers())) {
-								LOG.debug("Skipping abstract type " + ClassUtils.toString(clazz));
+								LOG.trace("Skipping abstract type " + ClassUtils.toString(clazz));
 								return FileVisitResult.CONTINUE;
 							}
-						}
-
-						if (clazz.getSuperclass() != null && clazz.getSuperclass().equals(Enum.class)) {
-							return FileVisitResult.CONTINUE;
 						}
 
 						if (!loadAbstractClasses) {
@@ -254,7 +250,7 @@ public class ClasspathScanner<T> {
 						}
 
 						boolean b = false;
-						
+
 						switch (classIdentityType) {
 						case ASSIGNABLE_FROM:
 							b = classType.isAssignableFrom(clazz) && !ClassUtils.equals(classType, clazz);
@@ -263,8 +259,8 @@ public class ClasspathScanner<T> {
 							b = ClassUtils.isDirectChild(classType, clazz);
 							break;
 						}
-						
-						if(b) {
+
+						if (b) {
 							classes.add((Class<? extends T>) clazz);
 						}
 
@@ -299,11 +295,6 @@ public class ClasspathScanner<T> {
 		}
 
 		return shuffleStrategies.get(getShuffleStrategy()).apply(classes);
-	}
-
-	private Path getPath() {
-		return cl != null && cl instanceof AppClassLoader ? ((AppClassLoader) cl).getPath()
-				: AppDirectory.getBasePath();
 	}
 
 	public int getMaxCount() {
@@ -360,4 +351,5 @@ public class ClasspathScanner<T> {
 		this.accessAllConstructors = accessAllConstructors;
 		return this;
 	}
+
 }

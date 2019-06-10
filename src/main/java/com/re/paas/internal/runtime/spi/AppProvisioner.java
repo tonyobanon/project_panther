@@ -3,10 +3,10 @@ package com.re.paas.internal.runtime.spi;
 import java.nio.file.Path;
 import java.util.Set;
 
-import com.google.gson.JsonObject;
-import com.re.paas.api.app_provisioning.AppClassLoader;
+import com.re.paas.api.apps.AppClassLoader;
 import com.re.paas.api.designpatterns.Singleton;
-import com.re.paas.internal.runtime.security.Secure;
+import com.re.paas.api.fusion.server.JsonObject;
+import com.re.paas.api.runtime.MethodMeta;
 
 public interface AppProvisioner {
 	
@@ -16,24 +16,27 @@ public interface AppProvisioner {
 		return Singleton.get(AppProvisioner.class);
 	}
 	
-	@Secure
-	public boolean install(Path archive);
+	@MethodMeta
+	Boolean install(Path archive);
 
-	@Secure
-	public void list();
+	@MethodMeta
+	void list();
 
-	@Secure
-	public void start();
+	@MethodMeta
+	void start();
 
-	@Secure
-	public void stop(String app);
+	@MethodMeta
+	void stop(String app);
 
-	@Secure
-	public Set<String> listApps();
+	@MethodMeta
+	Set<String> listApps();
 
-	@Secure
-	public AppClassLoader getClassloader(String appId);
+	@MethodMeta
+	AppClassLoader getClassloader(String appId);
 
-	@Secure
-	public JsonObject getConfig(String appId);
+	@MethodMeta
+	JsonObject getConfig(String appId);
+	
+	@MethodMeta
+	String getAppName(String appId);
 }

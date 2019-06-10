@@ -20,8 +20,8 @@ import com.re.paas.api.utils.Utils;
 import com.re.paas.internal.classes.FormSectionType;
 import com.re.paas.internal.classes.spec.TokenCredentials;
 import com.re.paas.internal.core.keys.ConfigKeys;
-import com.re.paas.internal.models.tables.payments.CurrencyRatesTable;
 import com.re.paas.internal.realms.AdminRealm;
+import com.re.paas.internal.tables.defs.payments.CurrencyRatesTable;
 
 public class CurrencyModel extends BaseModel {
 
@@ -80,7 +80,7 @@ public class CurrencyModel extends BaseModel {
 		return getCurrencyRate(ConfigModel.get(ConfigKeys.DEFAULT_CURRENCY).toString(), currency);
 	}
 
-	protected static Double getCurrencyRate(String base, String currency) {
+	public static Double getCurrencyRate(String base, String currency) {
 
 		if (base.equals(currency)) {
 			return 1.0;

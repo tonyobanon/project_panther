@@ -23,7 +23,7 @@ public enum ParameterError implements Error {
 
 	@Override
     public String namespace() {
-    	return "listables";
+    	return "parameter";
     }
 	  
 	public static ParameterError from(int value) {

@@ -8,10 +8,6 @@ import com.re.paas.api.runtime.spi.SpiDelegate;
 import com.re.paas.api.runtime.spi.SpiType;
 
 public class RealmSPILocator extends BaseSPILocator {
-
-	public RealmSPILocator() {
-		addTypeSuffix("Realm");
-	}
 	
 	@Override
 	public SpiType spiType() {

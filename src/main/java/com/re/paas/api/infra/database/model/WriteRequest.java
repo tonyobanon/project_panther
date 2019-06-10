@@ -1,5 +1,6 @@
 package com.re.paas.api.infra.database.model;
 
+import com.re.paas.api.infra.database.document.Item;
 import com.re.paas.api.infra.database.document.xspec.DeleteItemSpec;
 import com.re.paas.api.infra.database.document.xspec.PutItemSpec;
 
@@ -17,6 +18,11 @@ public class WriteRequest {
 	public WriteRequest(PutItemSpec putRequest) {
 		this.deleteRequest = null;
 		this.putRequest = putRequest;
+	}
+	
+	public WriteRequest(Item i) {
+		this.deleteRequest = null;
+		this.putRequest = PutItemSpec.forItem(i);
 	}
 
 	public DeleteItemSpec getDeleteRequest() {

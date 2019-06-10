@@ -1,6 +1,5 @@
 package com.re.paas.internal.models;
 
-import static com.googlecode.objectify.ObjectifyService.ofy;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -13,13 +12,14 @@ import java.util.Map;
 import org.apache.http.client.fluent.Content;
 import org.apache.http.client.fluent.Request;
 
-import com.googlecode.objectify.cmd.QueryKeys;
 import com.re.paas.api.annotations.develop.BlockerBlockerTodo;
 import com.re.paas.api.classes.ClientRBRef;
 import com.re.paas.api.classes.Exceptions;
 import com.re.paas.api.classes.FluentHashMap;
 import com.re.paas.api.forms.SimpleField;
 import com.re.paas.api.forms.input.InputType;
+import com.re.paas.api.fusion.server.JsonArray;
+import com.re.paas.api.fusion.server.JsonObject;
 import com.re.paas.api.infra.cloud.CloudEnvironment;
 import com.re.paas.api.models.BaseModel;
 import com.re.paas.api.models.Model;
@@ -33,8 +33,8 @@ import com.re.paas.internal.classes.spec.TokenCredentials;
 import com.re.paas.internal.core.keys.ConfigKeys;
 import com.re.paas.internal.models.helpers.CacheHelper;
 import com.re.paas.internal.models.helpers.EntityHelper;
-import com.re.paas.internal.models.tables.locations.PublicHolidayTable;
 import com.re.paas.internal.realms.AdminRealm;
+import com.re.paas.internal.tables.defs.locations.PublicHolidayTable;
 import com.re.paas.internal.utils.BackendObjectMarshaller;
 
 @Model(dependencies = { RBModel.class })

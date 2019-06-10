@@ -72,7 +72,7 @@ public class AdapterConfig {
 	}
 	
 	public String toString() {
-		return Json.getGson().toJson(this);
+		return Json.toJson(this);
 	}
 
 	public AdapterType getType() {

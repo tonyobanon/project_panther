@@ -39,13 +39,13 @@ import com.re.paas.apps.rex.realms.AgentRealm;
 import com.re.paas.apps.rex.realms.OrganizationAdminRealm;
 import com.re.paas.internal.billing.BaseCardInfo;
 import com.re.paas.internal.billing.BillingAddress;
+import com.re.paas.internal.billing.BillingModel;
 import com.re.paas.internal.billing.InvoiceSpec;
 import com.re.paas.internal.billing.PaymentRequest;
 import com.re.paas.internal.core.keys.ConfigKeys;
+import com.re.paas.internal.locations.LocationModel;
 import com.re.paas.internal.models.BaseUserModel;
-import com.re.paas.internal.models.BillingModel;
 import com.re.paas.internal.models.ConfigModel;
-import com.re.paas.internal.models.LocationModel;
 import com.re.paas.internal.models.RoleModel;
 import com.re.paas.internal.models.SearchModel;
 import com.re.paas.internal.models.helpers.EntityHelper;
@@ -97,33 +97,6 @@ public class BaseAgentModel extends BaseModel {
 		// Add to activity stream
 
 		return id;
-	}
-
-	protected static PaymentRequest createPaymentRequest(Long agentOrganization) {
-
-		PaymentRequest req = new PaymentRequest();
-
-		AgentOrganizationTable e = ofy().load().type(AgentOrganizationTable.class).id(agentOrganization).safe();
-
-		req.setCustomerEmail(e.getEmail()).setCustomerId(e.getId()).setCustomerPhone(e.getPhone().toString());
-
-		BillingAddress billingAddress = new BillingAddress();
-
-		String[] address = e.getAddress().split(",[\\s]*");
-
-		billingAddress.setHouseNumberOrName(address[0]);
-		billingAddress.setStreet(e.getAddress().replace(address[0], ""));
-		billingAddress.setPostalCode(e.getPostalCode().toString());
-		billingAddress.setCity(LocationModel.getCityName(e.getCity().toString()));
-		billingAddress.setStateOrProvince(e.getTerritory());
-		billingAddress.setCountry(e.getCountry());
-
-		req.setBillingAddress(billingAddress);
-
-		BaseCardInfo cardInfo = BillingModel.getPaymentMethod(agentOrganization);
-		req.setCardInfo(cardInfo);
-
-		return req;
 	}
 
 	@ModelMethod(functionality = AgentOrganizationFunctionalities.Constants.LIST_AGENT_ORGANIZATION_NAMES)

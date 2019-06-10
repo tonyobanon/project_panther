@@ -46,7 +46,7 @@ public class IndexDefinition extends IndexDescriptor {
      * addition to the primary key attributes and index key attributes, which are automatically projected.
      * </p>
      */
-    private Projection projection;
+    private Projection projection = new Projection().withProjectionType(ProjectionType.KEYS_ONLY);
 
     private boolean queryOptimzed;
     

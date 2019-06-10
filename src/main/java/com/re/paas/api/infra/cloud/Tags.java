@@ -20,4 +20,6 @@ public class Tags {
 	
 	public static final String CACHE_PROFILE = "cache_profile";
 	public static final String DATABASE_PROFILE = "database_profile";
+	public final static String CLUSTER_ACCESS_KEY_TAG = "ce_cluster_access_key_tag";
+	public final static String CLUSTER_SECRET_KEY_TAG = "ce_cluster_secret_key_tag";
 }

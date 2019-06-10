@@ -13,7 +13,7 @@ import com.re.paas.api.models.BaseModel;
 import com.re.paas.api.models.classes.InstallOptions;
 import com.re.paas.api.realms.Realm;
 import com.re.paas.internal.classes.spec.BaseUserSpec;
-import com.re.paas.internal.models.tables.users.BaseUserEntity;
+import com.re.paas.internal.tables.defs.users.BaseUserTable;
 
 public class UserModel extends BaseModel {
 
@@ -43,7 +43,7 @@ public class UserModel extends BaseModel {
 
 		List<BaseUserSpec> result = new ArrayList<>();
 		
-		ofy().load().type(BaseUserEntity.class).ids(keys.keySet()).forEach((k, v) -> {
+		ofy().load().type(BaseUserTable.class).ids(keys.keySet()).forEach((k, v) -> {
 
 			BaseUserSpec spec = new BaseUserSpec().setId(v.getId()).setRole(v.getRole()).setDescription(keys.forEach(k))
 					.setName(v.getFirstName() + ClientResources.HtmlCharacterEntities.SPACE + v.getLastName())

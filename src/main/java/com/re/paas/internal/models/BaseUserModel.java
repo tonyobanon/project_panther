@@ -1,14 +1,15 @@
 package com.re.paas.internal.models;
 
-import static com.googlecode.objectify.ObjectifyService.ofy;
+import static com.re.paas.api.infra.database.document.xspec.ExpressionSpecBuilder.D;
+import static com.re.paas.api.infra.database.document.xspec.ExpressionSpecBuilder.N;
+import static com.re.paas.api.infra.database.document.xspec.ExpressionSpecBuilder.S;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import com.re.paas.api.annotations.develop.BlockerTodo;
-import com.re.paas.api.annotations.develop.Note;
-import com.re.paas.api.annotations.develop.PlatformInternal;
 import com.re.paas.api.annotations.develop.Todo;
 import com.re.paas.api.classes.ClientRBRef;
 import com.re.paas.api.classes.ClientResources;
@@ -16,6 +17,18 @@ import com.re.paas.api.classes.FluentArrayList;
 import com.re.paas.api.classes.FluentHashMap;
 import com.re.paas.api.classes.PlatformException;
 import com.re.paas.api.classes.ResourceException;
+import com.re.paas.api.infra.database.document.Database;
+import com.re.paas.api.infra.database.document.Item;
+import com.re.paas.api.infra.database.document.PrimaryKey;
+import com.re.paas.api.infra.database.document.Table;
+import com.re.paas.api.infra.database.document.xspec.DeleteItemSpec;
+import com.re.paas.api.infra.database.document.xspec.ExpressionSpecBuilder;
+import com.re.paas.api.infra.database.document.xspec.GetItemSpec;
+import com.re.paas.api.infra.database.document.xspec.GetItemsSpec;
+import com.re.paas.api.infra.database.document.xspec.PutItemSpec;
+import com.re.paas.api.infra.database.document.xspec.QuerySpec;
+import com.re.paas.api.infra.database.document.xspec.UpdateItemSpec;
+import com.re.paas.api.infra.database.model.BatchGetItemRequest;
 import com.re.paas.api.models.BaseModel;
 import com.re.paas.api.models.Model;
 import com.re.paas.api.models.ModelMethod;
@@ -30,21 +43,25 @@ import com.re.paas.api.sentences.Preposition;
 import com.re.paas.api.sentences.Sentence;
 import com.re.paas.api.sentences.SubjectEntity;
 import com.re.paas.api.utils.Dates;
+import com.re.paas.internal.classes.Json;
 import com.re.paas.internal.core.keys.ConfigKeys;
 import com.re.paas.internal.core.keys.MetricKeys;
 import com.re.paas.internal.fusion.functionalities.AuthFunctionalities;
 import com.re.paas.internal.fusion.functionalities.UserFunctionalities;
 import com.re.paas.internal.fusion.services.impl.Unexposed;
 import com.re.paas.internal.models.errors.UserAccountError;
-import com.re.paas.internal.models.helpers.EntityHelper;
 import com.re.paas.internal.models.listables.IndexedNameTypes;
-import com.re.paas.internal.models.tables.users.BaseUserEntity;
-import com.re.paas.internal.models.tables.users.UserFormValueEntity;
 import com.re.paas.internal.realms.AdminRealm;
 import com.re.paas.internal.sentences.ObjectTypes;
 import com.re.paas.internal.sentences.SubjectTypes;
+import com.re.paas.internal.tables.defs.payments.BillingContextTable;
+import com.re.paas.internal.tables.defs.users.BaseUserTable;
+import com.re.paas.internal.tables.defs.users.UserFormValueTable;
+import com.re.paas.internal.tables.spec.payments.BillingContextTableSpec;
+import com.re.paas.internal.tables.spec.users.BaseUserTableSpec;
+import com.re.paas.internal.tables.spec.users.UserFormValueTableSpec;
 
-@Todo("stop storing passwords as plain text, hash it instead")
+@BlockerTodo("stop storing passwords as plain text, hash it instead")
 @Model(dependencies = RoleModel.class)
 public class BaseUserModel extends BaseModel {
 
@@ -80,8 +97,16 @@ public class BaseUserModel extends BaseModel {
 		// Delete form values
 		deleteFieldValuesForUser(id);
 
-		// Delete entity
-		ofy().delete().key(Key.create(BaseUserEntity.class, id)).now();
+		// Delete entry
+
+		Table t = Database.get().getTable(BaseUserTable.class);
+
+		DeleteItemSpec spec = new ExpressionSpecBuilder().withCondition(N(BaseUserTableSpec.ID).eq(id))
+				.buildForDeleteItem();
+
+		t.deleteItem(spec);
+
+		// Update metric
 
 		ConfigModel.put(ConfigKeys.USER_COUNT_CURRENT,
 				Integer.parseInt(ConfigModel.get(ConfigKeys.USER_COUNT_CURRENT)) - 1);
@@ -91,99 +116,150 @@ public class BaseUserModel extends BaseModel {
 	}
 
 	public static Long getUserId(String email) {
-		BaseUserEntity e = ofy().load().type(BaseUserEntity.class).filter("email = ", email).first().now();
-		if (e != null) {
-			return e.getId();
-		} else {
-			throw new NullPointerException();
-		}
+
+		Table t = Database.get().getTable(BaseUserTable.class);
+
+		QuerySpec spec = new ExpressionSpecBuilder().withKeyCondition(S(BaseUserTableSpec.EMAIL).eq(email))
+				.addProjection(BaseUserTableSpec.ID).buildForQuery();
+
+		Item i = t.getIndex(BaseUserTableSpec.EMAIL_INDEX).first(spec);
+
+		return i != null ? i.getLong(BaseUserTableSpec.ID) : null;
 	}
 
 	@ModelMethod(functionality = AuthFunctionalities.Constants.EMAIL_LOGIN_USER)
 	public static Long loginByEmail(String email, String password) {
 
-		if (!doesEmailExist(email)) {
+		Table t = Database.get().getTable(BaseUserTable.class);
+
+		QuerySpec spec = new ExpressionSpecBuilder().withKeyCondition(S(BaseUserTableSpec.EMAIL).eq(email))
+				.addProjection(BaseUserTableSpec.PASSWORD).addProjection(BaseUserTableSpec.ID).buildForQuery();
+
+		Item i = t.getIndex(BaseUserTableSpec.EMAIL_INDEX).first(spec);
+
+		if (i == null) {
 			// Incorrect email
 			throw new PlatformException(UserAccountError.EMAIL_DOES_NOT_EXIST);
 		}
 
-		BaseUserEntity e = ofy().load().type(BaseUserEntity.class).filter("email = ", email).first().now();
-		if (e.getPassword().equals(password)) {
-			return e.getId();
-		} else {
+		if (!i.getString(BaseUserTableSpec.PASSWORD).equals(password)) {
 			// Wrong password
 			throw new PlatformException(UserAccountError.INCORRECT_PASSWORD);
 		}
+
+		return i.getLong(BaseUserTableSpec.ID);
 	}
 
-	@Note("The phone index has been commented out in the entity")
-	@BlockerTodo("Phone Index is currently not used on the frontend. Indexes are expensive remember")
 	@ModelMethod(functionality = AuthFunctionalities.Constants.PHONE_LOGIN_USER)
-	public static Long loginByPhone(Long phone, String password) {
+	public static Long loginByPhone(String phone, String password) {
 
-		if (!doesPhoneExist(phone)) {
-			// Incorrect phone
+		Table t = Database.get().getTable(BaseUserTable.class);
+
+		QuerySpec spec = new ExpressionSpecBuilder().withKeyCondition(S(BaseUserTableSpec.PHONE).eq(phone))
+				.addProjection(BaseUserTableSpec.PASSWORD).addProjection(BaseUserTableSpec.ID).buildForQuery();
+
+		Item i = t.getIndex(BaseUserTableSpec.PHONE_INDEX).first(spec);
+
+		if (i == null) {
+			// Incorrect email
 			throw new PlatformException(UserAccountError.PHONE_DOES_NOT_EXIST);
 		}
 
-		BaseUserEntity e = ofy().load().type(BaseUserEntity.class).filter("phone = ", phone.toString()).first().now();
-		if (e.getPassword().equals(password)) {
-			return e.getId();
-		} else {
+		if (!i.getString(BaseUserTableSpec.PASSWORD).equals(password)) {
 			// Wrong password
 			throw new PlatformException(UserAccountError.INCORRECT_PASSWORD);
 		}
+
+		return i.getLong(BaseUserTableSpec.ID);
 	}
 
 	@Todo("Validate user's phone number, and other info properly, make method protected")
+	@BlockerTodo("Long id = nextKey(); may be problematic due to collisions, fix")
+	@BlockerTodo("The address should conform to NUMBER, STREET [SUITE AVENUE], see BillingModel.createPaymentRequest(..)")
+	
 	public static Long registerUser(UserProfileSpec spec, String role, Long principal) {
 
-		BaseUserEntity e = EntityHelper.fromObjectModel(role, principal, spec);
-
-		if (doesEmailExist(e.getEmail())) {
+		if (doesEmailExist(spec.getEmail())) {
 			throw new PlatformException(UserAccountError.EMAIL_ALREADY_EXISTS);
 		}
 
-		if (doesPhoneExist(e.getPhone())) {
+		if (doesPhoneExist(spec.getPhone())) {
 			throw new PlatformException(UserAccountError.PHONE_ALREADY_EXISTS);
 		}
 
-		e.setId(nextKey());
+		Long id = nextKey();
 
-		ofy().save().entity(e).now();
+		Table t = Database.get().getTable(BaseUserTable.class);
+
+		Item i = Item.fromMap(Json.toMap(spec));
+
+		// Update item with id, role and principal
+		i.with(BaseUserTableSpec.ID, id).with(BaseUserTableSpec.ROLE, role).with(BaseUserTableSpec.PRINCIPAL, principal)
+				.with(BaseUserTableSpec.DATE_CREATED, Dates.now()).with(BaseUserTableSpec.DATE_UPDATED, Dates.now());
+
+		t.putItem(PutItemSpec.forItem(i));
+
+		// Create new billing context for account
+
+		Database.get().getTable(BillingContextTable.class)
+				.putItem(PutItemSpec.forItem(new Item().with(BillingContextTableSpec.ACCOUNT_ID, id)));
+
+		// Update system metrics
 
 		ConfigModel.put(ConfigKeys.USER_COUNT_CURRENT,
 				Integer.parseInt(ConfigModel.get(ConfigKeys.USER_COUNT_CURRENT)) + 1);
 		MetricsModel.increment(MetricKeys.USERS_COUNT);
 
 		// Update cached list index
-		SearchModel.addCachedListKey(IndexedNameTypes.USER, e.getId());
+		SearchModel.addCachedListKey(IndexedNameTypes.USER, id);
 
-		return e.getId();
+		return id;
 	}
 
 	private static boolean doesEmailExist(String email) {
-		return ofy().load().type(BaseUserEntity.class).filter("email = ", email).first().now() != null;
+
+		Table t = Database.get().getTable(BaseUserTable.class);
+
+		QuerySpec spec = new ExpressionSpecBuilder().withKeyCondition(S(BaseUserTableSpec.EMAIL).eq(email))
+				.buildForQuery();
+
+		Item i = t.getIndex(BaseUserTableSpec.EMAIL_INDEX).first(spec);
+		return i != null;
 	}
 
-	private static boolean doesPhoneExist(Long phone) {
-		return ofy().load().type(BaseUserEntity.class).filter("phone = ", phone.toString()).first().now() != null;
+	private static boolean doesPhoneExist(String phone) {
+
+		Table t = Database.get().getTable(BaseUserTable.class);
+
+		QuerySpec spec = new ExpressionSpecBuilder().withKeyCondition(S(BaseUserTableSpec.PHONE).eq(phone))
+				.buildForQuery();
+
+		Item i = t.getIndex(BaseUserTableSpec.PHONE_INDEX).first(spec);
+		return i != null;
 	}
 
-	@PlatformInternal
-	public static BaseUserEntity get(Long userId) {
-		return ofy().load().type(BaseUserEntity.class).id(userId).safe();
+	private static Item get(Long userId, String... projections) {
+
+		Table t = Database.get().getTable(BaseUserTable.class);
+		ExpressionSpecBuilder expr = new ExpressionSpecBuilder().addProjection(projections)
+				.withCondition(N(BaseUserTableSpec.ID).eq(userId));
+
+		GetItemSpec spec = expr.buildForGetItem();
+		return t.getItem(spec);
 	}
 
-	@ModelMethod(functionality = { 
-			UserFunctionalities.Constants.VIEW_OWN_PROFILE, 
+	private static String get(Long userId, String projection) {
+		return get(userId, new String[] { projection }).get(projection).toString();
+	}
+
+	@ModelMethod(functionality = { UserFunctionalities.Constants.VIEW_OWN_PROFILE,
 			UserFunctionalities.Constants.MANAGE_USER_ACCOUNTS })
 	public static String getAvatar(Long userId) {
-		return userId.equals(-1l) ? null : get(userId).getImage();
+		return userId.equals(-1l) ? null : get(userId, BaseUserTableSpec.IMAGE);
 	}
 
 	protected static Boolean isMaleUser(Long userId) {
-		return Gender.from(get(userId).getGender()).equals(Gender.MALE);
+		return Gender.from(Integer.parseInt(get(userId, BaseUserTableSpec.GENDER))).equals(Gender.MALE);
 	}
 
 	@ModelMethod(functionality = UserFunctionalities.Constants.GET_USER_PROFILE)
@@ -196,37 +272,55 @@ public class BaseUserModel extends BaseModel {
 	}
 
 	@ModelMethod(functionality = UserFunctionalities.Constants.GET_USER_PROFILE)
-	public static UserProfileSpec getProfile(Long principal, Long userId) {
+	public static UserProfileSpec getProfile(Long principal, Long userId, String... projections) {
 
-		if (!canAccessUserProfile(principal, userId)) {
+		if (principal != null && !canAccessUserProfile(principal, userId)) {
 			throw new ResourceException(ResourceException.ACCESS_NOT_ALLOWED);
 		}
 
-		return EntityHelper.toObjectModel(get(userId));
+		Item i = get(userId, projections);
+
+		UserProfileSpec spec = new UserProfileSpec()
+				.setId(i.getLong(BaseUserTableSpec.ID))
+				.setApplicationId(i.getLong(BaseUserTableSpec.APPLICATION_ID))
+				.setEmail(i.getString(BaseUserTableSpec.EMAIL)).setFirstName(i.getString(BaseUserTableSpec.FIRST_NAME))
+				.setMiddleName(i.getString(BaseUserTableSpec.MIDDLE_NAME))
+				.setLastName(i.getString(BaseUserTableSpec.LAST_NAME)).setImage(i.getString(BaseUserTableSpec.IMAGE))
+				.setPhone(i.getString(BaseUserTableSpec.PHONE))
+				.setDateOfBirth(i.getDate(BaseUserTableSpec.DATE_OF_BIRTH))
+				.setGender(Gender.from(i.getInt(BaseUserTableSpec.GENDER)))
+				.setAddress(i.getString(BaseUserTableSpec.ADDRESS)).setCity(i.getInt(BaseUserTableSpec.CITY))
+				.setTerritory(i.getString(BaseUserTableSpec.TERRITORY))
+				.setCountry(i.getString(BaseUserTableSpec.COUNTRY))
+				.setFacebookProfile(i.getString(BaseUserTableSpec.FACEBOOK_PROFILE))
+				.setTwitterProfile(i.getString(BaseUserTableSpec.TWITTER_PROFILE))
+				.setLinkedInProfile(i.getString(BaseUserTableSpec.LINKEDIN_PROFILE))
+				.setSkypeProfile(i.getString(BaseUserTableSpec.SKYPE_PROFILE))
+				.setPreferredLocale(i.getString(BaseUserTableSpec.PREFERRED_LOCALE));
+
+		return spec;
 	}
 
 	@ModelMethod(functionality = UserFunctionalities.Constants.VIEW_OWN_PROFILE)
-	public static UserProfileSpec getProfile(Long userId) {
-		return EntityHelper.toObjectModel(get(userId));
+	public static UserProfileSpec getProfile(Long userId, String... projections) {
+		return getProfile(null, userId, projections);
 	}
 
-	@ModelMethod(functionality = { 
-			UserFunctionalities.Constants.VIEW_OWN_PROFILE, 
+	@ModelMethod(functionality = { UserFunctionalities.Constants.VIEW_OWN_PROFILE,
 			UserFunctionalities.Constants.MANAGE_USER_ACCOUNTS })
 	public static String getRole(Long userId) {
-		return get(userId).getRole();
+		return get(userId, BaseUserTableSpec.ROLE);
 	}
-	
+
 	public static Long getApplicationId(Long userId) {
-		return get(userId).getApplicationId();
+		return Long.parseLong(get(userId, BaseUserTableSpec.APPLICATION_ID));
 	}
 
 	public static String getPreferredLocale(Long userId) {
-		return get(userId).getPreferredLocale();
+		return get(userId, BaseUserTableSpec.PREFERRED_LOCALE);
 	}
 
-	@ModelMethod(functionality = { 
-			UserFunctionalities.Constants.MANAGE_OWN_PROFILE, 
+	@ModelMethod(functionality = { UserFunctionalities.Constants.MANAGE_OWN_PROFILE,
 			UserFunctionalities.Constants.MANAGE_USER_ACCOUNTS })
 	public static void updateEmail(Long principal, Long userId, String email) {
 
@@ -234,9 +328,13 @@ public class BaseUserModel extends BaseModel {
 			throw new PlatformException(UserAccountError.EMAIL_ALREADY_EXISTS);
 		}
 
-		BaseUserEntity e = get(userId).setEmail(email).setDateUpdated(Dates.now());
-		;
-		ofy().save().entity(e).now();
+		Table t = Database.get().getTable(BaseUserTable.class);
+
+		UpdateItemSpec spec = new ExpressionSpecBuilder().withCondition(N(BaseUserTableSpec.ID).eq(userId))
+				.addUpdate(S(BaseUserTableSpec.EMAIL).set(email))
+				.addUpdate(D(BaseUserTableSpec.DATE_UPDATED).set(Dates.now())).buildForUpdate();
+
+		t.updateItem(spec);
 
 		// Add to activity stream
 
@@ -255,18 +353,21 @@ public class BaseUserModel extends BaseModel {
 		ActivityStreamModel.newActivity(activity);
 	}
 
-	@ModelMethod(functionality = { 
-			UserFunctionalities.Constants.MANAGE_OWN_PROFILE, 
+	@ModelMethod(functionality = { UserFunctionalities.Constants.MANAGE_OWN_PROFILE,
 			UserFunctionalities.Constants.MANAGE_USER_ACCOUNTS })
-	public static void updatePhone(Long principal, Long userId, Long phone) {
+	public static void updatePhone(Long principal, Long userId, String phone) {
 
 		if (doesPhoneExist(phone)) {
 			throw new PlatformException(UserAccountError.PHONE_ALREADY_EXISTS);
 		}
 
-		BaseUserEntity e = get(userId).setPhone(phone).setDateUpdated(Dates.now());
-		;
-		ofy().save().entity(e).now();
+		Table t = Database.get().getTable(BaseUserTable.class);
+
+		UpdateItemSpec spec = new ExpressionSpecBuilder().withCondition(N(BaseUserTableSpec.ID).eq(userId))
+				.addUpdate(S(BaseUserTableSpec.PHONE).set(phone))
+				.addUpdate(D(BaseUserTableSpec.DATE_UPDATED).set(Dates.now())).buildForUpdate();
+
+		t.updateItem(spec);
 
 		// Add to activity stream
 
@@ -285,19 +386,18 @@ public class BaseUserModel extends BaseModel {
 		ActivityStreamModel.newActivity(activity);
 	}
 
-	@ModelMethod(functionality = { 
-			UserFunctionalities.Constants.MANAGE_OWN_PROFILE, 
+	@ModelMethod(functionality = { UserFunctionalities.Constants.MANAGE_OWN_PROFILE,
 			UserFunctionalities.Constants.MANAGE_USER_ACCOUNTS })
 	public static void updatePassword(Long principal, Long userId, String currentPassword, String newPassword) {
-		BaseUserEntity e = get(userId);
 
-		if (e.getPassword().equals(currentPassword)) {
-			e.setPassword(newPassword).setDateUpdated(Dates.now());
-		} else {
-			throw new PlatformException(UserAccountError.PASSWORDS_MISMATCH);
-		}
+		Table t = Database.get().getTable(BaseUserTable.class);
 
-		ofy().save().entity(e).now();
+		UpdateItemSpec spec = new ExpressionSpecBuilder().withCondition(N(BaseUserTableSpec.ID).eq(userId))
+				.withCondition(S(BaseUserTableSpec.PASSWORD).eq(currentPassword))
+				.addUpdate(S(BaseUserTableSpec.PASSWORD).set(newPassword))
+				.addUpdate(D(BaseUserTableSpec.DATE_UPDATED).set(Dates.now())).buildForUpdate();
+
+		t.updateItem(spec);
 
 		// Add to activity stream
 
@@ -314,12 +414,17 @@ public class BaseUserModel extends BaseModel {
 		ActivityStreamModel.newActivity(activity);
 	}
 
-	@ModelMethod(functionality = {
-			UserFunctionalities.Constants.MANAGE_OWN_PROFILE, 
-			UserFunctionalities.Constants.MANAGE_USER_ACCOUNTS})
+	@ModelMethod(functionality = { UserFunctionalities.Constants.MANAGE_OWN_PROFILE,
+			UserFunctionalities.Constants.MANAGE_USER_ACCOUNTS })
 	public static void updateAvatar(Long principal, Long userId, String blobId) {
-		BaseUserEntity e = get(userId).setImage(blobId).setDateUpdated(Dates.now());
-		ofy().save().entity(e).now();
+
+		Table t = Database.get().getTable(BaseUserTable.class);
+
+		UpdateItemSpec spec = new ExpressionSpecBuilder().withCondition(N(BaseUserTableSpec.ID).eq(userId))
+				.addUpdate(S(BaseUserTableSpec.IMAGE).set(blobId))
+				.addUpdate(D(BaseUserTableSpec.DATE_UPDATED).set(Dates.now())).buildForUpdate();
+
+		t.updateItem(spec);
 
 		// Add to activity stream
 
@@ -340,8 +445,13 @@ public class BaseUserModel extends BaseModel {
 	@ModelMethod(functionality = UserFunctionalities.Constants.MANAGE_USER_ACCOUNTS)
 	public static void updateRole(Long principal, Long userId, String role) {
 
-		BaseUserEntity e = get(userId).setRole(role).setDateUpdated(Dates.now());
-		ofy().save().entity(e).now();
+		Table t = Database.get().getTable(BaseUserTable.class);
+
+		UpdateItemSpec spec = new ExpressionSpecBuilder().withCondition(N(BaseUserTableSpec.ID).eq(userId))
+				.addUpdate(S(BaseUserTableSpec.ROLE).set(role))
+				.addUpdate(D(BaseUserTableSpec.DATE_UPDATED).set(Dates.now())).buildForUpdate();
+
+		t.updateItem(spec);
 
 		// Add to activity stream
 
@@ -358,48 +468,55 @@ public class BaseUserModel extends BaseModel {
 
 	protected static void deleteFieldValues(String fieldId) {
 
-		List<Key<UserFormValueEntity>> keys = new FluentArrayList<>();
+		Table t = Database.get().getTable(UserFormValueTable.class);
 
-		ofy().load().type(UserFormValueEntity.class).filter("fieldId = ", fieldId).forEach(e -> {
-			keys.add(Key.create(UserFormValueEntity.class, e.getId()));
-		});
+		DeleteItemSpec spec = new ExpressionSpecBuilder().withCondition(S(UserFormValueTableSpec.FIELD_ID).eq(fieldId))
+				.buildForDeleteItem();
 
-		ofy().delete().keys(keys).now();
+		t.deleteItem(spec);
 	}
 
 	private static void deleteFieldValuesForUser(Long userId) {
 
-		List<Key<UserFormValueEntity>> keys = new FluentArrayList<>();
+		Table t = Database.get().getTable(UserFormValueTable.class);
 
-		ofy().load().type(UserFormValueEntity.class).filter("userId = ", userId).forEach(e -> {
-			keys.add(Key.create(UserFormValueEntity.class, e.getId()));
-		});
+		DeleteItemSpec spec = new ExpressionSpecBuilder()
+				.withCondition(S(UserFormValueTableSpec.USER_ID).eq(userId.toString())).buildForDeleteItem();
 
-		ofy().delete().keys(keys).now();
+		t.deleteItem(spec);
 	}
 
 	@Unexposed
 	@ModelMethod(functionality = UserFunctionalities.Constants.MANAGE_USER_ACCOUNTS)
-	public static Map<Long, String> getFieldValues(Long userId, Collection<Long> fieldIds) {
+	public static Map<String, String> getFieldValues(Long userId, Collection<String> fieldIds) {
+		Map<String, String> result = new FluentHashMap<>();
 
-		Map<Long, String> result = new FluentHashMap<>();
+		Collection<Item> items = Database.get().getTable(UserFormValueTable.class)
+				.getIndex(UserFormValueTableSpec.USER_INDEX).all(UserFormValueTableSpec.USER_ID, userId.toString(),
+						UserFormValueTableSpec.FIELD_ID, fieldIds.toArray(new String[fieldIds.size()]),
+						UserFormValueTableSpec.VALUE);
 
-		fieldIds.forEach(fieldId -> {
-
-			UserFormValueEntity e = ofy().load().type(UserFormValueEntity.class).filter("fieldId = ", fieldId)
-					.filter("userId = ", userId).first().now();
-
-			result.put(fieldId, e != null ? e.getValue() : null);
+		items.forEach(i -> {
+			result.put(i.getString(UserFormValueTableSpec.FIELD_ID), i.getString(UserFormValueTableSpec.VALUE));
 		});
+
 		return result;
 	}
 
 	@ModelMethod(functionality = UserFunctionalities.Constants.GET_PERSON_NAMES)
 	public static Map<Long, String> getPersonNames(List<Long> ids) {
+
+		GetItemsSpec spec = GetItemsSpec.forKeys(
+				ids.stream().map(id -> new PrimaryKey(BaseUserTableSpec.ID, id)).collect(Collectors.toList()),
+				BaseUserTableSpec.FIRST_NAME, BaseUserTableSpec.MIDDLE_NAME, BaseUserTableSpec.LAST_NAME);
+
 		Map<Long, String> names = new FluentHashMap<>();
-		ofy().load().type(BaseUserEntity.class).ids(ids).forEach((k, v) -> {
-			names.put(k, v.getFirstName() + " " + v.getMiddleName() + " " + v.getLastName());
-		});
+
+		Database.get().batchGetItem(new BatchGetItemRequest().addRequestItem(UserFormValueTable.class, spec))
+				.getResponses(UserFormValueTable.class).forEach(i -> {
+					names.put(i.getLong(BaseUserTableSpec.ID), getName(i, true));
+				});
+
 		return names;
 	}
 
@@ -410,29 +527,38 @@ public class BaseUserModel extends BaseModel {
 		if (id.equals(-1l)) {
 			return ClientRBRef.get("guest");
 		}
-		BaseUserEntity v = ofy().load().type(BaseUserEntity.class).id(id).safe();
-		return (full
-				? v.getFirstName() + ClientResources.HtmlCharacterEntities.SPACE + v.getMiddleName()
-						+ ClientResources.HtmlCharacterEntities.SPACE + v.getLastName()
-				: v.getFirstName() + ClientResources.HtmlCharacterEntities.SPACE + v.getLastName());
+
+		// Todo: Why fetch BaseUserTableSpec.MIDDLE_NAME if !full
+		Item i = get(id, BaseUserTableSpec.FIRST_NAME, BaseUserTableSpec.MIDDLE_NAME, BaseUserTableSpec.LAST_NAME);
+		return getName(i, full);
+	}
+
+	private static String getName(Item i, Boolean full) {
+
+		String fname = i.getString(BaseUserTableSpec.FIRST_NAME);
+		String mname = i.getString(BaseUserTableSpec.MIDDLE_NAME);
+		String lname = i.getString(BaseUserTableSpec.LAST_NAME);
+
+		return fname + (full ? ClientResources.HtmlCharacterEntities.SPACE + mname : "")
+				+ ClientResources.HtmlCharacterEntities.SPACE + lname;
 	}
 
 	@Override
 	public void start() {
 		// TODO Auto-generated method stub
-		
+
 	}
 
 	@Override
 	public void update() {
 		// TODO Auto-generated method stub
-		
+
 	}
 
 	@Override
 	public void unInstall() {
 		// TODO Auto-generated method stub
-		
+
 	}
 
 }

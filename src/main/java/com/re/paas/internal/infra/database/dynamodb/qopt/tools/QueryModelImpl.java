@@ -205,12 +205,12 @@ public class QueryModelImpl implements QueryModel {
 
 						Condition condition = N(AttributeModelImpl.indexToHashKey.get(index.getId()))
 								.eq(_currentPartition).and(rangeCondition);
-						specExpr.withKeyCondition(condition).addProjections(projections);
+						specExpr.withKeyCondition(condition).addProjection(projections);
 
 						LOG.debug("Query for partition " + _currentPartition + " in index '" + index.getId()
 								+ "' has started");
 
-						Stream<QueryResult> qResult = queryIndex.query(specExpr.buildForQuery());
+						Stream<QueryResult> qResult = queryIndex.result(specExpr.buildForQuery());
 
 						qResult.forEach(r -> {
 							r.getItems().forEach(consumer);
@@ -411,7 +411,7 @@ public class QueryModelImpl implements QueryModel {
 				.withKeyCondition(S(IndexUPartitionSpec.ID).eq(index.getId()).and(N(IndexUPartitionSpec.SIZE).ge(size)))
 				.addProjection(IndexUPartitionSpec.PARTITION_ID).buildForQuery().setConsistentRead(true).setLimit(1);
 
-		Stream<QueryResult> result = indexUPartition.getIndex(IndexUPartitionSpec.SIZE_INDEX).query(spec);
+		Stream<QueryResult> result = indexUPartition.getIndex(IndexUPartitionSpec.SIZE_INDEX).result(spec);
 
 		Optional<QueryResult> o = result.findFirst();
 

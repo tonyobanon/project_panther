@@ -1,5 +1,6 @@
 package com.re.paas.api.utils;
 
+import java.io.File;
 import java.io.InputStream;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -21,24 +22,33 @@ import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+// Remove all this
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Lists;
-import com.re.paas.api.annotations.develop.BlockerTodo;
-import com.re.paas.api.annotations.develop.Todo;
-import com.re.paas.api.app_provisioning.AppClassLoader;
-import com.re.paas.api.classes.Exceptions;
-import com.re.paas.api.runtime.ClassLoaderSecurity;
-import com.re.paas.internal.runtime.spi.AppProvisioner;
 
+import com.re.paas.api.annotations.develop.BlockerTodo;
+import com.re.paas.api.apps.AppClassLoader;
+import com.re.paas.api.classes.Exceptions;
+import com.re.paas.api.classes.ParameterizedClass;
+import com.re.paas.api.runtime.ClassLoaderSecurity;
+import com.re.paas.internal.runtime.spi.AppProvisioner; // Add this as API since it's impl already abstracted as a singleton
+import com.re.paas.internal.runtime.spi.ClassLoaders; // Spin this off as a singleton ?
+
+@BlockerTodo("Refractor this, I see it's accessing a lot of internal stuff, i.e it's calling AppClassLoader, e.t.c")
 public class ClassUtils<T> {
 
 	private static final Pattern DOT_PATTERN = Pattern.compile(Pattern.quote("."));
 	private static final Pattern HASH_PATTERN = Pattern.compile(Pattern.quote("#"));
 
-	private static final String classNamePattern = "([\\p{L}_$][\\p{L}\\p{N}_$]*\\.)*[\\p{L}_$][\\p{L}\\p{N}_$]*";
-	private static final Pattern GENERIC_TYPE_PATTERN = Pattern
-			.compile("((?<=\\Q<\\E)" + classNamePattern + "(\\Q, \\E" + classNamePattern + ")*" + "(?=\\Q>\\E\\z)){1}");
+	private static final Pattern nonGenericlassNamePattern = Pattern
+			.compile("(([\\p{L}_$][\\p{L}\\p{N}_$]*\\.)*[\\p{L}_$][\\p{L}\\p{N}_$]*)");
+
+	private static final Pattern classNamePatternAll = Pattern.compile(nonGenericlassNamePattern + "(\\Q<\\E"
+			+ nonGenericlassNamePattern + "(\\s*\\Q,\\E\\s*" + nonGenericlassNamePattern + ")*" + "\\Q>\\E){0,1}");
+
+	private static final Pattern GENERIC_TYPE_PATTERN = Pattern.compile("((?<=\\Q<\\E)" + classNamePatternAll
+			+ "(\\s*\\Q,\\E\\s*" + classNamePatternAll + ")*" + "(?=\\Q>\\E\\z){1}){1}");
 
 	public static boolean isMethodOverrriden(final Method myMethod) {
 		Class<?> declaringClass = myMethod.getDeclaringClass();
@@ -143,9 +153,9 @@ public class ClassUtils<T> {
 	public static InputStream getResourceAsStream(Class<?> claz, String name) {
 
 		/**
-		 * remove leading slash so path will work with classes in a JAR file
+		 * remove leading file separator so path will work with classes in a JAR file
 		 */
-		while (name.startsWith("/")) {
+		while (name.startsWith(File.separator)) {
 			name = name.substring(1);
 		}
 
@@ -155,29 +165,40 @@ public class ClassUtils<T> {
 
 	}
 
-	@Todo("Add support for multi-depth generic hierarchies")
-	@BlockerTodo("Split using proper regex not ', '")
+	public static ParameterizedClass getParameterizedClass(ClassLoader cl, Type type) {
+		return getParameterizedClass(cl, type.getTypeName());
+	}
+
 	/**
-	 * This method does not support multi-depth generic hierarchies
+	 * 
+	 * @param cl
+	 * @param typeName
+	 * @return Class | List<><Class>
 	 */
-	public static List<Class<?>> getGenericRefs(ClassLoader cl, Type t) {
-		List<Class<?>> result = Lists.newArrayList();
+	public static ParameterizedClass getParameterizedClass(ClassLoader cl, String typeName) {
 
-		String typeName = t.getTypeName();
+		Matcher m = nonGenericlassNamePattern.matcher(typeName);
+		m.find();
 
-		Matcher m = GENERIC_TYPE_PATTERN.matcher(typeName);
+		ParameterizedClass result = null;
+		try {
+			result = new ParameterizedClass(cl.loadClass(m.group()));
+		} catch (ClassNotFoundException e) {
+			Exceptions.throwRuntime(e);
+		}
 
-		boolean b = m.find();
+		Matcher m1 = GENERIC_TYPE_PATTERN.matcher(typeName);
+
+		boolean b = m1.find();
 
 		if (b) {
-			String classes = m.group();
 
-			for (String o : classes.split(", ")) {
-				try {
-					result.add(cl.loadClass(o));
-				} catch (ClassNotFoundException e) {
-					throw new RuntimeException(e);
-				}
+			String classes = m1.group();
+
+			Matcher m2 = classNamePatternAll.matcher(classes);
+
+			while (m2.find()) {
+				result.addGenericType(getParameterizedClass(cl, m2.group()));
 			}
 		}
 		return result;
@@ -233,21 +254,6 @@ public class ClassUtils<T> {
 		return Joiner.on(".").join(parts);
 	}
 
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
 	/**
 	 * This function generates a name that can be used to identify this class
 	 * uniquely accross the platform
@@ -280,16 +286,14 @@ public class ClassUtils<T> {
 
 		String[] parts = HASH_PATTERN.split(name);
 
+		if (parts.length == 1) {
+			return forName(name, ClassLoaders.getClassLoader());
+		}
+
 		String appId = parts[0];
 		String className = parts[1];
 
-		ClassLoader cl = null;
-
-		if (AppProvisioner.DEFAULT_APP_ID.equals(appId)) {
-			cl = ClassLoader.getSystemClassLoader();
-		} else {
-			cl = AppProvisioner.get().getClassloader(appId);
-		}
+		ClassLoader cl = ClassLoaders.getClassLoader(appId);
 
 		return forName(className, cl);
 	}
@@ -320,33 +324,18 @@ public class ClassUtils<T> {
 
 	/**
 	 * This method should only be used for SPI classes
+	 * 
 	 * @param clazz
 	 * @return
 	 */
 	public static String getAppId(Class<?> clazz) {
-		ClassLoader cl = clazz.getClassLoader();
-
-		if (cl instanceof AppClassLoader) {
-			return ((AppClassLoader) cl).getAppId();
-		} else {
-			return AppProvisioner.DEFAULT_APP_ID;
-		}
+		return ClassLoaders.getId(clazz.getClassLoader());
 	}
 
 	public static boolean isTrusted(Class<?> c) {
 		boolean isTrusted = !(c.getClassLoader() instanceof AppClassLoader);
 		return isTrusted;
 	}
-
-	
-	
-	
-	
-	
-	
-	
-	
-	
 
 	public static Object getFieldValue(Class<?> clazz, String name) {
 		return getFieldValue(clazz, null, name);

@@ -8,10 +8,6 @@ import com.re.paas.api.runtime.spi.SpiDelegate;
 import com.re.paas.api.runtime.spi.SpiType;
 
 public class NodeRoleSPILocator extends BaseSPILocator {
-
-	public NodeRoleSPILocator() {
-		addTypeSuffix("NodeRole");
-	}
 	
 	@Override
 	public SpiType spiType() {

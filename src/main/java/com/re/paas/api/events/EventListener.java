@@ -7,7 +7,7 @@ public interface EventListener extends Resource {
 
 	@Override
 	default SpiType getSpiType() {
-		return SpiType.EVENT_LISTENER;
+		return SpiType.EVENT;
 	}
 
 }

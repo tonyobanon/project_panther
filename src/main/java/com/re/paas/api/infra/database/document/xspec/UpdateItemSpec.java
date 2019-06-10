@@ -10,7 +10,7 @@ public class UpdateItemSpec extends BaseSpec {
 	
 	private PrimaryKey primaryKey;
 	
-    private String returnValues;
+    private String returnValues = ReturnValue.NONE.toString();
     
     private final String updateExpression;
     private final String conditionExpression;
@@ -28,7 +28,6 @@ public class UpdateItemSpec extends BaseSpec {
         this.valueMap = valueMap == null ? null : Collections.unmodifiableMap(valueMap);
     }
     
-
     public PrimaryKey getPrimaryKey() {
 		return primaryKey;
 	}
@@ -42,8 +41,6 @@ public class UpdateItemSpec extends BaseSpec {
 		this.returnValues = returnValues;
 		return this;
 	}
-
-
 
 	public String getReturnValues() {
         return this.returnValues;

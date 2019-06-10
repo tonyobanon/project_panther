@@ -110,7 +110,7 @@ public class ApplicationService extends BaseService {
 
 		Long applicationId = Long.parseLong(ctx.request().getParam("applicationId"));
 
-		Map<String, String> result = ApplicationModel.getConsolidatedFieldValues(applicationId);
+		Map<String, String> result = ApplicationModel.getFieldValues(applicationId, true);
 
 		ctx.response().write(GsonFactory.getInstance().toJson(result)).end();
 	}

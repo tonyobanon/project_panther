@@ -19,6 +19,10 @@ public class BatchWriteItemRequest {
 		return this;
 	}
 	
+	public BatchWriteItemRequest addRequestItems(Class<?> table, List<WriteRequest> requestItems) {
+		return addRequestItems(table.getSimpleName(), requestItems);
+	}
+	
 	public BatchWriteItemRequest addRequestItems(String tableName, List<WriteRequest> requestItems) {
 		
 		List<WriteRequest> requests = this.requestItems.get(tableName);
@@ -29,6 +33,10 @@ public class BatchWriteItemRequest {
 			requests.addAll(requestItems);
 		}
 		return this;
+	}
+	
+	public BatchWriteItemRequest addRequestItem(Class<?> table, WriteRequest requestItem) {
+		return addRequestItem(table.getSimpleName(), requestItem);
 	}
 	
 	public BatchWriteItemRequest addRequestItem(String tableName, WriteRequest requestItem) {

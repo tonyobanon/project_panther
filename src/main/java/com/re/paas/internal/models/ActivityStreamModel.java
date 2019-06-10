@@ -1,9 +1,11 @@
 package com.re.paas.internal.models;
 
-import static com.googlecode.objectify.ObjectifyService.ofy;
-
 import com.re.paas.api.annotations.develop.BlockerTodo;
 import com.re.paas.api.annotations.develop.Todo;
+import com.re.paas.api.infra.database.document.Database;
+import com.re.paas.api.infra.database.document.Item;
+import com.re.paas.api.infra.database.document.Table;
+import com.re.paas.api.infra.database.document.xspec.PutItemSpec;
 import com.re.paas.api.models.BaseModel;
 import com.re.paas.api.models.classes.InstallOptions;
 import com.re.paas.api.sentences.Sentence;
@@ -11,17 +13,17 @@ import com.re.paas.api.sentences.SubjectEntity;
 import com.re.paas.api.utils.Dates;
 import com.re.paas.internal.classes.ActivitityStreamTimeline;
 import com.re.paas.internal.core.keys.ConfigKeys;
-import com.re.paas.internal.models.tables.ActivityStreamTable;
 import com.re.paas.internal.sentences.DefaultSentenceStringifier;
+import com.re.paas.internal.tables.defs.base.ActivityStreamTable;
+import com.re.paas.internal.tables.spec.base.ActivityStreamTableSpec;
 import com.re.paas.internal.utils.BackendObjectMarshaller;
-
 
 @BlockerTodo("Create sentence serializers and deserializer, since they will be stored as Json very soon")
 
 @BlockerTodo("Maintaining activity streams are extremely expensive, and as such, find a workaround")
 
-@BlockerTodo("Create a configuration, that allows admins to set the default page size when\n" + 
-		"retrieving activity streams on the client")
+@BlockerTodo("Create a configuration, that allows admins to set the default page size when\n"
+		+ "retrieving activity streams on the client")
 
 public class ActivityStreamModel extends BaseModel {
 
@@ -86,41 +88,40 @@ public class ActivityStreamModel extends BaseModel {
 			}
 		}
 
-		ActivityStreamTable e = new ActivityStreamTable()
-				.setActivity(activity.asString(new DefaultSentenceStringifier()))
-				.setSubject(subject)
-				.setSubjectImage(subject != null ? BaseUserModel.getAvatar(subject) : null)
-				.setPersonImage(person != null ? BaseUserModel.getAvatar(person) : null)
-				.setLikes(0).setDate(Dates.now());
+		Item item = new Item()
+				.withString(ActivityStreamTableSpec.ACTIVITY, activity.asString(new DefaultSentenceStringifier()))
+				.withNumber(ActivityStreamTableSpec.SUBJECT, subject)
+				.withString(ActivityStreamTableSpec.SUBJECT_IMAGE,
+						subject != null ? BaseUserModel.getAvatar(subject) : null)
+				.withString(ActivityStreamTableSpec.PERSON_IMAGE,
+						person != null ? BaseUserModel.getAvatar(person) : null)
+				.with(ActivityStreamTableSpec.LIKES, 0).with(ActivityStreamTableSpec.DATE, Dates.now());
 
-		//
-
-		// then, save
-		// GsonFactory.newInstance().toJson(activity)
-		ofy().save().entity(e).now();
+		Table t = Database.get().getTable(ActivityStreamTable.class);
+		t.putItem(PutItemSpec.forItem(item));
 	}
 
 	@Override
 	public void install(InstallOptions options) {
 		// TODO Auto-generated method stub
-		
+
 	}
 
 	@Override
 	public void start() {
 		// TODO Auto-generated method stub
-		
+
 	}
 
 	@Override
 	public void update() {
 		// TODO Auto-generated method stub
-		
+
 	}
 
 	@Override
 	public void unInstall() {
 		// TODO Auto-generated method stub
-		
+
 	}
 }

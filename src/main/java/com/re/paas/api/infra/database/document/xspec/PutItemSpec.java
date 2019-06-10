@@ -63,4 +63,8 @@ public class PutItemSpec extends BaseSpec {
     public Map<String, Object> getValueMap() {
         return valueMap;
     }
+    
+    public static PutItemSpec forItem(Item i) {
+    	return new ExpressionSpecBuilder().buildForPut().withItem(i);
+    }
 }

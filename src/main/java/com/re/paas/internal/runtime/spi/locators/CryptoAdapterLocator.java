@@ -9,10 +9,6 @@ import com.re.paas.api.runtime.spi.SpiType;
 
 public class CryptoAdapterLocator extends BaseSPILocator {
 
-	public CryptoAdapterLocator() {
-		addTypeSuffix("Adapter");
-	}
-	
 	@Override
 	public SpiType spiType() {
 		return SpiType.CRYPTO_ADAPTER;

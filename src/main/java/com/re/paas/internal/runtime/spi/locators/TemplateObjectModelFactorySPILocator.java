@@ -8,10 +8,6 @@ import com.re.paas.api.templating.AbstractObjectModelFactorySpiDelegate;
 import com.re.paas.api.templating.TemplateObjectModelFactory;
 
 public class TemplateObjectModelFactorySPILocator extends BaseSPILocator {
-
-	public TemplateObjectModelFactorySPILocator() {
-		addTypeSuffix("TemplateFactory");
-	}
 	
 	@Override
 	public SpiType spiType() {

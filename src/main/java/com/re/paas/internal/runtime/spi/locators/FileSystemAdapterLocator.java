@@ -8,10 +8,6 @@ import com.re.paas.api.runtime.spi.SpiDelegate;
 import com.re.paas.api.runtime.spi.SpiType;
 
 public class FileSystemAdapterLocator extends BaseSPILocator {
-
-	public FileSystemAdapterLocator() {
-		addTypeSuffix("Adapter");
-	}
 	
 	@Override
 	public SpiType spiType() {

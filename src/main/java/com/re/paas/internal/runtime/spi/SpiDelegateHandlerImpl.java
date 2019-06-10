@@ -12,69 +12,144 @@ import java.util.function.Consumer;
 
 import com.re.paas.api.annotations.develop.BlockerBlockerTodo;
 import com.re.paas.api.annotations.develop.BlockerTodo;
+import com.re.paas.api.classes.ClientRBRef;
 import com.re.paas.api.classes.Exceptions;
 import com.re.paas.api.classes.KeyValuePair;
 import com.re.paas.api.designpatterns.Singleton;
 import com.re.paas.api.infra.cache.AbstractCacheAdapterDelegate;
 import com.re.paas.api.infra.cache.CacheFactory;
 import com.re.paas.api.logging.Logger;
+import com.re.paas.api.runtime.MethodMeta;
+import com.re.paas.api.runtime.MethodMeta.Factor;
+import com.re.paas.api.runtime.MethodMeta.IdentityStrategy;
 import com.re.paas.api.runtime.spi.BaseSPILocator;
+import com.re.paas.api.runtime.spi.ClassIdentityType;
 import com.re.paas.api.runtime.spi.DelegateInitResult;
 import com.re.paas.api.runtime.spi.DelegateSpec;
-import com.re.paas.api.runtime.spi.SpiBase;
 import com.re.paas.api.runtime.spi.SpiDelegate;
 import com.re.paas.api.runtime.spi.SpiDelegateHandler;
 import com.re.paas.api.runtime.spi.SpiType;
 import com.re.paas.api.runtime.spi.TypeClassification;
 import com.re.paas.api.utils.ClassUtils;
-import com.re.paas.internal.classes.AppDirectory;
+import com.re.paas.internal.classes.ClasspathScanner;
+import com.re.paas.internal.fusion.ui.impl.UIContext;
 import com.re.paas.internal.infra.cache.CacheBackedMap;
-import com.re.paas.internal.runtime.security.Secure;
-import com.re.paas.internal.runtime.security.Secure.Factor;
-import com.re.paas.internal.runtime.security.Secure.IdentityStrategy;
+import com.re.paas.internal.runtime.spi.SpiDelegateConfigHandler.Tier;
 
 public class SpiDelegateHandlerImpl implements SpiDelegateHandler {
 
 	private static final Logger LOG = Logger.get(SpiDelegateHandlerImpl.class);
 
-	private static Map<SpiType, SpiDelegate<?>> delegates = Collections
+	static Map<SpiType, SpiDelegate<?>> delegates = Collections
 			.synchronizedMap(new LinkedHashMap<SpiType, SpiDelegate<?>>());
 
 	private static Map<SpiType, Map<Object, Object>> resources = Collections
 			.synchronizedMap(new HashMap<SpiType, Map<Object, Object>>());
 
-	private static SpiDelegate<?> findDelegate(SpiType type) {
-
-		Class<? extends SpiDelegate<?>> delegate = SpiBaseImpl.getDefaultDelegate(type);
-
-		if (delegate == null) {
-
-			String key = SpiBaseImpl.getDelegateConfigKey(type);
-			delegate = ClassUtils.forName(AppDirectory.getConfig().get(key).getAsString());
-		}
-
-		return ClassUtils.createInstance(delegate);
+	public SpiDelegateHandlerImpl() {
+		SpiDelegateConfigHandler.init();
 	}
 
-	private static boolean isDelegateTrusted(Class<? extends SpiDelegate<?>> delegateClass) {
-		return ClassUtils.isTrusted(delegateClass) || SpiBaseImpl.isTrusted(ClassUtils.getAppId(delegateClass));
+	private static Map<SpiType, Class<? extends SpiDelegate<?>>> scanAvailableDelegates(ClassLoader cl) {
+
+		LOG.debug("Scanning for available delegates.. ");
+
+		Map<SpiType, Class<? extends SpiDelegate<?>>> result = new HashMap<>(SpiType.values().length);
+
+		for (SpiType type : SpiType.values()) {
+
+			BaseSPILocator locator = SPILocatorHandlerImpl.getDefaultLocators().get(type);
+
+			@SuppressWarnings("unchecked")
+			Class<SpiDelegate<?>> delegateType = (Class<SpiDelegate<?>>) locator.delegateType();
+
+			List<Class<? extends SpiDelegate<?>>> delegateClasses = new ClasspathScanner<>(delegateType,
+					ClassIdentityType.ASSIGNABLE_FROM).setMaxCount(1).setClassLoader(cl).scanClasses();
+
+			if (delegateClasses.isEmpty()) {
+				result.put(type, null);
+			} else {
+				result.put(type, delegateClasses.get(0));
+			}
+		}
+
+		return result;
+	}
+
+	private static Boolean shouldSetAsDefault(String appId, SpiType type) {
+
+		String appName = AppProvisioner.get().getAppName(appId);
+
+		String confirmMessage = ClientRBRef.get("app.confirm.set.default.delegate").add(type + ".action").toString();
+
+		boolean useAsDefault = UIContext.confirm(appName, confirmMessage);
+
+		if (useAsDefault && type.classification() == TypeClassification.ACTIVE) {
+
+			String confirmTrust = ClientRBRef.get("app.confirm.trust.set.default.delegate").toString();
+			useAsDefault = UIContext.confirm(appName, confirmTrust);
+
+			if (useAsDefault) {
+				SpiBaseImpl.registerTrustedApp(appId);
+			}
+		}
+
+		return useAsDefault;
+	}
+
+	/**
+	 * This scans for available delegates and registers them on the platform
+	 * 
+	 * @param cl
+	 */
+	static void install(ClassLoader cl) {
+
+		String appId = ClassLoaders.getId(cl);
+
+		// Scan available delegates
+		Map<SpiType, Class<? extends SpiDelegate<?>>> available = scanAvailableDelegates(cl);
+
+		// Add delegate in available and/or default tier(s), based on user preference
+		for (Entry<SpiType, Class<? extends SpiDelegate<?>>> e : available.entrySet()) {
+			Tier[] tiers = shouldSetAsDefault(appId, e.getKey()) ? Tier.onlyDefaultAndAvailable()
+					: Tier.onlyAvailable();
+
+			LOG.debug("Registering delegate " + e.getValue() + ", type=" + e.getValue() + ", tiers="
+					+ Arrays.toString(tiers));
+			SpiDelegateConfigHandler.put(e.getKey(), e.getValue(), tiers);
+		}
+	}
+
+	static void uninstall(ClassLoader cl) {
+
+		// Scan available delegates
+		Map<SpiType, Class<? extends SpiDelegate<?>>> available = scanAvailableDelegates(cl);
+
+		// Remove delegate from available and default
+		for (Entry<SpiType, Class<? extends SpiDelegate<?>>> e : available.entrySet()) {
+
+			Tier[] tiers = SpiDelegateConfigHandler.get(e.getKey(), Tier.onlyDefault()) != null
+					? Tier.onlyDefaultAndAvailable()
+					: Tier.onlyAvailable();
+
+			LOG.debug("Unregistering delegate " + e.getValue() + ", type=" + e.getValue() + ", tiers="
+					+ Arrays.toString(tiers));
+			SpiDelegateConfigHandler.remove(e.getKey(), e.getValue(), tiers);
+		}
 	}
 
 	@BlockerTodo("use DelegateInitResult as returned by the delegate's init function")
-	@BlockerTodo("If redis is the backing cache for delegate resource maps, then we need to clear it when starting")
-	static void start(String dependants, String appId, SpiType[] types) {
+	static void start(ClassLoader cl, SpiType[] types, String dependants) {
 
 		for (SpiType type : types) {
 
 			SpiDelegate<?> delegate = delegates.get(type);
 
-			SpiDelegate<?> newDelegate = findDelegate(type);
+			Boolean isDelegateLoaded = delegate != null;
 
-			boolean isNewDelegate = delegate == null || !ClassUtils.equals(delegate.getClass(), newDelegate.getClass());
+			if (!isDelegateLoaded) {
 
-			if (isNewDelegate) {
-
-				delegate = newDelegate;
+				delegate = ClassUtils.createInstance(SpiDelegateConfigHandler.get(type, Tier.all()));
 
 				@SuppressWarnings("unchecked")
 				Class<? extends SpiDelegate<?>> delegateClass = (Class<? extends SpiDelegate<?>>) delegate.getClass();
@@ -130,16 +205,20 @@ public class SpiDelegateHandlerImpl implements SpiDelegateHandler {
 												.replaceAll(dependency.name(), "(" + dependency.name() + ")")));
 							}
 
-							start(dependants + " -> " + type.name(), appId, new SpiType[] { dependency });
+							start(cl, new SpiType[] { dependency }, dependants + " -> " + type.name());
 
 						} else {
-							start(type.name(), appId, new SpiType[] { dependency });
+							start(cl, new SpiType[] { dependency }, type.name());
 						}
 
 					}
 				}
 
-				LOG.info("Starting new SPI Delegate, app = " + appId + " , type = " + type.toString());
+				if (!delegate.applies()) {
+					continue;
+				}
+
+				LOG.info("Starting new SPI Delegate, type = " + type.toString());
 
 				@SuppressWarnings("unchecked")
 				Class<SpiDelegate<?>> delegateType = (Class<SpiDelegate<?>>) locator.delegateType();
@@ -152,11 +231,6 @@ public class SpiDelegateHandlerImpl implements SpiDelegateHandler {
 				}
 
 				delegates.put(type, delegate);
-
-				// Clear resource from previous delegate
-				if (resources.containsKey(type)) {
-					resources.get(type).clear();
-				}
 
 				// TODO Here, Check if delegate is respecting the setting in Cloud Environment
 
@@ -180,31 +254,21 @@ public class SpiDelegateHandlerImpl implements SpiDelegateHandler {
 
 				resources.put(type, rMap);
 
-				// Here, we have a new delegate, so we are adding all discovered classes
-				// across all applications
-
-				List<Class<?>> classes = SPILocatorHandlerImpl.getSpiClasses().get(type).get(appId);
-
 				// Initialize delegate
-				DelegateInitResult r = initDelegate(type, delegate, classes);
-				
-				
-				
+				DelegateInitResult r = startDelegate(delegate);
+
+				// Todo: Process result
 
 			} else {
 
-				// In this scenario, we are adding the discovered classes specifically
-				// owned by appId, to the current delegate, just so that it's aware
+				// Transfer only application-specific classes to the existing delegate, since
+				// other classes must have been registered when the delegate was instantiated
 
-				// See SpiBaseImpl#stop0(..);
-
-				LOG.info("Using existing SPI Delegate, app = " + appId + " , type = " + type.toString());
+				String appId = ClassLoaders.getId(cl);
 
 				List<Class<?>> classes = SPILocatorHandlerImpl.getSpiClasses().get(type).get(appId);
 
-				if (classes != null && !classes.isEmpty()) {
-					delegate.add0(classes);
-				}
+				delegate.add0(classes);
 			}
 		}
 	}
@@ -229,21 +293,23 @@ public class SpiDelegateHandlerImpl implements SpiDelegateHandler {
 		return deps.toArray(new SpiType[deps.size()]);
 	}
 
-	private static DelegateInitResult initDelegate(SpiType type, SpiDelegate<?> delegate, List<Class<?>> classes) {
+	private static DelegateInitResult startDelegate(SpiDelegate<?> delegate) {
+
+		boolean isTrusted = isTrusted(delegate);
+
+		if (!isTrusted && delegate.getType().getKey().classification() == TypeClassification.ACTIVE) {
+			throw new SecurityException("Only trusted Spi delegates can be used for an active Spi Type");
+		}
+
+		return delegate.init();
+	}
+
+	private static boolean isTrusted(SpiDelegate<?> delegate) {
 
 		@SuppressWarnings("unchecked")
 		Class<? extends SpiDelegate<?>> delegateClass = (Class<? extends SpiDelegate<?>>) delegate.getClass();
 
-		boolean isTrusted = isDelegateTrusted(delegateClass);
-
-		if (!isTrusted && type.classification() == TypeClassification.ACTIVE) {
-			throw new SecurityException("Only trusted Spi delegates can be used for an active Spi Type");
-		}
-
-		// Start delegate
-		DelegateInitResult r = delegate.init();
-		
-		return r;
+		return ClassUtils.isTrusted(delegateClass) || SpiBaseImpl.isAppTrusted(ClassUtils.getAppId(delegateClass));
 	}
 
 	@Override
@@ -251,18 +317,14 @@ public class SpiDelegateHandlerImpl implements SpiDelegateHandler {
 		return delegates;
 	}
 
-	@Override
-	@Secure(factor = Factor.CLASSLOADER_SECURITY, identityStrategy = IdentityStrategy.SAME, allowed = {
-			SpiDelegate.class })
-	@Secure(factor = Factor.CLASSLOADER_SECURITY, identityStrategy = IdentityStrategy.SINGLETON, allowed = {
-			SpiBase.class })
 	public Map<Object, Object> getResources(SpiType type) {
 		return resources.get(type);
 	}
 
 	@BlockerBlockerTodo("Ensure that the SPIs are tranversed in the correct order")
+	@MethodMeta(factor = Factor.CALLER, identityStrategy = IdentityStrategy.SAME, allowed = { SpiDelegate.class })
 	public final void forEach(SpiType type, Consumer<Class<?>> consumer) {
-		
+
 		loop: for (List<Class<?>> l : SPILocatorHandlerImpl.getSpiClasses().get(type).values()) {
 			for (Class<?> c : l) {
 				consumer.accept(c);
@@ -281,8 +343,7 @@ public class SpiDelegateHandlerImpl implements SpiDelegateHandler {
 		}
 
 		if (o.isEmpty()) {
-			LOG.warn("No resources were registered for the SpiType: " + type.name());
+			LOG.warn("No resource class(es) were registered for the SpiType: " + type.name());
 		}
 	}
-
 }

@@ -3,11 +3,11 @@ package com.re.paas.internal.clustering;
 import java.util.List;
 
 import com.re.paas.api.classes.FluentArrayList;
-import com.re.paas.api.clustering.Function;
 import com.re.paas.api.clustering.NodeRegistry;
 import com.re.paas.api.clustering.NodeRole;
 import com.re.paas.api.clustering.events.NodeLeaveEvent;
 import com.re.paas.api.clustering.master.MasterFunction;
+import com.re.paas.api.clustering.protocol.Client;
 import com.re.paas.api.events.AbstractEventDelegate;
 import com.re.paas.api.infra.cloud.CloudEnvironment;
 import com.re.paas.api.logging.Logger;
@@ -36,26 +36,31 @@ public class SlaveNodeRole extends NodeRole {
 	public void start() {
 
 		NodeRegistry registry = NodeRegistry.get();
+		Boolean success = true;
 
-		Logger.get().info("Requesting to join cluster: " + registry.clusterName());
+		if(!NodeRegistry.get().getWkaHost().equals(NodeRegistry.get().getClusteringAddress())) {
+			
+			Logger.get().info("Requesting to join cluster: " + registry.clusterName());
 
-		NodeJoinResult r = Function.execute(MasterFunction.CLUSTER_JOIN, NodeJoinRequest.get(), NodeJoinResult.class)
-				.get(0);
+			NodeJoinResult r = Client.get(NodeRegistry.get().getWka())
+					.execute(MasterFunction.CLUSTER_JOIN, NodeJoinRequest.get(), NodeJoinResult.class).join();
 
-		if (r.isSuccess()) {
+			if (r.isSuccess()) {
 
-			Logger.get().info("Node: " + registry.getClusteringAddress() + " joined the cluster successfully");
+				Logger.get().info("Node: " + registry.getClusteringAddress() + " joined the cluster successfully");
 
-			registry.setNodeId(r.getNodeId());
-			registry.setMasterNodeId(r.getMasterNodeId());
+				registry.setNodeId(r.getNodeId());
+				registry.setMasterNodeId(r.getMasterNodeId());
 
-		} else {
-			Logger.get().info(
-					"Node: " + registry.getClusteringAddress() + " could not join cluster because: " + r.getMessage());
+			} else {
+				success = false;
+				Logger.get().info(
+						"Node: " + registry.getClusteringAddress() + " could not join cluster because: " + r.getMessage());
+			}
 		}
-
+		
 		// Notify NodeRole Delegate
-		AbstractEventDelegate.getInstance().dispatch(new RoleStartCompleteEvent(r.isSuccess()));
+		AbstractEventDelegate.getInstance().dispatch(new RoleStartCompleteEvent(success), false);
 	}
 
 	@Override

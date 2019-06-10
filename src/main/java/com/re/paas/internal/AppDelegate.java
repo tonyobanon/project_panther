@@ -1,9 +1,7 @@
 package com.re.paas.internal;
 
 import java.io.File;
-import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.net.InetAddress;
 import java.security.Security;
 import java.util.concurrent.Callable;
@@ -11,42 +9,36 @@ import java.util.concurrent.Callable;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
 import com.re.paas.api.annotations.develop.PlatformInternal;
-import com.re.paas.api.app_provisioning.AppClassLoader;
+import com.re.paas.api.apps.AppClassLoader;
 import com.re.paas.api.clustering.NodeRegistry;
 import com.re.paas.api.clustering.protocol.ClientFactory;
 import com.re.paas.api.clustering.protocol.Server;
 import com.re.paas.api.designpatterns.Factory;
 import com.re.paas.api.designpatterns.Singleton;
-import com.re.paas.api.infra.cloud.CloudEnvironment;
 import com.re.paas.api.logging.LogPipeline;
 import com.re.paas.api.logging.LoggerFactory;
 import com.re.paas.api.networking.AddressResolver;
+import com.re.paas.api.runtime.ClassLoaderSecurity;
 import com.re.paas.api.runtime.ExecutorFactory;
 import com.re.paas.api.runtime.ExecutorFactoryConfig;
-import com.re.paas.api.runtime.ClassLoaderSecurity;
 import com.re.paas.api.runtime.spi.SpiBase;
 import com.re.paas.api.runtime.spi.SpiDelegateHandler;
 import com.re.paas.api.runtime.spi.SpiLocatorHandler;
-import com.re.paas.api.runtime.spi.SpiType;
 import com.re.paas.api.utils.Base64;
 import com.re.paas.api.utils.JsonParser;
 import com.re.paas.internal.clustering.DefaultNodeRegistry;
 import com.re.paas.internal.clustering.protocol.ClientFactoryImpl;
 import com.re.paas.internal.clustering.protocol.ServerImpl;
 import com.re.paas.internal.compute.Scheduler;
-import com.re.paas.internal.fusion.services.impl.ServerOptions;
 import com.re.paas.internal.fusion.services.impl.WebServer;
-import com.re.paas.internal.infra.database.DatabaseAdapterDelegate;
 import com.re.paas.internal.infra.filesystem.FileSystemProviders;
-import com.re.paas.internal.jvmtools.annotations.AnnotationUtil;
 import com.re.paas.internal.logging.DefaultLogger;
 import com.re.paas.internal.logging.DefaultLoggerFactory;
 import com.re.paas.internal.networking.AddressResolverImpl;
 import com.re.paas.internal.runtime.ExecutorFactoryImpl;
-import com.re.paas.internal.runtime.Permissions;
-import com.re.paas.internal.runtime.SecurityManagerImpl;
-import com.re.paas.internal.runtime.security.Secure;
-import com.re.paas.internal.runtime.ClassLoaderSecurityImpl;
+import com.re.paas.internal.runtime.security.ClassLoaderSecurityImpl;
+import com.re.paas.internal.runtime.security.Permissions;
+import com.re.paas.internal.runtime.security.SecurityManagerImpl;
 import com.re.paas.internal.runtime.spi.AppClassLoaderImpl;
 import com.re.paas.internal.runtime.spi.AppProvisioner;
 import com.re.paas.internal.runtime.spi.AppProvisionerImpl;
@@ -57,7 +49,7 @@ import com.re.paas.internal.utils.Base64Impl;
 import com.re.paas.internal.utils.JsonParserImpl;
 
 public class AppDelegate implements Callable<Void> {
-	
+
 	private static void addPlatformObjects() {
 
 		FileSystemProviders.init();
@@ -66,7 +58,7 @@ public class AppDelegate implements Callable<Void> {
 		// Register Singletons
 
 		Singleton.register(LoggerFactory.class, new DefaultLoggerFactory());
-		
+
 		if (Platform.isDevMode()) {
 			DefaultLogger.setPipeline(LogPipeline.from(System.out, System.err));
 		} else {
@@ -81,7 +73,6 @@ public class AppDelegate implements Callable<Void> {
 		Singleton.register(AddressResolver.class, new AddressResolverImpl());
 		Singleton.register(NodeRegistry.class, new DefaultNodeRegistry());
 		Singleton.register(ClientFactory.class, new ClientFactoryImpl());
-		Singleton.register(LoggerFactory.class, new DefaultLoggerFactory());
 		Singleton.register(JsonParser.class, new JsonParserImpl());
 		Singleton.register(Base64.class, new Base64Impl());
 
@@ -126,35 +117,25 @@ public class AppDelegate implements Callable<Void> {
 
 		// Set security manager
 		System.setSecurityManager(new SecurityManagerImpl());
-		
-		Method m = SpiDelegateHandlerImpl.class.getDeclaredMethod("getResources", SpiType.class);
-		
-		for(Annotation a : AnnotationUtil.getAnnotations(m, Secure.class)) {
-			System.out.println(a);
-		}
-		
-		if (true) {
-			return;
-		}
-		
+
 		if (!Platform.isSafeMode()) {
 
 			// Discover application(s)
 			AppProvisioner.get().start();
 		}
 
-		if (Platform.isInstalled()) {
+		if (Platform.isInstalled() || Platform.isDevMode()) {
 
 			// Start application(s)
-			SpiBase.get().start();
+			SpiBase.get().start(AppProvisioner.get().listApps());
 		}
-
-		System.out.println(AppProvisioner.get().listApps());
-
-		// Start Embedded Web Server
-		CloudEnvironment env = CloudEnvironment.get();
-		WebServer.start(
-				new ServerOptions().withHost(env.httpHost()).withPort(env.httpPort()).withSslPort(env.httpsPort()));
+//
+//		System.out.println(AppProvisioner.get().listApps());
+//
+//		// Start Embedded Web Server
+//		CloudEnvironment env = CloudEnvironment.get();
+//		WebServer.start(
+//				new ServerOptions().withHost(env.httpHost()).withPort(env.httpPort()).withSslPort(env.httpsPort()));
 	}
 
 	@PlatformInternal

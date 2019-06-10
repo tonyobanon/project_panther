@@ -1,11 +1,8 @@
 package com.re.paas.internal.cloud.aws;
 
-import java.util.HashMap;
-import java.util.Map;
-
+import com.re.paas.api.fusion.server.JsonObject;
 import com.re.paas.api.infra.cloud.CloudEnvironment;
 import com.re.paas.api.infra.cloud.InstanceCredential;
-import com.re.paas.internal.classes.Json;
 
 public class AwsInstanceCredential extends InstanceCredential {
 
@@ -45,23 +42,17 @@ public class AwsInstanceCredential extends InstanceCredential {
 
 	@Override
 	public final String toString() {
-		
-		Map<String, String> props = new HashMap<>();
-		
-		props.put("name", name);
-		props.put("fingerprint", keyFingerprint);
-		props.put("material", keyMaterial);
-		
-		return Json.fromMap(props).toString();
+		return new JsonObject().put("name", name).put("fingerprint", keyFingerprint).put("material", keyMaterial)
+				.toString();
 	}
 
 	@Override
 	public InstanceCredential fromString(String instanceId, String stringVal) {
-		
-		Map<String, String> props = Json.toMap(stringVal);
-		
-		return new AwsInstanceCredential(instanceId, props.get("name"), props.get("fingerprint"),
-				props.get("material"));
+
+		JsonObject props = new JsonObject(stringVal);
+
+		return new AwsInstanceCredential(instanceId, props.getString("name"), props.getString("fingerprint"),
+				props.getString("material"));
 	}
 
 }

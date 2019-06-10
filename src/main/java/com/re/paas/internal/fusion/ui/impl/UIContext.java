@@ -7,7 +7,7 @@ import com.re.paas.api.annotations.develop.BlockerTodo;
 @BlockerTodo
 public class UIContext {
 
-	public static boolean confirm(String message) {
+	public static boolean confirm(String title, String body) {
 		return true;
 	}
 

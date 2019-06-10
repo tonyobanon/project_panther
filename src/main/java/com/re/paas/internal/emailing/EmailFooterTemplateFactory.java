@@ -8,7 +8,7 @@ import com.re.paas.api.classes.ClientResources.HtmlCharacterEntities;
 import com.re.paas.api.classes.ClientResources.WebResource;
 import com.re.paas.api.models.classes.UserProfileSpec;
 import com.re.paas.api.templating.TemplateObjectModelFactory;
-import com.re.paas.internal.models.tables.users.BaseUserEntity;
+import com.re.paas.internal.tables.defs.users.BaseUserTable;
 
 public class EmailFooterTemplateFactory extends TemplateObjectModelFactory<EmailFooterTemplate> {
 
@@ -17,7 +17,7 @@ public class EmailFooterTemplateFactory extends TemplateObjectModelFactory<Email
 		Map<String, WebResource> o = new HashMap<String, ClientResources.WebResource>();
 
 		// BaseUserEntity e = BaseUserModel.get(userId);
-		BaseUserEntity e = new BaseUserEntity().setTwitterProfile("tonyobanon").setFacebookProfile("tonyobanon")
+		BaseUserTable e = new BaseUserTable().setTwitterProfile("tonyobanon").setFacebookProfile("tonyobanon")
 				.setLinkedInProfile("tonyobanon").setSkypeProfile("tonyobanon");
 
 		if (e.getFacebookProfile() != null) {

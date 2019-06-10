@@ -1,0 +1,4 @@
+
+Validation Parameters:
+
+1. The application should not have more than one delegate for any given type

@@ -26,7 +26,7 @@ import org.eclipse.jetty.server.handler.AbstractHandler;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 
 import com.re.paas.api.annotations.develop.BlockerTodo;
-import com.re.paas.api.app_provisioning.AppClassLoader;
+import com.re.paas.api.apps.AppClassLoader;
 import com.re.paas.api.classes.Exceptions;
 import com.re.paas.api.cryto.CryptoAdapter;
 import com.re.paas.api.cryto.KeyStoreProperties;
@@ -41,8 +41,8 @@ import com.re.paas.api.fusion.ui.AbstractComponent;
 import com.re.paas.api.logging.Logger;
 import com.re.paas.api.runtime.ExecutorFactory;
 import com.re.paas.api.runtime.Invokable;
+import com.re.paas.api.runtime.MethodMeta;
 import com.re.paas.internal.Platform;
-import com.re.paas.internal.runtime.security.Secure;
 import com.re.paas.internal.runtime.spi.AppProvisioner;
 
 @BlockerTodo("Optimize the way requests are handled, as the current impl is thread expensive.")
@@ -50,7 +50,7 @@ public class WebServer {
 
 	private static Server server;
 
-	@Secure
+	@MethodMeta
 	public static void start(ServerOptions options) {
 
 		Logger.get().info("Launching embedded web server ..");
@@ -123,12 +123,12 @@ public class WebServer {
 		Logger.get().info("Server started successfully..");
 	}
 
-	@Secure
+	@MethodMeta
 	public static Server getServer() {
 		return server;
 	}
 
-	@Secure
+	@MethodMeta
 	public static void stop() {
 
 		Logger.get().info("Stopping embedded web server ..");
@@ -227,15 +227,22 @@ public class WebServer {
 					try {
 
 						if (cl != null) {
-
+							
+							// External
+							
+							Thread.currentThread().setContextClassLoader(cl);
+							
 							Class<?> clazz = cl.loadClass(RoutingContextHandler.class.getName());
 
 							Class<?>[] argumentTypes = new Class<?>[] { ServiceDescriptor.class, RoutingContext.class };
 							Method m = clazz.getDeclaredMethod("handle", argumentTypes);
 
 							m.invoke(null, sDescriptor, ctx);
+							
+							Thread.currentThread().setContextClassLoader(null);
 
 						} else {
+							// Internal
 							RoutingContextHandler.handle(sDescriptor, ctx);
 						}
 

@@ -8,14 +8,10 @@ import com.re.paas.api.tasks.AbstractTaskModelDelegate;
 import com.re.paas.api.tasks.TaskImage;
 
 public class TaskModelSPILocator extends BaseSPILocator {
-
-	public TaskModelSPILocator() {
-		addTypeSuffix("TaskModel");
-	}
 	
 	@Override
 	public SpiType spiType() {
-		return SpiType.TASK_IMAGE;
+		return SpiType.TASK_MODEL;
 	}
 	
 	@Override

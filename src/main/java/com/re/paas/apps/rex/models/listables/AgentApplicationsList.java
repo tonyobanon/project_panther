@@ -11,7 +11,7 @@ import com.re.paas.apps.rex.realms.AgentRealm;
 import com.re.paas.internal.models.BaseUserModel;
 import com.re.paas.internal.models.RoleModel;
 import com.re.paas.internal.models.listables.AbstractApplicationsList;
-import com.re.paas.internal.models.tables.users.ApplicationEntity;
+import com.re.paas.internal.tables.defs.users.ApplicationTable;
 
 public class AgentApplicationsList extends AbstractApplicationsList {
 
@@ -32,8 +32,8 @@ public class AgentApplicationsList extends AbstractApplicationsList {
 	}
 
 	@Override
-	public Class<ApplicationEntity> entityType() {
-		return ApplicationEntity.class;
+	public Class<ApplicationTable> entityType() {
+		return ApplicationTable.class;
 	}
 
 	@Override

@@ -4,43 +4,43 @@ import java.util.Date;
 
 public class UserProfileSpec {
 	
+	private Long id;
 	private Long applicationId;
 
 	private String email;
-	private String password;
 
 	private String firstName;
 	private String middleName;
 	private String lastName;
 	private String image;
 
-	private Long phone;
+	private String phone;
 	private Date dateOfBirth;
 	private Gender gender;
 
 	private String address;
 
 	private Integer city;
-	private String cityName;
-	
-	private String territory; 
-	private String territoryName;
-	
+	private String territory;
 	private String country;
-	private String countryName;
-	private String countryDialingCode;
 	
 	private String facebookProfile;
 	private String twitterProfile;
 	private String linkedInProfile;
 	private String skypeProfile;
 	
-	private String role;
 	private String preferredLocale;
 
 	
-	
-	
+	public Long getId() {
+		return id;
+	}
+
+	public UserProfileSpec setId(Long id) {
+		this.id = id;
+		return this;
+	}
+
 	public Long getApplicationId() {
 		return applicationId;
 	}
@@ -56,15 +56,6 @@ public class UserProfileSpec {
 
 	public UserProfileSpec setEmail(String email) {
 		this.email = email;
-		return this;
-	}
-
-	public String getPassword() {
-		return password;
-	}
-
-	public UserProfileSpec setPassword(String password) {
-		this.password = password;
 		return this;
 	}
 
@@ -104,11 +95,11 @@ public class UserProfileSpec {
 		return this;
 	}
 
-	public Long getPhone() {
+	public String getPhone() {
 		return phone;
 	}
 
-	public UserProfileSpec setPhone(long phone) {
+	public UserProfileSpec setPhone(String phone) {
 		this.phone = phone;
 		return this;
 	}
@@ -167,51 +158,6 @@ public class UserProfileSpec {
 		return this;
 	}
 
-	public String getRole() {
-		return role;
-	}
-
-	public UserProfileSpec setRole(String role) {
-		this.role = role;
-		return this;
-	}
-
-	public String getCityName() {
-		return cityName;
-	}
-
-	public UserProfileSpec setCityName(String cityName) {
-		this.cityName = cityName;
-		return this;
-	}
-
-	public String getTerritoryName() {
-		return territoryName;
-	}
-
-	public UserProfileSpec setTerritoryName(String territoryName) {
-		this.territoryName = territoryName;
-		return this;
-	}
-
-	public String getCountryName() {
-		return countryName;
-	}
-
-	public UserProfileSpec setCountryName(String countryName) {
-		this.countryName = countryName;
-		return this;
-	}
-
-	public String getCountryDialingCode() {
-		return countryDialingCode;
-	}
-
-	public UserProfileSpec setCountryDialingCode(String countryDialingCode) {
-		this.countryDialingCode = countryDialingCode;
-		return this;
-	}
-	
 	public String getFacebookProfile() {
 		return facebookProfile;
 	}

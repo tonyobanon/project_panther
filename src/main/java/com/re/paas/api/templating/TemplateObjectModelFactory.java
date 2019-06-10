@@ -14,9 +14,10 @@ public abstract class TemplateObjectModelFactory<M extends TemplateObjectModel> 
 
 		super(SpiType.TEMPLATE_OBJECT_MODEL_FACTORY);
 		
+		
 		@SuppressWarnings("unchecked")
 		Class<M> templateClass = (Class<M>) ClassUtils
-				.getGenericRefs(getClass().getClassLoader(), getClass().getGenericSuperclass()).get(0);
+				.getParameterizedClass(getClass().getClassLoader(), getClass().getGenericSuperclass()).getGenericTypes().get(0).getType();
 
 		if (ClassUtils.equals(templateClass, TemplateObjectModel.class)) {
 			// Only subclasses of TemplateObjectModel are allowed

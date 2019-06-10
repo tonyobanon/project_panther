@@ -9,13 +9,13 @@ import com.re.paas.api.classes.FluentHashMap;
 import com.re.paas.api.listable.Listable;
 import com.re.paas.api.listable.ListingFilter;
 import com.re.paas.api.listable.ListingType;
-import com.re.paas.internal.classes.CronInterval;
+import com.re.paas.internal.classes.TaskInterval;
 import com.re.paas.internal.classes.CronType;
 import com.re.paas.internal.classes.spec.BaseCronJobSpec;
 import com.re.paas.internal.fusion.functionalities.TaskFunctionalities;
 import com.re.paas.internal.models.BaseUserModel;
 import com.re.paas.internal.models.RoleModel;
-import com.re.paas.internal.models.tables.CronJobTable;
+import com.re.paas.internal.tables.defs.base.CronJobTable;
 
 public class CronJobList extends Listable<BaseCronJobSpec>{
 
@@ -53,7 +53,7 @@ public class CronJobList extends Listable<BaseCronJobSpec>{
 			BaseCronJobSpec spec = new BaseCronJobSpec()
 					.setId(e.getId())
 					.setName(e.getName())
-					.setInterval(CronInterval.from(e.getInterval()))
+					.setInterval(TaskInterval.from(e.getInterval()))
 					.setCronType(CronType.from(e.getCronType()))
 					.setIsReady(e.getIsReady())
 					.setTotalExecutionCount(e.getTotalExecutionCount())

@@ -2,17 +2,17 @@ package com.re.paas.internal.billing;
 
 public enum IpnEventType {
 	
-	AUTHORISATION_SUCCESS(0, InvoicePaymentStatus.PENDING_3D_SECURE_AUTHORIZATION, InvoicePaymentStatus.AUTHORIZATION_SUCCESS), 
-	AUTHORISATION_FAILED(1, InvoicePaymentStatus.PENDING_3D_SECURE_AUTHORIZATION, InvoicePaymentStatus.AUTHORIZATION_FAILED), 
+	AUTHORISATION_SUCCESS(0, PaymentStatus.PENDING_3D_SECURE_AUTHORIZATION, PaymentStatus.AUTHORIZATION_SUCCESS), 
+	AUTHORISATION_FAILED(1, PaymentStatus.PENDING_3D_SECURE_AUTHORIZATION, PaymentStatus.AUTHORIZATION_FAILED), 
 	
-	CAPTURE(2, InvoicePaymentStatus.PENDING_CAPTURE), 
-	CAPTURE_FAILED(3, InvoicePaymentStatus.PENDING_CAPTURE), 
+	CAPTURE(2, PaymentStatus.PENDING_CAPTURE), 
+	CAPTURE_FAILED(3, PaymentStatus.PENDING_CAPTURE), 
 	
-	CANCEL_OR_REFUND(4, InvoicePaymentStatus.PENDING_3D_SECURE_AUTHORIZATION, InvoicePaymentStatus.AUTHORIZATION_SUCCESS), 
+	CANCEL_OR_REFUND(4, PaymentStatus.PENDING_3D_SECURE_AUTHORIZATION, PaymentStatus.AUTHORIZATION_SUCCESS), 
 	
-	CANCELLATION(5, InvoicePaymentStatus.PENDING_3D_SECURE_AUTHORIZATION, InvoicePaymentStatus.AUTHORIZATION_SUCCESS),
+	CANCELLATION(5, PaymentStatus.PENDING_3D_SECURE_AUTHORIZATION, PaymentStatus.AUTHORIZATION_SUCCESS),
 	
-	REFUNDED_REVERSED(6, InvoicePaymentStatus.REFUNDED), 
+	REFUNDED_REVERSED(6, PaymentStatus.REFUNDED), 
 	REFUND(7),
 	
 	REQUEST_FOR_INFORMATION(8), 
@@ -25,11 +25,11 @@ public enum IpnEventType {
 	
 	private final int value;
 	
-	private final InvoicePaymentStatus[] acceptableStatuses;
-	private Long merchantReference;
+	private final PaymentStatus[] acceptableStatuses;
+	private Long reference;
 	private String message;
 
-	private IpnEventType(Integer value, InvoicePaymentStatus...acceptableStatuses ) {
+	private IpnEventType(Integer value, PaymentStatus...acceptableStatuses ) {
 		this.value = value;
 		this.acceptableStatuses = acceptableStatuses;
 	}
@@ -79,17 +79,17 @@ public enum IpnEventType {
 		this.message = message;
 		return this;
 	}
-
-	public Long getMerchantReference() {
-		return merchantReference;
+	
+	public Long getReference() {
+		return reference;
 	}
 
-	public IpnEventType setMerchantReference(Long merchantReference) {
-		this.merchantReference = merchantReference;
+	public IpnEventType setReference(Long reference) {
+		this.reference = reference;
 		return this;
 	}
 
-	public InvoicePaymentStatus[] getAcceptableStatuses() {
+	public PaymentStatus[] getAcceptableStatuses() {
 		return acceptableStatuses;
 	}
 

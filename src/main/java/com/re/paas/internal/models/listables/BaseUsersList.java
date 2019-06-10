@@ -15,7 +15,7 @@ import com.re.paas.internal.classes.spec.BaseUserSpec;
 import com.re.paas.internal.fusion.functionalities.UserFunctionalities;
 import com.re.paas.internal.models.BaseUserModel;
 import com.re.paas.internal.models.RoleModel;
-import com.re.paas.internal.models.tables.users.BaseUserEntity;
+import com.re.paas.internal.tables.defs.users.BaseUserTable;
 
 public class BaseUsersList extends Listable<BaseUserSpec>{
 
@@ -30,8 +30,8 @@ public class BaseUsersList extends Listable<BaseUserSpec>{
 	}
 
 	@Override
-	public Class<BaseUserEntity> entityType() {
-		return BaseUserEntity.class;
+	public Class<BaseUserTable> entityType() {
+		return BaseUserTable.class;
 	}
 	
 	@Override
@@ -47,7 +47,7 @@ public class BaseUsersList extends Listable<BaseUserSpec>{
 		keys.forEach(k -> {
 			Long userId = Long.parseLong(k);
 			
-			BaseUserEntity e = ofy().load().type(BaseUserEntity.class).id(userId).safe();
+			BaseUserTable e = ofy().load().type(BaseUserTable.class).id(userId).safe();
 			
 			IndexedNameSpec nameSpec = new IndexedNameSpec()
 						.setKey(userId.toString())

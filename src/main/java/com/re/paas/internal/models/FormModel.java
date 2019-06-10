@@ -31,9 +31,9 @@ import com.re.paas.internal.fusion.functionalities.UserApplicationFunctionalitie
 import com.re.paas.internal.models.helpers.EntityHelper;
 import com.re.paas.internal.models.helpers.EntityUtils;
 import com.re.paas.internal.models.helpers.FormFieldRepository;
-import com.re.paas.internal.models.tables.forms.FormCompositeFieldTable;
-import com.re.paas.internal.models.tables.forms.FormSectionTable;
-import com.re.paas.internal.models.tables.forms.FormSimpleFieldTable;
+import com.re.paas.internal.tables.defs.forms.FormCompositeFieldTable;
+import com.re.paas.internal.tables.defs.forms.FormSectionTable;
+import com.re.paas.internal.tables.defs.forms.FormSimpleFieldTable;
 
 public class FormModel extends BaseModel {
 

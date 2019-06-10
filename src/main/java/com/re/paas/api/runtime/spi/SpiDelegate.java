@@ -2,41 +2,32 @@ package com.re.paas.api.runtime.spi;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Map;
 import java.util.function.Consumer;
 
 import com.re.paas.api.annotations.develop.BlockerTodo;
-import com.re.paas.api.annotations.develop.PlatformInternal;
 import com.re.paas.api.classes.KeyValuePair;
+import com.re.paas.api.classes.ParameterizedClass;
+import com.re.paas.api.designpatterns.Singleton;
 import com.re.paas.api.logging.Logger;
-import com.re.paas.api.runtime.ExecutorFactory;
+import com.re.paas.api.runtime.MethodMeta;
+import com.re.paas.api.runtime.MethodMeta.CustomValidatorContext;
+import com.re.paas.api.runtime.MethodMeta.Factor;
+import com.re.paas.api.runtime.MethodMeta.IdentityStrategy;
+import com.re.paas.api.runtime.MethodMeta.Validator;
 import com.re.paas.api.utils.ClassUtils;
 import com.re.paas.api.utils.Utils;
-import com.re.paas.internal.runtime.security.Secure;
-import com.re.paas.internal.runtime.security.Secure.Factor;
-import com.re.paas.internal.runtime.security.Secure.IdentityStrategy;
 
-/**
- * Note: T must be non-parameterized, since
- * ClassUtils.getGenericSuperclasses(..) does not yet support multi-nested
- * generic construct <br>
- * <br>
- * <b>Notes on Security</b>
- * <li>Delegates are responsible for enforcing code security within their
- * respective domains. Trusted delegates should ensure that the
- * {@link ExecutorFactory#execute(com.re.paas.api.app_provisioning.AppClassLoader, Boolean, Runnable)}
- * is used when running code from resource classes</li>
- */
-@Secure
 public abstract class SpiDelegate<T> {
 
 	private static final Logger LOG = Logger.get(SpiDelegate.class);
 
 	private KeyValuePair<SpiType, Class<?>> type = null;
 
-	protected static final String DEFAULT_NAMESPACE_PREFIX = "default";
-	protected static final String EXT_PREFIX = "ext";
+	protected static final String EXT_RESOURCE_PREFIX = "ext_";
 
 	protected final <S> List<S> getList(Class<S> T, String namespace) {
 		@SuppressWarnings("unchecked")
@@ -60,90 +51,78 @@ public abstract class SpiDelegate<T> {
 	}
 
 	protected final Map<Object, Object> getAll() {
-		return getAll(type.getKey());
+		return getAll(getSpiType());
 	}
 
 	private static final Map<Object, Object> getAll(SpiType type) {
 		return SpiDelegateHandler.get().getResources(type);
 	}
 
-	/**
-	 * This filters the set of resources
-	 * 
-	 * @return
-	 */
-	protected final List<Class<?>> filter() {
-		return null;
-	}
-
-	@SuppressWarnings("unchecked")
 	protected final Object get(String namespace) {
-		checkNamespaceAccess(namespace);
-		Object o = getAll(type.getKey()).get(namespace);
+		Object o = getAll().get(namespace);
 		if (o instanceof Class) {
-			return ClassUtils.createInstance((Class<T>) o);
+			@SuppressWarnings("unchecked")
+			Object r = ClassUtils.createInstance((Class<T>) o);
+			return r;
 		}
 		return o;
 	}
 
 	protected final boolean hasKey(String namespace) {
-		checkNamespaceAccess(namespace);
-		Object o = getAll(type.getKey()).get(namespace);
-		return o != null;
-	}
-
-	protected final Object get() {
-		return get(DEFAULT_NAMESPACE_PREFIX);
+		return getAll().containsKey(namespace);
 	}
 
 	protected final void set(String namespace, Object obj) {
-		checkNamespaceAccess(namespace);
-		getAll(type.getKey()).put(namespace, obj);
+		getAll().put(namespace, obj);
 	}
 
 	protected final Object remove(String namespace) {
-		checkNamespaceAccess(namespace);
-		return getAll(type.getKey()).remove(namespace);
+		return getAll().remove(namespace);
 	}
 
-	/**
-	 * Since any thread can access {@link #getAll()}, we need to enforce some
-	 * security constraints on threads
-	 */
-	@Secure(factor = Factor.CALLER, allowed = {
-			AbstractResource.class }, identityStrategy = IdentityStrategy.ASSIGNABLE, allowInternalAccess = false)
-	private static final void checkNamespaceAccess(String namespace) {
-		if (namespace.startsWith(EXT_PREFIX)) {
+	@MethodMeta(factor = Factor.CALLER, allowed = {
+			Resource.class }, identityStrategy = IdentityStrategy.ASSIGNABLE, onImplementation = true)
+	@MethodMeta(validator = MetaFactoryValidators.ResourceValidator.class)
 
-		}
+	public boolean hasResourceKey(String namespace) {
+		return hasKey(EXT_RESOURCE_PREFIX + namespace);
 	}
 
-	public final boolean hasResourceKey(String namespace) {
-		return hasKey(EXT_PREFIX + namespace);
+	@MethodMeta(factor = Factor.CALLER, allowed = {
+			Resource.class }, identityStrategy = IdentityStrategy.ASSIGNABLE, onImplementation = true)
+	@MethodMeta(validator = MetaFactoryValidators.ResourceValidator.class)
+
+	public Object getResource(String namespace) {
+		return get(EXT_RESOURCE_PREFIX + namespace);
 	}
 
-	public final Object getResource(String namespace) {
-		return get(EXT_PREFIX + namespace);
+	@MethodMeta(factor = Factor.CALLER, allowed = {
+			Resource.class }, identityStrategy = IdentityStrategy.ASSIGNABLE, onImplementation = true)
+	@MethodMeta(validator = MetaFactoryValidators.ResourceValidator.class)
+
+	public void setResource(Object namespace, Object obj) {
+		set(EXT_RESOURCE_PREFIX + namespace, obj);
 	}
 
-	public final void setResource(Object namespace, Object obj) {
-		set(EXT_PREFIX + namespace, obj);
-	}
+	@MethodMeta(factor = Factor.CALLER, allowed = {
+			Resource.class }, identityStrategy = IdentityStrategy.ASSIGNABLE, onImplementation = true)
+	@MethodMeta(validator = MetaFactoryValidators.ResourceValidator.class)
 
-	public final Object removeResource(String namespace) {
-		return remove(EXT_PREFIX + namespace);
+	public Object removeResource(String namespace) {
+		return remove(EXT_RESOURCE_PREFIX + namespace);
 	}
 
 	public final Class<?> getLocatorClassType() {
-		return ClassUtils.getGenericRefs(getClass().getClassLoader(), getClass().getSuperclass().getGenericSuperclass())
-				.get(0);
+		ParameterizedClass c = ClassUtils.getParameterizedClass(getClass().getClassLoader(),
+				getClass().getSuperclass().getGenericSuperclass());
+		return c.getGenericTypes().get(0).getType();
 	}
 
 	public final KeyValuePair<SpiType, Class<?>> getType() {
 		return type;
 	}
 
-	@Secure(factor = Factor.CALLER, allowed = {
+	@MethodMeta(factor = Factor.CALLER, allowed = {
 			SpiDelegateHandler.class }, identityStrategy = IdentityStrategy.SINGLETON, allowInternalAccess = false)
 	public final SpiDelegate<T> setType(KeyValuePair<SpiType, Class<?>> type) {
 		this.type = type;
@@ -160,10 +139,11 @@ public abstract class SpiDelegate<T> {
 		return result;
 	}
 
-	@SuppressWarnings("unchecked")
 	protected final void forEach(Consumer<Class<T>> consumer) {
 		SpiDelegateHandler.get().forEach(getSpiType(), c -> {
-			consumer.accept((Class<T>) c);
+			@SuppressWarnings("unchecked")
+			Class<T> clazz = (Class<T>) c;
+			consumer.accept(clazz);
 		});
 	}
 
@@ -171,36 +151,53 @@ public abstract class SpiDelegate<T> {
 	 * This function is used to initialize this delegate. Subclasses should ensure
 	 * that this method takes no longer than 10 seconds to execute.
 	 */
-	@PlatformInternal
+	@MethodMeta
 	public abstract DelegateInitResult init();
 
-	/**
-	 * This releases the resources used by this delegate, and performs any cleanup
-	 * tasks. This is called before this delegate is taken out of service
-	 */
-
-	public void shutdown() {
-
+	public Boolean applies() {
+		return true;
 	}
 
 	/**
-	 * This unloads all classes that have been previously loaded by this delegate
+	 * Indicate that delegate needs to be taken out of service
 	 */
 	@BlockerTodo("Make abstract, and implement across all delegates")
-	@Secure
-	public void unload() {
+	public void shutdown() {}
+
+	@MethodMeta(factor = Factor.CALLER, allowed = {
+			SpiBase.class }, identityStrategy = IdentityStrategy.SINGLETON, allowInternalAccess = false)
+	
+	/**
+	 * Release resources used by this delegate
+	 */
+	public final void release() {
+		MetaFactoryValidators.ResourceValidator.remove(this);
+		
+		Map<Object, Object> rMap = getAll();
+		if (!rMap.isEmpty()) {
+			rMap.clear();
+		}
 	}
 
-	@Secure(factor = Factor.CALLER, allowed = {
+	@MethodMeta(factor = Factor.CALLER, allowed = {
 			SpiDelegateHandler.class }, identityStrategy = IdentityStrategy.SINGLETON, allowInternalAccess = false)
 	public final void add0(List<Class<?>> classes) {
 		add(Utils.toGenericList((classes)));
 	}
 
-	@Secure(factor = Factor.CALLER, allowed = {
+	@MethodMeta(factor = Factor.CALLER, allowed = {
 			SpiBase.class }, identityStrategy = IdentityStrategy.SINGLETON, allowInternalAccess = false)
+
 	public final List<Class<T>> remove0(List<Class<?>> classes) {
 		return remove(Utils.toGenericList(classes));
+	}
+	
+	
+	@MethodMeta(factor = Factor.CALLER, allowed = {
+			SpiBase.class }, identityStrategy = IdentityStrategy.SINGLETON, allowInternalAccess = false)
+	
+	public static final void emptyResourceValidatorCache(String appId) {
+		MetaFactoryValidators.ResourceValidator.remove(appId);
 	}
 
 	protected void add(List<Class<T>> classes) {
@@ -220,4 +217,76 @@ public abstract class SpiDelegate<T> {
 		return true;
 	}
 
+	@BlockerTodo
+	private static class MetaFactoryValidators {
+
+		public static class ResourceValidator extends Validator {
+
+			private static final Map<String, List<String>> classFrames = Collections.synchronizedMap(new HashMap<>());
+
+			@Override
+			public Boolean apply(CustomValidatorContext ctx) {
+
+				Class<?> source = ctx.getSource().getDeclaringClass();
+				Class<?> target = ctx.getTarget().getDeclaringClass();
+
+				String appId = ClassUtils.getAppId(source);
+
+				List<String> classFrames = ResourceValidator.classFrames.get(appId);
+
+				if (classFrames == null) {
+					classFrames = new ArrayList<>();
+					ResourceValidator.classFrames.put(appId, classFrames);
+				}
+
+				String frame = source.getName() + "$" + ClassUtils.toString(target);
+
+				if (classFrames.contains(frame)) {
+					return true;
+				}
+
+				@SuppressWarnings("unchecked")
+				Class<? extends SpiDelegate<?>> delegateClass = (Class<? extends SpiDelegate<?>>) ctx.getTarget()
+						.getDeclaringClass();
+
+				// Get direct super class, to get abstract delegate class
+				@SuppressWarnings("unchecked")
+				Class<? extends SpiDelegate<?>> abstractDelegateClass = (Class<? extends SpiDelegate<?>>) delegateClass
+						.getSuperclass();
+
+				SpiDelegate<?> delegate = Singleton.get(abstractDelegateClass);
+
+				SpiType type = delegate.getSpiType();
+
+				Boolean canAccess = SpiLocatorHandler.get().exists(type, source);
+
+				if (canAccess) {
+					classFrames.add(frame);
+				}
+
+				return canAccess;
+			}
+
+			private static void remove(String appId) {
+				classFrames.remove(appId);
+			}
+
+			private static void remove(SpiDelegate<?> delegate) {
+
+				String delegateClass = ClassUtils.toString(delegate.getClass());
+
+				synchronized (classFrames) {
+					for (List<String> classFrames : classFrames.values()) {
+						ListIterator<String> it = classFrames.listIterator();
+						while (it.hasNext()) {
+							String s = it.next();
+							if (s.endsWith("$" + delegateClass)) {
+								it.remove();
+							}
+						}
+					}
+				}
+			}
+		}
+	}
 }

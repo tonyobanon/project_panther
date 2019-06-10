@@ -20,7 +20,7 @@ public class Singleton {
 		@SuppressWarnings("unchecked")
 		T o = (T) singletons.get(name);
 		
-		if (!ClassUtils.isAccessible(o.getClass())) {
+		if (o != null && !ClassUtils.isAccessible(o.getClass())) {
 			throw new SecurityException(name + " is not accessible by the current thread");
 		}
 		
@@ -40,7 +40,7 @@ public class Singleton {
 	 * @param type
 	 * @param typeSubType
 	 */
-	public static <T> void register(Class<T> type, T typeSubType) {
+	public static <T> void register(Class<? extends T> type, T typeSubType) {
 
 		String name = ClassUtils.toString(type);
 		

@@ -10,13 +10,13 @@ import java.util.function.BiConsumer;
 import com.re.paas.api.Adapter;
 import com.re.paas.api.classes.Exceptions;
 import com.re.paas.api.clustering.NodeRole;
+import com.re.paas.api.runtime.MethodMeta;
 import com.re.paas.api.runtime.spi.DelegateInitResult;
 import com.re.paas.api.runtime.spi.DelegateSpec;
 import com.re.paas.api.runtime.spi.SpiDelegate;
 import com.re.paas.api.runtime.spi.SpiType;
 import com.re.paas.api.utils.ClassUtils;
 import com.re.paas.internal.Platform;
-import com.re.paas.internal.runtime.security.Secure;
 
 @DelegateSpec(dependencies = { SpiType.NODE_ROLE })
 public abstract class AbstractAdapterDelegate<U extends Object, T extends Adapter<U>> extends SpiDelegate<T> {
@@ -79,13 +79,13 @@ public abstract class AbstractAdapterDelegate<U extends Object, T extends Adapte
 		return config;
 	}
 
-	@Secure
+	@MethodMeta
 	public AbstractAdapterDelegate<U, T> setConfig(AdapterConfig config) {
 		this.config = config;
 		return this;
 	}
 
-	@Secure
+	@MethodMeta
 	public abstract Object load(LoadPhase phase);
 
 	public T getAdapter(String name) {

@@ -5,34 +5,24 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Stream;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
 import com.re.paas.api.annotations.develop.BlockerBlockerTodo;
 import com.re.paas.api.annotations.develop.BlockerTodo;
-import com.re.paas.api.app_provisioning.AppClassLoader;
-import com.re.paas.api.classes.ClientRBRef;
+import com.re.paas.api.apps.AppClassLoader;
 import com.re.paas.api.classes.Exceptions;
 import com.re.paas.api.classes.PlatformException;
+import com.re.paas.api.fusion.server.JsonArray;
+import com.re.paas.api.fusion.server.JsonObject;
 import com.re.paas.api.infra.database.document.Database;
 import com.re.paas.api.infra.database.document.Table;
 import com.re.paas.api.logging.Logger;
-import com.re.paas.api.runtime.spi.BaseSPILocator;
-import com.re.paas.api.runtime.spi.ClassIdentityType;
 import com.re.paas.api.runtime.spi.SpiBase;
-import com.re.paas.api.runtime.spi.SpiDelegate;
-import com.re.paas.api.runtime.spi.SpiType;
-import com.re.paas.api.runtime.spi.TypeClassification;
 import com.re.paas.api.utils.Utils;
 import com.re.paas.internal.Platform;
-import com.re.paas.internal.classes.ClasspathScanner;
 import com.re.paas.internal.errors.SpiError;
-import com.re.paas.internal.fusion.ui.impl.UIContext;
 
 @BlockerTodo("Create ThreadGroup(s) for each application, so that ThreadSecurity#newThread can use it")
 public class AppProvisionerImpl implements AppProvisioner {
@@ -62,7 +52,7 @@ public class AppProvisionerImpl implements AppProvisioner {
 		return basePath;
 	}
 
-	public boolean install(Path archive) {
+	public Boolean install(Path archive) {
 
 		// Save to DB, along with version
 
@@ -71,19 +61,17 @@ public class AppProvisionerImpl implements AppProvisioner {
 		// Extract to app directory
 
 		// Ensure that all dependencies are available
-		
-		
 
 		Path path = null; // directory that now has app artifact, sequel to extraction
+		// Remove to use internal filesystem
 
-		
-		
-		
 		String appId = path.getFileName().toString();
 
 		readConfiguration(path);
 
-		return scanAvailableDelegates(appId, path);
+		SpiBaseImpl.install(getClassloader(appId));
+
+		return true;
 	}
 
 	public void list() {
@@ -92,19 +80,26 @@ public class AppProvisionerImpl implements AppProvisioner {
 
 	private static String[] getAppDependencies(String appId) {
 
-		JsonElement v = AppProvisionerImpl.appConfig.get(appId).get("app_dependencies");
-
-		JsonArray arr = v != null ? v.getAsJsonArray() : null;
+		JsonArray arr = AppProvisionerImpl.appConfig.get(appId).getJsonArray("app_dependencies");
 
 		if (arr != null) {
 			String[] array = new String[arr.size()];
 			for (int i = 0; i < arr.size(); i++) {
-				array[i] = arr.get(i).toString();
+				array[i] = arr.getString(i);
 			}
 			return array;
 		} else {
 			return new String[] {};
 		}
+	}
+
+	public static String getAppId() {
+		AppClassLoader cl = (AppClassLoader) Thread.currentThread().getContextClassLoader();
+		return cl != null ? cl.getAppId() : DEFAULT_APP_ID;
+	}
+
+	public static String getAppName() {
+		return AppProvisioner.get().getAppName(getAppId());
 	}
 
 	public void start() {
@@ -115,60 +110,6 @@ public class AppProvisionerImpl implements AppProvisioner {
 		}
 	}
 
-	/**
-	 * 
-	 * @param appId
-	 * @param path
-	 * @return A boolean indicating whether the application is required to start
-	 *         immediately
-	 */
-	private boolean scanAvailableDelegates(String appId, Path path) {
-
-		boolean hasActive = false;
-
-		for (SpiType type : SpiType.values()) {
-
-			BaseSPILocator locator = SPILocatorHandlerImpl.getDefaultLocators().get(type);
-
-			@SuppressWarnings("unchecked")
-			Class<SpiDelegate<?>> delegateType = (Class<SpiDelegate<?>>) locator.delegateType();
-
-			AppClassLoader cl = getClassloader(appId);
-
-			List<Class<? extends SpiDelegate<?>>> delegateClasses = new ClasspathScanner<>(delegateType,
-					ClassIdentityType.ASSIGNABLE_FROM).setClassLoader(cl).scanClasses();
-
-			if (delegateClasses.isEmpty()) {
-				continue;
-			}
-
-			String confirmMessage = ClientRBRef.get("app.confirm.set.default.delegate").add(type + ".action")
-					.toString();
-
-			boolean useAsDefault = UIContext.confirm(confirmMessage);
-
-			if (useAsDefault && type.classification() == TypeClassification.ACTIVE) {
-
-				String confirmTrust = ClientRBRef.get("app.confirm.trust.set.default.delegate").toString();
-				useAsDefault = UIContext.confirm(confirmTrust);
-
-				if (useAsDefault) {
-					SpiBaseImpl.registerTrustedApp(appId);
-					hasActive = true;
-				}
-			}
-
-			if (useAsDefault) {
-				SpiBaseImpl.registerDefaultDelegate(type, delegateClasses.get(0));
-			} else {
-				SpiBaseImpl.registerAvailableDelegates(type, delegateClasses.get(0));
-			}
-
-		}
-
-		return hasActive;
-	}
-
 	private static void readConfiguration(Path path) {
 
 		String appId = path.getFileName().toString();
@@ -177,7 +118,7 @@ public class AppProvisionerImpl implements AppProvisioner {
 		try {
 			config = Utils.getJson(Files.newInputStream(path.resolve("config.json")));
 		} catch (Exception e) {
-			Logger.get(AppProvisionerImpl.class).warn("Could not config.json for app: " + appId);
+			LOG.warn("Could not find config.json for app: " + appId);
 			config = new JsonObject();
 		}
 
@@ -205,16 +146,21 @@ public class AppProvisionerImpl implements AppProvisioner {
 
 		Stream<Path> paths = Files.list(appBase);
 
-		System.out.println(paths.count());
-
 		paths.forEach(path -> {
+
+			if (!Files.isDirectory(path)) {
+				return;
+			}
+
+			LOG.debug("Loading app: " + path.getFileName());
 			readConfiguration(path);
 		});
 
+		LOG.debug("All applications loaded in " + AppProvisioner.class.getSimpleName());
 		paths.close();
 	}
 
-	@BlockerTodo("Schedule Application Restart")
+	@BlockerTodo("Schedule Platform Restart ?")
 	public void stop(String app) {
 
 		assert !app.equals(DEFAULT_APP_ID);
@@ -239,11 +185,20 @@ public class AppProvisionerImpl implements AppProvisioner {
 		return appClassloaders.keySet();
 	}
 
-	public AppClassLoader getClassloader(String appId) {
+	static AppClassLoader getAppClassloader(String appId) {
 		return appClassloaders.get(appId);
+	}
+
+	public AppClassLoader getClassloader(String appId) {
+		return getAppClassloader(appId);
 	}
 
 	public JsonObject getConfig(String appId) {
 		return appConfig.get(appId);
 	}
+
+	public String getAppName(String appId) {
+		return getConfig(appId).getString("name");
+	}
+
 }

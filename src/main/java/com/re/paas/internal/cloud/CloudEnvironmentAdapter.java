@@ -62,8 +62,8 @@ public interface CloudEnvironmentAdapter extends CloudEnvironment {
 
 	default ClusterCredentials credentials() {
 
-		String accessKey = getInstanceTags().get(ClusterCredentials.CLUSTER_ACCESS_KEY_TAG);
-		String secretKey = getInstanceTags().get(ClusterCredentials.CLUSTER_SECRET_KEY_TAG);
+		String accessKey = getInstanceTags().get(Tags.CLUSTER_ACCESS_KEY_TAG);
+		String secretKey = getInstanceTags().get(Tags.CLUSTER_SECRET_KEY_TAG);
 
 		return new ClusterCredentials(accessKey, secretKey);
 	}

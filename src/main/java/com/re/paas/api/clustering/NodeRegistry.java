@@ -1,6 +1,7 @@
 package com.re.paas.api.clustering;
 
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
@@ -26,8 +27,6 @@ public interface NodeRegistry {
 
 	Integer getInboundPort();
 
-	Boolean isAutoScalingEnabled();
-
 	String getCloudUniqueId();
 
 	String getName();
@@ -37,6 +36,10 @@ public interface NodeRegistry {
 	InetAddress getWkaHost();
 
 	Integer getWkaInboundPort();
+	
+	default InetSocketAddress getWka() {
+		return new InetSocketAddress(getWkaHost(), getWkaInboundPort());
+	}
 
 	Server getServer();
 

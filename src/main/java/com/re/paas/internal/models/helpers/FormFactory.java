@@ -1,6 +1,7 @@
 package com.re.paas.internal.models.helpers;
 
-import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 
@@ -14,7 +15,6 @@ import com.re.paas.api.forms.Section;
 import com.re.paas.api.forms.SimpleField;
 import com.re.paas.api.forms.SizeSpec;
 import com.re.paas.api.forms.input.InputType;
-import com.re.paas.api.utils.Utils;
 import com.re.paas.internal.documents.pdf.PDFBuilder;
 import com.re.paas.internal.documents.pdf.gen.Image;
 import com.re.paas.internal.documents.pdf.gen.InputControl;
@@ -31,16 +31,13 @@ import com.re.paas.internal.models.RBModel;
 @BlockerTodo("More space needed for: * Kindly attach a copy of your passport")
 public class FormFactory {
 
-	public static File toPDF(String locale, SizeSpec bodySize, SizeSpec headerSize, SizeSpec otherSize, PDFForm sheet) {
+	public static void toPDF(String locale, SizeSpec bodySize, SizeSpec headerSize, SizeSpec otherSize, PDFForm sheet, Path file) {
 
 		try {
 
-			// Create Temp File
-			File tempFile = File.createTempFile(Utils.newRandom(), ".pdf");
-
 			// Generate, write to temp file
 
-			PDFBuilder writer = new PDFBuilder(tempFile.getAbsolutePath());
+			PDFBuilder writer = new PDFBuilder();
 
 			Table table = new Table(new TableConfig(100));
 
@@ -73,14 +70,14 @@ public class FormFactory {
 
 			for (Section section : sheet.getSections()) {
 
-				table.withRow(new Row(headerSize).withColumn(
-						new Column(new TextControl(RBModel.get(locale, section.getTitle())).forSection())
+				table.withRow(new Row(headerSize)
+						.withColumn(new Column(new TextControl(RBModel.get(locale, section.getTitle())).forSection())
 								.withPercentileWidth(100)));
 
 				if (section.getSummary() != null) {
 
-					table.withRow(new Row(bodySize).withColumn(
-							new Column(new TextControl(RBModel.get(locale, section.getSummary())))
+					table.withRow(new Row(bodySize)
+							.withColumn(new Column(new TextControl(RBModel.get(locale, section.getSummary())))
 									.withPercentileWidth(100)));
 				}
 
@@ -210,14 +207,15 @@ public class FormFactory {
 			table.commit();
 
 			writer.appendTable(table, false);
+			
+			if(!Files.exists(file)) {
+				Files.createFile(file);
+			}
 
-			writer.close();
-
-			return tempFile;
+			writer.flush(file);
 
 		} catch (Exception e) {
 			e.printStackTrace();
-			return null;
 		}
 	}
 
@@ -318,7 +316,7 @@ public class FormFactory {
 			}
 
 		} else {
-  
+
 			CompositeField ce = (CompositeField) question;
 
 			if (!ce.getIsVisible()) {

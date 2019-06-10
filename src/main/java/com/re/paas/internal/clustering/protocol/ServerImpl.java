@@ -39,10 +39,16 @@ public class ServerImpl implements Server {
 		
 		this.bootstrap = this.createBootstrap().join();
 	}
+	
+	@Override
+	public Boolean isOpen() {
+		return channel.isOpen();
+	}
 
 	@Override
 	public void start() {
 		
+		// We want to make sure that the issue
 		
 		try {
 			// Bind and start to accept incoming connections.
@@ -72,6 +78,8 @@ public class ServerImpl implements Server {
 			};
 		});
 	}
+	
+	
 
 	@Override
 	public InetAddress host() {

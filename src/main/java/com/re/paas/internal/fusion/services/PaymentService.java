@@ -3,8 +3,8 @@ package com.re.paas.internal.fusion.services;
 import com.re.paas.api.fusion.server.BaseService;
 import com.re.paas.api.fusion.server.FusionEndpoint;
 import com.re.paas.api.fusion.server.RoutingContext;
+import com.re.paas.internal.billing.BasePaymentModel;
 import com.re.paas.internal.fusion.functionalities.LocationFunctionalities;
-import com.re.paas.internal.models.BasePaymentModel;
 
 public class PaymentService extends BaseService {
 	
