@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import com.re.paas.internal.models.RBModel;
+import com.re.paas.integrated.models.RBModel;
 
 public class RBUtils {
 

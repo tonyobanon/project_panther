@@ -1,6 +1,6 @@
 package com.re.paas.api.clustering.protocol;
 
-import java.net.InetAddress;
+import java.net.InetSocketAddress;
 
 import com.re.paas.api.designpatterns.Singleton;
 
@@ -10,16 +10,16 @@ public interface ClientFactory {
 		return Singleton.get(ClientFactory.class);
 	}
 	
-	Client getClient(Short nodeId);
+	Client getClient(Short memberId);
 	
-	Client getClient(InetAddress host, Integer port);
+	Client getClient(InetSocketAddress host);
 
-	void addNode(Short nodeId);
+	void addMember(Short memberId);
 
-	void releaseNode(Short nodeId);
+	void releaseMember(Short memberId);
 	
 	boolean isRotated();
 	
 	Short maxRotatedClients();
-	
+
 }

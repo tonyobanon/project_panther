@@ -11,12 +11,12 @@ import java.util.List;
 
 import com.re.paas.api.annotations.develop.BlockerTodo;
 import com.re.paas.api.classes.Exceptions;
-import com.re.paas.internal.runtime.spi.ClassLoaders;
+import com.re.paas.internal.runtime.spi.Classpaths;
 
 @BlockerTodo("Can ClassplathScanner extend this? to avoid duplicating logic")
 public class ResourceScanner {
 
-	private Path path = ClassLoaders.getClassPath(ClassLoader.getSystemClassLoader());
+	private Path path = Classpaths.get(ClassLoader.getSystemClassLoader());
 	
     private final String ext;
 

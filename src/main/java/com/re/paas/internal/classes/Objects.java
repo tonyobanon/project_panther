@@ -1,5 +1,6 @@
 package com.re.paas.internal.classes;
 
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 public class Objects {
@@ -9,4 +10,10 @@ public class Objects {
 		return a != null ? a : second.get();
 	}
 
+	public static Consumer<?> noOpConsumer() {
+		return (p) -> {
+			
+		};
+	}
+	
 }

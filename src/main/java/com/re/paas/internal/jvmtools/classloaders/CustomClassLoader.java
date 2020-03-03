@@ -23,7 +23,7 @@ public class CustomClassLoader extends ClassLoader {
 	private final Map<String, Class<?>> _classes = new HashMap<>();
 	private final Map<String, byte[]> _classBytes = new HashMap<>();
 
-	private BiConsumer<Class<?>, byte[]> onFindListener;
+	private BiConsumer<Class<?>, byte[]> listener;
 
 	private final URI path;
 
@@ -31,8 +31,8 @@ public class CustomClassLoader extends ClassLoader {
 		this(false);
 	}
 
-	public CustomClassLoader onFind(BiConsumer<Class<?>, byte[]> onFindListener) {
-		this.onFindListener = onFindListener;
+	public CustomClassLoader listener(BiConsumer<Class<?>, byte[]> listener) {
+		this.listener = listener;
 		return this;
 	}
 
@@ -94,8 +94,8 @@ public class CustomClassLoader extends ClassLoader {
 			this.ingest(clazz, data);
 		}
 
-		if (this.onFindListener != null) {
-			this.onFindListener.accept(clazz, data);
+		if (this.listener != null) {
+			this.listener.accept(clazz, data);
 		}
 
 		return clazz;

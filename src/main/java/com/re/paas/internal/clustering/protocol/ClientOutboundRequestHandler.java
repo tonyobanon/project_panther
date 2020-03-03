@@ -2,12 +2,14 @@ package com.re.paas.internal.clustering.protocol;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.ByteBuffer;
 import java.util.concurrent.CompletableFuture;
 
-import com.re.paas.api.clustering.NodeRegistry;
+import com.re.paas.api.classes.Exceptions;
+import com.re.paas.api.classes.ObjectSerializer;
+import com.re.paas.api.clustering.ClusteringServices;
 import com.re.paas.api.clustering.classes.Conditional;
 import com.re.paas.api.logging.Logger;
-import com.re.paas.internal.utils.ObjectUtils;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
@@ -145,7 +147,13 @@ public class ClientOutboundRequestHandler<R> extends ChannelInboundHandlerAdapte
 
 		responseReaderThread = new Thread(() -> {
 
-			Object o = ObjectUtils.deserialize(responseReader);
+			Object o = null;
+
+			try {
+				o = ObjectSerializer.get().deserialize(ByteBuffer.wrap(responseReader.readAllBytes()));
+			} catch (IOException e) {
+				Exceptions.throwRuntime(e);
+			}
 
 			// @DEV
 			endTime = System.nanoTime();
@@ -220,19 +228,20 @@ public class ClientOutboundRequestHandler<R> extends ChannelInboundHandlerAdapte
 
 	private void sendRequest() throws IOException {
 
-		byte[] bodyContents = ObjectUtils.serialize(this.requestBody);
-		ByteBuf body = ByteBufAllocator.DEFAULT.directBuffer(bodyContents.length, bodyContents.length);
+		ByteBuffer bodyContents = ObjectSerializer.get().serialize(this.requestBody);
+		
+		ByteBuf body = ByteBufAllocator.DEFAULT.directBuffer(bodyContents.position(), bodyContents.position());
 		body.writeBytes(bodyContents);
 
 		// Create header bytes
 		ByteBuf header = ByteBufAllocator.DEFAULT.directBuffer(Constants.CLIENT_PACKET_FRAME_SIZE);
 
-		Short nodeId = NodeRegistry.get().getNodeId();
+		Short memberId = ClusteringServices.get().getMember().getMemberId();
 
 		header.writeBytes(Unpooled.copyShort(Constants.HS1));
 		header.writeBytes(Unpooled.copyShort(Constants.HS2));
 		header.writeBytes(Unpooled.copyShort(Constants.HS3));
-		header.writeBytes(Unpooled.copyShort(nodeId));
+		header.writeBytes(Unpooled.copyShort(memberId));
 		header.writeBytes(Unpooled.copyShort(getClientId()));
 		header.writeBytes(Unpooled.copyInt(body.readableBytes()));
 		header.writeBytes(Unpooled.copyShort(functionId));
@@ -241,6 +250,6 @@ public class ClientOutboundRequestHandler<R> extends ChannelInboundHandlerAdapte
 		header.writeBytes(Unpooled.copyShort(Constants.HE3));
 
 		// Write to remote host
-		ChannelUtils.sendRequest(this, header, body, Constants.CLIENT_PACKET_FRAME_SIZE, nodeId, getClientId());
+		ChannelUtils.sendRequest(this, header, body, Constants.CLIENT_PACKET_FRAME_SIZE, memberId, getClientId());
 	}
 }

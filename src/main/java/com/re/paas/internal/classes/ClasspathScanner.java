@@ -22,10 +22,11 @@ import com.google.common.collect.Lists;
 import com.re.paas.api.classes.Exceptions;
 import com.re.paas.api.logging.Logger;
 import com.re.paas.api.runtime.spi.BaseSPILocator.ShuffleStrategy;
+import com.re.paas.api.runtime.ClassLoaders;
 import com.re.paas.api.runtime.spi.ClassIdentityType;
 import com.re.paas.api.utils.ClassUtils;
 import com.re.paas.api.utils.Utils;
-import com.re.paas.internal.runtime.spi.ClassLoaders;
+import com.re.paas.internal.runtime.spi.Classpaths;
 
 public class ClasspathScanner<T> {
 
@@ -112,7 +113,7 @@ public class ClasspathScanner<T> {
 		try {
 
 			ClassLoader cl = this.cl != null ? this.cl : ClassLoaders.getClassLoader();
-			Path basePath = ClassLoaders.getClassPath(cl);
+			Path basePath = Classpaths.get(cl);
 
 			Files.walkFileTree(basePath, new SimpleFileVisitor<Path>() {
 				@Override
@@ -179,7 +180,7 @@ public class ClasspathScanner<T> {
 		try {
 
 			ClassLoader cl = this.cl != null ? this.cl : ClassLoaders.getClassLoader();
-			Path basePath = ClassLoaders.getClassPath(cl);
+			Path basePath = Classpaths.get(cl);
 
 			Files.walkFileTree(basePath, new SimpleFileVisitor<Path>() {
 				@SuppressWarnings("unchecked")

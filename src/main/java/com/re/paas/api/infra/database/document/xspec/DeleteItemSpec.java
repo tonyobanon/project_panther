@@ -66,7 +66,11 @@ public final class DeleteItemSpec extends BaseSpec {
 	}
 
 	public static DeleteItemSpec forKey(String hashKeyName, Object hashKeyValue) {
+		return forKey(new PrimaryKey(hashKeyName, hashKeyValue));
+	}
+	
+	public static DeleteItemSpec forKey(PrimaryKey key) {
 		return new ExpressionSpecBuilder().buildForDeleteItem()
-				.setPrimaryKey(new PrimaryKey(hashKeyName, hashKeyValue));
+				.setPrimaryKey(key);
 	}
 }

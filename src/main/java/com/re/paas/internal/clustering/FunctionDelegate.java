@@ -24,15 +24,14 @@ public class FunctionDelegate extends AbstractFunctionDelegate {
 		Consumer<Class<Function>> consumer = c -> {
 			addFunction(c);
 		};
-		forEach(consumer);
-		return DelegateInitResult.SUCCESS;
+		return forEach(consumer);
 	}
 	
 	@Override
 	public Function getFunction(String namespace, Short contextId) {
 		
 		@SuppressWarnings("unchecked")
-		Map<Short, Function> functionMap = (Map<Short, Function>) get(namespace);
+		Map<Short, Function> functionMap = (Map<Short, Function>) getLocalStore().get(namespace);
 
 		if (functionMap != null) {
 			return functionMap.get(contextId);
@@ -92,10 +91,10 @@ public class FunctionDelegate extends AbstractFunctionDelegate {
 		}
 
 		@SuppressWarnings("unchecked")
-		Map<Short, Function> existingMap = (Map<Short, Function>) get(namespace);
+		Map<Short, Function> existingMap = (Map<Short, Function>) getLocalStore().get(namespace);
 
 		if (existingMap == null) {
-			set(namespace, functionMap);
+			getLocalStore().put(namespace, functionMap);
 		} else {
 			
 			functionMap.forEach((k, v) -> {
@@ -126,14 +125,14 @@ public class FunctionDelegate extends AbstractFunctionDelegate {
 		String namespace = functions[0].namespace();
 
 		@SuppressWarnings("unchecked")
-		Map<Short, Function> existingMap = (Map<Short, Function>) get(namespace);
+		Map<Short, Function> existingMap = (Map<Short, Function>) getLocalStore().get(namespace);
 
 		for (Function f : functions) {
 			existingMap.remove(f.contextId());
 		}
 
 		if (existingMap.isEmpty()) {
-			remove(namespace);
+			getLocalStore().remove(namespace);
 		}
 		
 		for (Function f : functions) {

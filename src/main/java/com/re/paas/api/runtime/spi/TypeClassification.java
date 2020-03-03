@@ -1,26 +1,27 @@
 package com.re.paas.api.runtime.spi;
 
-/**
- * SPI type classification define how delegates of such types consumes resources
- * discovered. However, it should be noted that at the barest minimum, delegates
- * are required to discover and expose resources that are delegated to them.
- * @see {@link TypeClassification#ACTIVE} {@code and} {@link TypeClassification#PASSIVE}
- * 
- * @author Tony
- */
 public enum TypeClassification {
 
-	/**
-	 * These are types whose delegates actively executes code provided by the
-	 * resource, at one point or another. All delegates for active types are
-	 * required to be trusted.
-	 */
-	ACTIVE,
+	ACTIVE_RESOURCE(true, true),
 
-	/**
-	 * These are types whose delegate do not actively run any code provided by the
-	 * resource, at any point in time. Here, delegates are not required to be
-	 * trusted
-	 */
-	PASSIVE
+	ACTIVE_DELEGATE(false, true),
+
+	OPEN(false, false);
+
+	private final Boolean trustedResource;
+	private final Boolean trustedDelegate;
+
+	private TypeClassification(Boolean trustedResource, Boolean trustedDelegate) {
+		this.trustedResource = trustedResource;
+		this.trustedDelegate = trustedDelegate;
+	}
+
+	public Boolean requiresTrustedResource() {
+		return trustedResource;
+	}
+
+	public Boolean requiresTrustedDelegate() {
+		return trustedDelegate;
+	}
+
 }

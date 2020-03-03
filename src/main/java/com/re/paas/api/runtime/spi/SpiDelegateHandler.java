@@ -1,12 +1,12 @@
 package com.re.paas.api.runtime.spi;
 
 import java.util.Map;
-import java.util.function.Consumer;
+import java.util.function.Function;
 
 import com.re.paas.api.designpatterns.Singleton;
-import com.re.paas.api.runtime.MethodMeta;
-import com.re.paas.api.runtime.MethodMeta.Factor;
-import com.re.paas.api.runtime.MethodMeta.IdentityStrategy;
+import com.re.paas.api.runtime.SecureMethod;
+import com.re.paas.api.runtime.SecureMethod.Factor;
+import com.re.paas.api.runtime.SecureMethod.IdentityStrategy;
 
 
 public interface SpiDelegateHandler {
@@ -15,22 +15,27 @@ public interface SpiDelegateHandler {
 		return Singleton.get(SpiDelegateHandler.class);
 	}
 
-	@MethodMeta(factor = Factor.CALLER, identityStrategy = IdentityStrategy.SINGLETON, allowed = {
+	@SecureMethod(factor = Factor.CALLER, identityStrategy = IdentityStrategy.SINGLETON, allowed = {
 			SpiBase.class })
-	@MethodMeta(factor = Factor.CALLER, identityStrategy = IdentityStrategy.SINGLETON, allowed = {
+	@SecureMethod(factor = Factor.CALLER, identityStrategy = IdentityStrategy.SINGLETON, allowed = {
 			SpiLocatorHandler.class })
 	Map<SpiType, SpiDelegate<?>> getDelegates();
 
 	
-	@MethodMeta(factor = Factor.CALLER, identityStrategy = IdentityStrategy.SAME, allowed = {
+	@SecureMethod(factor = Factor.CALLER, identityStrategy = IdentityStrategy.SAME, allowed = {
 			SpiDelegate.class })
-	@MethodMeta(factor = Factor.CALLER, identityStrategy = IdentityStrategy.SINGLETON, allowed = {
+	@SecureMethod(factor = Factor.CALLER, identityStrategy = IdentityStrategy.SINGLETON, allowed = {
 			SpiBase.class })
-	Map<Object, Object> getResources(SpiType type);
+	DelegateResorceSet getResources(SpiType type);
 
 	
-	@MethodMeta(factor = Factor.CALLER, identityStrategy = IdentityStrategy.SAME, allowed = {
+	@SecureMethod(factor = Factor.CALLER, identityStrategy = IdentityStrategy.SAME, allowed = {
 			SpiDelegate.class })
-	void forEach(SpiType type, Consumer<Class<?>> consumer);
+	void releaseResources(SpiType type);
+	
+	
+	@SecureMethod(factor = Factor.CALLER, identityStrategy = IdentityStrategy.SAME, allowed = {
+			SpiDelegate.class })
+	<T> DelegateInitResult forEach(SpiType type, Function<Class<T>, ResourceStatus> function);
 
 }

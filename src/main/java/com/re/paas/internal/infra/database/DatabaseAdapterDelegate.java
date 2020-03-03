@@ -4,9 +4,9 @@ import java.util.function.BiConsumer;
 
 import com.re.paas.api.adapters.LoadPhase;
 import com.re.paas.api.annotations.develop.BlockerTodo;
-import com.re.paas.api.clustering.NodeRole;
 import com.re.paas.api.infra.database.AbstractDatabaseAdapterDelegate;
 import com.re.paas.api.infra.database.document.Database;
+import com.re.paas.api.roles.AbstractRole;
 import com.re.paas.api.runtime.spi.DelegateSpec;
 import com.re.paas.api.runtime.spi.SpiType;
 
@@ -16,10 +16,10 @@ public class DatabaseAdapterDelegate extends AbstractDatabaseAdapterDelegate {
 	private static Database database;
 
 	@Override
-	public Object load(LoadPhase phase) {
+	public Boolean load(LoadPhase phase) {
 		Database db = getDatabase(true);
 
-		if (NodeRole.getDelegate().isMaster()) {
+		if (AbstractRole.getDelegate().isMaster()) {
 			switch (phase) {
 			case PLATFORM_SETUP: // Needs db.load as newly created artifacts may need to be loaded
 				setupTables(); 

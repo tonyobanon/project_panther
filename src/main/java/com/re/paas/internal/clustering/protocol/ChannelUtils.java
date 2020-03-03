@@ -1,6 +1,8 @@
 package com.re.paas.internal.clustering.protocol;
 
-import com.re.paas.internal.utils.ObjectUtils;
+import java.nio.ByteBuffer;
+
+import com.re.paas.api.classes.ObjectSerializer;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
@@ -112,8 +114,8 @@ public class ChannelUtils {
 
 		if (responseBody != null) {
 
-			byte[] bodyContents = ObjectUtils.serialize(responseBody);
-			ByteBuf body = ByteBufAllocator.DEFAULT.directBuffer(bodyContents.length, bodyContents.length);
+			ByteBuffer bodyContents = ObjectSerializer.get().serialize(responseBody);
+			ByteBuf body = ByteBufAllocator.DEFAULT.directBuffer(bodyContents.position(), bodyContents.position());
 			body.writeBytes(bodyContents);
 
 			// content length

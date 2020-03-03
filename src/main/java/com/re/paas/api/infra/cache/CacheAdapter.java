@@ -6,6 +6,7 @@ import com.re.paas.api.Adapter;
 import com.re.paas.api.adapters.AdapterType;
 import com.re.paas.api.annotations.Final;
 import com.re.paas.api.designpatterns.Singleton;
+import com.re.paas.api.forms.Form;
 import com.re.paas.api.runtime.spi.SpiType;
 
 public interface CacheAdapter extends Adapter<CacheFactory<String, Object>> {
@@ -16,6 +17,10 @@ public interface CacheAdapter extends Adapter<CacheFactory<String, Object>> {
 	
 	default CacheFactory<String, Object> cacheFactory(Map<String, String> fields) {
 		return getResource(fields);
+	}
+	
+	default Form initForm() {
+		return null;
 	}
 	
 	@Override

@@ -1,17 +1,15 @@
 package com.re.paas.api.infra.database.document.xspec;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 
 import com.re.paas.api.infra.database.document.PrimaryKey;
 
 public final class GetItemsSpec extends BaseGetItemSpec {
 	
-	private List<PrimaryKey> primaryKeys = new ArrayList<>();
+	private Collection<PrimaryKey> primaryKeys = new ArrayList<>();
 
     GetItemsSpec(ExpressionSpecBuilder builder) {
         SubstitutionContext context = new SubstitutionContext();
@@ -20,11 +18,11 @@ public final class GetItemsSpec extends BaseGetItemSpec {
         this.nameMap = nameMap == null ? null : Collections.unmodifiableMap(nameMap);
     }
 
-	public List<PrimaryKey> getPrimaryKeys() {
+	public Collection<PrimaryKey> getPrimaryKeys() {
 		return primaryKeys;
 	}
 
-	public GetItemsSpec setPrimaryKeys(List<PrimaryKey> primaryKeys) {
+	public GetItemsSpec setPrimaryKeys(Collection<PrimaryKey> primaryKeys) {
 		this.primaryKeys = primaryKeys;
 		return this;
 	}
@@ -41,10 +39,7 @@ public final class GetItemsSpec extends BaseGetItemSpec {
 	}
 	
 	public static GetItemsSpec forKeys(Collection<PrimaryKey> keys, String... projections) {
-		return forKeys(keys.toArray(new PrimaryKey[keys.size()]));
+		return new ExpressionSpecBuilder().addProjection(projections)
+				.buildForGetItems().setPrimaryKeys(keys);
 	}
-	
-	public static GetItemsSpec forKeys(PrimaryKey... keys) {
-    	return new ExpressionSpecBuilder().buildForGetItems().setPrimaryKeys(Arrays.asList(keys));
-    }
 }

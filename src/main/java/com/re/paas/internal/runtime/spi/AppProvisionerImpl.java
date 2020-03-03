@@ -11,18 +11,21 @@ import java.util.stream.Stream;
 
 import com.re.paas.api.annotations.develop.BlockerBlockerTodo;
 import com.re.paas.api.annotations.develop.BlockerTodo;
+import com.re.paas.api.annotations.develop.Note;
 import com.re.paas.api.apps.AppClassLoader;
 import com.re.paas.api.classes.Exceptions;
 import com.re.paas.api.classes.PlatformException;
-import com.re.paas.api.fusion.server.JsonArray;
-import com.re.paas.api.fusion.server.JsonObject;
+import com.re.paas.api.fusion.JsonObject;
 import com.re.paas.api.infra.database.document.Database;
 import com.re.paas.api.infra.database.document.Table;
 import com.re.paas.api.logging.Logger;
+import com.re.paas.api.runtime.RuntimeIdentity;
+import com.re.paas.api.runtime.spi.AppProvisioner;
 import com.re.paas.api.runtime.spi.SpiBase;
 import com.re.paas.api.utils.Utils;
-import com.re.paas.internal.Platform;
 import com.re.paas.internal.errors.SpiError;
+import com.re.paas.internal.infra.filesystem.FileSystemProviders;
+import com.re.paas.internal.runtime.RuntimeIdentityImpl;
 
 @BlockerTodo("Create ThreadGroup(s) for each application, so that ThreadSecurity#newThread can use it")
 public class AppProvisionerImpl implements AppProvisioner {
@@ -31,12 +34,12 @@ public class AppProvisionerImpl implements AppProvisioner {
 
 	public static final String APP_BUNDLES_COLLECTION = "app_bundles";
 
-	public static Map<String, AppClassLoader> appClassloaders = Collections
+	static Map<String, AppClassLoader> appClassloaders = Collections
 			.synchronizedMap(new HashMap<String, AppClassLoader>());
 
 	static Map<String, JsonObject> appConfig = Collections.synchronizedMap(new HashMap<String, JsonObject>());
 
-	private static final Path basePath = Platform.getResourcePath().resolve("apps");
+	private static final Path basePath = FileSystemProviders.getResourcePath().resolve("apps");
 
 	public AppProvisionerImpl() {
 		if (!Files.exists(basePath)) {
@@ -52,6 +55,8 @@ public class AppProvisionerImpl implements AppProvisioner {
 		return basePath;
 	}
 
+	@BlockerTodo("On installation, we want to scan through the classes, and ensure that it is not found in an existing classloader")
+	@Note("Don't we want to eargerly load all classes to make the above even possible")
 	public Boolean install(Path archive) {
 
 		// Save to DB, along with version
@@ -70,27 +75,14 @@ public class AppProvisionerImpl implements AppProvisioner {
 		readConfiguration(path);
 
 		SpiBaseImpl.install(getClassloader(appId));
+		
+		SpiBaseImpl.start(appId);
 
 		return true;
 	}
 
 	public void list() {
 
-	}
-
-	private static String[] getAppDependencies(String appId) {
-
-		JsonArray arr = AppProvisionerImpl.appConfig.get(appId).getJsonArray("app_dependencies");
-
-		if (arr != null) {
-			String[] array = new String[arr.size()];
-			for (int i = 0; i < arr.size(); i++) {
-				array[i] = arr.getString(i);
-			}
-			return array;
-		} else {
-			return new String[] {};
-		}
 	}
 
 	public static String getAppId() {
@@ -125,7 +117,10 @@ public class AppProvisionerImpl implements AppProvisioner {
 		appConfig.put(appId, config);
 
 		// Create classloader
-		AppClassLoader cl = AppClassLoader.get(appId, getAppDependencies(appId));
+		AppClassLoader cl = AppClassLoader.get(appId);
+
+		// Load RuntimeIdentity
+		load(cl);
 
 		// Save classloader
 		appClassloaders.put(appId, cl);
@@ -160,6 +155,35 @@ public class AppProvisionerImpl implements AppProvisioner {
 		paths.close();
 	}
 
+	/**
+	 * This loads the RuntimeIdentity into the specified classloader
+	 * 
+	 * @param cl
+	 */
+	public static void load(AppClassLoader cl) {
+
+		try {
+
+			@SuppressWarnings("unchecked")
+			Class<RuntimeIdentityImpl> tscImpl = (Class<RuntimeIdentityImpl>) cl
+					.loadClass(RuntimeIdentityImpl.class.getName());
+
+			@SuppressWarnings("unchecked")
+			Class<RuntimeIdentity> tsc = (Class<RuntimeIdentity>) cl.loadClass(RuntimeIdentity.class.getName());
+
+			tsc.getDeclaredMethod("setInstance", tsc).invoke(null,
+					/**
+					 * Instantiate a custom instance
+					 */
+					tscImpl.getDeclaredConstructor(ClassLoader.class).newInstance(ClassLoader.getSystemClassLoader()));
+
+		} catch (ClassNotFoundException | IllegalAccessException | IllegalArgumentException
+				| java.lang.reflect.InvocationTargetException | NoSuchMethodException | SecurityException
+				| InstantiationException e) {
+			Exceptions.throwRuntime(e);
+		}
+	}
+
 	@BlockerTodo("Schedule Platform Restart ?")
 	public void stop(String app) {
 
@@ -182,6 +206,10 @@ public class AppProvisionerImpl implements AppProvisioner {
 	}
 
 	public Set<String> listApps() {
+		return listApps0();
+	}
+	
+	static Set<String> listApps0() {
 		return appClassloaders.keySet();
 	}
 

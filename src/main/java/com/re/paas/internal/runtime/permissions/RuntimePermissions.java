@@ -1,11 +1,11 @@
 package com.re.paas.internal.runtime.permissions;
 
+import com.re.paas.api.Platform;
 import com.re.paas.api.annotations.develop.BlockerTodo;
 import com.re.paas.api.apps.AppClassLoader;
-import com.re.paas.api.apps.AppClassLoader.DelegationType;
 import com.re.paas.api.utils.Utils;
-import com.re.paas.internal.Platform;
-import com.re.paas.internal.runtime.security.Permissions;
+import com.re.paas.internal.runtime.Permissions;
+import com.re.paas.internal.runtime.spi.AppClassLoaderImpl;
 
 @BlockerTodo("Important permission sets are still missing")
 public class RuntimePermissions implements BasePermission {
@@ -88,7 +88,7 @@ public class RuntimePermissions implements BasePermission {
 
 		case PermissionNames.DEFINE_CLASS_IN_PACKAGE:
 
-			if (AppClassLoader.getDelegationType(context) == DelegationType.FIND_FIRST) {
+			if (AppClassLoaderImpl.isAppIntrinsic(context)) {
 
 				if (Utils.startsWith(context, Platform.getDefineForbiddenPackages())) {
 					return Permissions.DENY;
@@ -100,7 +100,7 @@ public class RuntimePermissions implements BasePermission {
 
 			return PermissionIndexes.DEFINE_CLASS_IN_PACKAGE;
 
-		case PermissionNames.ACCESS_DECLARED_MEMNERS:
+		case PermissionNames.ACCESS_DECLARED_MEMBERS:
 			return PermissionIndexes.ACCESS_DECLARED_MEMNERS;
 		case PermissionNames.QUEUE_PRINT_JOB:
 			return PermissionIndexes.QUEUE_PRINT_JOB;
@@ -112,6 +112,10 @@ public class RuntimePermissions implements BasePermission {
 			return PermissionIndexes.PREFERENCES;
 		case PermissionNames.USE_POLICY:
 			return PermissionIndexes.USE_POLICY;
+			
+			
+		case PermissionNames.GET_STACK_WALKER:
+			return PermissionIndexes.GET_STACK_WALKER;
 		}
 
 		return Permissions.ALLOW;
@@ -154,6 +158,8 @@ public class RuntimePermissions implements BasePermission {
 		destination[PermissionIndexes.SET_DEFAULT_UNCAUGHT_EXCEPTION] = false;
 		destination[PermissionIndexes.PREFERENCES] = false;
 		destination[PermissionIndexes.USE_POLICY] = false;
+		
+		destination[PermissionIndexes.GET_STACK_WALKER] = false;
 	}
 
 	private static class PermissionIndexes {
@@ -193,6 +199,8 @@ public class RuntimePermissions implements BasePermission {
 		public static final int SET_DEFAULT_UNCAUGHT_EXCEPTION = 26;
 		public static final int PREFERENCES = 27;
 		public static final int USE_POLICY = 28;
+		
+		public static final int GET_STACK_WALKER = 29;
 	}
 
 	private static class PermissionNames {
@@ -225,14 +233,15 @@ public class RuntimePermissions implements BasePermission {
 		public static final String ACCESS_CLASS_IN_PACAKAGE = "accessClassInPackage";
 		public static final String DEFINE_CLASS_IN_PACKAGE = "defineClassInPackage";
 
-		public static final String ACCESS_DECLARED_MEMNERS = "accessDeclaredMembers";
+		public static final String ACCESS_DECLARED_MEMBERS = "accessDeclaredMembers";
 
 		public static final String QUEUE_PRINT_JOB = "queuePrintJob";
 		public static final String GET_STACK_TRACE = "getStackTrace";
 		public static final String SET_DEFAULT_UNCAUGHT_EXCEPTION = "setDefaultUncaughtExceptionHandler";
 		public static final String PREFERENCES = "preferences";
 		public static final String USE_POLICY = "usePolicy";
-
+		
+		public static final String GET_STACK_WALKER = "getStackWalkerWithClassReference";
 	}
 
 }

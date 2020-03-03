@@ -1,8 +1,11 @@
 package com.re.paas.api.classes;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
+import com.google.common.base.Joiner;
+import com.google.common.base.Splitter;
 import com.re.paas.api.annotations.develop.BlockerTodo;
 import com.re.paas.api.classes.ClientResources.ClientRBRefEntry;
 import com.re.paas.api.classes.ClientResources.ClientRBRefEntryType;
@@ -15,15 +18,23 @@ public class ClientRBRef {
 	}
 
 	private ClientRBRef(Object value) {
-		this(new String[] { value.toString() });
+		this(Splitter.on(',').split(value.toString()));
 	}
 
-	private ClientRBRef(String... values) {
+	private ClientRBRef(Iterable<String> values) {
 		for (String v : values) {
 			if (!ClientResources.RB_KEY_PATTERN.matcher(v).matches()) {
 				throw new IllegalArgumentException("The RB key format: " + v + " is invalid");
 			}
-			this.values.add(new ClientRBRefEntry().setText(v).setType(ClientRBRefEntryType.TRANSLATE));
+			String[] arr = v.split(ClientRBRefEntry.TEXT_AND_TYPE_DELIM);
+			String text = arr[0];
+			ClientRBRefEntryType type = ClientRBRefEntryType.TRANSLATE;
+
+			if (arr.length > 1) {
+				type = ClientRBRefEntryType.from(Integer.parseInt(arr[1]));
+			}
+
+			this.values.add(new ClientRBRefEntry().setText(text).setType(type));
 		}
 	}
 
@@ -46,7 +57,7 @@ public class ClientRBRef {
 	}
 
 	public static ClientRBRef forAll(String... values) {
-		return new ClientRBRef(values);
+		return new ClientRBRef(Arrays.asList(values));
 	}
 
 	private static String getTag(String value) {
@@ -70,9 +81,21 @@ public class ClientRBRef {
 	}
 
 	@Override
+	public String toString() {
+		List<String> entries = new ArrayList<>();
+		values.forEach(e -> {
+			StringBuilder sb = new StringBuilder(e.getText());
+			if (e.getType() == ClientRBRefEntryType.NON_TRANSLATE) {
+				sb.append(ClientRBRefEntry.TEXT_AND_TYPE_DELIM + e.getType().getValue());
+			}
+			entries.add(sb.toString());
+		});
+		return Joiner.on(',').join(entries);
+	}
+
 	@ClientAware
 	@BlockerTodo("Properly format, remove multiple whitespace")
-	public String toString() {
+	public String toHtmlString() {
 
 		StringBuilder sb = new StringBuilder();
 
@@ -82,6 +105,5 @@ public class ClientRBRef {
 		}
 
 		return sb.toString();
-
 	}
 }

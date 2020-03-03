@@ -7,14 +7,16 @@ import java.util.concurrent.CompletableFuture;
 import com.re.paas.api.classes.Exceptions;
 import com.re.paas.api.classes.ObjectWrapper;
 import com.re.paas.api.classes.PlatformException;
+import com.re.paas.api.clustering.ClusteringServices;
 import com.re.paas.api.clustering.Function;
-import com.re.paas.api.clustering.NodeRegistry;
-import com.re.paas.api.clustering.classes.BaseNodeSpec;
 import com.re.paas.api.clustering.protocol.Client;
 import com.re.paas.api.logging.Logger;
+import com.re.paas.api.logging.LoggerFactory;
+import com.re.paas.api.utils.ClassUtils;
 import com.re.paas.api.utils.Utils;
 import com.re.paas.internal.clustering.Functions;
 import com.re.paas.internal.errors.ClusteringError;
+import com.re.paas.internal.serialization.Primitives;
 
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.ChannelHandlerContext;
@@ -27,7 +29,9 @@ import io.netty.channel.socket.nio.NioSocketChannel;
 
 public class ClientImpl implements Client {
 
-	private Short nodeId;
+	private static Logger LOG = LoggerFactory.get().getLog(ClientImpl.class);
+
+	private Short memberId;
 	private Short clientId;
 
 	private SocketChannel channel;
@@ -38,18 +42,18 @@ public class ClientImpl implements Client {
 	private boolean ownsChannel = true;
 	private boolean managed;
 	private ClientImpl provisional;
-	
-	ClientImpl(Short nodeId) {
-		this.nodeId = nodeId;
+
+	ClientImpl(Short memberId) {
+		this.memberId = memberId;
 	}
-	
-	ClientImpl(Short nodeId, Short clientId, ClientImpl nexus) {
-		
-		this.nodeId = nodeId;
+
+	ClientImpl(Short memberId, Short clientId, ClientImpl nexus) {
+
+		this.memberId = memberId;
 		this.clientId = clientId;
-		
+
 		this.managed = true;
-		
+
 		this.host = nexus.host();
 		this.port = nexus.port();
 
@@ -57,16 +61,16 @@ public class ClientImpl implements Client {
 		this.channel = nexus.getChannel();
 	}
 
-	ClientImpl(Short nodeId, Short clientId) {
+	ClientImpl(Short memberId, Short clientId) {
 
-		BaseNodeSpec spec = NodeRegistry.get().getNodes().get(nodeId);
+		InetSocketAddress host = ClusteringServices.get().getMember(memberId).getHost();
 
-		this.nodeId = nodeId;
+		this.memberId = memberId;
 		this.clientId = clientId;
-		
+
 		this.managed = true;
 
-		init(spec.getRemoteAddress(), spec.getInboundPort());
+		init(host.getAddress(), host.getPort());
 	}
 
 	ClientImpl(InetAddress host, Integer port) {
@@ -90,7 +94,7 @@ public class ClientImpl implements Client {
 	public Integer port() {
 		return this.port;
 	}
-	
+
 	boolean managed() {
 		return managed;
 	}
@@ -130,12 +134,17 @@ public class ClientImpl implements Client {
 
 		return future;
 	}
-	
+
 	@Override
 	public <P, R> CompletableFuture<R> execute(Function function, P parameter, Class<R> R) {
 
-		if (getNodeId() != null && NodeRegistry.get().getNodeId().equals(getNodeId())) {
+		if (getMemberId() != null && ClusteringServices.get().getMember().getMemberId().equals(getMemberId())) {
 			return Functions.execute(function, parameter);
+		}
+
+		if ((!Primitives.isWrapperType(parameter)) && !ClassUtils.isSerializable(parameter)) {
+			LOG.warn("Executing function: " + function.namespace() + "/" + function.contextId()
+					+ " remotely with an unserialized parameter");	
 		}
 
 		Logger.get().debug("Making request to: " + host().getHostAddress());
@@ -146,18 +155,18 @@ public class ClientImpl implements Client {
 		ObjectWrapper<SocketChannel> channel = new ObjectWrapper<SocketChannel>(getChannel());
 
 		if (managed()) {
-			
+
 			ClientFactoryImpl.clientInUse(this);
-			
+
 			if (getProvisional() != null) {
 				clientId = getProvisional().getClientId();
 				channel.set(getProvisional().getChannel());
 			}
 		}
 
-		//final String handlerName = Utils.mergeUnsigned(nodeId, clientId).toString();
+		// final String handlerName = Utils.mergeUnsigned(nodeId, clientId).toString();
 		final String handlerName = managed() ? clientId.toString() : Utils.newShortRandom();
-				
+
 		ClientOutboundRequestHandler<R> handler = new ClientOutboundRequestHandler<R>(clientId,
 				Function.getId(function), parameter, completableFuture);
 
@@ -170,7 +179,7 @@ public class ClientImpl implements Client {
 			channel.get().pipeline().remove(handlerName);
 
 			if (managed()) {
-				ClientFactoryImpl.clientFree(this);	
+				ClientFactoryImpl.clientFree(this);
 			}
 		});
 	}
@@ -181,8 +190,8 @@ public class ClientImpl implements Client {
 	}
 
 	@Override
-	public Short getNodeId() {
-		return nodeId;
+	public Short getMemberId() {
+		return memberId;
 	}
 
 	@Override

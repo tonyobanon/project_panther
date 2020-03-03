@@ -6,14 +6,13 @@ import java.util.Map;
 
 import com.re.paas.api.classes.ClientRBRef;
 import com.re.paas.api.classes.ClientResources;
-import com.re.paas.api.classes.IndexedNameSpec;
 import com.re.paas.api.classes.KeyValuePair;
 
 public class Sentence implements Serializable {
 
 	private static final long serialVersionUID = 1L;
 
-	// ClientResources.ClientRBRef | SubjectEntity | IndexedNameSpec
+	// ClientResources.ClientRBRef | SubjectEntity | String
 	private Object subject;
 
 	private CustomPredicate predicate;
@@ -49,7 +48,7 @@ public class Sentence implements Serializable {
 		return this;
 	}
 
-	public Sentence setSubject(IndexedNameSpec subject) {
+	public Sentence setSubject(String subject) {
 		this.subject = subject;
 		return this;
 	}

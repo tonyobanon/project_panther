@@ -3,6 +3,9 @@ package com.re.paas.api.forms;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.re.paas.api.annotations.develop.BlockerTodo;
+
+@BlockerTodo("On the client, if a field is set as empty, the server should see it as null")
 public class Form {
 
 	private String id;

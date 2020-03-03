@@ -3,33 +3,37 @@ package com.re.paas.api.realms;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 
-import com.re.paas.api.forms.Reference;
-import com.re.paas.api.forms.Section;
-import com.re.paas.api.forms.SectionReference;
-import com.re.paas.api.fusion.services.Functionality;
+import com.re.paas.api.classes.ModifyType;
+import com.re.paas.api.fusion.functionalities.Functionality;
 import com.re.paas.api.runtime.spi.SpiDelegate;
 
 public abstract class AbstractRealmDelegate extends SpiDelegate<Realm> {
 
 	public abstract Collection<String> getRealmNames();
 
+	/**
+	 * Note: In the return realm, all functionalities has a {@link ModifyType} of
+	 * null.
+	 * 
+	 * @param name
+	 * @return
+	 */
 	public abstract Realm getRealm(String name);
 
-	public abstract Collection<Functionality> getFunctionalities(Realm realm);
-
-	public abstract Map<String, Collection<String>> getAllFunctionalities();
-
-	public abstract Collection<Section> getSections(Realm realm);
-
-	public abstract String getReferenceId(Realm realm, SectionReference sReference, Reference reference);
+	public abstract List<Functionality> getFunctionalities(Realm realm);
 
 	public abstract void addRoleFunctionalities(String role, Collection<Functionality> functionalities);
 
 	public abstract void removeRoleFunctionalities(String role, Collection<Functionality> functionalities);
 
+	public abstract void removeRoleFunctionalities(String role);
+
 	public abstract Collection<Functionality> getRoleFunctionalities(String role);
+
+	public abstract void addRoleRealm(String role, Realm realm);
+
+	public abstract void removeRoleRealm(String role);
 
 	public Collection<String> getRoleFunctionalitiesAstring(String role) {
 
@@ -39,7 +43,7 @@ public abstract class AbstractRealmDelegate extends SpiDelegate<Realm> {
 			return null;
 		}
 		List<String> result = new ArrayList<>(functionalities.size());
-		
+
 		functionalities.forEach(f -> {
 			result.add(f.asString());
 		});

@@ -25,7 +25,7 @@ public enum FormSectionType {
 		}
 	}
 
-	public int getValue() {
+	public Integer getValue() {
 		return value;
 	}
 

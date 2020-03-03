@@ -1,11 +1,12 @@
 package com.re.paas.api.forms;
 
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
+import java.util.function.Predicate;
 
-public class Section {
+public class Section implements Cloneable {
 
 	private String id;
 	private SectionReference reference;
@@ -13,23 +14,57 @@ public class Section {
 	private Object summary;
 	private List<AbstractField> fields = new ArrayList<AbstractField>();
 
+	@Override
+	public Section clone() {
+		Section s = new Section();
+		s.importData(this, true, false);
+		return s;
+	}
+
+	public Section deepClone() {
+		Section s = new Section();
+		s.importData(this, true, true);
+		return s;
+	}
+
 	/**
-	 * Copies the section without copying its reference
-	 * @param source The section to copy
-	 * @param withFields
+	 * Copies the section
+	 * 
+	 * @param source        The section to copy
+	 * @param copyReference Specifies whether to copy reference
+	 * @param withFields    Indicates that fields should also be copied. Note: a
+	 *                      deep copy is created for the fields
 	 */
-	public void importData(Section source, boolean withFields) {
-		
-		if(this == source) {
-			return;
+	public Section importData(Section source, boolean copyReference, boolean withFields) {
+
+		if (this == source) {
+			return this;
 		}
-		
-		setId(source.getId());
-		setTitle(source.getTitle());
-		setSummary(source.getSummary());
-		if (withFields) {
-			withFields(source.getFields());
+
+		if (copyReference && source.getReference() != null) {
+			this.setReference(source.getReference());
 		}
+
+		if (source.getId() != null) {
+			this.setId(source.getId());
+		}
+
+		if (source.getTitle() != null) {
+			this.setTitle(source.getTitle());
+		}
+
+		if (source.getSummary() != null) {
+			this.setSummary(source.getSummary());
+		}
+
+		if (withFields && !source.getFields().isEmpty()) {
+
+			source.getFields().forEach(f -> {
+				this.withField(AbstractField.copyOf(f, true));
+			});
+		}
+
+		return this;
 	}
 
 	public AbstractField getField(Reference reference) {
@@ -40,7 +75,7 @@ public class Section {
 		}
 		return null;
 	}
-	
+
 	public AbstractField getField(String id) {
 		for (AbstractField field : fields) {
 			if (field.getId().equals(id)) {
@@ -64,10 +99,10 @@ public class Section {
 		return fields;
 	}
 
-	public void removeField(String id) {
+	public void removeField(Reference reference) {
 		Iterator<AbstractField> it = fields.iterator();
 		while (it.hasNext()) {
-			if (it.next().getId().equals(id)) {
+			if (it.next().getReference().asString().equals(reference.asString())) {
 				it.remove();
 				break;
 			}
@@ -75,11 +110,31 @@ public class Section {
 	}
 
 	public Section withField(AbstractField field) {
-		return withFields(Arrays.asList(field));
+
+		// First, remove any existing field with same reference
+		this.filter(f -> !f.getReference().value().equals(field.getReference().value()));
+
+		this.fields.add(field);
+		return this;
 	}
 
-	public Section withFields(List<AbstractField> fields) {
-		this.fields.addAll(fields);
+	public Section filter(Predicate<AbstractField> predicate) {
+		Iterator<AbstractField> it = this.fields.iterator();
+
+		while (it.hasNext()) {
+			AbstractField f = it.next();
+			if (!predicate.test(f)) {
+				it.remove();
+			}
+		}
+
+		return this;
+	}
+
+	public Section withFields(Collection<AbstractField> fields) {
+		for (AbstractField f : fields) {
+			withField(f);
+		}
 		return this;
 	}
 
@@ -118,5 +173,4 @@ public class Section {
 		this.reference = reference;
 		return this;
 	}
-
 }

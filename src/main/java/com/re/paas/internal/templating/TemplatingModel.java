@@ -12,7 +12,7 @@ import com.re.paas.api.logging.Logger;
 import com.re.paas.api.models.BaseModel;
 import com.re.paas.api.templating.TemplateObjectModel;
 import com.re.paas.api.templating.TemplateObjectModelFactory;
-import com.re.paas.api.utils.ClassUtils;
+import com.re.paas.internal.classes.ClassUtil;
 
 /**
  * This model used Apache Velocity as the default templating engine
@@ -122,7 +122,7 @@ public class TemplatingModel extends BaseModel {
 		});
 
 		// Add inherited fields
-		for (Field f : ClassUtils.getInheritedFields(modelClass, TemplateObjectModel.class, fieldConsumer)) {
+		for (Field f : ClassUtil.getInheritedFields(modelClass, TemplateObjectModel.class, fieldConsumer)) {
 			fields.add(f);
 		}
 

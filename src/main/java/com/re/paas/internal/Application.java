@@ -2,9 +2,9 @@ package com.re.paas.internal;
 
 import java.lang.reflect.InvocationTargetException;
 
-import com.re.paas.api.utils.ClassUtils;
+import com.re.paas.api.Platform;
 import com.re.paas.internal.infra.filesystem.FileSystemProviders;
-import com.re.paas.internal.runtime.security.MetaFactory;
+import com.re.paas.internal.runtime.transformers.RuntimeTransformers;
 
 public abstract class Application {
 
@@ -27,11 +27,11 @@ public abstract class Application {
 
 		if (performMetaFactoryScan) {
 			// Perform Meta factory scan
-			MetaFactory.scan();
+			RuntimeTransformers.apply();
 		}
 
 		// Start application delegate
-		ClassUtils.call(AppDelegate.class, ClassLoader.getSystemClassLoader());
+		com.re.paas.internal.classes.ClassUtil.call(AppDelegate.class, ClassLoader.getSystemClassLoader());
 	}
 
 }

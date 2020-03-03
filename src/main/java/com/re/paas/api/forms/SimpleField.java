@@ -23,23 +23,55 @@ public class SimpleField extends BaseSimpleField {
 	}
 
 	@Override
-	public void importData(AbstractField source) {
+	public SimpleField importData(AbstractField source, boolean copyReference) {
 
 		SimpleField sourceField = (SimpleField) source;
 
-		this.setId(sourceField.getId());
+		if (copyReference && sourceField.getReference() != null) {
+			this.setReference(sourceField.getReference());
+		}
+		
+		if (sourceField.getId() != null) {
+			this.setId(sourceField.getId());
+		}
 
-		this.setTitle(sourceField.getTitle());
-		this.setSortOrder(sourceField.getSortOrder());
-		this.setContext(sourceField.getContext());
+		if (sourceField.getTitle() != null) {
+			this.setTitle(sourceField.getTitle());
+		}
 
-		this.setIsRequired(sourceField.getIsRequired());
-		this.setIsVisible(sourceField.getIsVisible());
-		this.setIsDefault(sourceField.getIsDefault());
+		if (sourceField.getSortOrder() != null) {
+			this.setSortOrder(sourceField.getSortOrder());
+		}
 
-		this.withInputType(sourceField.getInputType());
-		this.setDefaultValue(sourceField.getDefaultValue());
-		this.withTextValue(sourceField.getTextValue());
+		if (sourceField.getContext() != null) {
+			this.setContext(sourceField.getContext());
+		}
+
+		if (sourceField.getIsRequired() != null) {
+			this.setIsRequired(sourceField.getIsRequired());
+		}
+
+		if (sourceField.getIsVisible() != null) {
+			this.setIsVisible(sourceField.getIsVisible());
+		}
+
+		if (sourceField.getIsDefault() != null) {
+			this.setIsDefault(sourceField.getIsDefault());
+		}
+
+		if (sourceField.getInputType() != null) {
+			this.withInputType(sourceField.getInputType());
+		}
+
+		if (sourceField.getDefaultValue() != null) {
+			this.setDefaultValue(sourceField.getDefaultValue());
+		}
+
+		if (sourceField.getTextValue() != null) {
+			this.withTextValue(sourceField.getTextValue());
+		}
+		
+		return this;
 	}
 
 	public String getDefaultValue() {
@@ -68,5 +100,4 @@ public class SimpleField extends BaseSimpleField {
 		this.textValue = textValue;
 		return this;
 	}
-
 }

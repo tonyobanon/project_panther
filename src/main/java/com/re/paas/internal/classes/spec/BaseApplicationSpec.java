@@ -2,7 +2,6 @@ package com.re.paas.internal.classes.spec;
 
 import java.util.Date;
 
-import com.re.paas.api.classes.IndexedNameSpec;
 import com.re.paas.internal.classes.ApplicationStatus;
 
 public class BaseApplicationSpec {
@@ -11,8 +10,7 @@ public class BaseApplicationSpec {
 	private String role;
 	private ApplicationStatus status;
 	
-	private String name;
-	private IndexedNameSpec nameSpec;
+	private String title;
 	
 	private Date dateCreated;
 	private Date dateUpdated;
@@ -44,13 +42,12 @@ public class BaseApplicationSpec {
 		return this;
 	}
 	
-	public IndexedNameSpec getNameSpec() {
-		return nameSpec;
+	public String getTitle() {
+		return title;
 	}
 
-	public BaseApplicationSpec setNameSpec(IndexedNameSpec nameSpec) {
-		this.nameSpec = nameSpec;
-		this.name = nameSpec.toString();
+	public BaseApplicationSpec setTitle(String title) {
+		this.title = title;
 		return this;
 	}
 
@@ -69,15 +66,6 @@ public class BaseApplicationSpec {
 
 	public BaseApplicationSpec setDateUpdated(Date dateUpdated) {
 		this.dateUpdated = dateUpdated;
-		return this;
-	}
-
-	public String getName() {
-		return name;
-	}
-
-	public BaseApplicationSpec setName(String name) {
-		this.name = name;
 		return this;
 	}
 

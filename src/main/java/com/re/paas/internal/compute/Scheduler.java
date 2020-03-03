@@ -8,17 +8,16 @@ import java.util.Map;
 import java.util.TimeZone;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 import com.re.paas.api.annotations.develop.BlockerTodo;
 import com.re.paas.api.utils.Utils;
 
-
 /**
  * This class may be used to perform certain routine tasks.
  **/
 
-@SuppressWarnings("unused")
 @BlockerTodo("Make thread count fully configurable, to allow for scalability")
 public class Scheduler {
 
@@ -49,9 +48,9 @@ public class Scheduler {
 		totalDelay = tillMidnight - offset;
 
 		defaultExecutor.scheduleAtFixedRate(() -> {
-				for (Runnable o : dailyTasks.values()) {
-					o.run();
-				}
+			for (Runnable o : dailyTasks.values()) {
+				o.run();
+			}
 		}, (totalDelay * 3600000)/* Add 10 minutes */ + 600000 + offset, 86400000, TimeUnit.MILLISECONDS);
 	}
 
@@ -65,10 +64,46 @@ public class Scheduler {
 	/**
 	 * This executes a defined task after the specified delay
 	 */
-	public static void schedule(Runnable task, int delay, TimeUnit unit) {
-		defaultExecutor.schedule(task, delay, unit);
+	@BlockerTodo("We know that the JVM on which this request was submitted can go out service at any time."
+			+ "Hence, since there may be multiple nodes in our cluster, we want to have the ability to keep track of tasks "
+			+ "and transfer to other nodes on an as needed basis")
+
+	public static void schedule(Runnable task, Long delay, TimeUnit unit) {
+		schedule(null, task, delay, unit);;
 	}
 	
+	public static void main(String[] args) {
+      
+		//GlobalConfigurationBuilder.defaultClusteredBuilder().
+		
+    }
+
+	@BlockerTodo
+	public static void schedule(String taskId, Runnable task, Long delay, TimeUnit unit) {
+
+		ScheduledFuture<?> future = defaultExecutor.schedule(() -> {
+
+			task.run();
+			
+			if(taskId != null) {
+				unschedule(taskId);
+			}
+
+		}, delay, unit);
+
+		if(taskId != null) {
+
+			// Add future to data grid. Is this even valid?
+		}
+		
+	}
+
+	@BlockerTodo
+	public static void unschedule(String taskId) {
+
+		// Remove future from data grid. Is this even valid?
+	}
+
 	/**
 	 * This executes a defined task after the specified delay
 	 */

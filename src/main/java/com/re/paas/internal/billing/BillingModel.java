@@ -34,25 +34,25 @@ import com.re.paas.api.models.BaseModel;
 import com.re.paas.api.models.classes.InstallOptions;
 import com.re.paas.api.models.classes.UserProfileSpec;
 import com.re.paas.api.utils.Dates;
-import com.re.paas.internal.locations.LocationModel;
-import com.re.paas.internal.models.BaseUserModel;
-import com.re.paas.internal.models.CurrencyModel;
-import com.re.paas.internal.models.errors.BillingError;
-import com.re.paas.internal.tables.defs.payments.BillingContextTable;
-import com.re.paas.internal.tables.defs.payments.CardTable;
-import com.re.paas.internal.tables.defs.payments.InvoiceItemTable;
-import com.re.paas.internal.tables.defs.payments.InvoicePaymentHistoryTable;
-import com.re.paas.internal.tables.defs.payments.InvoicePaymentTable;
-import com.re.paas.internal.tables.defs.payments.InvoiceStatusHistoryTable;
-import com.re.paas.internal.tables.defs.payments.InvoiceTable;
-import com.re.paas.internal.tables.spec.payments.BillingContextTableSpec;
-import com.re.paas.internal.tables.spec.payments.CardTableSpec;
-import com.re.paas.internal.tables.spec.payments.InvoiceItemTableSpec;
-import com.re.paas.internal.tables.spec.payments.InvoicePaymentHistoryTableSpec;
-import com.re.paas.internal.tables.spec.payments.InvoicePaymentTableSpec;
-import com.re.paas.internal.tables.spec.payments.InvoiceStatusHistoryTableSpec;
-import com.re.paas.internal.tables.spec.payments.InvoiceTableSpec;
-import com.re.paas.internal.tables.spec.users.BaseUserTableSpec;
+import com.re.paas.integrated.models.BaseUserModel;
+import com.re.paas.integrated.models.CurrencyModel;
+import com.re.paas.integrated.models.errors.BillingError;
+import com.re.paas.integrated.tables.defs.payments.BillingContextTable;
+import com.re.paas.integrated.tables.defs.payments.CardTable;
+import com.re.paas.integrated.tables.defs.payments.InvoiceItemTable;
+import com.re.paas.integrated.tables.defs.payments.InvoicePaymentHistoryTable;
+import com.re.paas.integrated.tables.defs.payments.InvoicePaymentTable;
+import com.re.paas.integrated.tables.defs.payments.InvoiceStatusHistoryTable;
+import com.re.paas.integrated.tables.defs.payments.InvoiceTable;
+import com.re.paas.integrated.tables.spec.payments.BillingContextTableSpec;
+import com.re.paas.integrated.tables.spec.payments.CardTableSpec;
+import com.re.paas.integrated.tables.spec.payments.InvoiceItemTableSpec;
+import com.re.paas.integrated.tables.spec.payments.InvoicePaymentHistoryTableSpec;
+import com.re.paas.integrated.tables.spec.payments.InvoicePaymentTableSpec;
+import com.re.paas.integrated.tables.spec.payments.InvoiceStatusHistoryTableSpec;
+import com.re.paas.integrated.tables.spec.payments.InvoiceTableSpec;
+import com.re.paas.integrated.tables.spec.users.BaseUserTableSpec;
+import com.re.paas.internal.i18n.LocationModel;
 
 public class BillingModel extends BaseModel {
 
@@ -304,7 +304,7 @@ public class BillingModel extends BaseModel {
 	public static void payAllOutstandingInvoices() {
 
 		Stream<QueryResult> queryResult = Database.get().getTable(InvoiceTable.class)
-				.getIndex(InvoiceTableSpec.IS_OUTSTANDING_INDEX).result(new ExpressionSpecBuilder()
+				.getIndex(InvoiceTableSpec.IS_OUTSTANDING_INDEX).query(new ExpressionSpecBuilder()
 						.withKeyCondition(BOOL(InvoiceTableSpec.IS_OUTSTANDING).eq(true)).buildForQuery());
 
 		queryResult.forEach(page -> {

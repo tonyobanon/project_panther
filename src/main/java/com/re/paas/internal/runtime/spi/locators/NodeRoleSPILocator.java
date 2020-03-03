@@ -1,7 +1,7 @@
 package com.re.paas.internal.runtime.spi.locators;
 
-import com.re.paas.api.clustering.AbstractNodeRoleDelegate;
-import com.re.paas.api.clustering.NodeRole;
+import com.re.paas.api.roles.AbstractNodeRoleDelegate;
+import com.re.paas.api.roles.AbstractRole;
 import com.re.paas.api.runtime.spi.AbstractResource;
 import com.re.paas.api.runtime.spi.BaseSPILocator;
 import com.re.paas.api.runtime.spi.SpiDelegate;
@@ -16,7 +16,7 @@ public class NodeRoleSPILocator extends BaseSPILocator {
 
 	@Override
 	public Class<? extends AbstractResource> classType() {
-		return NodeRole.class;
+		return AbstractRole.class;
 	}
 	
 	@Override

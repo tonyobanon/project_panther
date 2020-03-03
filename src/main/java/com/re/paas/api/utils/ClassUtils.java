@@ -2,9 +2,8 @@ package com.re.paas.api.utils;
 
 import java.io.File;
 import java.io.InputStream;
-import java.lang.reflect.Constructor;
+import java.io.Serializable;
 import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Type;
@@ -17,29 +16,20 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.concurrent.Callable;
 import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-// Remove all this
-import com.google.common.base.Joiner;
-import com.google.common.base.Splitter;
-import com.google.common.collect.Lists;
+import java.util.stream.Collectors;
 
 import com.re.paas.api.annotations.develop.BlockerTodo;
 import com.re.paas.api.apps.AppClassLoader;
 import com.re.paas.api.classes.Exceptions;
 import com.re.paas.api.classes.ParameterizedClass;
-import com.re.paas.api.runtime.ClassLoaderSecurity;
-import com.re.paas.internal.runtime.spi.AppProvisioner; // Add this as API since it's impl already abstracted as a singleton
-import com.re.paas.internal.runtime.spi.ClassLoaders; // Spin this off as a singleton ?
+import com.re.paas.api.runtime.RuntimeIdentity;
+import com.re.paas.api.runtime.spi.AppProvisioner;
 
 @BlockerTodo("Refractor this, I see it's accessing a lot of internal stuff, i.e it's calling AppClassLoader, e.t.c")
 public class ClassUtils<T> {
-
-	private static final Pattern DOT_PATTERN = Pattern.compile(Pattern.quote("."));
-	private static final Pattern HASH_PATTERN = Pattern.compile(Pattern.quote("#"));
 
 	private static final Pattern nonGenericlassNamePattern = Pattern
 			.compile("(([\\p{L}_$][\\p{L}\\p{N}_$]*\\.)*[\\p{L}_$][\\p{L}\\p{N}_$]*)");
@@ -71,83 +61,8 @@ public class ClassUtils<T> {
 		}
 	}
 
-	public static <T> T createInstance(String name) {
-		@SuppressWarnings("unchecked")
-		Class<? extends T> clazz = (Class<? extends T>) forName(name);
-		T o = createInstance(clazz);
-
-		return o;
-	}
-
-	public static <T> Class<? extends T> forName(String name, ClassLoader cl) {
-
-		try {
-			@SuppressWarnings("unchecked")
-			Class<? extends T> o = (Class<? extends T>) cl.loadClass(name);
-			return o;
-		} catch (ClassNotFoundException e) {
-			throw new RuntimeException(e);
-		}
-	}
-
-	/**
-	 * Invokes a callable
-	 * 
-	 * @param name
-	 * @param cl
-	 * @return
-	 */
-	public static void call(Class<?> target, ClassLoader cl) {
-		Class<? extends Callable<?>> clazz = forName(target.getName(), cl);
-		try {
-			createInstance(clazz).call();
-		} catch (Exception e) {
-			throw new RuntimeException(e);
-		}
-	}
-
-	@BlockerTodo("Add support for caching")
-	public static <T> T createInstance(Class<T> clazz) {
-
-		try {
-
-			return clazz.getDeclaredConstructor().newInstance();
-
-		} catch (InstantiationException | InvocationTargetException | NoSuchMethodException e) {
-
-			Exceptions.throwRuntime(e);
-			return null;
-
-		} catch (IllegalAccessException e) {
-
-			// Try again, but this time, temporarily make the no-arg constructors accessible
-
-			Constructor<?> modified = null;
-
-			for (Constructor<?> c : clazz.getDeclaredConstructors()) {
-				if (c.getParameterCount() == 0) {
-					c.setAccessible(true);
-					modified = c;
-					break;
-				}
-			}
-
-			try {
-
-				T o = null;
-				if (modified != null) {
-					o = clazz.getDeclaredConstructor().newInstance();
-					modified.setAccessible(false);
-				}
-
-				return o;
-
-			} catch (Exception ex) {
-				Exceptions.throwRuntime(e);
-				return null;
-			}
-
-		}
+	public static Boolean isSerializable(Object o) {
+		return Serializable.class.isAssignableFrom(o.getClass());
 	}
 
 	public static InputStream getResourceAsStream(Class<?> claz, String name) {
@@ -204,38 +119,13 @@ public class ClassUtils<T> {
 		return result;
 	}
 
-	public static List<Field> getInheritedFields(Class<?> clazz, Class<?> abstractParent) {
-		return getInheritedFields0(clazz.getSuperclass(), abstractParent, null);
-	}
-
-	public static List<Field> getInheritedFields(Class<?> clazz, Class<?> abstractParent,
-			Consumer<Field> fieldConsumer) {
-		return getInheritedFields0(clazz.getSuperclass(), abstractParent, fieldConsumer);
-	}
-
-	private static List<Field> getInheritedFields0(Class<?> clazz, Class<?> abstractParent,
-			Consumer<Field> fieldConsumer) {
-
-		assert abstractParent.isAssignableFrom(clazz);
-
-		List<Field> result = Lists.newArrayList();
-
-		while (!equals(clazz, abstractParent) && (clazz.getSuperclass() != null)) {
-
-			for (Field f : clazz.getDeclaredFields()) {
-
-				fieldConsumer.accept(f);
-
-				int mod = f.getModifiers();
-				if (Modifier.isProtected(mod) && (!Modifier.isFinal(mod))) {
-					result.add(f);
-				}
-			}
-
-			clazz = clazz.getSuperclass();
+	public static <T> T createInstance(Class<T> clazz) {
+		try {
+			return clazz.getDeclaredConstructor().newInstance();
+		} catch (Exception e) {
+			Exceptions.throwRuntime(e);
+			return null;
 		}
-
-		return result;
 	}
 
 	@SuppressWarnings("unused")
@@ -246,12 +136,6 @@ public class ClassUtils<T> {
 		}
 
 		return clazz;
-	}
-
-	public static String getPackageName(String className) {
-		List<String> parts = new ArrayList<>(Splitter.on(DOT_PATTERN).splitToList(className));
-		parts.remove(parts.size() - 1);
-		return Joiner.on(".").join(parts);
 	}
 
 	/**
@@ -276,29 +160,6 @@ public class ClassUtils<T> {
 	}
 
 	/**
-	 * This function should be used by names that were generated using
-	 * {@link ClassUtils#toString(Class)}
-	 * 
-	 * @param name
-	 * @return
-	 */
-	public static <T> Class<? extends T> forName(String name) {
-
-		String[] parts = HASH_PATTERN.split(name);
-
-		if (parts.length == 1) {
-			return forName(name, ClassLoaders.getClassLoader());
-		}
-
-		String appId = parts[0];
-		String className = parts[1];
-
-		ClassLoader cl = ClassLoaders.getClassLoader(appId);
-
-		return forName(className, cl);
-	}
-
-	/**
 	 * This function determines whether the current context is allowed to access the
 	 * specified class
 	 * 
@@ -307,9 +168,9 @@ public class ClassUtils<T> {
 	 */
 	public static boolean isAccessible(Class<?> clazz) {
 
-		if (ClassLoaderSecurity.hasTrust()) {
-			return true;
-		}
+		// Before, I used to do ThreadSecurity, but ....
+
+		// It's will pass since
 
 		// If this is a platform class, allow access
 		if (clazz.getClassLoader().equals(ClassLoader.getSystemClassLoader())) {
@@ -318,23 +179,8 @@ public class ClassUtils<T> {
 
 		// Since it's not, allow if the app is the owner
 
-		AppClassLoader cl = (AppClassLoader) ClassLoaderSecurity.class.getClassLoader();
+		AppClassLoader cl = (AppClassLoader) RuntimeIdentity.class.getClassLoader();
 		return cl == clazz.getClassLoader();
-	}
-
-	/**
-	 * This method should only be used for SPI classes
-	 * 
-	 * @param clazz
-	 * @return
-	 */
-	public static String getAppId(Class<?> clazz) {
-		return ClassLoaders.getId(clazz.getClassLoader());
-	}
-
-	public static boolean isTrusted(Class<?> c) {
-		boolean isTrusted = !(c.getClassLoader() instanceof AppClassLoader);
-		return isTrusted;
 	}
 
 	public static Object getFieldValue(Class<?> clazz, String name) {
@@ -384,6 +230,7 @@ public class ClassUtils<T> {
 	 * @param class2
 	 * @return
 	 */
+	@BlockerTodo("Vaerify that this works in a distributed scenario")
 	public static boolean equals(Class<?> class1, Class<?> class2) {
 		return class1.equals(class2);
 	}
@@ -474,4 +321,29 @@ public class ClassUtils<T> {
 				&& (c = c.getSuperclass()) != null);
 
 	}
+
+	public static Class<?> load(ClassLoader cl, String className) {
+		return loadAll(cl, Arrays.asList(className)).get(0);
+	}
+
+	public static List<Class<?>> loadAll(ClassLoader cl, List<String> classNames) {
+
+		List<Class<?>> result = new ArrayList<>(classNames.size());
+
+		classNames.stream().map(className -> {
+
+			Class<?> c = null;
+
+			try {
+				c = cl.loadClass(className);
+			} catch (ClassNotFoundException e) {
+				Exceptions.throwRuntime(e);
+			}
+
+			return c;
+		}).collect(Collectors.toList());
+
+		return result;
+	}
+
 }

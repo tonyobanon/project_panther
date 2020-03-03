@@ -15,12 +15,16 @@ public abstract class BaseEvent implements Serializable {
 		this.eventId = Utils.newShortRandom();
 	}
 	
+	public static AbstractEventDelegate getDelegate() {
+		return AbstractEventDelegate.getInstance();
+	}
+	
 	public static <T extends BaseEvent> void one(Class<T> eventType, Consumer<T> consumer) {
-		AbstractEventDelegate.getInstance().one(eventType, consumer);
+		getDelegate().one(eventType, consumer);
 	}
 	
 	public static void dispatch(BaseEvent evt) {
-		AbstractEventDelegate.getInstance().dispatch(evt);
+		getDelegate().dispatch(evt);
 	}
 
 	public String getEventId() {
@@ -32,6 +36,8 @@ public abstract class BaseEvent implements Serializable {
 		return this;
 	}
 
-	public abstract String name();
+	public String name() {
+		return this.getClass().getSimpleName();
+	}
 	
 }

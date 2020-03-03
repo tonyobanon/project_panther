@@ -1,120 +1,67 @@
 package com.re.paas.api.runtime.spi;
 
+import java.lang.StackWalker.Option;
+import java.lang.StackWalker.StackFrame;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
 import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import com.re.paas.api.annotations.develop.BlockerTodo;
+import com.re.paas.api.apps.AppClassLoader;
+import com.re.paas.api.classes.AsyncDistributedMap;
 import com.re.paas.api.classes.KeyValuePair;
 import com.re.paas.api.classes.ParameterizedClass;
 import com.re.paas.api.designpatterns.Singleton;
 import com.re.paas.api.logging.Logger;
-import com.re.paas.api.runtime.MethodMeta;
-import com.re.paas.api.runtime.MethodMeta.CustomValidatorContext;
-import com.re.paas.api.runtime.MethodMeta.Factor;
-import com.re.paas.api.runtime.MethodMeta.IdentityStrategy;
-import com.re.paas.api.runtime.MethodMeta.Validator;
+import com.re.paas.api.runtime.ClassLoaders;
+import com.re.paas.api.runtime.ConcreteIntrinsic;
+import com.re.paas.api.runtime.SecureMethod;
+import com.re.paas.api.runtime.SecureMethod.CustomValidatorContext;
+import com.re.paas.api.runtime.SecureMethod.Factor;
+import com.re.paas.api.runtime.SecureMethod.IdentityStrategy;
+import com.re.paas.api.runtime.SecureMethod.Validator;
 import com.re.paas.api.utils.ClassUtils;
 import com.re.paas.api.utils.Utils;
 
 public abstract class SpiDelegate<T> {
 
-	private static final Logger LOG = Logger.get(SpiDelegate.class);
+	// private static final Logger LOG = Logger.get(SpiDelegate.class);
 
 	private KeyValuePair<SpiType, Class<?>> type = null;
 
 	protected static final String EXT_RESOURCE_PREFIX = "ext_";
 
-	protected final <S> List<S> getList(Class<S> T, String namespace) {
-		@SuppressWarnings("unchecked")
-		List<S> o = (List<S>) get(namespace);
-		return o;
+	protected final Map<Object, Object> getLocalStore() {
+		return getResourceSet(getSpiType()).getLocalStore();
 	}
 
-	protected final <S> void addToList(String namespace, S obj) {
-		@SuppressWarnings("unchecked")
-		List<S> e = (List<S>) get(namespace);
-		if (e == null) {
-			e = new ArrayList<S>();
-			set(namespace, e);
-		}
-		if (!e.contains(obj)) {
-			e.add(obj);
-		} else {
-			LOG.warn("List: " + this.getClass().getSimpleName() + "/" + namespace + " already contains element: "
-					+ obj.toString() + ", skipping ..");
-		}
+	/**
+	 * Note: the distributed map returned cannot be modified using it's iterator
+	 * @param name
+	 * @return
+	 */
+	protected final Map<String, ?> getDistributedStore(String name) {
+		return getResourceSet(getSpiType()).getDistributedStores().get(name);
 	}
 
-	protected final Map<Object, Object> getAll() {
-		return getAll(getSpiType());
-	}
-
-	private static final Map<Object, Object> getAll(SpiType type) {
+	private static final DelegateResorceSet getResourceSet(SpiType type) {
 		return SpiDelegateHandler.get().getResources(type);
 	}
 
-	protected final Object get(String namespace) {
-		Object o = getAll().get(namespace);
-		if (o instanceof Class) {
-			@SuppressWarnings("unchecked")
-			Object r = ClassUtils.createInstance((Class<T>) o);
-			return r;
-		}
-		return o;
-	}
-
-	protected final boolean hasKey(String namespace) {
-		return getAll().containsKey(namespace);
-	}
-
-	protected final void set(String namespace, Object obj) {
-		getAll().put(namespace, obj);
-	}
-
-	protected final Object remove(String namespace) {
-		return getAll().remove(namespace);
-	}
-
-	@MethodMeta(factor = Factor.CALLER, allowed = {
-			Resource.class }, identityStrategy = IdentityStrategy.ASSIGNABLE, onImplementation = true)
-	@MethodMeta(validator = MetaFactoryValidators.ResourceValidator.class)
-
-	public boolean hasResourceKey(String namespace) {
-		return hasKey(EXT_RESOURCE_PREFIX + namespace);
-	}
-
-	@MethodMeta(factor = Factor.CALLER, allowed = {
-			Resource.class }, identityStrategy = IdentityStrategy.ASSIGNABLE, onImplementation = true)
-	@MethodMeta(validator = MetaFactoryValidators.ResourceValidator.class)
-
-	public Object getResource(String namespace) {
-		return get(EXT_RESOURCE_PREFIX + namespace);
-	}
-
-	@MethodMeta(factor = Factor.CALLER, allowed = {
-			Resource.class }, identityStrategy = IdentityStrategy.ASSIGNABLE, onImplementation = true)
-	@MethodMeta(validator = MetaFactoryValidators.ResourceValidator.class)
-
-	public void setResource(Object namespace, Object obj) {
-		set(EXT_RESOURCE_PREFIX + namespace, obj);
-	}
-
-	@MethodMeta(factor = Factor.CALLER, allowed = {
-			Resource.class }, identityStrategy = IdentityStrategy.ASSIGNABLE, onImplementation = true)
-	@MethodMeta(validator = MetaFactoryValidators.ResourceValidator.class)
-
-	public Object removeResource(String namespace) {
-		return remove(EXT_RESOURCE_PREFIX + namespace);
-	}
-
 	public final Class<?> getLocatorClassType() {
+
 		ParameterizedClass c = ClassUtils.getParameterizedClass(getClass().getClassLoader(),
 				getClass().getSuperclass().getGenericSuperclass());
+
 		return c.getGenericTypes().get(0).getType();
 	}
 
@@ -122,8 +69,8 @@ public abstract class SpiDelegate<T> {
 		return type;
 	}
 
-	@MethodMeta(factor = Factor.CALLER, allowed = {
-			SpiDelegateHandler.class }, identityStrategy = IdentityStrategy.SINGLETON, allowInternalAccess = false)
+	@SecureMethod(factor = Factor.CALLER, allowed = {
+			SpiDelegateHandler.class }, identityStrategy = IdentityStrategy.SINGLETON, restrictHierarchyAccess = true)
 	public final SpiDelegate<T> setType(KeyValuePair<SpiType, Class<?>> type) {
 		this.type = type;
 		return this;
@@ -133,25 +80,19 @@ public abstract class SpiDelegate<T> {
 		return type.getKey();
 	}
 
-	protected final List<Class<T>> getResourceClasses() {
-		List<Class<T>> result = new ArrayList<>();
-		forEach(result::add);
-		return result;
-	}
+	protected abstract Collection<?> getResourceObjects();
 
-	protected final void forEach(Consumer<Class<T>> consumer) {
-		SpiDelegateHandler.get().forEach(getSpiType(), c -> {
-			@SuppressWarnings("unchecked")
-			Class<T> clazz = (Class<T>) c;
-			consumer.accept(clazz);
-		});
+	@BlockerTodo("Most delegates should return this in their init(..) functions")
+	
+	protected final DelegateInitResult forEach(Function<Class<T>, ResourceStatus> consumer) {
+		return SpiDelegateHandler.get().forEach(getSpiType(), consumer);
 	}
 
 	/**
 	 * This function is used to initialize this delegate. Subclasses should ensure
 	 * that this method takes no longer than 10 seconds to execute.
 	 */
-	@MethodMeta
+	@SecureMethod
 	public abstract DelegateInitResult init();
 
 	public Boolean applies() {
@@ -162,63 +103,114 @@ public abstract class SpiDelegate<T> {
 	 * Indicate that delegate needs to be taken out of service
 	 */
 	@BlockerTodo("Make abstract, and implement across all delegates")
-	public void shutdown() {}
+	public void shutdown() {
+	}
 
-	@MethodMeta(factor = Factor.CALLER, allowed = {
-			SpiBase.class }, identityStrategy = IdentityStrategy.SINGLETON, allowInternalAccess = false)
-	
 	/**
 	 * Release resources used by this delegate
 	 */
+	@SecureMethod(factor = Factor.CALLER, allowed = {
+			SpiBase.class }, identityStrategy = IdentityStrategy.SINGLETON, restrictHierarchyAccess = true)
 	public final void release() {
-		MetaFactoryValidators.ResourceValidator.remove(this);
 		
-		Map<Object, Object> rMap = getAll();
-		if (!rMap.isEmpty()) {
-			rMap.clear();
-		}
+		MetaFactoryValidators.ResourceValidator.remove(this);
+		SpiDelegateHandler.get().releaseResources(getSpiType());
 	}
 
-	@MethodMeta(factor = Factor.CALLER, allowed = {
-			SpiDelegateHandler.class }, identityStrategy = IdentityStrategy.SINGLETON, allowInternalAccess = false)
+	@SecureMethod(factor = Factor.CALLER, allowed = {
+			SpiDelegateHandler.class }, identityStrategy = IdentityStrategy.SINGLETON)
+	public boolean requiresDistributedStore() {
+		return false;
+	}
+
+	/**
+	 * This could either be a string list representing the store names, or a list of
+	 * {@link DistributedStoreConfig} objects
+	 * 
+	 * @return
+	 */
+	@SecureMethod(factor = Factor.CALLER, allowed = {
+			SpiDelegateHandler.class }, identityStrategy = IdentityStrategy.SINGLETON)
+	public List<Object> distributedStoreNames() {
+		return Collections.emptyList();
+	}
+
+	@SecureMethod(factor = Factor.CALLER, allowed = {
+			SpiDelegateHandler.class }, identityStrategy = IdentityStrategy.SINGLETON, restrictHierarchyAccess = true)
 	public final void add0(List<Class<?>> classes) {
+
 		add(Utils.toGenericList((classes)));
+
 	}
 
-	@MethodMeta(factor = Factor.CALLER, allowed = {
-			SpiBase.class }, identityStrategy = IdentityStrategy.SINGLETON, allowInternalAccess = false)
+	@SecureMethod(factor = Factor.CALLER, allowed = {
+			SpiBase.class }, identityStrategy = IdentityStrategy.SINGLETON, restrictHierarchyAccess = true)
 
 	public final List<Class<T>> remove0(List<Class<?>> classes) {
+
 		return remove(Utils.toGenericList(classes));
+
 	}
-	
-	
-	@MethodMeta(factor = Factor.CALLER, allowed = {
-			SpiBase.class }, identityStrategy = IdentityStrategy.SINGLETON, allowInternalAccess = false)
-	
+
+	@SecureMethod(factor = Factor.CALLER, allowed = {
+			SpiBase.class }, identityStrategy = IdentityStrategy.SINGLETON, restrictHierarchyAccess = true)
+
 	public static final void emptyResourceValidatorCache(String appId) {
 		MetaFactoryValidators.ResourceValidator.remove(appId);
 	}
 
-	protected void add(List<Class<T>> classes) {
+	@SecureMethod(factor = Factor.CALLER, allowed = {
+			SpiDelegateHandler.class }, identityStrategy = IdentityStrategy.SINGLETON)
+	public Comparator<Class<? extends T>> getClassComparator() {
+		return null;
 	}
 
-	protected List<Class<T>> remove(List<Class<T>> classes) {
-		return Collections.emptyList();
+	@SecureMethod(factor = Factor.CALLER, allowed = {
+			SpiDelegateHandler.class }, identityStrategy = IdentityStrategy.SINGLETON)
+	public final Boolean canRegisterInplace0(Class<?> clazz) {
+		@SuppressWarnings("unchecked")
+		Class<T> c = (Class<T>) clazz;
+		return canRegisterInPlace(c);
 	}
 
-	/**
-	 * Any delegate that overrides this function as false, must have a dependency on
-	 * {@link SpiType#CACHE_ADAPTER}
-	 * 
-	 * @return
-	 */
-	public boolean inMemory() {
+	protected Boolean canRegisterInPlace(Class<T> clazz) {
 		return true;
 	}
 
+	protected ResourceStatus add(Class<T> clazz) {
+		return ResourceStatus.UPDATED;
+	}
+
+	protected ResourceStatus remove(Class<T> clazz) {
+		return ResourceStatus.UPDATED;
+	}
+
+	@ConcreteIntrinsic
+	@SecureMethod(factor = Factor.CALLER, allowed = { Resource.class }, identityStrategy = IdentityStrategy.ASSIGNABLE)
+	@SecureMethod(validator = MetaFactoryValidators.ResourceValidator.class)
+
+	public Object get(String key) {
+		return getLocalStore().get(EXT_RESOURCE_PREFIX + key);
+	}
+
+	@ConcreteIntrinsic
+	@SecureMethod(factor = Factor.CALLER, allowed = { Resource.class }, identityStrategy = IdentityStrategy.ASSIGNABLE)
+	@SecureMethod(validator = MetaFactoryValidators.ResourceValidator.class)
+
+	public void set(Object key, Object value) {
+		getLocalStore().put(EXT_RESOURCE_PREFIX + key, value);
+	}
+
+	@ConcreteIntrinsic
+	@SecureMethod(factor = Factor.CALLER, allowed = { Resource.class }, identityStrategy = IdentityStrategy.ASSIGNABLE)
+	@SecureMethod(validator = MetaFactoryValidators.ResourceValidator.class)
+
+	public Object remove(String namespace) {
+		return getLocalStore().remove(EXT_RESOURCE_PREFIX + namespace);
+	}
+
 	@BlockerTodo
-	private static class MetaFactoryValidators {
+	protected static final class MetaFactoryValidators {
 
 		public static class ResourceValidator extends Validator {
 
@@ -230,7 +222,7 @@ public abstract class SpiDelegate<T> {
 				Class<?> source = ctx.getSource().getDeclaringClass();
 				Class<?> target = ctx.getTarget().getDeclaringClass();
 
-				String appId = ClassUtils.getAppId(source);
+				String appId = ClassLoaders.getId(source);
 
 				List<String> classFrames = ResourceValidator.classFrames.get(appId);
 

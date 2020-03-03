@@ -1,7 +1,7 @@
 package com.re.paas.internal.runtime.spi.locators;
 
-import com.re.paas.api.fusion.server.BaseService;
 import com.re.paas.api.fusion.services.AbstractServiceDelegate;
+import com.re.paas.api.fusion.services.BaseService;
 import com.re.paas.api.runtime.spi.AbstractResource;
 import com.re.paas.api.runtime.spi.BaseSPILocator;
 import com.re.paas.api.runtime.spi.SpiDelegate;

@@ -2,7 +2,7 @@ package com.re.paas.internal.classes;
 
 public enum ActivitityStreamTimeline {
 
-	HOURLY(0), DAILY(1), WEEKLY(2);
+	HOURLY(1), DAILY(2), WEEKLY(3);
 
 	private int value;
 
@@ -14,13 +14,13 @@ public enum ActivitityStreamTimeline {
 
 		switch (value) {
 
-		case 0:
+		case 1:
 			return ActivitityStreamTimeline.HOURLY;
 			
-		case 1:
+		case 2:
 			return ActivitityStreamTimeline.DAILY;
 			
-		case 2:
+		case 3:
 			return ActivitityStreamTimeline.WEEKLY;
 			
 		default:

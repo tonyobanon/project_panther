@@ -19,8 +19,7 @@ public class ErrorSpiDelegate extends AbstractErrorSpiDelegate {
 			addError(c);
 		};
 
-		forEach(consumer);
-		return DelegateInitResult.SUCCESS;
+		return forEach(consumer);
 	}
 
 	private void addError(Class<Error> c) {
@@ -40,10 +39,10 @@ public class ErrorSpiDelegate extends AbstractErrorSpiDelegate {
 		}
 
 		@SuppressWarnings("unchecked")
-		Map<Integer, String> existingMap = (Map<Integer, String>) get(namespace);
+		Map<Integer, String> existingMap = (Map<Integer, String>) getLocalStore().get(namespace);
 
 		if (existingMap == null) {
-			set(namespace, errorMap);
+			getLocalStore().put(namespace, errorMap);
 		} else {
 
 			errorMap.forEach((k, v) -> {
@@ -67,14 +66,14 @@ public class ErrorSpiDelegate extends AbstractErrorSpiDelegate {
 		String namespace = errors[0].namespace();
 
 		@SuppressWarnings("unchecked")
-		Map<Integer, String> existingMap = (Map<Integer, String>) get(namespace);
+		Map<Integer, String> existingMap = (Map<Integer, String>) getLocalStore().get(namespace);
 
 		for (Error e : errors) {
 			existingMap.remove(e.getCode());
 		}
 
 		if (existingMap.isEmpty()) {
-			remove(namespace);
+			getLocalStore().remove(namespace);
 		}
 	}
 
@@ -82,7 +81,7 @@ public class ErrorSpiDelegate extends AbstractErrorSpiDelegate {
 	public String getError(String namespace, Integer code) {
 
 		@SuppressWarnings("unchecked")
-		Map<Integer, String> errorMap = (Map<Integer, String>) get(namespace);
+		Map<Integer, String> errorMap = (Map<Integer, String>) getLocalStore().get(namespace);
 
 		if (errorMap != null) {
 			return errorMap.get(code);

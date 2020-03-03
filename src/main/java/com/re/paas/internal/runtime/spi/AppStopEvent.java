@@ -16,11 +16,6 @@ public class AppStopEvent extends BaseEvent {
 		this.success = success;
 	}
 
-	@Override
-	public String name() {
-		return "AppStopEvent";
-	}
-
 	public Object getReason() {
 		return reason;
 	}

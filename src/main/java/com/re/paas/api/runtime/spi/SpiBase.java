@@ -3,7 +3,7 @@ package com.re.paas.api.runtime.spi;
 import java.util.Collection;
 
 import com.re.paas.api.designpatterns.Singleton;
-import com.re.paas.api.runtime.MethodMeta;
+import com.re.paas.api.runtime.SecureMethod;
 
 public interface SpiBase {
 	
@@ -11,13 +11,16 @@ public interface SpiBase {
 		return Singleton.get(SpiBase.class);
 	}
 	
-	@MethodMeta
+	@SecureMethod
 	public void start(Collection<String> apps);
 
-	@MethodMeta
+	@SecureMethod
 	public void stop();
 
-	@MethodMeta
+	@SecureMethod
 	public Boolean stop(String appId);
+	
+	@SecureMethod
+	public Boolean hasTrust(String appId);
 
 }

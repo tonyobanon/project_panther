@@ -1,20 +1,26 @@
 package com.re.paas.internal.infra.filesystem;
 
+import java.io.IOException;
 import java.net.URI;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.spi.FileSystemProvider;
 
-import com.re.paas.api.runtime.MethodMeta;
+import com.re.paas.api.Platform;
+import com.re.paas.api.classes.Exceptions;
+import com.re.paas.api.runtime.SecureMethod;
 import com.re.paas.api.utils.ClassUtils;
-import com.re.paas.internal.runtime.security.MethodInterceptor;
+import com.re.paas.internal.runtime.MethodInterceptor;
 
 public class FileSystemProviders {
 
 	private static FileSystem internalFs;
 
-	@MethodMeta
+	@SecureMethod
 	public static void init() {
+		
 		System.setProperty("java.nio.file.spi.DefaultFileSystemProvider", FileSystemProviderImpl.class.getName());
 
 		FileSystemProvider provider = FileSystems.getDefault().provider();
@@ -40,7 +46,7 @@ public class FileSystemProviders {
 	 * transformed version that contains an indirection to {@link MethodInterceptor} (if
 	 * any exists)
 	 */
-	@MethodMeta
+	@SecureMethod
 	public static void reload() {
 
 		// At this point, we are sure that FileSystems.getDefault().getClass() ==
@@ -59,8 +65,27 @@ public class FileSystemProviders {
 	 * 
 	 * @return
 	 */
-	@MethodMeta
+	@SecureMethod
 	public static FileSystem getInternal() {
 		return internalFs;
 	}
+
+	@SecureMethod
+	public static Path getResourcePath() {
+		try {
+	
+			Path basePath = getInternal().getPath(System.getProperty("user.home"));
+			Path p = basePath.resolve(Platform.getPlatformPrefix()).resolve("resources");
+	
+			Files.createDirectories(p);
+	
+			return p;
+	
+		} catch (IOException e) {
+			Exceptions.throwRuntime(e);
+			return null;
+		}
+	}
+	
+	
 }

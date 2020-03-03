@@ -1,11 +1,11 @@
 package com.re.paas.internal.sentences;
 
-import com.re.paas.api.fusion.services.Functionality;
+import com.re.paas.api.fusion.functionalities.Functionality;
 import com.re.paas.api.sentences.Article;
 import com.re.paas.api.sentences.ObjectType;
-import com.re.paas.internal.fusion.functionalities.PlatformFunctionalities;
-import com.re.paas.internal.fusion.functionalities.RoleFunctionalities;
-import com.re.paas.internal.fusion.functionalities.UserApplicationFunctionalities;
+import com.re.paas.integrated.fusion.functionalities.PlatformFunctionalities;
+import com.re.paas.integrated.fusion.functionalities.RoleFunctionalities;
+import com.re.paas.integrated.fusion.functionalities.UserApplicationFunctionalities;
 
 public enum ObjectTypes implements ObjectType {
 

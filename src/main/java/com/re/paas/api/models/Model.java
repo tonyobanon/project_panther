@@ -5,7 +5,7 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-import com.re.paas.internal.models.ModelDelegate;
+import com.re.paas.integrated.models.ModelDelegate;
 
 @Target({ ElementType.TYPE })
 @Retention(RetentionPolicy.RUNTIME)

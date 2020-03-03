@@ -1,6 +1,6 @@
 package com.re.paas.api.sentences;
 
-import com.re.paas.api.fusion.services.Functionality;
+import com.re.paas.api.fusion.functionalities.Functionality;
 
 public interface ObjectType {
 	

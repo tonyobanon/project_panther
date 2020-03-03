@@ -1,9 +1,9 @@
 package com.myapp.services;
 
 import com.myapp.functionalities.HelloWorldFunctionalities;
-import com.re.paas.api.fusion.server.BaseService;
-import com.re.paas.api.fusion.server.FusionEndpoint;
-import com.re.paas.api.fusion.server.RoutingContext;
+import com.re.paas.api.fusion.FusionEndpoint;
+import com.re.paas.api.fusion.RoutingContext;
+import com.re.paas.api.fusion.services.BaseService;
 
 public class HelloWorldService extends BaseService {
 

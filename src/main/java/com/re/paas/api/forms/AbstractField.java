@@ -1,7 +1,7 @@
 package com.re.paas.api.forms;
 
 
-public abstract class AbstractField {
+public abstract class AbstractField implements Cloneable {
 
 	protected String id;
 	private Reference reference;
@@ -10,7 +10,12 @@ public abstract class AbstractField {
 		this.id = id;
 	}
 	
-	public static AbstractField copyOf(AbstractField src) {
+	@Override
+	public AbstractField clone() {
+		return AbstractField.copyOf(this, true);
+	}
+	
+	static AbstractField copyOf(AbstractField src, boolean copyReference) {
 		
 		AbstractField field = null;
 		
@@ -20,16 +25,17 @@ public abstract class AbstractField {
 			field = new CompositeField();
 		}
 		
-		field.importData(src);
+		field.importData(src, copyReference);
 		return field;
 	}
 	
 	/**
-	 * Copies the section without copying its reference
+	 * Copies the field
+	 * 
 	 * @param source The section to copy
-	 * @param withFields
+	 * @param copyReference This indicates whether or not the reference should be copied from the source
 	 */
-	public abstract void importData(AbstractField source);
+	public abstract AbstractField importData(AbstractField source, boolean copyReference);
 	
 	public AbstractField setId(String id) {
 		this.id = id;

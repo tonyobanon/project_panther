@@ -4,8 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BiConsumer;
 
-import com.re.paas.api.fusion.services.Functionality;
-import com.re.paas.api.listable.IndexedNameType;
+import com.re.paas.api.fusion.functionalities.Functionality;
+import com.re.paas.api.listable.ListableIndex;
 import com.re.paas.api.models.classes.ApplicationDeclineReason;
 import com.re.paas.api.sentences.ObjectType;
 
@@ -14,7 +14,7 @@ public class RealmApplicationSpec {
 	private boolean requiresReview;
 	private Functionality reviewFunctionality;
 	private ObjectType baseObjectType;
-	private IndexedNameType indexedNameType;
+	private ListableIndex<?> listableIndex;
 	private List<String> variableNames = new ArrayList<>();
 	private BiConsumer<Long, Long> onAccept;
 	private BiConsumer<Long, ApplicationDeclineReason> onDecline;
@@ -49,12 +49,12 @@ public class RealmApplicationSpec {
 		return this;
 	}
 
-	public IndexedNameType getIndexedNameType() {
-		return indexedNameType;
+	public ListableIndex<?> getListableIndex() {
+		return listableIndex;
 	}
 
-	public RealmApplicationSpec setIndexedNameType(IndexedNameType indexedNameType) {
-		this.indexedNameType = indexedNameType;
+	public RealmApplicationSpec setListableIndex(ListableIndex<?> listableIndex) {
+		this.listableIndex = listableIndex;
 		return this;
 	}
 

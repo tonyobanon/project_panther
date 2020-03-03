@@ -1,18 +1,17 @@
 package com.re.paas.internal.templating;
 
-import java.util.Collections;
+import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
 import com.google.common.collect.Maps;
 import com.re.paas.api.runtime.spi.DelegateInitResult;
+import com.re.paas.api.runtime.spi.ResourceStatus;
 import com.re.paas.api.templating.AbstractObjectModelFactorySpiDelegate;
 import com.re.paas.api.templating.TemplateObjectModel;
 import com.re.paas.api.templating.TemplateObjectModelFactory;
-import com.re.paas.api.utils.ClassUtils;
 
 public class ObjectModelFactorySpiDelegate extends AbstractObjectModelFactorySpiDelegate {
 
@@ -20,25 +19,25 @@ public class ObjectModelFactorySpiDelegate extends AbstractObjectModelFactorySpi
 
 	@Override
 	public DelegateInitResult init() {
+		
 		createResourceMaps();
-		forEach(this::addTemplateObjectModelFactory);
-		return DelegateInitResult.SUCCESS;
+		
+		return forEach(this::add0);
 	}
 
 	@Override
-	protected void add(List<Class<TemplateObjectModelFactory<? extends TemplateObjectModel>>> classes) {
-		classes.forEach(c -> {
-			addTemplateObjectModelFactory(c);
-		});
+	protected Collection<?> getResourceObjects() {
+		return getTemplateObjectModelFactories().values();
+	}
+	
+	@Override
+	protected ResourceStatus add(Class<TemplateObjectModelFactory<? extends TemplateObjectModel>> clazz) {
+		return add0(clazz);
 	}
 
 	@Override
-	protected List<Class<TemplateObjectModelFactory<? extends TemplateObjectModel>>> remove(
-			List<Class<TemplateObjectModelFactory<? extends TemplateObjectModel>>> classes) {
-		classes.forEach(c -> {
-			removeTemplateObjectModelFactory(c);
-		});
-		return Collections.emptyList();
+	protected ResourceStatus remove(Class<TemplateObjectModelFactory<? extends TemplateObjectModel>> clazz) {
+		return remove0(clazz);
 	}
 
 	@Override
@@ -53,32 +52,34 @@ public class ObjectModelFactorySpiDelegate extends AbstractObjectModelFactorySpi
 		return map;
 	}
 
-	private void removeTemplateObjectModelFactory(Class<TemplateObjectModelFactory<? extends TemplateObjectModel>> c) {
+	private ResourceStatus remove0(Class<TemplateObjectModelFactory<? extends TemplateObjectModel>> clazz) {
 
 		Map<Class<?>, TemplateObjectModelFactory<? extends TemplateObjectModel>> resources = resources();
 
 		Set<Entry<Class<?>, TemplateObjectModelFactory<? extends TemplateObjectModel>>> set = resources.entrySet();
 
 		for (Entry<Class<?>, TemplateObjectModelFactory<? extends TemplateObjectModel>> e : set) {
-			if (e.getValue().getClass().equals(c)) {
+			if (e.getValue().getClass().equals(clazz)) {
 				set.remove(e);
 			}
 		}
+		
+		return ResourceStatus.UPDATED;
 	}
 
-	private void addTemplateObjectModelFactory(Class<TemplateObjectModelFactory<? extends TemplateObjectModel>> c) {
-		TemplateObjectModelFactory<? extends TemplateObjectModel> tmf = ClassUtils.createInstance(c);
+	private ResourceStatus add0(Class<TemplateObjectModelFactory<? extends TemplateObjectModel>> c) {
+		TemplateObjectModelFactory<? extends TemplateObjectModel> tmf = com.re.paas.internal.classes.ClassUtil.createInstance(c);
 		getTemplateObjectModelFactories().put(tmf.getObjectModelClass(), tmf);
+		return ResourceStatus.UPDATED;
 	}
 
 	private void createResourceMaps() {
-		set(TMF_NAMESPACE, new HashMap<>());
+		getLocalStore().put(TMF_NAMESPACE, new HashMap<>());
 	}
 
 	@SuppressWarnings("unchecked")
 	private Map<Class<? extends TemplateObjectModel>, TemplateObjectModelFactory<? extends TemplateObjectModel>> getTemplateObjectModelFactories() {
-		return (Map<Class<? extends TemplateObjectModel>, TemplateObjectModelFactory<? extends TemplateObjectModel>>) get(
-				TMF_NAMESPACE);
+		return (Map<Class<? extends TemplateObjectModel>, TemplateObjectModelFactory<? extends TemplateObjectModel>>) getLocalStore().get(TMF_NAMESPACE);
 	}
 
 }

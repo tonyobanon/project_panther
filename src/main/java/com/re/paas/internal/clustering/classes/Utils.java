@@ -26,14 +26,11 @@ import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.HttpClients;
 
-import com.re.paas.api.clustering.classes.OsPlatform;
-import com.re.paas.api.logging.Logger;
 import com.re.paas.internal.Application;
 
 public class Utils {
 
 	private static SecureRandom secureRandom = new SecureRandom();
-	private static OsPlatform platform = null;
 
 	public static String newRandom() {
 		return UUID.randomUUID().toString().replaceAll("-", "");
@@ -203,10 +200,6 @@ public class Utils {
 		return sb.toString().toLowerCase();
 	}
 
-	public static OsPlatform getPlatform() {
-		return platform;
-	}
-
 	public static String getAppBaseDir() {
 		
 		File base = null;
@@ -228,34 +221,5 @@ public class Utils {
 		return filePath;
 	}
 	
-	static {
-
-		Logger.get().info("Getting OS platform");
-		
-		String OPERATING_SYSTEM = System.getProperty("os.name").toLowerCase();
-
-		if (OPERATING_SYSTEM.indexOf("win") >= 0) {
-
-			// Windows
-			platform = OsPlatform.WINDOWS;
-
-		} else if (OPERATING_SYSTEM.indexOf("mac") >= 0) {
-
-			// Mac
-			platform = OsPlatform.MAC;
-
-		} else if (OPERATING_SYSTEM.indexOf("nix") >= 0 || OPERATING_SYSTEM.indexOf("nux") >= 0
-				|| OPERATING_SYSTEM.indexOf("aix") > 0) {
-
-			// Unix / Linux
-			platform = OsPlatform.LINUX;
-
-		} else if (OPERATING_SYSTEM.indexOf("sunos") >= 0) {
-
-			// Solaris
-			platform = OsPlatform.SOLARIS;
-		} 
-
-	}
 
 }

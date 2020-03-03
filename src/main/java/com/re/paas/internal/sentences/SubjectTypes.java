@@ -1,8 +1,8 @@
 package com.re.paas.internal.sentences;
 
-import com.re.paas.api.fusion.services.Functionality;
+import com.re.paas.api.fusion.functionalities.Functionality;
 import com.re.paas.api.sentences.SubjectType;
-import com.re.paas.internal.fusion.functionalities.UserFunctionalities;
+import com.re.paas.integrated.fusion.functionalities.UserFunctionalities;
 
 public enum SubjectTypes implements SubjectType {
 

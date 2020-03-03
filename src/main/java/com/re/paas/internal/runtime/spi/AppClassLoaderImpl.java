@@ -8,37 +8,46 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 
 import com.google.common.collect.Maps;
 import com.re.paas.api.annotations.develop.BlockerBlockerTodo;
+import com.re.paas.api.annotations.develop.BlockerTodo;
 import com.re.paas.api.apps.AppClassLoader;
 import com.re.paas.api.classes.Exceptions;
-import com.re.paas.api.runtime.ClassLoaderSecurity;
-import com.re.paas.api.utils.ClassUtils;
+import com.re.paas.api.classes.ObjectWrapper;
+import com.re.paas.api.logging.Logger;
+import com.re.paas.api.logging.LoggerFactory;
+import com.re.paas.api.runtime.ClassLoaders;
+import com.re.paas.api.runtime.ParameterizedInvokable;
+import com.re.paas.api.runtime.RuntimeIdentity;
+import com.re.paas.internal.classes.ClassUtil;
+import com.re.paas.internal.fusion.services.RoutingContextHandler;
 
 public class AppClassLoaderImpl extends AppClassLoader {
 
-	private final Map<String, Class<?>> loadedClasses = Maps.newHashMap();
+	private static List<String> appIntrinsicClasses = new ArrayList<>();
+	private static Logger LOG = LoggerFactory.get().getLog(AppClassLoaderImpl.class);
+
+	private final Map<String, Class<?>> thirdPartyClasses = Maps.newHashMap();
 
 	private final String appId;
 	private final Path path;
 	private boolean isStopping = false;
 
-	private final String[] appDependencies;
-
-	public AppClassLoaderImpl(ClassLoader parent, String appId) {
-		this(parent, appId, null);
+	@BlockerTodo("For high performance, I advise that we stop using using appIntrinsicClasses, "
+			+ "but use a standard naming convention in the class names")
+	public static boolean isAppIntrinsic(String classname) {
+		return appIntrinsicClasses.contains(classname);
 	}
 
-	public AppClassLoaderImpl(ClassLoader parent, String appId, String[] appDependencies) {
+	public AppClassLoaderImpl(ClassLoader parent, String appId) {
 		super(parent);
 		this.appId = appId;
 		this.path = AppProvisionerImpl.getAppBasePath().resolve(appId);
-		this.appDependencies = appDependencies;
-
-		// Load ThreadSecurity class into the classloader
-		ClassLoaderSecurity.load(this);
 	}
 
 	public URL getResource(String name) {
@@ -59,175 +68,188 @@ public class AppClassLoaderImpl extends AppClassLoader {
 	}
 
 	@Override
-	protected Class<?> findClass(String name) throws ClassNotFoundException {
-		byte[] data = loadClassFromDisk(name);
+	public Class<?> findClass(String name) throws ClassNotFoundException {
+		return findClass0(name, isAppIntrinsic(name));
+	}
+
+	public Class<?> findClass0(String name, boolean isAppIntrinsic) throws ClassNotFoundException {
+		
+		byte[] data = loadClassFromDisk(name, isAppIntrinsic);
+
 		if (data == null) {
-			return null;
+			throw new ClassNotFoundException(name);
+		}
+
+		SecurityManager sm = System.getSecurityManager();
+
+		if (sm != null) {
+			String pkg = ClassUtil.getPackageName(name);
+			sm.checkPackageDefinition(pkg);
 		}
 
 		return this.defineClass(name, data, 0, data.length, null);
 	}
 
-	private Class<?> findClass0(String name) throws ClassNotFoundException {
+	private Class<?> loadClass0(String name, boolean isAppIntrinsic) throws ClassNotFoundException {
+
 		Class<?> c = null;
+		try {
 
-		// First, check if the class has already been loaded by the current classloader
-		c = findLoadedClass(name);
+			// Find class
+			c = findClass0(name, isAppIntrinsic);
 
-		if (c != null) {
-			return c;
+		} catch (ClassNotFoundException e) {
+
+			// Search in all available app classloaders
+
+			ObjectWrapper<Class<?>> cWrapper = new ObjectWrapper<>();
+
+			AppProvisionerImpl.appClassloaders.entrySet().forEach(entry -> {
+
+				if (cWrapper.get() != null) {
+					return;
+				}
+
+				try {
+					cWrapper.set(((AppClassLoaderImpl) entry.getValue()).findClass0(name, false));
+				} catch (ClassNotFoundException ex) {
+				}
+
+			});
+
+			if (cWrapper.get() != null) {
+				
+				c = cWrapper.get();
+
+				thirdPartyClasses.put(name, c);
+				SPILocatorHandlerImpl.addDependencyPath0(getAppId(), Arrays.asList(ClassLoaders.getId(cWrapper.get())));
+			}
 		}
 
-		// Find class
-		c = findClass(name);
-
+		
+		if(c == null) {
+			throw new ClassNotFoundException(name);
+		}
+		
 		return c;
 	}
 
-	private Class<?> loadClassDelegateFirst(String name) throws ClassNotFoundException {
+	@BlockerTodo("Using checkPackageAccess(..), we could orchestrate scenarios where an app blocks other app(s) from depending on it")
+	private Class<?> load0(String name) throws ClassNotFoundException {
 
 		Class<?> c = null;
+		boolean isAppIntrinsic = isAppIntrinsic(name);
 
-		// First, Delegate to parent classloader
-		try {
-			c = super.loadClass(name, false);
-		} catch (ClassNotFoundException e) {
+		List<ClassLoader> classloaders = Arrays.asList(ClassLoaders.getClassLoader(), this);
+
+		if (isAppIntrinsic) {
+			classloaders.add(classloaders.remove(0));
 		}
 
-		if (c != null) {
-			return c;
-		}
+		for (ClassLoader cl : classloaders) {
+			try {
+				c = cl instanceof AppClassLoader ? ((AppClassLoaderImpl) cl).loadClass0(name, isAppIntrinsic)
+						: cl.loadClass(name);
+			} catch (ClassNotFoundException e) {
+			}
 
-		return findClass0(name);
-	}
+			if (c != null) {
 
-	private Class<?> loadClassFindFirst(String name) throws ClassNotFoundException {
+				// If the classes was loaded from the system class loader
+				if (c.getClassLoader() == ClassLoaders.getClassLoader()) {
 
-		Class<?> c = findClass0(name);
+					SecurityManager sm = System.getSecurityManager();
 
-		if (c != null) {
-			return c;
-		}
-
-		// Then, Delegate to parent classloader
-		try {
-			c = super.loadClass(name, false);
-		} catch (ClassNotFoundException e) {
+					// Here, we are using the className instead of pkg, because we also want to
+					// check for classes as well
+					sm.checkPackageAccess(name);
+				}
+				break;
+			}
 		}
 
 		return c;
-	}
-
-	@Override
-	public Class<?>[] load(Class<?>... classes) throws ClassNotFoundException {
-		Class<?>[] r = new Class<?>[classes.length];
-		for (int i = 0; i < classes.length; i++) {
-			Class<?> c = this.loadClass(classes[i].getName());
-			r[i] = c;
-		}
-		return r;
 	}
 
 	@Override
 	public Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
 
-		String pkg = ClassUtils.getPackageName(name);
-		SecurityManager sm = System.getSecurityManager();
+		Class<?> c = findLoadedClass(name);
 
-		if (sm != null) {
-			// Here, we are using the className instead of pkg, because we also want to
-			// check for classes as well
-			sm.checkPackageAccess(name);
+		if (c != null) {
+			return c;
+		}
+
+		if (!isAppIntrinsic(name)) {
+
+			c = super.findLoadedClass(name);
+
+			if (c != null) {
+				return c;
+			}
+		}
+
+		c = thirdPartyClasses.get(name);
+
+		if (c != null) {
+			return c;
 		}
 
 		synchronized (getClassLoadingLock(name)) {
-
-			Class<?> c = null;
-			DelegationType delegateType = getDelegationType(name);
-
-			switch (delegateType) {
-			case DELEGATE_FIRST:
-				c = loadClassDelegateFirst(name);
-				break;
-			case FIND_FIRST:
-				c = loadClassFindFirst(name);
-				break;
-			}
-
-			if (c != null) {
-				return c;
-			}
-
-			c = loadedClasses.get(name);
-			if (c != null) {
-				return c;
-			}
-
-			// Find class file using this classloader and define in Metaspace
-
-			if (sm != null) {
-				sm.checkPackageDefinition(pkg);
-
-				byte[] data = loadClassFromDisk(name);
-				if (data != null) {
-					c = defineClass(name, data, 0, data.length);
-					return c;
-				}
-			}
-
-			// Then, Check classloader of app dependencies
-
-			for (int i = 0; i < appDependencies.length; i++) {
-				try {
-					c = AppProvisioner.get().getClassloader(appDependencies[i]).loadClass(name);
-					break;
-				} catch (ClassNotFoundException e1) {
-				}
-			}
-
-			if (c != null) {
-				loadedClasses.put(name, c);
-				return c;
-			}
-
-			Exceptions.throwRuntime(new ClassNotFoundException(name));
-			return null;
+			c = load0(name);
 		}
+
+		if (c != null) {
+			return c;
+		}
+
+		throw new ClassNotFoundException(name);
+	}
+	
+	private final Path getClassPath(String className, Path path) {
+		return path.resolve(className.replace(".", File.separator) + ".class");
 	}
 
 	@BlockerBlockerTodo("Add support for nested classes, as this may not work in that scenario")
-	private byte[] loadClassFromDisk(String className) {
+	private byte[] loadClassFromDisk(String className, boolean appIntrinsic) {
 
-		Path path = ClassLoaders.getClassPath().resolve(className.replace(".", File.separator) + ".class");
+		List<Path> paths = new ArrayList<>(2);
 
-		if (!Files.exists(path)) {
+		if (appIntrinsic) {
+			paths.add(getClassPath(className, Classpaths.get()));
+		}
 
-			path = this.path.resolve("classes").resolve(className.replace(".", File.separator) + ".class");
+		paths.add(getClassPath(className, this.path.resolve("classes")));
 
-			if (!Files.exists(path)) {
-				return null;
+		for (Path path : paths) {
+
+			if (Files.exists(path)) {
+
+				try {
+
+					// read class
+					InputStream in = Files.newInputStream(path);
+					ByteArrayOutputStream byteSt = new ByteArrayOutputStream();
+
+					// write into byte
+					int len = 0;
+					while ((len = in.read()) != -1) {
+						byteSt.write(len);
+					}
+
+					in.close();
+
+					// convert into byte array
+					return byteSt.toByteArray();
+
+				} catch (IOException e) {
+					Exceptions.throwRuntime(e);
+					return null;
+				}
 			}
 		}
 
-		try {
-
-			// read class
-			InputStream in = Files.newInputStream(path);
-			ByteArrayOutputStream byteSt = new ByteArrayOutputStream();
-			// write into byte
-			int len = 0;
-			while ((len = in.read()) != -1) {
-				byteSt.write(len);
-			}
-
-			in.close();
-			// convert into byte array
-			return byteSt.toByteArray();
-
-		} catch (IOException e) {
-			Exceptions.throwRuntime(e);
-			return null;
-		}
+		return null;
 	}
 
 	public Path getPath() {
@@ -247,6 +269,11 @@ public class AppClassLoaderImpl extends AppClassLoader {
 	}
 
 	static {
+
 		registerAsParallelCapable();
+
+		appIntrinsicClasses.add(RuntimeIdentity.class.getName());
+		appIntrinsicClasses.add(ParameterizedInvokable.class.getName());
+		appIntrinsicClasses.add(RoutingContextHandler.class.getName());
 	}
 }

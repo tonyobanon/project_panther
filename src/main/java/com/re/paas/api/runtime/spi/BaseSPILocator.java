@@ -9,9 +9,9 @@ import java.util.Map;
 import java.util.regex.Pattern;
 
 import com.re.paas.api.classes.Exceptions;
-import com.re.paas.api.runtime.MethodMeta;
-import com.re.paas.api.runtime.MethodMeta.Factor;
-import com.re.paas.api.runtime.MethodMeta.IdentityStrategy;
+import com.re.paas.api.runtime.SecureMethod;
+import com.re.paas.api.runtime.SecureMethod.Factor;
+import com.re.paas.api.runtime.SecureMethod.IdentityStrategy;
 import com.re.paas.internal.runtime.spi.SPILocatorHandlerImpl;
 
 public abstract class BaseSPILocator {
@@ -41,8 +41,12 @@ public abstract class BaseSPILocator {
 	public ClassIdentityType classIdentity() {
 		return ClassIdentityType.ASSIGNABLE_FROM;
 	}
+	
+	public Boolean scanResourceClasses() {
+		return true;
+	}
 
-	@MethodMeta(factor = Factor.CALLER, identityStrategy = IdentityStrategy.SAME, allowed = SPILocatorHandlerImpl.class)
+	@SecureMethod(factor = Factor.CALLER, identityStrategy = IdentityStrategy.SAME, allowed = SPILocatorHandlerImpl.class)
 	public static final void removeTypeSuffixes(SpiType[] types, String appId) {
 		for (SpiType type : types) {
 			ListIterator<String> suffixIterator = getTypeSuffixes(type).listIterator();
@@ -56,7 +60,7 @@ public abstract class BaseSPILocator {
 		}
 	}
 
-	@MethodMeta(factor = Factor.CALLER, identityStrategy = IdentityStrategy.SAME, allowed = SPILocatorHandlerImpl.class)
+	@SecureMethod(factor = Factor.CALLER, identityStrategy = IdentityStrategy.SAME, allowed = SPILocatorHandlerImpl.class)
 	public static final void addTypeSuffix(SpiType type, String appId, String[] suffixes) {
 		List<String> suffixList = getTypeSuffixes(type);
 		for (String suffix : suffixes) {

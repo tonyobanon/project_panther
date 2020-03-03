@@ -1,3 +1,442 @@
+
+If a container joins during an app installation,
+pause, until installation is complete
+
+
+There should be a pre-defined timeframe between when a master is
+appointed, and when he fully assumes the role
+that value should be AbstractTaskDelegate.intervalInSecs()
+
+
+We need to create a mechanism of transmitting and running
+master onboarding tasks. See directly below for more info:
+
+We need to precisely monitor master shutdowns
+1. First, when we receive the SIGTERM command, we wait till
+the next task execution happens (Always dispatch event!)
+
+
+2. Then CAREFULLY considering all possible offsets, send the onboarding task
+to the incoming master ensuring that the next execution matches what it would have been.
+Since all task exeecution times have been set based on this.
+Note: this is where our leeway comes into play 
+
+
+
+Migrate S3Cache evictor (in S3Adapter) to Task Executor
+
+
+
+
+
+
+
+Functions and ClusterFunction
+
+Rename *NodeRole to *MemberRole
+
+bucketList and shutdown(...) in InfinispanCacheFactory
+
+Platform.getState().getContext();
+
+Introspect ComputeQuotaExceededEvent
+
+Add support for distributed logging
+
+What's up with Scheduler
+
+What's up with TemplateFactory
+
+If ENV is local, open up a port, that will
+be used to communicate with the studio
+
+Why is SpiDelegateHandler using a multimap
+when it is wrapping it a 1 to 1 mapping. Why not
+just use Cache?
+
+
+ARCH 28:
+I really really need to think about some solution to perform in place cache updates that may involve complex orchestration
+Update Member.addRole(...)
+RealmDelegate: Inplace updates?
+
+Complete MemberSetupFunction
+
+Don't forget SessionImpl oo
+
+Deprecate CacheAdapter
+
+FusionHelper
+
+
+Regarding my thoughts around persisting volatile cache data to disk?
+This is now a no-no. This has to be in the DB. The problem?
+Finding a way top activate a hook
+
+Use Zoo Keeper for platform clustering 
+https://kubernetes.io/docs/tutorials/stateful-application/zookeeper/
+
+
+Use vertX Cluster Manager 
+
+
+Register hook, inorder to help in distinguishing between cluster vs node shutdown
+
+Think about what happens to the cluster when the JVM crashes due to an exception
+
+
+Implement Platform.setState(...)
+
+
+
+Configure Kubernetes configuration to terminate gracefully
+https://cloud.google.com/blog/products/gcp/kubernetes-best-practices-terminating-with-grace
+
+
+In NodeRoleDelegate, Add functionality to elect a master node, because YES masters can leave
+
+
+For ACTIVE_DELEGATES to be removed the platform will need to pause all traffic
+
+
+Streamline cluster joining workflow such that when we
+know what subet the node is, we can simple get the first
+address in the space and assume it's the
+
+
+Streamline app dependency model
+i.e If the app is not found when the dependant app tries to install, FAIL
+
+
+FormModel should add form hooks to RealmDelegate
+
+We need to work on CL class hierarchy
+
+Todo: unregister section/fields and associated refs
+Todo: unregister functionalities and associated refs
+
+Todo: when unregistering the above, we need to ask the user which sibling should take it's place
+
+Add wide support hooks to realm delegate;
+* This will also help FormModel to listens for when form sections and fields are deleted
+
+	
+			
+
+Log everything!
+
+
+Appclassloader needs to keep track of dependency structure for classes
+within an app. This will be critically used to determine
+* Whether there is circular reference (not allowed)
+* The order with which classes will be unregistered 
+
+
+Scrap the concept of Ids from the form API
+
+Allow delegates to be able to configure distributed caches to persist data
+
+Accross all delegate, determine when new rClasses additions should trigger a platform restart
+
+Adapter config can be passed in as Jvm flags
+
+Upgrade RBModel into a Delegate
+
+When loading the platform, a user context
+
+Stop throw throwing errors from init, add and remove
+
+RealmDelegate Todo:
+
+* Prepare removal logic
+
+* Post addAll(...) - inorder to prepare realms ahead of time
+
+
+^ -> Two sub realms can extend a single parent
+	 However, they must not contain any similar reference.
+	 In a scenario, where they do contain similar references, 
+	 we may need the user's intervention
+
+
+
+Note: RealmDelegate always assume annotation defaults
+
+Check for Cloneables and implement
+
+Detect the order of the realm classes in an
+advanced way such that the order is as follows
+- Standalone ancestor
+
+- Non-standalone child (This is where the clashes may happen)
+
+- Standalone child 
+
+
+
+validatingReferences if you have parent - modify, delete
+
+
+
+We need to make consideration for conflict scenarios, by:
+Detect such clashes and inform the user of such
+
+
+
+
+
+
+Probe field.getId() and section.getId()
+
+
+Probe referenceKKey
+
+
+Notes:
+* Complete sections are replaced - optionally using importFields()
+
+* To delete a form section from a child realm , just reference it, and do not import fields
+
+* How is section Id used?
+
+
+Right now, we are doing something really tricky
+- In SPILocatorHandlerImpl#addClasses() we are
+also loading abstract classes. However, in delegates,
+we always instanting the class object as though it
+is always a concrete class
+I think we should stop loading abstract classes
+but we need to first investigate
+
+
+
+
+
+Do realms have a default role
+where all functionalities are assigned?
+we should have this, Check role model
+
+
+Secure all maps and collections by making
+them immutable
+
+Tune infinispan as defined here: https://infinispan.org/docs/stable/titles/tuning/tuning.html
+
+See here: https://access.redhat.com/solutions/873573 to switch infinispan from multicast
+
+
+
+Disable load balancing feature in 
+
+
+remove future.joins in TaskDelegate and entire codebase
+
+onImplementation?
+
+Remove getAll() to getLocalStore()
+
+Fix add0 to validate resource count moving forward
+
+
+Fix NodeRoleHelper
+
+Create inheritance hierarchy for services
+Then protected AbstractAdapterDelegate#getAdapters properly
+
+
+Add support for @Inject
+
+Remove CacheAdapter
+
+eviction?
+
+expire-related recursion
+
+Implement shutdown() in all cache factories
+
+OBJECT STORAGE FACTORY
+
+updateKeyExpiry on access by continuously pushing the date forward (only based on i)
+
+setKeyExpiry(e) on expire(..), removeKeyExpiry on del(..)
+
+setKeyExpiry(i) on invalidate(..)
+
+
+
+REDIS
+
+updateKeyExpiry on access by re-invoking .expire(..)
+
+removeKeyExpiry(..) on expire(..), removeKeyExpiry on del(..)
+
+setKeyExpiry(..) on invalidate(..)
+
+
+
+
+redis not calling key() properly, fix
+
+Fix futures
+
+del, sdel,hdel
+expire, invalidate
+
+
+
+
+In ObjectStorageCache, add an algo
+to preset dates, so the reaper can do
+less work
+
+
+
+
+In In ObjectStorageCache, allow developers
+to decide whether to maintain a keylist
+
+
+=
+
+
+
+In delegate implementations, is the remove(..) method
+implemented correctly? no
+The idea is that they should really return the resources that
+could not actually be removed, for any reason
+
+
+
+
+Migrate Fusion service invokation from reflection to LambdaMetafactory
+see https://dzone.com/articles/java-reflection-but-faster
+
+
+NodeRole *** (What happens in here, since a thread is created)
+
+Service
+Model
+ScheduledTask
+
+
+
+
+** - We cannot afford to outrightly disable
+thread creation because threads will need to be
+created by third party libraries in the scenarios:
+1. netty - For inter-node communication
+2. jetty - For http server orchestration
+
+Hence, we need to update our security manager to
+factor this in
+
+For the above I need to properly run some
+tests inorder to ascertain the acceptable 
+number of skipOffsets for the stack frame
+
+
+
+Implement MasterNodeRole.getAvailableNode()
+
+
+Implement SecurityManager.getThreadGroup()
+and integrate that into our workflow
+
+In the Security Manager, allow libraries
+such as netty and jetty to create threads
+without any issues. Hence, we need a 
+whitelist mechanism, that's intelligent
+If it's not, even third parties can use
+netty and jetty to create threads too
+
+
+
+
+
+** - Any Internal API that's using a restricted JVM
+should be annotated properly, to avoid attacks
+
+
+
+** - Critically test RuntimeIdentity.hasTrust() - ish
+
+
+Implement comments in Permissions.init() and other methods in this claa
+the above is very top priority
+
+   
+LAMBDA_META_FACTORY_CLASS?
+
+
+Test that when subclasses of SpiDelegate call a final method
+inside SpiDelegate, the stackframe distinguishes between
+the two classes
+
+check out AppClassLoader static block
+
+
+Implement MasterNodeRole.getAvailableNode. This is generally computed
+by taking some aggreagated node metrics into consideration,
+i.e CPU/memory usage e.t.c
+
+
+
+I think the Appclassloader prevents access to
+.internal.. packages, investigate
+
+
+Currently, our infinispan cluster assumes that all nodes
+exists on the same local network.. Well, this may not always
+be the case, especially because we allow a node from another
+network to join the cluster.
+The side effect of this is that multiple clusters will be formed
+Which again, can be tricky. Please fix
+
+
+Add in-memory cache adapter backed by infinispan.
+
+Delegate resource maps should use an IMDG
+
+
+Properly implement Scheduler
+Before the above can happen, we need to create a cluster-wide data grid
+
+
+When the master is uploading assets, they should be transferred
+to other cluster nodes
+Also, when a new node joins, he should fetch assets
+
+
+Update config.json to use correct delegate class locations
+
+
+
+Make ActivityStream optionally searchable
+Hence, if this is enabled, the ActivityStreamModel
+should write to search..
+
+
+
+
+Listing Contexts
+DB
+Realm
+
+
+
+Search for occurences of SimpleField. e.t.c you 'll notice the following
+* ids do not seem to be unique
+
+
+
+In DB API, I am currently converting Date to Long, which should be done by the DB PublicHolidayTableSpec.
+
+
+Supported autogenerated Ids for strings as well
+Annotate relevant tables with @AutoGenerated
+
+If ExpressionSpecBuilder comtains an empty projection list, project all in the spec
+
 Scan to emsure that we are not unnecessarily using ReturnValue.ALL_NEW
 
 Table modeller should properly infer DB data types, i.e List<Long> == NS(Number Set)
@@ -439,7 +878,7 @@ database_profile
 }
 
 
-Migrate from Reflection to Generated Code With javax.tools.JavaCompiler
+Migrate from Reflection to LambdaMetafactory
 see https://dzone.com/articles/java-reflection-but-faster
 
 
@@ -525,3 +964,20 @@ Probe cache=true in fusion
 
 Start Jvm with --illegal-access=permit
 
+// Improve security
+		ctx.response()
+
+				// prevents Internet Explorer from MIME -
+				// sniffing a
+				// response away from the declared content-type
+				.putHeader("X-Content-Type-Options", "nosniff")
+				// Strict HTTPS (for about ~6Months)
+				.putHeader("Strict-Transport-Security", "max-age=" + 15768000)
+				// IE8+ do not allow opening of attachments in
+				// the context
+				// of this resource
+				.putHeader("X-Download-Options", "noopen")
+				// enable XSS for IE
+				.putHeader("X-XSS-Protection", "1; mode=block")
+				// deny frames
+				.putHeader("X-FRAME-OPTIONS", "DENY");

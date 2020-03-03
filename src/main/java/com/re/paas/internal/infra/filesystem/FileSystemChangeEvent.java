@@ -15,9 +15,4 @@ public class FileSystemChangeEvent extends BaseEvent {
 		return config;
 	}
 
-	@Override
-	public String name() {
-		return "FileSystemChangeEvent";
-	}
-
 }

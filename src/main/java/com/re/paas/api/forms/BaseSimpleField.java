@@ -5,6 +5,8 @@ import com.re.paas.api.classes.ClientRBRef;
 public abstract class BaseSimpleField extends AbstractField {
 
 	private Object title;
+	private Object helperText;
+	
 	private Integer sortOrder;
 	private Object context;
 
@@ -13,7 +15,7 @@ public abstract class BaseSimpleField extends AbstractField {
 	private Boolean isDefault;
 
 	public BaseSimpleField(Object id, Object title) {
-		super(id.toString());
+		super(id != null ? id.toString() : null);
 		this.title = title;
 		this.sortOrder = 0;
 		
@@ -85,4 +87,12 @@ public abstract class BaseSimpleField extends AbstractField {
 		return this;
 	}
 
+	public Object getHelperText() {
+		return helperText;
+	}
+
+	public BaseSimpleField setHelperText(Object helperText) {
+		this.helperText = helperText;
+		return this;
+	}
 }

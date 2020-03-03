@@ -2,8 +2,8 @@ package com.re.paas.internal.runtime.permissions;
 
 import java.util.PropertyPermission;
 
-import com.re.paas.api.runtime.ClassLoaderSecurity;
-import com.re.paas.internal.runtime.security.Permissions;
+import com.re.paas.api.runtime.RuntimeIdentity;
+import com.re.paas.internal.runtime.Permissions;
 
 public class PropertyPermissions implements BasePermission {
 
@@ -70,7 +70,7 @@ public class PropertyPermissions implements BasePermission {
 	 * @return
 	 */
 	private static String prefix() {
-		String appId = ClassLoaderSecurity.getAppId();
+		String appId = RuntimeIdentity.getAppId();
 		return appId != null ? "app." + appId + ".props." : "";
 	}
 }

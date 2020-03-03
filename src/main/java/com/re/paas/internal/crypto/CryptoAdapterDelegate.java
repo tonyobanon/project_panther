@@ -9,7 +9,7 @@ public class CryptoAdapterDelegate extends AbstractCryptoAdapterDelegate {
 	private static CryptoProvider provider;
 
 	@Override
-	public Object load(LoadPhase pahse) {
+	public Boolean load(LoadPhase pahse) {
 		getProvider(true);
 		return true;
 	}

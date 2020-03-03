@@ -3,7 +3,7 @@ package com.re.paas.internal.crypto.impl;
 import java.nio.file.Path;
 
 import com.re.paas.api.cryto.KeyStoreProperties;
-import com.re.paas.internal.Platform;
+import com.re.paas.internal.infra.filesystem.FileSystemProviders;
 
 public class DefaultKeyStoreProperties extends KeyStoreProperties {
 
@@ -13,7 +13,7 @@ public class DefaultKeyStoreProperties extends KeyStoreProperties {
 	public DefaultKeyStoreProperties() {
 		super();
 		this.type = "PKCS12";
-		this.keyStorePath = Platform.getResourcePath().resolve("/crypto/keystore.p12");
+		this.keyStorePath = FileSystemProviders.getResourcePath().resolve("/crypto/keystore.p12");
 	}
 
 	@Override

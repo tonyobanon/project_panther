@@ -1,5 +1,6 @@
 package com.re.paas.internal.clustering;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -9,8 +10,8 @@ import java.util.function.Consumer;
 import com.re.paas.api.clustering.AbstractClusterFunction;
 import com.re.paas.api.clustering.AbstractClusterFunctionDelegate;
 import com.re.paas.api.clustering.Function;
-import com.re.paas.api.clustering.NodeRole;
 import com.re.paas.api.logging.Logger;
+import com.re.paas.api.roles.AbstractRole;
 import com.re.paas.api.runtime.spi.DelegateInitResult;
 import com.re.paas.api.runtime.spi.DelegateSpec;
 import com.re.paas.api.runtime.spi.SpiType;
@@ -24,35 +25,29 @@ public class ClusterFunctionDelegate extends AbstractClusterFunctionDelegate {
 
 	@Override
 	public DelegateInitResult init() {
-		scanFunctions();
-		return DelegateInitResult.SUCCESS;
-	}
-
-	@Override
-	public void scanFunctions() {
-
-		Logger.get().info("Scanning Cluster Functions");
-
-		Consumer<Class<AbstractClusterFunction<Object, Object>>> consumer = c -> {
-			processClusterFunction(c);
-		};
-		forEach(consumer);
+		return forEach(ClusterFunctionDelegate::processClusterFunction);
 	}
 
 	@Override
 	protected void add(List<Class<AbstractClusterFunction<Object, Object>>> classes) {
-		classes.forEach(c -> {
-			processClusterFunction(c);
-		});
+		classes.forEach(ClusterFunctionDelegate::processClusterFunction);
+	}
+	
+	
+	
+	@Override
+	protected Collection<?> getResourceObjects() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 	private static void processClusterFunction(Class<AbstractClusterFunction<Object, Object>> c) {
 
-		AbstractClusterFunction<Object, Object> o = ClassUtils.createInstance(c);
+		AbstractClusterFunction<Object, Object> o = com.re.paas.internal.classes.ClassUtil.createInstance(c);
 
 		boolean b = false;
 
-		for (NodeRole role : NodeRole.get().values()) {
+		for (AbstractRole role : AbstractRole.get().values()) {
 			b = o.role().equals(role.getClass());
 			if (b) {
 				break;

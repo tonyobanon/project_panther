@@ -17,7 +17,7 @@ import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.re.paas.api.annotations.develop.Todo;
 import com.re.paas.api.classes.SingleThreadExecutor;
 import com.re.paas.api.logging.Logger;
-import com.re.paas.internal.infra.database.dynamodb.qopt.tools.DynamoDBAdapter;
+import com.re.paas.integrated.infra.database.dynamodb.qopt.tools.DynamoDBAdapter;
 
 public class StorageServiceFactory {
 

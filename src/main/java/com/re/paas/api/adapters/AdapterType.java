@@ -5,8 +5,7 @@ import com.re.paas.api.cryto.AbstractCryptoAdapterDelegate;
 import com.re.paas.api.infra.cache.AbstractCacheAdapterDelegate;
 import com.re.paas.api.infra.database.AbstractDatabaseAdapterDelegate;
 import com.re.paas.api.infra.filesystem.AbstractFileSystemAdapterDelegate;
-
-;
+import com.re.paas.api.infra.metrics.AbstractMetricsAdapterDelegate;
 
 /**
  * 
@@ -17,7 +16,8 @@ import com.re.paas.api.infra.filesystem.AbstractFileSystemAdapterDelegate;
 public enum AdapterType {
 
 	CACHE(AbstractCacheAdapterDelegate.class), DATABASE(AbstractDatabaseAdapterDelegate.class),
-	FILE_SYSTEM(AbstractFileSystemAdapterDelegate.class), CRYPTO(AbstractCryptoAdapterDelegate.class);
+	FILE_SYSTEM(AbstractFileSystemAdapterDelegate.class), CRYPTO(AbstractCryptoAdapterDelegate.class),
+	METRICS(AbstractMetricsAdapterDelegate.class);
 
 	private final Class<? extends AbstractAdapterDelegate<?, ? extends Adapter<?>>> delegateType;
 

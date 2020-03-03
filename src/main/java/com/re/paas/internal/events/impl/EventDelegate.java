@@ -32,8 +32,7 @@ public class EventDelegate extends AbstractEventDelegate {
 		Consumer<Class<EventListener>> consumer = (c) -> {
 			registerListener(c);
 		};
-		forEach(consumer);
-		return DelegateInitResult.SUCCESS;
+		return forEach(consumer);
 	}
 
 	@SuppressWarnings("unchecked")
@@ -85,7 +84,7 @@ public class EventDelegate extends AbstractEventDelegate {
 
 	private static void registerListener(Class<?> c) {
 
-		Object o = ClassUtils.createInstance(c);
+		Object o = com.re.paas.internal.classes.ClassUtil.createInstance(c);
 
 		for (Method m : c.getMethods()) {
 

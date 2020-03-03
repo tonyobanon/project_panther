@@ -8,9 +8,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.re.paas.api.classes.Exceptions;
+import com.re.paas.api.infra.filesystem.NativeFileSystem;
+import com.re.paas.api.utils.JsonParser;
 import com.re.paas.api.utils.Utils;
-import com.re.paas.internal.Platform;
-import com.re.paas.internal.classes.Json;
 
 public class AdapterConfig {
 
@@ -18,7 +18,7 @@ public class AdapterConfig {
 			.synchronizedMap(new HashMap<AdapterType, AdapterConfig>());
 
 	private transient final AdapterType type;
-	private transient Path basePath = Platform.getResourcePath().resolve("adapter_config");
+	private transient Path basePath = NativeFileSystem.get().getResourcePath().resolve("adapter_config");
 	
 	private transient final Path file;
 
@@ -40,7 +40,7 @@ public class AdapterConfig {
 		AdapterConfig instance = instances.get(type);
 
 		if (instance == null) {
-			instance = Json.fromJson(Utils.getString(file), AdapterConfig.class);
+			instance = JsonParser.get().fromJson(Utils.getString(file), AdapterConfig.class);
 			instances.put(type, instance);
 		}
 
@@ -72,7 +72,7 @@ public class AdapterConfig {
 	}
 	
 	public String toString() {
-		return Json.toJson(this);
+		return JsonParser.get().toJson(this);
 	}
 
 	public AdapterType getType() {

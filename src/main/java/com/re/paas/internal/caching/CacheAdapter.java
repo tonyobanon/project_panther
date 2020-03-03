@@ -14,7 +14,7 @@ import com.re.paas.api.infra.cache.CacheFactory;
 import com.re.paas.api.logging.Logger;
 import com.re.paas.api.models.Model;
 import com.re.paas.api.utils.Utils;
-import com.re.paas.internal.fusion.services.impl.JwtTokens;
+import com.re.paas.internal.fusion.JwtTokens;
 
 @Model
 //Used for caching User functionalities, Listing Context
@@ -46,8 +46,8 @@ public class CacheAdapter {
 
 		persistentCache = newCache(new FluentHashMap<Integer, Object>());
 
-		CacheAdapter.put(JwtTokens.USER_SESSIONS_HASH, new FluentHashMap<>());
-		CacheAdapter.put(JwtTokens.SESSION_ADDRESSES_HASH, new FluentHashMap<>());
+		CacheAdapter.putString(JwtTokens.USER_SESSIONS_HASH, new FluentHashMap<>());
+		CacheAdapter.putString(JwtTokens.SESSION_ADDRESSES_HASH, new FluentHashMap<>());
 	}
 
 	private static final Cache newCache(Map<Integer, Object> properties) {
@@ -116,7 +116,7 @@ public class CacheAdapter {
 	}
 
 	public static Object put(CacheType type, String key, Object value) {
-		return getCache(type).put(key, value);
+		return getCache(type).putString(key, value);
 	}
 
 	public static Object del(String key) {

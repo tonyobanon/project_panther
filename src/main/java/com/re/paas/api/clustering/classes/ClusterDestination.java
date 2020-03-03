@@ -18,8 +18,8 @@ public enum ClusterDestination {
 		return t;
 	}
 
-	public ClusterDestination setDestination(Short nodeId) {
-		this.destination = nodeId;
+	public ClusterDestination setDestination(Short memberId) {
+		this.destination = memberId;
 		return this;
 	}
 	
@@ -27,9 +27,5 @@ public enum ClusterDestination {
 		this.destination = addr;
 		return this;
 	}
-	
-	public static ClusterDestination spec(BaseNodeSpec spec) {
-		return ClusterDestination.SPECIFIC_NODE.setDestination(ClusteringUtils.getInetSocketAddress(spec));
-	}
-	
+
 }

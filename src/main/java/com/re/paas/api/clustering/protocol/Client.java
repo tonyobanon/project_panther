@@ -4,26 +4,25 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.concurrent.CompletableFuture;
 
+import com.re.paas.api.clustering.ClusteringServices;
 import com.re.paas.api.clustering.Function;
-import com.re.paas.api.clustering.NodeRegistry;
 
 public interface Client {
 
+	/**
+	 * This returns a client that can be used to communicate with the master
+	 * @return
+	 */
 	public static Client get() {
-		NodeRegistry registry = NodeRegistry.get();
-		return ClientFactory.get().getClient(registry.getWkaHost(), registry.getWkaInboundPort());
+		return ClientFactory.get().getClient(ClusteringServices.get().getMaster().getHost());
 	}
 
 	public static Client get(InetSocketAddress address) {
-		return ClientFactory.get().getClient(address.getAddress(), address.getPort());
-	}
-	
-	public static Client get(InetAddress host, Integer port) {
-		return ClientFactory.get().getClient(host, port);
+		return ClientFactory.get().getClient(address);
 	}
 
-	public static Client get(Short nodeId) {
-		return ClientFactory.get().getClient(nodeId);
+	public static Client get(Short memberId) {
+		return ClientFactory.get().getClient(memberId);
 	}
 
 	<P, R> CompletableFuture<R> execute(Function function, P parameter, Class<R> R);
@@ -38,7 +37,7 @@ public interface Client {
 
 	void close();
 
-	Short getNodeId();
+	Short getMemberId();
 
 	Short getClientId();
 

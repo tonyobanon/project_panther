@@ -6,12 +6,12 @@ import com.re.paas.api.annotations.develop.Todo;
 import com.re.paas.api.classes.ClientResources;
 import com.re.paas.api.classes.ClientResources.WebResource;
 import com.re.paas.api.classes.ResourceException;
-import com.re.paas.api.fusion.services.Functionality;
-import com.re.paas.api.fusion.ui.AbstractComponent;
-import com.re.paas.api.fusion.ui.AbstractUIComponentDelegate;
+import com.re.paas.api.fusion.functionalities.Functionality;
+import com.re.paas.api.fusion.ui.deprecated.AbstractComponent;
+import com.re.paas.api.fusion.ui.deprecated.AbstractUIComponentDelegate;
 import com.re.paas.api.sentences.ObjectEntity;
 import com.re.paas.api.sentences.SubjectEntity;
-import com.re.paas.internal.models.BaseUserModel;
+import com.re.paas.integrated.models.BaseUserModel;
 
  class Utils {
 

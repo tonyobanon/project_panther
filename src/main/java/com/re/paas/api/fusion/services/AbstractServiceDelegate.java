@@ -1,23 +1,38 @@
 package com.re.paas.api.fusion.services;
 
-import java.util.List;
 
-import com.google.common.collect.Multimap;
-import com.re.paas.api.fusion.server.BaseService;
-import com.re.paas.api.fusion.server.Route;
-import com.re.paas.api.fusion.server.ServiceDescriptor;
+import com.re.paas.api.fusion.Route;
+import com.re.paas.api.fusion.RoutingContext;
+import com.re.paas.api.fusion.functionalities.Functionality;
 import com.re.paas.api.runtime.spi.SpiDelegate;
 
 public abstract class AbstractServiceDelegate extends SpiDelegate<BaseService> {
 
+	/**
+	 * Is set to true, the master pod will distribute traffic to other worker pods in the cluster,
+	 * rather than service the request itself. 
+	 */
+	protected static final Boolean distributeTrafficOnMaster = Boolean.parseBoolean(System.getenv("distributeTrafficOnMaster"));
+	
 	public static final String BASE_PATH = "/api";
-
-	public  abstract Multimap<Route, ServiceDescriptor> getServiceDescriptors();
 	
-	public abstract ServiceDescriptor getServiceDescriptor(Route route);
-	
-	public abstract Functionality getServiceFunctionality(Route route);
+	/**
+	 * This returns the functionality that is associated with the specified route
+	 * 
+	 * @param route
+	 * @return
+	 */
+	public abstract Functionality getFunctionality(Route route);
 
-	public abstract List<String> getFunctionalityService(Functionality functionality);
+	/**
+	 * This returns the first route that is associated with the specified functionality
+	 * 
+	 * @param functionality
+	 * @return
+	 */
+	public abstract Route getService(Functionality functionality);
+	
+	
+	public abstract void handler(RoutingContext ctx);
 
 }

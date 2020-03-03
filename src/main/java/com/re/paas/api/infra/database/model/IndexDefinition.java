@@ -1,6 +1,6 @@
 package com.re.paas.api.infra.database.model;
 
-import com.re.paas.internal.infra.database.dynamodb.qopt.classes.QueryType;
+import com.re.paas.integrated.infra.database.dynamodb.qopt.classes.QueryType;
 
 /**
  * <p>

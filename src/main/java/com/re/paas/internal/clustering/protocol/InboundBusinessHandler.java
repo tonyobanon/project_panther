@@ -1,10 +1,12 @@
 package com.re.paas.internal.clustering.protocol;
 
+import java.nio.ByteBuffer;
+
 import com.re.paas.api.classes.Exceptions;
+import com.re.paas.api.classes.ObjectSerializer;
 import com.re.paas.api.clustering.AbstractRequest;
 import com.re.paas.api.clustering.Function;
 import com.re.paas.internal.clustering.Functions;
-import com.re.paas.internal.utils.ObjectUtils;
 
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
@@ -22,14 +24,14 @@ public class InboundBusinessHandler extends ChannelInboundHandlerAdapter {
 		Channel channel = ctx.channel();
 
 		TransactionContext context = (TransactionContext) msg;
-		
+
 		try {
 
-			Object parameter = ObjectUtils.deserialize(context.getBytes());
+			Object parameter = ObjectSerializer.get().deserialize(ByteBuffer.wrap(context.getBytes()));
 			Function function = Function.fromId(context.getFunctionId());
 
 			if (parameter instanceof AbstractRequest) {
-				((AbstractRequest) parameter).setNodeId(context.getNodeId()).setClientId(context.getClientId());
+				((AbstractRequest) parameter).setMemberId(context.getNodeId()).setClientId(context.getClientId());
 			}
 
 			// Run function

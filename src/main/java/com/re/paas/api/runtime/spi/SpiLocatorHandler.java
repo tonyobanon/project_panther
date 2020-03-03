@@ -1,15 +1,23 @@
 package com.re.paas.api.runtime.spi;
 
-import com.re.paas.api.designpatterns.Singleton;
-import com.re.paas.api.runtime.MethodMeta;
+import java.util.List;
 
+import com.re.paas.api.apps.AppClassLoader;
+import com.re.paas.api.designpatterns.Singleton;
+import com.re.paas.api.runtime.SecureMethod;
+import com.re.paas.api.runtime.SecureMethod.Factor;
+import com.re.paas.api.runtime.SecureMethod.IdentityStrategy;
 
 public interface SpiLocatorHandler {
-	
-	public static SpiLocatorHandler get() {
+
+	static SpiLocatorHandler get() {
 		return Singleton.get(SpiLocatorHandler.class);
 	}
 
-	@MethodMeta
-	public Boolean exists(SpiType type, Class<?> clazz);
+	@SecureMethod
+	Boolean exists(SpiType type, Class<?> clazz);
+
+	@SecureMethod(factor = Factor.CALLER, identityStrategy = IdentityStrategy.SINGLETON, allowed = {
+			AppClassLoader.class })
+	void addDependencyPath(String source, List<String> targets);
 }

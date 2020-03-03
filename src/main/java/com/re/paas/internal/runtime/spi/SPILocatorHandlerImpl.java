@@ -1,21 +1,28 @@
 package com.re.paas.internal.runtime.spi;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.stream.Collectors;
 
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.re.paas.api.apps.AppClassLoader;
 import com.re.paas.api.classes.Exceptions;
 import com.re.paas.api.classes.ObjectWrapper;
 import com.re.paas.api.classes.PlatformException;
-import com.re.paas.api.fusion.server.JsonObject;
+import com.re.paas.api.fusion.JsonArray;
+import com.re.paas.api.fusion.JsonObject;
 import com.re.paas.api.logging.Logger;
+import com.re.paas.api.runtime.ClassLoaders;
 import com.re.paas.api.runtime.spi.BaseSPILocator;
 import com.re.paas.api.runtime.spi.SpiLocatorHandler;
 import com.re.paas.api.runtime.spi.SpiType;
 import com.re.paas.api.utils.ClassUtils;
+import com.re.paas.internal.classes.ClassUtil;
 import com.re.paas.internal.classes.ClasspathScanner;
 import com.re.paas.internal.errors.ApplicationError;
 
@@ -23,15 +30,17 @@ public class SPILocatorHandlerImpl implements SpiLocatorHandler {
 
 	private static final Logger LOG = Logger.get(SPILocatorHandlerImpl.class);
 
-	static Map<SpiType, BaseSPILocator> defaultSpiLocator = Collections
+	private static Map<SpiType, BaseSPILocator> defaultSpiLocator = Collections
 			.synchronizedMap(new HashMap<SpiType, BaseSPILocator>());
 
 	static Map<SpiType, Map<String, List<Class<?>>>> spiClasses = Collections
 			.synchronizedMap(new HashMap<SpiType, Map<String, List<Class<?>>>>());
 
+	static Map<String, List<String>> appDependencies = new HashMap<>();
+
 	private static BaseSPILocator findLocator(SpiType type) {
 		String key = SPILocatorHandlerImpl.getLocatorConfigKey(type);
-		return ClassUtils.createInstance(ClassLoaders.getConfiguration().getString(key));
+		return ClassUtil.createInstance(ClassLoaders.getConfiguration().getString(key));
 	}
 
 	static void start(ClassLoader cl, SpiType[] types) {
@@ -40,10 +49,14 @@ public class SPILocatorHandlerImpl implements SpiLocatorHandler {
 
 		for (SpiType type : types) {
 
+			if (cl instanceof AppClassLoader && type.classification().requiresTrustedResource()) {
+				continue;
+			}
+
 			BaseSPILocator locator = defaultSpiLocator.get(type);
 
 			boolean isLocatorLoaded = locator != null;
-			
+
 			if (!isLocatorLoaded) {
 
 				locator = findLocator(type);
@@ -74,14 +87,13 @@ public class SPILocatorHandlerImpl implements SpiLocatorHandler {
 		}
 	}
 
-	/**
-	 * @param newLocator
-	 * @param spi
-	 * @param appId
-	 * 
-	 * @return {@code Boolean} Flag indicating whether a new locator was used
-	 */
 	private static void addClasses(BaseSPILocator spi, ClassLoader cl) {
+
+		if (!spi.scanResourceClasses()) {
+
+			LOG.debug("Skipping resource classes scanning for type: " + spi.spiType());
+			return;
+		}
 
 		ClasspathScanner<?> cs = new ClasspathScanner<>(spi.classSuffix(), spi.classType(), spi.classIdentity())
 				.setMaxCount(spi.spiType().getCount()).setClassLoader(cl).setLoadAbstractClasses(true)
@@ -89,11 +101,11 @@ public class SPILocatorHandlerImpl implements SpiLocatorHandler {
 
 		List<?> classes = cs.scanClasses();
 
-		if (!classes.isEmpty()) {
-			@SuppressWarnings("unchecked")
-			List<Class<?>> o = (List<Class<?>>) classes;
-			spiClasses.get(spi.spiType()).put(ClassLoaders.getId(cl), o);
-		}
+		@SuppressWarnings("unchecked")
+		List<Class<?>> o = (List<Class<?>>) classes;
+		String appId = ClassLoaders.getId(cl);
+
+		spiClasses.get(spi.spiType()).put(appId, o);
 	}
 
 	static Map<SpiType, BaseSPILocator> getDefaultLocators() {
@@ -133,13 +145,27 @@ public class SPILocatorHandlerImpl implements SpiLocatorHandler {
 
 		for (SpiType type : SpiType.values()) {
 
-			String e = config.getString("platform.spi." + type.toString().toLowerCase() + ".fileSuffixes");
+			Object v = config.getValue("platform.spi." + type.toString().toLowerCase() + ".fileSuffixes");
 
-			if (e == null || e.trim().equals("")) {
+			if (v == null) {
 				result.put(type, null);
 			} else {
-				String[] suffixes = e.split("[\\s]*,[\\s]*");
-				result.put(type, suffixes);
+
+				List<String> values = null;
+
+				if (v instanceof JsonArray) {
+
+					JsonArray arrayValue = (JsonArray) v;
+					
+					values = Lists.newArrayList(arrayValue.iterator()).stream().map(a -> (String) a)
+							.collect(Collectors.toUnmodifiableList());
+
+				} else if (v instanceof String) {
+					values = Lists.newArrayList((String) v);
+				}
+
+				result.put(type, values.toArray(new String[values.size()]));
+
 			}
 		}
 
@@ -151,10 +177,53 @@ public class SPILocatorHandlerImpl implements SpiLocatorHandler {
 		String appId = ClassLoaders.getId(cl);
 		JsonObject config = ClassLoaders.getConfiguration(cl);
 
-		for(Entry<SpiType, String[]> e : getLocatorSuffixes(config).entrySet()) {
+		for (Entry<SpiType, String[]> e : getLocatorSuffixes(config).entrySet()) {
 			if (e.getValue() != null) {
 				BaseSPILocator.addTypeSuffix(e.getKey(), appId, e.getValue());
 			}
 		}
+	}
+
+	@Override
+	public void addDependencyPath(String source, List<String> targets) {
+		addDependencyPath0(source, targets);
+	}
+
+	static void addDependencyPath0(String child, List<String> parents) {
+
+		List<String> deps = appDependencies.get(child);
+
+		// Check for circular dependency
+
+		parents.forEach(p -> {
+			if (hasDependency(p, child)) {
+				Exceptions.throwRuntime("Detected circular dependency between apps: " + p + " and " + child);
+			}
+		});
+
+		if (deps == null) {
+			deps = new ArrayList<>();
+			appDependencies.put(child, deps);
+		}
+
+		deps.addAll(parents);
+	}
+
+	private static boolean hasDependency(String child, String parent) {
+		List<String> deps = appDependencies.get(child);
+		return deps != null && deps.contains(parent);
+	}
+
+	static List<String> getDependants(String appId) {
+
+		List<String> r = new ArrayList<>();
+
+		AppProvisionerImpl.listApps0().forEach(a -> {
+			if (hasDependency(a, appId)) {
+				r.add(a);
+			}
+		});
+
+		return r;
 	}
 }

@@ -15,7 +15,13 @@ public class IntegerWrapper extends ObjectWrapper<Integer>{
 	}
 	
 	public IntegerWrapper add(Integer value) {
-		this.value += value;
+		
+		if(value >= 0) {
+			this.value += value;
+		} else {
+			this.value -= Math.abs(value);
+		}
+		
 		return this;
 	}
 	

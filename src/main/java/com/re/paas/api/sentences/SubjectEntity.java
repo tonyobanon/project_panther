@@ -3,7 +3,7 @@ package com.re.paas.api.sentences;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.re.paas.api.fusion.services.Functionality;
+import com.re.paas.api.fusion.functionalities.Functionality;
 
 public class SubjectEntity {
 

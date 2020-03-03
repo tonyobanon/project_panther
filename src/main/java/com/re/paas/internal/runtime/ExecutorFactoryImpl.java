@@ -1,5 +1,6 @@
 package com.re.paas.internal.runtime;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -11,20 +12,23 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 
 import com.re.paas.api.annotations.develop.BlockerTodo;
 import com.re.paas.api.classes.Exceptions;
+import com.re.paas.api.classes.ObjectWrapper;
 import com.re.paas.api.concurrency.ExecutorFactoryStats;
 import com.re.paas.api.events.AbstractEventDelegate;
 import com.re.paas.api.logging.Logger;
 import com.re.paas.api.logging.LoggerFactory;
+import com.re.paas.api.runtime.ClassLoaders;
 import com.re.paas.api.runtime.ComputeException;
 import com.re.paas.api.runtime.ComputeQuotaExceededEvent;
 import com.re.paas.api.runtime.ExecutorFactory;
 import com.re.paas.api.runtime.ExecutorFactoryConfig;
-import com.re.paas.api.runtime.Invokable;
+import com.re.paas.api.runtime.ParameterizedExecutable;
+import com.re.paas.api.runtime.ParameterizedInvokable;
 import com.re.paas.api.utils.Utils;
-import com.re.paas.internal.runtime.security.Permissions;
 
 @BlockerTodo("In this class, find alternative to HashMap and ArrayList for high performance")
 public class ExecutorFactoryImpl extends ExecutorFactory {
@@ -106,8 +110,10 @@ public class ExecutorFactoryImpl extends ExecutorFactory {
 		return this.name;
 	}
 
+	@BlockerTodo("Create mechanism to monitor the number of spawned threads per application..")
+	@BlockerTodo("Enforce a timeout policy, so that calls to i.call() don't take forever..")
 	@Override
-	public <R> CompletableFuture<R> execute(Invokable<R> task) {
+	public <P, R> CompletableFuture<R> execute(ParameterizedExecutable<P, R> executable) {
 
 		if (free.isEmpty()) {
 			Exceptions.throwRuntime(new ComputeException("No executor(s) available to run this task"));
@@ -121,22 +127,20 @@ public class ExecutorFactoryImpl extends ExecutorFactory {
 		markAsUsed(executorId);
 
 		CompletableFuture<R> r = new CompletableFuture<>();
-		
-		try {
-			
-		executor.submit(() -> {
-			
-			Permissions.init();
-			R result = task.call();
-			Permissions.clear();
 
-			markAsFree(executorId);
-			
-			r.complete(result);
-			return null;
-			
-		}).get();
-		
+		try {
+
+			executor.submit(() -> {
+
+				R result = executable.getFunction().apply(executable.getParameter());
+
+				markAsFree(executorId);
+
+				r.complete(result);
+				return null;
+
+			}).get();
+
 		} catch (NullPointerException | InterruptedException | ExecutionException e) {
 			Exceptions.throwRuntime(e);
 		}
@@ -201,12 +205,22 @@ public class ExecutorFactoryImpl extends ExecutorFactory {
 
 		String id = Utils.newShortRandom();
 
-		executorPool.put(id, Executors.newSingleThreadExecutor());
+		Permissions.bypass.set(true);
+
+		ExecutorService e = Executors.newSingleThreadExecutor();
+
+		// Add a no-op task to force thread spawning
+		e.execute(() -> {
+		});
+
+		Permissions.bypass.set(false);
+
+		executorPool.put(id, e);
+
 		free.add(id);
 	}
 
-	@Override
-	public void upgradePool() {
+	private void upgradePool() {
 
 		long executorCount = exponent;
 
@@ -219,9 +233,8 @@ public class ExecutorFactoryImpl extends ExecutorFactory {
 		this.exponent += exponent;
 	}
 
-	@Override
 	@BlockerTodo("Implement this")
-	public boolean downgradePool() {
+	private boolean downgradePool() {
 		return false;
 	}
 
@@ -275,8 +288,50 @@ public class ExecutorFactoryImpl extends ExecutorFactory {
 	}
 
 	@Override
-	public boolean isUpgradable() {
-		return isUpgradable;
+	public <P, R> ParameterizedExecutable<P, R> buildFunction(ParameterizedInvokable<P, R> task, P parameter) {
+		return buildFunction(new ObjectWrapper<ClassLoader>(), task, parameter);
+	}
+
+	@Override
+	public <P, R> ParameterizedExecutable<P, R> buildFunction(ObjectWrapper<ClassLoader> cl,
+			ParameterizedInvokable<P, R> task, P parameter) {
+		
+		if (cl.get() == null) {
+			cl.set(task.getClass().getClassLoader());
+		}
+		
+		String classloader = ClassLoaders.getId(cl.get());
+		
+		@SuppressWarnings("unchecked")
+		Function<P, R> function = (Function<P, R> & Serializable) (p) -> {
+
+			LOG.debug("Executing function: " + task + " by " + classloader);
+
+			Thread thread = Thread.currentThread();
+
+			// Set thread context loader
+			Permissions.bypass.set(true);
+			thread.setContextClassLoader(ClassLoaders.getClassLoader(classloader));
+			Permissions.bypass.set(false);
+
+			// Initialize permission set for this thread
+			Permissions.init();
+
+			// Execute task
+			R result = task.apply(p);
+
+			// Clear permission set for this thread
+			Permissions.clear();
+
+			// Reset thread context loader
+			Permissions.bypass.set(true);
+			thread.setContextClassLoader(null);
+			Permissions.bypass.set(false);
+
+			return result;
+		};
+
+		return new ParameterizedExecutable<P, R>(function, (P) parameter);
 	}
 
 }

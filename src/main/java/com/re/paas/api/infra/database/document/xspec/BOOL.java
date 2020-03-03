@@ -28,7 +28,7 @@ public final class BOOL extends PathOperand {
      * attribute is equal to that of the specified value) for building
      * condition expression.
      */
-    public ComparatorCondition eq(boolean value) {
+    public ComparatorCondition eq(Boolean value) {
         return new ComparatorCondition("=", this, new LiteralOperand(value));
     }
 

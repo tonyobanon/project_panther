@@ -2,8 +2,8 @@ package com.re.paas.internal.infra.filesystem;
 
 import java.net.URI;
 
-import com.re.paas.api.runtime.ClassLoaderSecurity;
-import com.re.paas.internal.Platform;
+import com.re.paas.api.Platform;
+import com.re.paas.api.runtime.RuntimeIdentity;
 
 public class UriHelper {
 
@@ -34,7 +34,7 @@ public class UriHelper {
 			// Do not modify the uri, if the backing provider is system internal
 			return path;
 		}
-		return basePath + "/" + ClassLoaderSecurity.getAppId() + path;
+		return basePath + "/" + RuntimeIdentity.getAppId() + path;
 	}
 
 	/**

@@ -14,11 +14,11 @@ import com.re.paas.api.classes.Exceptions;
 import com.re.paas.api.models.BaseModel;
 import com.re.paas.api.models.classes.InstallOptions;
 import com.re.paas.api.models.classes.MailCredentialSpec;
+import com.re.paas.integrated.models.BaseUserModel;
+import com.re.paas.integrated.models.ConfigModel;
+import com.re.paas.integrated.models.LocaleModel;
+import com.re.paas.integrated.models.RBModel;
 import com.re.paas.internal.core.keys.ConfigKeys;
-import com.re.paas.internal.models.BaseUserModel;
-import com.re.paas.internal.models.ConfigModel;
-import com.re.paas.internal.models.LocaleModel;
-import com.re.paas.internal.models.RBModel;
 import com.re.paas.internal.templating.TemplatingModel;
 import com.re.paas.internal.utils.JMSUtil;
 
@@ -34,9 +34,9 @@ public class EmailingModel extends BaseModel {
 
 		MailCredentialSpec spec = options.getMailCredentials();
 
-		ConfigModel.put(ConfigKeys.MAIL_PROVIDER_URL, spec.getProviderUrl());
-		ConfigModel.put(ConfigKeys.MAIL_PROVIDER_USERNAME, spec.getUsername());
-		ConfigModel.put(ConfigKeys.MAIL_PROVIDER_PASSWORD, spec.getPassword());
+		ConfigModel.putString(ConfigKeys.MAIL_PROVIDER_URL, spec.getProviderUrl());
+		ConfigModel.putString(ConfigKeys.MAIL_PROVIDER_USERNAME, spec.getUsername());
+		ConfigModel.putString(ConfigKeys.MAIL_PROVIDER_PASSWORD, spec.getPassword());
 
 	}
 

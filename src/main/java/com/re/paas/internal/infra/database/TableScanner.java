@@ -15,9 +15,9 @@ import com.re.paas.api.infra.database.modelling.BaseTable;
 import com.re.paas.api.logging.Logger;
 import com.re.paas.api.runtime.spi.ClassIdentityType;
 import com.re.paas.api.utils.ClassUtils;
+import com.re.paas.integrated.infra.database.dynamodb.qopt.tools.QueryModelImpl;
+import com.re.paas.integrated.infra.database.dynamodb.utils.DynamoDBUtils;
 import com.re.paas.internal.classes.ClasspathScanner;
-import com.re.paas.internal.infra.database.dynamodb.qopt.tools.QueryModelImpl;
-import com.re.paas.internal.infra.database.dynamodb.utils.DynamoDBUtils;
 
 public class TableScanner {
 
@@ -31,7 +31,7 @@ public class TableScanner {
 		for (Class<? extends BaseTable> entity : new ClasspathScanner<>("Table", BaseTable.class,
 				ClassIdentityType.ASSIGNABLE_FROM).scanClasses()) {
 
-			BaseTable instance = ClassUtils.createInstance(entity);
+			BaseTable instance = com.re.paas.internal.classes.ClassUtil.createInstance(entity);
 
 			if (!instance.enabled()) {
 				LOG.info("Skipping table '" + entity.getSimpleName() + "'");

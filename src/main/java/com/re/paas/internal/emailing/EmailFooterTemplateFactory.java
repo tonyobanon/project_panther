@@ -8,7 +8,7 @@ import com.re.paas.api.classes.ClientResources.HtmlCharacterEntities;
 import com.re.paas.api.classes.ClientResources.WebResource;
 import com.re.paas.api.models.classes.UserProfileSpec;
 import com.re.paas.api.templating.TemplateObjectModelFactory;
-import com.re.paas.internal.tables.defs.users.BaseUserTable;
+import com.re.paas.integrated.tables.defs.users.BaseUserTable;
 
 public class EmailFooterTemplateFactory extends TemplateObjectModelFactory<EmailFooterTemplate> {
 
@@ -21,21 +21,21 @@ public class EmailFooterTemplateFactory extends TemplateObjectModelFactory<Email
 				.setLinkedInProfile("tonyobanon").setSkypeProfile("tonyobanon");
 
 		if (e.getFacebookProfile() != null) {
-			o.put("facebook",
+			o.putString("facebook",
 					WebResource.get("http://www.facebook.com/" + e.getFacebookProfile(), e.getFacebookProfile()));
 		}
 
 		if (e.getTwitterProfile() != null) {
-			o.put("twitter", WebResource.get("http://www.twitter.com/" + e.getTwitterProfile(), e.getTwitterProfile()));
+			o.putString("twitter", WebResource.get("http://www.twitter.com/" + e.getTwitterProfile(), e.getTwitterProfile()));
 		}
 
 		if (e.getLinkedInProfile() != null) {
-			o.put("linkedin",
+			o.putString("linkedin",
 					WebResource.get("http://www.linkedin.com/" + e.getLinkedInProfile(), e.getLinkedInProfile()));
 		}
 
 		if (e.getSkypeProfile() != null) {
-			o.put("skype", WebResource.get("http://www.skype.com/" + e.getSkypeProfile(), e.getSkypeProfile()));
+			o.putString("skype", WebResource.get("http://www.skype.com/" + e.getSkypeProfile(), e.getSkypeProfile()));
 		}
 
 		return o;

@@ -16,11 +16,6 @@ public class AppStartEvent extends BaseEvent {
 		this.success = success;
 	}
 
-	@Override
-	public String name() {
-		return "AppStartEvent";
-	}
-
 	public Object getReason() {
 		return reason;
 	}

@@ -9,7 +9,7 @@ import com.re.paas.api.infra.filesystem.AbstractFileSystemAdapterDelegate;
 public class FileSystemAdapterDelegate extends AbstractFileSystemAdapterDelegate {
 
 	@Override
-	public Object load(LoadPhase pahse) {
+	public Boolean load(LoadPhase pahse) {
 		
 		// Acquire lock
 		FileSystemProviderImpl.acquireLock();

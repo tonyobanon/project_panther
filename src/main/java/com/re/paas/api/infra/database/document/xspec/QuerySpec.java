@@ -1,9 +1,17 @@
 package com.re.paas.api.infra.database.document.xspec;
 
+import static com.re.paas.api.infra.database.document.xspec.ExpressionSpecBuilder.*;
+
+import java.nio.ByteBuffer;
 import java.util.Collections;
+import java.util.Date;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
+
 
 import com.re.paas.api.infra.database.document.PrimaryKey;
+import com.re.paas.api.utils.ValueType;
 
 public final class QuerySpec extends BaseSpec {
 
@@ -20,7 +28,7 @@ public final class QuerySpec extends BaseSpec {
 	private PrimaryKey exclusiveStartKey;
 	private Boolean consistentRead;
 	private Boolean scanIndexForward;
-	
+
 	private Integer limit;
 
 	QuerySpec(ExpressionSpecBuilder builder) {
@@ -115,5 +123,96 @@ public final class QuerySpec extends BaseSpec {
 	public QuerySpec setLimit(Integer limit) {
 		this.limit = limit;
 		return this;
+	}
+
+	public static QuerySpec get(String hashKey, String hashValues[], String... projections) {
+
+		Condition hashCondition = null;
+
+		for (String hashValue : hashValues) {
+
+			Condition c = S(hashKey).eq(hashValue);
+
+			if (hashCondition == null) {
+				hashCondition = c;
+			} else {
+				hashCondition = hashCondition.or(c);
+			}
+		}
+
+		ExpressionSpecBuilder expr = new ExpressionSpecBuilder().withKeyCondition(hashCondition);
+
+		for (String projection : projections) {
+			expr.addProjection(projection);
+		}
+
+		return expr.buildForQuery();
+	}
+
+	@SuppressWarnings("unchecked")
+	public static QuerySpec get(String hashKey, String hashValue, String rangeKey, Object[] rangeValues,
+			String... projections) {
+
+		Condition condition = S(hashKey).eq(hashValue);
+
+		if (rangeKey != null) {
+			Condition rangeCondtion = null;
+			for (Object rangeValue : rangeValues) {
+
+				Condition c = rangeValue == null ? NULL(rangeKey).exists() : null;
+				ValueType rangeValueType = ValueType.getType(rangeValue);
+				
+				switch(rangeValueType) {
+				case BINARY:
+					rangeCondtion = B(rangeKey).eq((ByteBuffer)rangeValue);
+					break;
+				case BINARY_SET:
+					Set<ByteBuffer> binarySet = (Set<ByteBuffer>) rangeValue;
+					rangeCondtion = BS(rangeKey).eq(binarySet.toArray(new ByteBuffer[binarySet.size()]));
+					break;
+				case BOOLEAN:
+					rangeCondtion = BOOL(rangeKey).eq((Boolean) rangeValue);
+					break;
+				case DATE:
+					rangeCondtion = D(rangeKey).eq((Date)rangeValue);
+					break;
+				case LIST:
+					rangeCondtion = L(rangeKey).eq((List<?>)rangeValue);
+					break;
+				case MAP:
+					rangeCondtion = M(rangeKey).eq((Map<String, ?>)rangeValue);
+					break;
+				case NUMBER:
+					rangeCondtion = N(rangeKey).eq((Number)rangeValue);
+					break;
+				case NUMBER_SET:
+					rangeCondtion = NS(rangeKey).eq((Set<Number>) rangeValue);
+					break;
+				case STRING_SET:
+					Set<String> stringSet = (Set<String>) rangeValue;
+					rangeCondtion = SS(rangeKey).eq(stringSet);
+					break;
+				case STRING:
+					default:
+					rangeCondtion = S(rangeKey).eq((String)rangeValue);
+					break;
+				}
+
+				if (rangeCondtion == null) {
+					rangeCondtion = c;
+				} else {
+					rangeCondtion = rangeCondtion.or(c);
+				}
+			}
+			condition = condition.and(parenthesize(rangeCondtion));
+		}
+
+		ExpressionSpecBuilder expr = new ExpressionSpecBuilder().withKeyCondition(condition).addProjection(projections);
+
+		return expr.buildForQuery();
+	}
+	
+	public static QuerySpec get(String hashKey, String hashValue, String... projections) {
+		return get(hashKey, hashValue, null, null, projections);
 	}
 }

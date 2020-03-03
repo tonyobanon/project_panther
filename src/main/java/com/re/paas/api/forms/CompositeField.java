@@ -8,37 +8,71 @@ import java.util.Map;
 public class CompositeField extends BaseSimpleField {
 
 	private String itemsSource;
-	private Map<Object, Object> items;
+	private Map<String, Object> items;
 
 	private ArrayList<String> defaultSelections;
-	private boolean allowMultipleChoice;
+	private Boolean allowMultipleChoice;
 
 	CompositeField() {
 		super(null, null);
 	}
-	
+
 	@Override
-	public void importData(AbstractField source) {
-		
+	public CompositeField importData(AbstractField source, boolean copyReference) {
+
 		CompositeField sourceField = (CompositeField) source;
 
-		this.setId(sourceField.getId());
-
-		this.setTitle(sourceField.getTitle());
-		this.setSortOrder(sourceField.getSortOrder());
-		this.setContext(sourceField.getContext());
-
-		this.setIsRequired(sourceField.getIsRequired());
-		this.setIsVisible(sourceField.getIsVisible());
-		this.setIsDefault(sourceField.getIsDefault());
-
-		this.setItemsSource(sourceField.getItemsSource());
-		this.withItems(sourceField.getItems());
-		this.setDefaultSelections(sourceField.getDefaultSelections());
-		this.setAllowMultipleChoice(sourceField.isAllowMultipleChoice());
+		if (copyReference && sourceField.getReference() != null) {
+			this.setReference(sourceField.getReference());
+		}
 		
+		if (sourceField.getId() != null) {
+			this.setId(sourceField.getId());
+		}
+		
+		if (sourceField.getTitle() != null) {
+			this.setTitle(sourceField.getTitle());
+		}
+
+		if (sourceField.getSortOrder() != null) {
+			this.setSortOrder(sourceField.getSortOrder());
+		}
+
+		if (sourceField.getContext() != null) {
+			this.setContext(sourceField.getContext());
+		}
+
+		if (sourceField.getIsRequired() != null) {
+			this.setIsRequired(sourceField.getIsRequired());
+		}
+
+		if (sourceField.getIsVisible() != null) {
+			this.setIsVisible(sourceField.getIsVisible());
+		}
+
+		if (sourceField.getIsDefault() != null) {
+			this.setIsDefault(sourceField.getIsDefault());
+		}
+
+		if (sourceField.getItemsSource() != null) {
+			this.setItemsSource(sourceField.getItemsSource());
+		}
+
+		if ((sourceField.getItems() != null && !sourceField.getItems().isEmpty())) {
+			this.withItems(sourceField.getItems());
+		}
+
+		if (sourceField.getDefaultSelections() != null && !sourceField.getDefaultSelections().isEmpty()) {
+			this.setDefaultSelections(sourceField.getDefaultSelections());
+		}
+
+		if (sourceField.isAllowMultipleChoice() != null) {
+			this.setAllowMultipleChoice(sourceField.isAllowMultipleChoice());
+		}
+		
+		return this;
 	}
-	
+
 	public CompositeField(Object title) {
 		this(null, title);
 	}
@@ -48,21 +82,21 @@ public class CompositeField extends BaseSimpleField {
 		items = new HashMap<>();
 	}
 
-	public Map<Object, Object> getItems() {
+	public Map<String, Object> getItems() {
 		return items;
 	}
 
-	public CompositeField withItems(Map<Object, Object> items) {
+	public CompositeField withItems(Map<String, Object> items) {
 		this.items.putAll(items);
 		return this;
 	}
 
-	public CompositeField withItem(Object k, Object v) {
+	public CompositeField withItem(String k, Object v) {
 		this.items.put(k, v);
 		return this;
 	}
 
-	public boolean isAllowMultipleChoice() {
+	public Boolean isAllowMultipleChoice() {
 		return allowMultipleChoice;
 	}
 

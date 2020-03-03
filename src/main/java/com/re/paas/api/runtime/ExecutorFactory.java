@@ -2,6 +2,8 @@ package com.re.paas.api.runtime;
 
 import java.util.concurrent.CompletableFuture;
 
+import com.re.paas.api.annotations.develop.PlatformInternal;
+import com.re.paas.api.classes.ObjectWrapper;
 import com.re.paas.api.concurrency.ExecutorFactoryStats;
 import com.re.paas.api.designpatterns.Factory;
 import com.re.paas.api.runtime.spi.SpiBase;
@@ -18,7 +20,7 @@ public abstract class ExecutorFactory {
 	public static ExecutorFactory create(ExecutorFactoryConfig config) {
 		return create("default", config);
 	}
-	
+
 	/**
 	 * This is invoke when {@link SpiBase} is being started. Any call to this
 	 * function in the future has no side effect
@@ -36,20 +38,26 @@ public abstract class ExecutorFactory {
 
 	public abstract String getName();
 
-	public abstract <R> CompletableFuture<R> execute(Invokable<R> task);
+	public abstract <P, R> CompletableFuture<R> execute(ParameterizedExecutable<P, R> e);
 
-	@MethodMeta
+	@SecureMethod
 	public abstract void shutdown();
 
 	public abstract boolean isShutdown();
 
-	@MethodMeta
-	public abstract void upgradePool();
-
-	@MethodMeta
-	public abstract boolean downgradePool();
-
 	public abstract ExecutorFactoryStats getStatistics();
 
-	public abstract boolean isUpgradable();
+	/**
+	 * This is used to build a job. The resulting {@link ParameterizedExecutable}
+	 * can be passed into any arbitrary job execution mechanism on this platform
+	 * 
+	 * @param task
+	 * @return
+	 */
+	public abstract <P, R> ParameterizedExecutable<P, R> buildFunction(ParameterizedInvokable<P, R> task, P parameter);
+
+	@PlatformInternal
+	@SecureMethod
+	public abstract <P, R> ParameterizedExecutable<P, R> buildFunction(ObjectWrapper<ClassLoader> cl, ParameterizedInvokable<P, R> task, P parameter);
+	
 }

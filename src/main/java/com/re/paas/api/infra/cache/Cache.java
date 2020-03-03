@@ -2,57 +2,71 @@ package com.re.paas.api.infra.cache;
 
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Function;
 
 public interface Cache<K, V> {
-	
-	static Cache<String, Object> get() {
-		return CacheAdapter.getDelegate().getCacheFactory().getAny();
+
+	static Cache<String, Object> get(String bucket) {
+		return CacheAdapter.getDelegate().getCacheFactory().get(bucket);
 	}
 
-	void reset();
+	/* GENERIC */
 
-	void limit(int limit);
+	CompletableFuture<Boolean> exists(K key);
 
-	void greedy();
-
-	CompletableFuture<PartitionedSet<String>> sget(K key, Checkpoint checkpoint);
-
-	CompletableFuture<PartitionedSet<String>> sgetOrDefault(PersistenceType persistenceType, K key, Checkpoint checkpoint,
-			Callable<List<String>> producer);
-
-	CompletableFuture<Boolean> sadd(PersistenceType persistenceType, K key, List<String> elements);
-
-	CompletableFuture<Boolean> sdel(K key, String value);
-
-	CompletableFuture<Boolean> mset(PersistenceType persistenceType, K key, Map<K, V> value);
-	
 	CompletableFuture<V> get(K key);
+
+	CompletableFuture<V> set(K key, V value);
 	
-	CompletableFuture<String> set(K key, V value);
+	CompletableFuture<Object> setex(String key, Object value, Long lifespan);
 	
-	@SuppressWarnings("unchecked")
-	CompletableFuture<Long> del(K... keys);
+	CompletableFuture<V> set(K key, V value, Long maxIdle);
 	
-	CompletableFuture<Boolean> hset(K key, K field, V value);
+	CompletableFuture<Integer> del(K key);
 	
-	CompletableFuture<V> hget(K key, K field);
-	
-	CompletableFuture<Map<K, V>> hgetall(K key);
-	
-	@SuppressWarnings("unchecked")
-	CompletableFuture<Long> hdel(K key, K... fields);
-	
-	CompletableFuture<List<K>> hkeys(K key);
-	
-	CompletableFuture<Long> hincrby(K key, K field, Long amount);
-	
-	CompletableFuture<Long> hlen(K key);
+	CompletableFuture<Integer> del(@SuppressWarnings("unchecked") K... keys);
+
+	CompletableFuture<Integer> incrby(K key, Integer amount);
+
 	
 	CompletableFuture<Boolean> expire(K key, Long seconds);
 	
-	CompletableFuture<Boolean> expire(String key, PersistenceType persistenceType);
+	CompletableFuture<Boolean> invalidate(K key, Long seconds);
 	
-	CompletableFuture<Boolean> quit();
+	CompletableFuture<CacheEntryType> type(K key);
+
+
+	/* SETS */
+
+	CompletableFuture<Integer> slength(K key);
+
+	CompletableFuture<?> sget(K key, Function<V, CompletableFuture<?>> consumer);
+
+	CompletableFuture<Integer> sadd(K key, List<V> elements);
+
+	CompletableFuture<Integer> sdel(K key, V value);
+	
+	CompletableFuture<Integer> sdel(K key, @SuppressWarnings("unchecked") V... values);
+
+	/* HASHES */
+
+	CompletableFuture<V> hset(K key, K field, V value);
+
+	CompletableFuture<V> hget(K key, K field);
+
+	CompletableFuture<Map<K, V>> hgetall(K key);
+	
+	CompletableFuture<Integer> hdel(K key, K field);
+
+	CompletableFuture<Integer> hdel(K key, @SuppressWarnings("unchecked") K... fields);
+
+	CompletableFuture<?> hkeys(K key, Function<String, CompletableFuture<?>> consumer);
+
+	CompletableFuture<List<K>> hkeys(K key);
+
+	CompletableFuture<Integer> hincrby(K key, K field, Integer amount);
+
+	CompletableFuture<Integer> hlen(K key);
+
 }

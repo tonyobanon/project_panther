@@ -6,7 +6,7 @@ import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParseException;
-import com.re.paas.api.fusion.services.Functionality;
+import com.re.paas.api.fusion.functionalities.Functionality;
 
 public class FunctionalityDeserializer implements JsonDeserializer<Functionality> {
 

@@ -20,21 +20,23 @@ import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Random;
 import java.util.UUID;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import com.re.paas.api.annotations.develop.BlockerTodo;
 import com.re.paas.api.classes.ClientResources.HtmlCharacterEntities;
+import com.re.paas.api.fusion.JsonArray;
+import com.re.paas.api.fusion.JsonObject;
 import com.re.paas.api.classes.Exceptions;
 import com.re.paas.api.classes.TimeUnit;
-import com.re.paas.api.fusion.server.JsonArray;
-import com.re.paas.api.fusion.server.JsonObject;
 
 @BlockerTodo("Generate randoms ahead of time, to increase performance")
 @BlockerTodo("Also, scan for uses of SecureRandom, and do same")
@@ -431,6 +433,14 @@ public class Utils {
 	public static int nextRandomInt(Integer exclusiveBound) {
 		return random.nextInt(exclusiveBound);
 	}
+	
+	public static Long nextRandomLong() {
+		return random.nextLong();
+	}
+	
+	public static int randomInt(Integer lowerBound, Integer upperBound) {
+		return ThreadLocalRandom.current().nextInt(lowerBound, upperBound + 1);
+	}
 
 	public static Integer mergeUnsigned(short s1, short s2) {
 		return ((s1 & 0xFFFF) << 16) | (s2 & 0xFFFF);
@@ -493,6 +503,17 @@ public class Utils {
 	
 	public static <T> T getAnnotation() {
 		return null;
+	}
+	
+	public static <T> List<T> asList(Iterable<T> it) {
+		List<T> l = new ArrayList<>();
+		Iterator<T> i = it.iterator();
+		
+		while (i.hasNext()) {
+			l.add(i.next());
+		}
+		
+		return l;
 	}
 
 }

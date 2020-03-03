@@ -30,7 +30,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import com.re.paas.api.classes.Exceptions;
 import com.re.paas.api.infra.filesystem.AbstractFileSystemProvider;
-import com.re.paas.api.runtime.MethodMeta;
+import com.re.paas.api.runtime.SecureMethod;
 import com.re.paas.internal.utils.ObjectUtils;
 
 /**
@@ -53,17 +53,17 @@ public class FileSystemProviderImpl extends AbstractFileSystemProvider {
 		this(provider);
 	}
 
-	@MethodMeta(allowJdkAccess = true, allowInternalAccess=false)
+	@SecureMethod(jvmOnly = true)
 	public FileSystemProviderImpl(FileSystemProvider provider) {
 		this(provider.getFileSystem(URI.create("file:///")));
 	}
 
-	@MethodMeta
+	@SecureMethod
 	public FileSystemProviderImpl(FileSystem fs) {
 		setFileSystem(fs);
 	}
 
-	@MethodMeta
+	@SecureMethod
 	public static void setFileSystem(FileSystem fs) {
 		FileSystemProviderImpl.provider = fs.provider();
 		FileSystemProviderImpl.fs = fs;

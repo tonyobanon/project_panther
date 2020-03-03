@@ -14,9 +14,9 @@ import org.apache.pdfbox.pdmodel.interactive.digitalsignature.ExternalSigningSup
 import org.apache.pdfbox.pdmodel.interactive.digitalsignature.PDSignature;
 import org.apache.pdfbox.pdmodel.interactive.digitalsignature.SignatureInterface;
 
+import com.re.paas.integrated.models.ConfigModel;
 import com.re.paas.internal.core.keys.ConfigKeys;
-import com.re.paas.internal.locations.LocationModel;
-import com.re.paas.internal.models.ConfigModel;
+import com.re.paas.internal.i18n.LocationModel;
 
 
 public class PdfDocumentSigner extends AbstractDocumentSigner implements SignatureInterface {

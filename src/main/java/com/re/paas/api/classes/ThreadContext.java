@@ -10,6 +10,7 @@ public class ThreadContext {
 
 	public static final String REALM_VARIABLES = "r_variables";
 	private static final String IS_REQUEST_CONTEXT = "is_request_ctx";
+	private static final String APP_ID = "app_id";
 
 	private static final ThreadContext instance = new ThreadContext();
 

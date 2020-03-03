@@ -9,7 +9,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonSerializer;
 import com.re.paas.api.annotations.develop.BlockerTodo;
-import com.re.paas.api.fusion.server.JsonObject;
+import com.re.paas.api.fusion.JsonObject;
 import com.re.paas.api.logging.Logger;
 import com.re.paas.api.logging.LoggerFactory;
 import com.re.paas.api.runtime.spi.ClassIdentityType;
@@ -49,7 +49,7 @@ public class Json {
 	private static void registerTypeAdapters(GsonBuilder builder, Class<?> typeAdapterClass) {
 
 		Class<?> type = ClassUtils.getParameterizedClass(typeAdapterClass.getClassLoader(), typeAdapterClass.getGenericInterfaces()[0]).getGenericTypes().get(0).getType();
-		builder.registerTypeAdapter(type, ClassUtils.createInstance(typeAdapterClass));
+		builder.registerTypeAdapter(type, com.re.paas.internal.classes.ClassUtil.createInstance(typeAdapterClass));
 
 		LOG.debug("==== " + ClassUtils.toString(type) + ": " + ClassUtils.toString(typeAdapterClass) + "====");
 	}

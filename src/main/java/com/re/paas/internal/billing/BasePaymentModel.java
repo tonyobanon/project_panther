@@ -20,21 +20,21 @@ import com.re.paas.api.classes.ClientRBRef;
 import com.re.paas.api.classes.Exceptions;
 import com.re.paas.api.classes.FluentHashMap;
 import com.re.paas.api.classes.PlatformException;
-import com.re.paas.api.forms.AbstractField;
 import com.re.paas.api.forms.SimpleField;
 import com.re.paas.api.forms.input.InputType;
-import com.re.paas.api.fusion.server.HttpServerRequest;
-import com.re.paas.api.fusion.server.JsonArray;
-import com.re.paas.api.fusion.server.JsonObject;
+import com.re.paas.api.fusion.HttpServerRequest;
+import com.re.paas.api.fusion.JsonArray;
+import com.re.paas.api.fusion.JsonObject;
 import com.re.paas.api.logging.Logger;
 import com.re.paas.api.models.BaseModel;
 import com.re.paas.api.models.classes.InstallOptions;
+import com.re.paas.integrated.models.ConfigModel;
+import com.re.paas.integrated.models.FormModel;
+import com.re.paas.integrated.models.errors.BillingError;
+import com.re.paas.integrated.realms.AdminRealm;
+import com.re.paas.internal.classes.BackendObjectMarshaller;
 import com.re.paas.internal.classes.FormSectionType;
 import com.re.paas.internal.core.keys.ConfigKeys;
-import com.re.paas.internal.models.ConfigModel;
-import com.re.paas.internal.models.FormModel;
-import com.re.paas.internal.models.errors.BillingError;
-import com.re.paas.internal.realms.AdminRealm;
 
 public class BasePaymentModel extends BaseModel {
 
@@ -55,7 +55,7 @@ public class BasePaymentModel extends BaseModel {
 		String sectionId = FormModel.newSection(ClientRBRef.get("ayden_settings"), null,
 				FormSectionType.SYSTEM_CONFIGURATION, new AdminRealm());
 
-		ConfigModel.put(ConfigKeys.AYDEN_SETTINGS_FORM_SECTION_ID, sectionId);
+		ConfigModel.putString(ConfigKeys.AYDEN_SETTINGS_FORM_SECTION_ID, sectionId);
 
 		String usernameField = FormModel.newSimpleField(FormSectionType.SYSTEM_CONFIGURATION, sectionId,
 				new SimpleField(InputType.TEXT, ClientRBRef.get("username")));
@@ -75,15 +75,15 @@ public class BasePaymentModel extends BaseModel {
 		String authPasswordField = FormModel.newSimpleField(FormSectionType.SYSTEM_CONFIGURATION, sectionId,
 				new SimpleField(InputType.SECRET, ClientRBRef.get("notification_server_auth_password")));
 
-		ConfigModel.putAll(new FluentHashMap<String, Object>().with(ConfigKeys.AYDEN_USERNAME_FIELD_ID, usernameField)
+		ConfigModel.putAll(new FluentHashMap<String, String>().with(ConfigKeys.AYDEN_USERNAME_FIELD_ID, usernameField)
 				.with(ConfigKeys.AYDEN_PASSWORD_FIELD_ID, passwordField)
 				.with(ConfigKeys.AYDEN_APPLICATION_NAME_FIELD_ID, applicationNameField)
 				.with(ConfigKeys.AYDEN_LIVE_ENVIRONMENT_FIELD_ID, liveEnvironmentField)
 				.with(ConfigKeys.AYDEN_NOTIFICATION_SERVER_AUTH_USERNAME_FIELD_ID, authUsernameField)
 				.with(ConfigKeys.AYDEN_NOTIFICATION_SERVER_AUTH_PASSWORD_FIELD_ID, authPasswordField));
 
-		ConfigModel.putAll(new FluentHashMap<String, Object>().with(usernameField, "").with(passwordField, "")
-				.with(applicationNameField, "").with(liveEnvironmentField, false).with(authUsernameField, "")
+		ConfigModel.putAll(new FluentHashMap<String, String>().with(usernameField, "").with(passwordField, "")
+				.with(applicationNameField, "").with(liveEnvironmentField, "false").with(authUsernameField, "")
 				.with(authPasswordField, ""));
 	}
 
@@ -94,16 +94,16 @@ public class BasePaymentModel extends BaseModel {
 
 	private static Client _getAydenClient() {
 
-		Map<String, Object> keys = ConfigModel.getAll(ConfigKeys.AYDEN_USERNAME_FIELD_ID,
+		Map<String, String> keys = ConfigModel.getAll(ConfigKeys.AYDEN_USERNAME_FIELD_ID,
 				ConfigKeys.AYDEN_PASSWORD_FIELD_ID, ConfigKeys.AYDEN_APPLICATION_NAME_FIELD_ID,
 				ConfigKeys.AYDEN_LIVE_ENVIRONMENT_FIELD_ID);
 
-		Map<String, Object> values = ConfigModel.getAll(keys.values().toArray(new String[keys.values().size()]));
+		Map<String, String> values = ConfigModel.getAll(keys.values().toArray(new String[keys.values().size()]));
 
-		String username = (String) values.get(keys.get(ConfigKeys.AYDEN_USERNAME_FIELD_ID));
-		String password = (String) values.get(keys.get(ConfigKeys.AYDEN_PASSWORD_FIELD_ID));
-		String applicationName = (String) values.get(keys.get(ConfigKeys.AYDEN_APPLICATION_NAME_FIELD_ID));
-		Boolean isLive = (Boolean) values.get(keys.get(ConfigKeys.AYDEN_LIVE_ENVIRONMENT_FIELD_ID));
+		String username = values.get(keys.get(ConfigKeys.AYDEN_USERNAME_FIELD_ID));
+		String password = values.get(keys.get(ConfigKeys.AYDEN_PASSWORD_FIELD_ID));
+		String applicationName = values.get(keys.get(ConfigKeys.AYDEN_APPLICATION_NAME_FIELD_ID));
+		Boolean isLive = BackendObjectMarshaller.unmarshalBool(values.get(keys.get(ConfigKeys.AYDEN_LIVE_ENVIRONMENT_FIELD_ID)));
 
 		Client client = new Client(username, password, isLive ? Environment.LIVE : Environment.TEST, applicationName);
 
@@ -119,8 +119,8 @@ public class BasePaymentModel extends BaseModel {
 
 		String sectionId = ConfigModel.get(ConfigKeys.AYDEN_SETTINGS_FORM_SECTION_ID);
 
-		for (AbstractField o : FormModel.getFields(FormSectionType.SYSTEM_CONFIGURATION, sectionId)) {
-			if (ConfigModel.get(o.getId().toString()) == null) {
+		for (String fieldId : FormModel.getFieldIds(FormSectionType.SYSTEM_CONFIGURATION, sectionId)) {
+			if (ConfigModel.get(fieldId) == null) {
 				return false;
 			}
 		}
@@ -130,10 +130,10 @@ public class BasePaymentModel extends BaseModel {
 	public static void onNotificationReceived(HttpServerRequest req, Consumer<List<IpnEventType>> consumer)
 			throws PlatformException {
 
-		Map<String, Object> keys = ConfigModel.getAll(ConfigKeys.AYDEN_NOTIFICATION_SERVER_AUTH_USERNAME_FIELD_ID,
+		Map<String, String> keys = ConfigModel.getAll(ConfigKeys.AYDEN_NOTIFICATION_SERVER_AUTH_USERNAME_FIELD_ID,
 				ConfigKeys.AYDEN_NOTIFICATION_SERVER_AUTH_PASSWORD_FIELD_ID);
 
-		Map<String, Object> values = ConfigModel.getAll(keys.values().toArray(new String[keys.values().size()]));
+		Map<String, String> values = ConfigModel.getAll(keys.values().toArray(new String[keys.values().size()]));
 
 		String username = (String) values.get(keys.get(ConfigKeys.AYDEN_NOTIFICATION_SERVER_AUTH_USERNAME_FIELD_ID));
 		String password = (String) values.get(keys.get(ConfigKeys.AYDEN_NOTIFICATION_SERVER_AUTH_PASSWORD_FIELD_ID));

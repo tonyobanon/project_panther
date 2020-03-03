@@ -5,12 +5,12 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 import com.re.paas.api.classes.Exceptions;
-import com.re.paas.api.fusion.server.JsonArray;
-import com.re.paas.api.fusion.server.JsonObject;
+import com.re.paas.api.fusion.JsonArray;
+import com.re.paas.api.fusion.JsonObject;
 import com.re.paas.api.logging.Logger;
+import com.re.paas.api.runtime.ClassLoaders;
 import com.re.paas.api.runtime.spi.SpiDelegate;
 import com.re.paas.api.runtime.spi.SpiType;
-import com.re.paas.api.runtime.spi.TypeClassification;
 import com.re.paas.api.utils.ClassUtils;
 import com.re.paas.api.utils.Utils;
 
@@ -59,7 +59,7 @@ public class SpiDelegateConfigHandler {
 			JsonObject platformDelegatesConfig = new JsonObject();
 			for (SpiType type : SpiType.values()) {
 				String key = getDelegateConfigKey(type);
-				Class<?> clazz = ClassUtils.forName(ClassLoaders.getConfiguration().getString(key));
+				Class<?> clazz = com.re.paas.internal.classes.ClassUtil.forName(ClassLoaders.getConfiguration().getString(key));
 				platformDelegatesConfig.put(type.toString(), ClassUtils.toString(clazz));
 			}
 
@@ -110,7 +110,7 @@ public class SpiDelegateConfigHandler {
 			}
 
 			if (value != null) {
-				return ClassUtils.forName(value.toString());
+				return com.re.paas.internal.classes.ClassUtil.forName(value.toString());
 			}
 		}
 
@@ -119,8 +119,8 @@ public class SpiDelegateConfigHandler {
 
 	static synchronized void put(SpiType type, Class<? extends SpiDelegate<?>> delegateClass, Tier... tiers) {
 
-		if (type.classification() == TypeClassification.ACTIVE
-				&& !SpiBaseImpl.isAppTrusted(ClassUtils.getAppId(delegateClass))) {
+		if (type.classification().requiresTrustedDelegate()
+				&& !SpiBaseImpl.isAppTrusted(ClassLoaders.getId(delegateClass))) {
 
 			Exceptions.throwRuntime(new SecurityException("Type: " + type.toString() + " requires a trusted delegate"));
 		}
@@ -164,8 +164,8 @@ public class SpiDelegateConfigHandler {
 
 	static synchronized void remove(SpiType type, Class<? extends SpiDelegate<?>> delegateClass, Tier... tiers) {
 
-		if (type.classification() == TypeClassification.ACTIVE
-				&& !SpiBaseImpl.isAppTrusted(ClassUtils.getAppId(delegateClass))) {
+		if (type.classification().requiresTrustedDelegate()
+				&& !SpiBaseImpl.isAppTrusted(ClassLoaders.getId(delegateClass))) {
 			Exceptions.throwRuntime(new SecurityException("Type: " + type.toString() + " requires a trusted delegate"));
 		}
 

@@ -43,6 +43,7 @@ public class ConfigKeys {
 
 	public static final String USER_COUNT_ARCHIVE = "USER_COUNT_ARCHIVE";
 	public static final String USER_COUNT_CURRENT = "USER_COUNT_CURRENT";
+	public static final String USER_COUNT_$ROLE = "USER_COUNT_$ROLE";
 	
 	public static final String ACTIVITY_STREAM_ENABLED = "ACTIVITY_STREAM_ENABLED";
 	public static final String DEFAULT_ACTIVITY_STREAM_TIMELINE = "DEFAULT_ACTIVITY_STREAM_TIMELINE";
@@ -57,9 +58,6 @@ public class ConfigKeys {
 	public static final String HOLIDAY_API_FORM_SECTION_ID = "HOLIDAY_API_FORM_SECTION_ID";
 	public static final String HOLIDAY_API_URL_FIELD_ID = "HOLIDAY_API_URL";
 	public static final String HOLIDAY_API_KEY_FIELD_ID = "HOLIDAY_API_KEY";
-	
-	public static final String IS_HOLIDAY_DATA_AVAILABLE_$COUNTRY = "IS_HOLIDAY_DATA_AVAILABLE_$COUNTRY";
-
 	
 	public static final String IS_PROPERTY_PRICE_RULES_ENABLED = "IS_PROPERTY_PRICE_RULES_ENABLED";
 	

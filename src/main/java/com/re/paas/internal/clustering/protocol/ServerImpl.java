@@ -6,9 +6,6 @@ import java.util.concurrent.CompletableFuture;
 import com.re.paas.api.classes.Exceptions;
 import com.re.paas.api.classes.PlatformException;
 import com.re.paas.api.clustering.protocol.Server;
-import com.re.paas.api.events.AbstractEventDelegate;
-import com.re.paas.internal.clustering.classes.ServerStartEvent;
-import com.re.paas.internal.clustering.classes.ServerStopEvent;
 import com.re.paas.internal.errors.ClusteringError;
 
 import io.netty.bootstrap.ServerBootstrap;
@@ -46,37 +43,39 @@ public class ServerImpl implements Server {
 	}
 
 	@Override
-	public void start() {
+	public CompletableFuture<Void> start() {
 		
-		// We want to make sure that the issue
+		CompletableFuture<Void> future = new CompletableFuture<>();
 		
 		try {
 			// Bind and start to accept incoming connections.
 			this.bootstrap.bind(host, port).sync().addListener(new ChannelFutureListener() {
-				public void operationComplete(ChannelFuture future) {
+				public void operationComplete(ChannelFuture f) {
 					
-					ServerImpl.this.channel = future.channel();
-
-					// Dispatch event
-					AbstractEventDelegate.getInstance().dispatch(new ServerStartEvent(ServerImpl.this));
+					ServerImpl.this.channel = f.channel();
+					future.complete(null);
 				}
 			});
 		} catch (InterruptedException e) {
 			Exceptions.throwRuntime(
 					PlatformException.get(ClusteringError.ERROR_OCCURED_WHILE_STARTING_SERVER_SOCKET, host, port));
 		}
+		
+		return future;
 	}
 
 	@Override
-	public void stop() {
+	public CompletableFuture<Void> stop() {
+		
+		CompletableFuture<Void> future = new CompletableFuture<>();
 		
 		channel.close().addListener(new GenericFutureListener<Future<? super Void>>() {
-			public void operationComplete(Future<? super Void> future) throws Exception {
-				
-				// Dispatch event
-				AbstractEventDelegate.getInstance().dispatch(new ServerStopEvent());
+			public void operationComplete(Future<? super Void> f) throws Exception {
+				future.complete(null);
 			};
 		});
+		
+		return future;
 	}
 	
 	

@@ -6,15 +6,15 @@ public abstract class AbstractRequest implements Serializable {
 
 	private static final long serialVersionUID = 1L;
 	
-	private Short nodeId;
+	private Short memberId;
 	private Short clientId;
 	
-	public Short getNodeId() {
-		return nodeId;
+	public Short getMemberId() {
+		return memberId;
 	}
 	
-	public AbstractRequest setNodeId(Short nodeId) {
-		this.nodeId = nodeId;
+	public AbstractRequest setMemberId(Short memberId) {
+		this.memberId = memberId;
 		return this;
 	}
 	
@@ -26,5 +26,4 @@ public abstract class AbstractRequest implements Serializable {
 		this.clientId = clientId;
 		return this;
 	}
-	
 }

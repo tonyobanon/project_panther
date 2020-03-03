@@ -1,7 +1,7 @@
 package com.myapp.functionalities;
 
-import com.re.paas.api.fusion.services.AbstractFunctionalityDelegate;
-import com.re.paas.api.fusion.services.Functionality;
+import com.re.paas.api.fusion.functionalities.AbstractFunctionalityDelegate;
+import com.re.paas.api.fusion.functionalities.Functionality;
 
 public enum HelloWorldFunctionalities implements Functionality {
 

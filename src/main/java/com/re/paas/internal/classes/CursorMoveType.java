@@ -2,7 +2,7 @@ package com.re.paas.internal.classes;
 
 public enum CursorMoveType {
 
-	PREVIOUS(0), NEXT(1);
+	PREVIOUS(1), NEXT(2);
 
 	private int value;
 
@@ -14,10 +14,10 @@ public enum CursorMoveType {
 
 		switch (value) {
 
-		case 0:
+		case 1:
 			return CursorMoveType.PREVIOUS;
 			
-		case 1:
+		case 2:
 			return CursorMoveType.NEXT;
 			
 		default:
