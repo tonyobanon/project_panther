@@ -84,7 +84,7 @@ public class BufferImpl extends Buffer {
 	}
 
 	public int getIntLE(int pos) {
-		return buffer.getIntLE(pos);
+		return buffer.getInt(pos);
 	}
 
 	public long getUnsignedInt(int pos) {
@@ -92,7 +92,7 @@ public class BufferImpl extends Buffer {
 	}
 
 	public long getUnsignedIntLE(int pos) {
-		return buffer.getUnsignedIntLE(pos);
+		return buffer.getUnsignedInt(pos);
 	}
 
 	public long getLong(int pos) {
@@ -100,7 +100,7 @@ public class BufferImpl extends Buffer {
 	}
 
 	public long getLongLE(int pos) {
-		return buffer.getLongLE(pos);
+		return buffer.getLong(pos);
 	}
 
 	public double getDouble(int pos) {
@@ -116,7 +116,7 @@ public class BufferImpl extends Buffer {
 	}
 
 	public short getShortLE(int pos) {
-		return buffer.getShortLE(pos);
+		return buffer.getShort(pos);
 	}
 
 	public int getUnsignedShort(int pos) {
@@ -124,7 +124,7 @@ public class BufferImpl extends Buffer {
 	}
 
 	public int getUnsignedShortLE(int pos) {
-		return buffer.getUnsignedShortLE(pos);
+		return buffer.getUnsignedShort(pos);
 	}
 
 	public int getMedium(int pos) {
@@ -132,7 +132,7 @@ public class BufferImpl extends Buffer {
 	}
 
 	public int getMediumLE(int pos) {
-		return buffer.getMediumLE(pos);
+		return buffer.getMedium(pos);
 	}
 
 	public int getUnsignedMedium(int pos) {
@@ -140,7 +140,7 @@ public class BufferImpl extends Buffer {
 	}
 
 	public int getUnsignedMediumLE(int pos) {
-		return buffer.getUnsignedMediumLE(pos);
+		return buffer.getUnsignedMedium(pos);
 	}
 
 	public byte[] getBytes() {
@@ -194,12 +194,12 @@ public class BufferImpl extends Buffer {
 	}
 
 	public Buffer appendBuffer(Buffer buff) {
-		buffer.writeBytes(buff.getByteBuf());
+		buffer.writeBytes((ByteBuf) buff.getByteBuf());
 		return this;
 	}
 
 	public Buffer appendBuffer(Buffer buff, int offset, int len) {
-		ByteBuf byteBuf = buff.getByteBuf();
+		ByteBuf byteBuf = (ByteBuf) buff.getByteBuf();
 		int from = byteBuf.readerIndex() + offset;
 		buffer.writeBytes(byteBuf, from, len);
 		return this;
@@ -231,7 +231,7 @@ public class BufferImpl extends Buffer {
 	}
 
 	public Buffer appendIntLE(int i) {
-		buffer.writeIntLE(i);
+		buffer.writeInt(i);
 		return this;
 	}
 
@@ -241,7 +241,7 @@ public class BufferImpl extends Buffer {
 	}
 
 	public Buffer appendUnsignedIntLE(long i) {
-		buffer.writeIntLE((int) i);
+		buffer.writeInt((int) i);
 		return this;
 	}
 
@@ -251,7 +251,7 @@ public class BufferImpl extends Buffer {
 	}
 
 	public Buffer appendMediumLE(int i) {
-		buffer.writeMediumLE(i);
+		buffer.writeMedium(i);
 		return this;
 	}
 
@@ -261,7 +261,7 @@ public class BufferImpl extends Buffer {
 	}
 
 	public Buffer appendLongLE(long l) {
-		buffer.writeLongLE(l);
+		buffer.writeLong(l);
 		return this;
 	}
 
@@ -271,7 +271,7 @@ public class BufferImpl extends Buffer {
 	}
 
 	public Buffer appendShortLE(short s) {
-		buffer.writeShortLE(s);
+		buffer.writeShort(s);
 		return this;
 	}
 
@@ -281,7 +281,7 @@ public class BufferImpl extends Buffer {
 	}
 
 	public Buffer appendUnsignedShortLE(int s) {
-		buffer.writeShortLE(s);
+		buffer.writeShort(s);
 		return this;
 	}
 
@@ -323,7 +323,7 @@ public class BufferImpl extends Buffer {
 
 	public Buffer setIntLE(int pos, int i) {
 		ensureWritable(pos, 4);
-		buffer.setIntLE(pos, i);
+		buffer.setInt(pos, i);
 		return this;
 	}
 
@@ -335,7 +335,7 @@ public class BufferImpl extends Buffer {
 
 	public Buffer setUnsignedIntLE(int pos, long i) {
 		ensureWritable(pos, 4);
-		buffer.setIntLE(pos, (int) i);
+		buffer.setInt(pos, (int) i);
 		return this;
 	}
 
@@ -347,7 +347,7 @@ public class BufferImpl extends Buffer {
 
 	public Buffer setMediumLE(int pos, int i) {
 		ensureWritable(pos, 3);
-		buffer.setMediumLE(pos, i);
+		buffer.setMedium(pos, i);
 		return this;
 	}
 
@@ -359,7 +359,7 @@ public class BufferImpl extends Buffer {
 
 	public Buffer setLongLE(int pos, long l) {
 		ensureWritable(pos, 8);
-		buffer.setLongLE(pos, l);
+		buffer.setLong(pos, l);
 		return this;
 	}
 
@@ -383,7 +383,7 @@ public class BufferImpl extends Buffer {
 
 	public Buffer setShortLE(int pos, short s) {
 		ensureWritable(pos, 2);
-		buffer.setShortLE(pos, s);
+		buffer.setShort(pos, s);
 		return this;
 	}
 
@@ -395,19 +395,19 @@ public class BufferImpl extends Buffer {
 
 	public Buffer setUnsignedShortLE(int pos, int s) {
 		ensureWritable(pos, 2);
-		buffer.setShortLE(pos, s);
+		buffer.setShort(pos, s);
 		return this;
 	}
 
 	public Buffer setBuffer(int pos, Buffer b) {
 		ensureWritable(pos, b.length());
-		buffer.setBytes(pos, b.getByteBuf());
+		buffer.setBytes(pos, (ByteBuf) b.getByteBuf());
 		return this;
 	}
 
 	public Buffer setBuffer(int pos, Buffer b, int offset, int len) {
 		ensureWritable(pos, len);
-		ByteBuf byteBuf = b.getByteBuf();
+		ByteBuf byteBuf = (ByteBuf) b.getByteBuf();
 		buffer.setBytes(pos, byteBuf, byteBuf.readerIndex() + offset, len);
 		return this;
 	}
@@ -513,7 +513,7 @@ public class BufferImpl extends Buffer {
 	public int readFromBuffer(int pos, Buffer buffer) {
 		int len = buffer.getInt(pos);
 		Buffer b = buffer.getBuffer(pos + 4, pos + 4 + len);
-		this.buffer = b.getByteBuf();
+		this.buffer = (ByteBuf) b.getByteBuf();
 		return pos + 4 + len;
 	}
 }

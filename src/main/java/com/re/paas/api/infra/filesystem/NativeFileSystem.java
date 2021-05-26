@@ -3,7 +3,7 @@ package com.re.paas.api.infra.filesystem;
 import java.nio.file.FileSystem;
 import java.nio.file.Path;
 
-import com.re.paas.api.designpatterns.Singleton;
+import com.re.paas.api.Singleton;
 import com.re.paas.api.runtime.SecureMethod;
 
 public interface NativeFileSystem {

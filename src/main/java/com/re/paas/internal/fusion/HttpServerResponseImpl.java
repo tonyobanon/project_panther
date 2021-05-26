@@ -3,19 +3,17 @@ package com.re.paas.internal.fusion;
 import java.io.IOException;
 import java.util.Map;
 
-import javax.servlet.http.HttpServletResponse;
-
 import org.apache.commons.io.IOUtils;
 
 import com.re.paas.api.classes.FluentHashMap;
+import com.re.paas.api.fusion.BaseComponent;
 import com.re.paas.api.fusion.Buffer;
 import com.re.paas.api.fusion.Cookie;
-import com.re.paas.api.fusion.CookieUtil;
 import com.re.paas.api.fusion.HttpServerResponse;
 import com.re.paas.api.fusion.MultiMap;
-import com.re.paas.internal.fusion.services.ResponseUtil;
 
 import io.netty.handler.codec.http2.DefaultHttp2Headers;
+import jakarta.servlet.http.HttpServletResponse;
 
 public class HttpServerResponseImpl implements HttpServerResponse {
 
@@ -75,7 +73,6 @@ public class HttpServerResponseImpl implements HttpServerResponse {
 		return this;
 	}
 
-	@Override
 	public HttpServerResponse write(Buffer chunk) {
 		if (ended()) {
 			throwResponseEndedException();
@@ -91,28 +88,23 @@ public class HttpServerResponseImpl implements HttpServerResponse {
 		return this;
 	}
 
-	@Override
 	public HttpServerResponse write(String chunk, String enc) {
 		return write(Buffer.buffer(chunk, enc));
 	}
 
-	@Override
 	public HttpServerResponse write(String chunk) {
 		return write(Buffer.buffer(chunk));
 	}
 
-	@Override
 	public void end(String chunk) {
 		end(chunk, null);
 	}
 
-	@Override
 	public void end(String chunk, String enc) {
-		write(ResponseUtil.toResponse(getStatusCode(), chunk), enc);
+		write(chunk, enc);
 		end();
 	}
 
-	@Override
 	public void end(Buffer chunk) {
 		write(chunk);
 		end();
@@ -126,6 +118,15 @@ public class HttpServerResponseImpl implements HttpServerResponse {
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
+	}
+	
+	@Override
+	public HttpServerResponse render(BaseComponent component) {
+		
+		
+		// Set appId cookie, this will be used to resolve static assets
+		
+		return this;
 	}
 
 	@Override

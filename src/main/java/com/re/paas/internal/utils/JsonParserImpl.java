@@ -1,20 +1,50 @@
 package com.re.paas.internal.utils;
 
+import java.io.IOException;
 import java.util.Map;
 
+import com.re.paas.api.fusion.Buffer;
 import com.re.paas.api.utils.JsonParser;
 import com.re.paas.internal.classes.Json;
 
 public class JsonParserImpl implements JsonParser {
 
 	@Override
-	public String toPrettyJson(Object value) {
-		return toJson(value);
+	public String toPrettyString(Object value) {
+		return toString(value);
 	}
 
 	@Override
-	public <T> String toJson(T o) {
+	public <T> String toString(T o) {
 		return Json.toJson(o);
+	}
+	
+	@Override
+	public <T> Buffer toBuffer(T o) {
+	
+		Buffer buf = Buffer.buffer();
+		
+		Json.getGson().toJson(o, new Appendable() {
+			
+			@Override
+			public Appendable append(CharSequence csq, int start, int end) throws IOException {
+				return this.append(csq.subSequence(start, end));
+			}
+			
+			@Override
+			public Appendable append(char c) throws IOException {
+				buf.appendString(Character.toString(c));
+				return this;
+			}
+			
+			@Override
+			public Appendable append(CharSequence csq) throws IOException {
+				buf.appendString(csq.toString());
+				return this;
+			}
+		});
+		
+		return buf;
 	}
 
 	@Override
@@ -23,7 +53,7 @@ public class JsonParserImpl implements JsonParser {
 	}
 	
 	@Override
-	public <T> T fromJson(String json, Class<T> type) {
+	public <T> T fromString(String json, Class<T> type) {
 		return Json.fromJson(json, type);
 	}
 

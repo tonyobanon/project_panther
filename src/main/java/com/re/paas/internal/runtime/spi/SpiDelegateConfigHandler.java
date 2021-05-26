@@ -59,6 +59,7 @@ public class SpiDelegateConfigHandler {
 			JsonObject platformDelegatesConfig = new JsonObject();
 			for (SpiType type : SpiType.values()) {
 				String key = getDelegateConfigKey(type);
+				
 				Class<?> clazz = com.re.paas.internal.classes.ClassUtil.forName(ClassLoaders.getConfiguration().getString(key));
 				platformDelegatesConfig.put(type.toString(), ClassUtils.toString(clazz));
 			}

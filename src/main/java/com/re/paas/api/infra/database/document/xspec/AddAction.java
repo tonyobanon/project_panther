@@ -1,8 +1,6 @@
  
 package com.re.paas.api.infra.database.document.xspec;
 
-import com.amazonaws.annotation.Beta;
-
 
 /**
  * Represents an <a href=
@@ -34,7 +32,6 @@ import com.amazonaws.annotation.Beta;
  * This object is as immutable (or unmodifiable) as the underlying value (of
  * type <code>UnitOfExpression</code>) given during construction.
  */
-@Beta
 public final class AddAction extends UpdateAction {
     AddAction(PathOperand attr, UnitOfExpression value) {
         super("ADD", attr, value);

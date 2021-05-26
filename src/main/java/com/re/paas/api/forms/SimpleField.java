@@ -13,23 +13,19 @@ public class SimpleField extends BaseSimpleField {
 		super(null, null);
 	}
 
-	public SimpleField(InputType inputType, Object title) {
+	public SimpleField(InputType inputType, String title) {
 		this(null, inputType, title);
 	}
 
-	public SimpleField(Object id, InputType inputType, Object title) {
+	public SimpleField(Object id, InputType inputType, String title) {
 		super(id, title);
 		this.inputType = inputType;
 	}
 
 	@Override
-	public SimpleField importData(AbstractField source, boolean copyReference) {
+	public SimpleField importData(AbstractField source) {
 
 		SimpleField sourceField = (SimpleField) source;
-
-		if (copyReference && sourceField.getReference() != null) {
-			this.setReference(sourceField.getReference());
-		}
 		
 		if (sourceField.getId() != null) {
 			this.setId(sourceField.getId());

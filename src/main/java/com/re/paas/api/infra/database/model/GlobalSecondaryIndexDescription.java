@@ -3,7 +3,7 @@ package com.re.paas.api.infra.database.model;
 public class GlobalSecondaryIndexDescription extends IndexDefinition {
 	
 	public GlobalSecondaryIndexDescription(String tableName, String indexName) {
-		super(tableName, indexName);
+		super(tableName, indexName, Type.GSI);
 	}
 
 	/**

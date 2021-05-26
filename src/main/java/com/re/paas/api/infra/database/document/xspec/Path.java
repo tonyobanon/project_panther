@@ -5,12 +5,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
 
-import com.amazonaws.annotation.Immutable;
-
 /**
  * Internal representation of a path to an attribute.
  */
-@Immutable
 final class Path extends UnitOfExpression {
     private final List<PathElement> elements;
     

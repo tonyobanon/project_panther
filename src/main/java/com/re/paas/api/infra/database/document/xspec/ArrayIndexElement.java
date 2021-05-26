@@ -1,9 +1,6 @@
  
 package com.re.paas.api.infra.database.document.xspec;
 
-import com.amazonaws.annotation.Immutable;
-
-@Immutable
 final class ArrayIndexElement extends PathElement {
 
     private final int index;

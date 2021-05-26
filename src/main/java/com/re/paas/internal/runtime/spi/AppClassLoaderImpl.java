@@ -6,56 +6,93 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URLClassLoader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 
-import com.google.common.collect.Maps;
-import com.re.paas.api.annotations.develop.BlockerBlockerTodo;
-import com.re.paas.api.annotations.develop.BlockerTodo;
+import com.re.paas.api.Platform;
+import com.re.paas.api.annotations.develop.Todo;
 import com.re.paas.api.apps.AppClassLoader;
 import com.re.paas.api.classes.Exceptions;
-import com.re.paas.api.classes.ObjectWrapper;
-import com.re.paas.api.logging.Logger;
-import com.re.paas.api.logging.LoggerFactory;
 import com.re.paas.api.runtime.ClassLoaders;
 import com.re.paas.api.runtime.ParameterizedInvokable;
 import com.re.paas.api.runtime.RuntimeIdentity;
 import com.re.paas.internal.classes.ClassUtil;
-import com.re.paas.internal.fusion.services.RoutingContextHandler;
+import com.re.paas.internal.fusion.RoutingContextHandler;
 
 public class AppClassLoaderImpl extends AppClassLoader {
 
-	private static List<String> appIntrinsicClasses = new ArrayList<>();
-	private static Logger LOG = LoggerFactory.get().getLog(AppClassLoaderImpl.class);
-
-	private final Map<String, Class<?>> thirdPartyClasses = Maps.newHashMap();
+	private static List<String> intrinsicClasses = new ArrayList<>();
 
 	private final String appId;
 	private final Path path;
 	private boolean isStopping = false;
 
-	@BlockerTodo("For high performance, I advise that we stop using using appIntrinsicClasses, "
-			+ "but use a standard naming convention in the class names")
-	public static boolean isAppIntrinsic(String classname) {
-		return appIntrinsicClasses.contains(classname);
+	private final URLClassLoader libCl;
+
+	public static boolean isIntrinsic(String classname) {
+		return intrinsicClasses.contains(classname);
 	}
 
-	public AppClassLoaderImpl(ClassLoader parent, String appId) {
+	AppClassLoaderImpl(ClassLoader parent, String appId) {
 		super(parent);
+
 		this.appId = appId;
 		this.path = AppProvisionerImpl.getAppBasePath().resolve(appId);
+
+		this.libCl = createLibClassLoader();
 	}
 
-	public URL getResource(String name) {
-		URL url = this.findResource(name);
-		if (url == null) {
-			url = super.getResource(name);
+	private URLClassLoader createLibClassLoader() {
+
+		Path libFolder = this.path.resolve("lib");
+		List<URL> jars = new ArrayList<>();
+
+		try {
+
+			Files.list(libFolder).forEach(f -> {
+
+				if (!f.endsWith(".jar")) {
+					// Skip, we do not know how to handle this file
+					return;
+				}
+
+				if (f.getFileName().toString().equals(Platform.getFusionClientJarname())) {
+
+					FusionClassloaders.addFusionClient(appId, f);
+
+					// Note: all components are loaded in a designated class loader defined
+					// by our system classloader, hence we do not add this jar to <libCl> so that
+					// class lookups can be delegated to the system classloader
+
+				} else {
+
+					try {
+						jars.add(new URL("jar:file:" + f.toString()));
+					} catch (MalformedURLException e) {
+						Exceptions.throwRuntime(e);
+					}
+				}
+			});
+
+		} catch (IOException e) {
+			Exceptions.throwRuntime(e);
 		}
-		return url;
+
+		return new URLClassLoader(jars.toArray(new URL[jars.size()]), null);
+	}
+
+	@Override
+	public URLClassLoader getLibraryClassLoader() {
+		return libCl;
+	}
+
+	@Todo
+	public URL getResource(String name) {
+		return this.findResource(name);
 	}
 
 	@Override
@@ -69,11 +106,11 @@ public class AppClassLoaderImpl extends AppClassLoader {
 
 	@Override
 	public Class<?> findClass(String name) throws ClassNotFoundException {
-		return findClass0(name, isAppIntrinsic(name));
+		return findClass0(name, isIntrinsic(name));
 	}
 
 	public Class<?> findClass0(String name, boolean isAppIntrinsic) throws ClassNotFoundException {
-		
+
 		byte[] data = loadClassFromDisk(name, isAppIntrinsic);
 
 		if (data == null) {
@@ -90,55 +127,10 @@ public class AppClassLoaderImpl extends AppClassLoader {
 		return this.defineClass(name, data, 0, data.length, null);
 	}
 
-	private Class<?> loadClass0(String name, boolean isAppIntrinsic) throws ClassNotFoundException {
-
-		Class<?> c = null;
-		try {
-
-			// Find class
-			c = findClass0(name, isAppIntrinsic);
-
-		} catch (ClassNotFoundException e) {
-
-			// Search in all available app classloaders
-
-			ObjectWrapper<Class<?>> cWrapper = new ObjectWrapper<>();
-
-			AppProvisionerImpl.appClassloaders.entrySet().forEach(entry -> {
-
-				if (cWrapper.get() != null) {
-					return;
-				}
-
-				try {
-					cWrapper.set(((AppClassLoaderImpl) entry.getValue()).findClass0(name, false));
-				} catch (ClassNotFoundException ex) {
-				}
-
-			});
-
-			if (cWrapper.get() != null) {
-				
-				c = cWrapper.get();
-
-				thirdPartyClasses.put(name, c);
-				SPILocatorHandlerImpl.addDependencyPath0(getAppId(), Arrays.asList(ClassLoaders.getId(cWrapper.get())));
-			}
-		}
-
-		
-		if(c == null) {
-			throw new ClassNotFoundException(name);
-		}
-		
-		return c;
-	}
-
-	@BlockerTodo("Using checkPackageAccess(..), we could orchestrate scenarios where an app blocks other app(s) from depending on it")
 	private Class<?> load0(String name) throws ClassNotFoundException {
 
 		Class<?> c = null;
-		boolean isAppIntrinsic = isAppIntrinsic(name);
+		boolean isAppIntrinsic = isIntrinsic(name);
 
 		List<ClassLoader> classloaders = Arrays.asList(ClassLoaders.getClassLoader(), this);
 
@@ -148,22 +140,26 @@ public class AppClassLoaderImpl extends AppClassLoader {
 
 		for (ClassLoader cl : classloaders) {
 			try {
-				c = cl instanceof AppClassLoader ? ((AppClassLoaderImpl) cl).loadClass0(name, isAppIntrinsic)
+				c = cl instanceof AppClassLoader ? ((AppClassLoaderImpl) cl).findClass0(name, isAppIntrinsic)
 						: cl.loadClass(name);
 			} catch (ClassNotFoundException e) {
 			}
 
 			if (c != null) {
 
+				SystemClassLoaderImpl scl = (SystemClassLoaderImpl) ClassLoaders.getClassLoader();
+
 				// If the classes was loaded from the system class loader
-				if (c.getClassLoader() == ClassLoaders.getClassLoader()) {
+				if (c.getClassLoader() == scl.getClassloader()) {
 
 					SecurityManager sm = System.getSecurityManager();
 
 					// Here, we are using the className instead of pkg, because we also want to
 					// check for classes as well
 					sm.checkPackageAccess(name);
+
 				}
+
 				break;
 			}
 		}
@@ -180,7 +176,7 @@ public class AppClassLoaderImpl extends AppClassLoader {
 			return c;
 		}
 
-		if (!isAppIntrinsic(name)) {
+		if (!isIntrinsic(name)) {
 
 			c = super.findLoadedClass(name);
 
@@ -189,28 +185,21 @@ public class AppClassLoaderImpl extends AppClassLoader {
 			}
 		}
 
-		c = thirdPartyClasses.get(name);
+		c = libCl.loadClass(name);
 
 		if (c != null) {
 			return c;
 		}
 
 		synchronized (getClassLoadingLock(name)) {
-			c = load0(name);
+			return load0(name);
 		}
-
-		if (c != null) {
-			return c;
-		}
-
-		throw new ClassNotFoundException(name);
 	}
-	
+
 	private final Path getClassPath(String className, Path path) {
 		return path.resolve(className.replace(".", File.separator) + ".class");
 	}
 
-	@BlockerBlockerTodo("Add support for nested classes, as this may not work in that scenario")
 	private byte[] loadClassFromDisk(String className, boolean appIntrinsic) {
 
 		List<Path> paths = new ArrayList<>(2);
@@ -272,8 +261,8 @@ public class AppClassLoaderImpl extends AppClassLoader {
 
 		registerAsParallelCapable();
 
-		appIntrinsicClasses.add(RuntimeIdentity.class.getName());
-		appIntrinsicClasses.add(ParameterizedInvokable.class.getName());
-		appIntrinsicClasses.add(RoutingContextHandler.class.getName());
+		intrinsicClasses.add(RuntimeIdentity.class.getName());
+		intrinsicClasses.add(ParameterizedInvokable.class.getName());
+		intrinsicClasses.add(RoutingContextHandler.class.getName());
 	}
 }

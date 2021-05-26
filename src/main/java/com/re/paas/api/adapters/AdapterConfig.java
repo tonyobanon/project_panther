@@ -40,7 +40,7 @@ public class AdapterConfig {
 		AdapterConfig instance = instances.get(type);
 
 		if (instance == null) {
-			instance = JsonParser.get().fromJson(Utils.getString(file), AdapterConfig.class);
+			instance = JsonParser.get().fromString(Utils.getString(file), AdapterConfig.class);
 			instances.put(type, instance);
 		}
 
@@ -72,7 +72,7 @@ public class AdapterConfig {
 	}
 	
 	public String toString() {
-		return JsonParser.get().toJson(this);
+		return JsonParser.get().toString(this);
 	}
 
 	public AdapterType getType() {

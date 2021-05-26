@@ -1,7 +1,9 @@
 package com.re.paas.api.classes;
 
+import com.re.paas.api.annotations.develop.BlockerTodo;
 import com.re.paas.api.errors.Error;
 
+@BlockerTodo("Instead of ref1, ref2, make ref dynamic, and use the spread operator")
 public class PlatformException extends RuntimeException {
 
 	private static final long serialVersionUID = 1L;

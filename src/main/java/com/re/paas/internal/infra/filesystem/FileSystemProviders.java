@@ -18,46 +18,56 @@ public class FileSystemProviders {
 
 	private static FileSystem internalFs;
 
-	@SecureMethod
-	public static void init() {
-		
-		System.setProperty("java.nio.file.spi.DefaultFileSystemProvider", FileSystemProviderImpl.class.getName());
+	private static void setInternalFs() {
 
+		// We cannot cast <provider> to <FileSystemProviderImpl> because a ClassCastException 
+		// will be thrown due to classloader differences. This could have be fixed by setting
+		// <FileSystemProviderImpl> as an extrinsicClass in CustomClassLoader, but we can't do
+		// so because the class contains some secure methods that needs to be transformed
+		// at runtime
+		
 		FileSystemProvider provider = FileSystems.getDefault().provider();
+		
 
 		// At this point, we are sure that provider.getClass() ==
 		// com.re.paas.internal.infra.filesystem.FileSystemProviderImpl
 
-		// However, since this method is also called in AppDelegate, we cannot
-		// cast normally, because the active classloader would have changed then, hence
-		// a ClassCastException will be thrown. Hence, the need to use reflection
+		assert provider.getClass() == FileSystemProviderImpl.class;
 
+
+		// Note: Above (i.e. in the call to FileSystems.getDefault()), when the jvm initialized 
+		// FileSystemProviderImpl, it passed in the built in file system into the constructor, 
+		// which is then saved in the private static field <provider>
+	
 		FileSystemProvider iProvider = (FileSystemProvider) ClassUtils.getFieldValue(provider.getClass(), "provider");
 
 		// Save reference to OS-internal file system
 		internalFs = iProvider.getFileSystem(URI.create("file:///"));
-
-		System.clearProperty("java.nio.file.spi.DefaultFileSystemProvider");
+		
+		// System.out.println("Setting internalFs to " + internalFs);
 	}
 
 	/**
-	 * Reload the Jvm file system. This should be called after scanning protection
-	 * context, because we need to update the default file system class with the
-	 * transformed version that contains an indirection to {@link MethodInterceptor} (if
-	 * any exists)
+	 * Reload the Jvm file system. This should be called after meta factory
+	 * scanning, because we need to update the default file system class with the
+	 * transformed version that contains an indirection to {@link MethodInterceptor}
+	 * (if any exists)
 	 */
 	@SecureMethod
 	public static void reload() {
 
 		// At this point, we are sure that FileSystems.getDefault().getClass() ==
 		// com.re.paas.internal.infra.filesystem.FileSystemImpl
-		
-		FileSystem fs0 = FileSystems.getDefault();
 
-		FileSystem fs = (FileSystem) ClassUtils.getFieldValue(fs0.getClass(), fs0, "fs");
+		assert FileSystems.getDefault().getClass() == FileSystemWrapper.class;
+
+		FileSystemWrapper wrapper = (FileSystemWrapper) FileSystems.getDefault();
 		
-		ClassUtils.updateField(FileSystems.class.getDeclaredClasses()[0], "defaultFileSystem",
-				new FileSystemProviderImpl(fs).getFileSystem(URI.create("file:///")));
+		FileSystem impl = wrapper.getFileSystem();
+
+		FileSystem fs = (FileSystem) ClassUtils.getFieldValue(impl.getClass(), impl, "fs");
+
+		wrapper.setFileSystem(new FileSystemProviderImpl(fs).getFileSystem(URI.create("file:///")));
 	}
 
 	/**
@@ -73,19 +83,22 @@ public class FileSystemProviders {
 	@SecureMethod
 	public static Path getResourcePath() {
 		try {
-	
+
 			Path basePath = getInternal().getPath(System.getProperty("user.home"));
 			Path p = basePath.resolve(Platform.getPlatformPrefix()).resolve("resources");
-	
+
 			Files.createDirectories(p);
-	
+
 			return p;
-	
+
 		} catch (IOException e) {
 			Exceptions.throwRuntime(e);
 			return null;
 		}
 	}
-	
+
+	static {
+		setInternalFs();
+	}
 	
 }

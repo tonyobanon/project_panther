@@ -2,17 +2,24 @@ package com.re.paas.api.fusion;
 
 import com.re.paas.api.classes.Exceptions;
 
-public class Route {
-
+public final class Route {
+	
+	private final String appId;
+	
 	private String uri;
 	private HttpMethod method;
+	
 
-	public Route() {
+	public Route(String appId) {
+		this.appId = appId;
 	}
 
-	public Route(String uri, HttpMethod method) {
-		this.uri = uri;
-		this.method = method;
+	public Route(String appId, String uri, HttpMethod method) {
+		
+		this(appId);
+		
+		this.setUri(uri);
+		this.setMethod(method);
 	}
 
 	public String getUri() {
@@ -20,6 +27,13 @@ public class Route {
 	}
 
 	public Route setUri(String uri) {
+		
+		if (uri.isEmpty()) {
+			uri = null;
+		} else {
+			assert uri.startsWith("/");
+		}
+		
 		this.uri = uri;
 		return this;
 	}
@@ -29,28 +43,45 @@ public class Route {
 	}
 
 	public Route setMethod(HttpMethod method) {
+		
+		if (method == HttpMethod.ALL) {
+			method = null;
+		}
+		
 		this.method = method;
 		return this;
 	}
+	
+
+	public String getAppId() {
+		return appId;
+	}
+
 
 	public static Route fromString(String value) {
 
+		String[] parts = value.split("#");
+		
+		String appId = parts[0];
+		
+		value = parts[1];
+		
 		try {
 			if (value.equals("*")) {
-				return new Route();
+				return new Route(appId);
 			}
 			if (value.startsWith("/")) {
 				if (value.contains("-")) {
 					// uri with method
 					String[] arr = value.split("-");
-					return new Route(arr[0], HttpMethod.valueOf(arr[1]));
+					return new Route(appId, arr[0], HttpMethod.valueOf(arr[1]));
 				} else {
 					// only uri
-					return new Route().setUri(value);
+					return new Route(appId).setUri(value);
 				}
 			} else {
 				// only method
-				return new Route().setMethod(HttpMethod.valueOf(value));
+				return new Route(appId).setMethod(HttpMethod.valueOf(value));
 			}
 		} catch (Exception e) {
 			Exceptions.throwRuntime("Unable to parse route string: " + value);
@@ -60,7 +91,7 @@ public class Route {
 
 	@Override
 	public String toString() {
-		return
+		String value =
 		// Match all paths and methods
 		this.getUri() == null && this.getMethod() == null ? "*" :
 		// Match by method only
@@ -70,6 +101,10 @@ public class Route {
 						// Match by method and path
 								this.getUri() != null && this.getMethod() != null
 										? this.getUri() + "-" + this.getMethod().name()
-										: "";
+										: null;
+		
+		assert value != null;
+		
+		return this.getAppId() + "#" + value;
 	}
 }

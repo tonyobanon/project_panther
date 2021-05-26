@@ -3,10 +3,7 @@ package com.re.paas.internal.clustering.protocol;
 import java.net.InetAddress;
 import java.util.concurrent.CompletableFuture;
 
-import com.re.paas.api.classes.Exceptions;
-import com.re.paas.api.classes.PlatformException;
 import com.re.paas.api.clustering.protocol.Server;
-import com.re.paas.internal.errors.ClusteringError;
 
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.Channel;
@@ -14,7 +11,6 @@ import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
-import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
@@ -47,18 +43,26 @@ public class ServerImpl implements Server {
 		
 		CompletableFuture<Void> future = new CompletableFuture<>();
 		
+		ChannelFuture f = null;
+		
 		try {
 			// Bind and start to accept incoming connections.
-			this.bootstrap.bind(host, port).sync().addListener(new ChannelFutureListener() {
+			f = this.bootstrap.bind(host, port);
+			
+			f.sync().addListener(new ChannelFutureListener() {
 				public void operationComplete(ChannelFuture f) {
 					
 					ServerImpl.this.channel = f.channel();
+					
 					future.complete(null);
 				}
 			});
 		} catch (InterruptedException e) {
-			Exceptions.throwRuntime(
-					PlatformException.get(ClusteringError.ERROR_OCCURED_WHILE_STARTING_SERVER_SOCKET, host, port));
+			
+			future.completeExceptionally(f.cause());
+			
+//			Exceptions.throwRuntime(
+//					PlatformException.get(ClusteringError.ERROR_OCCURED_WHILE_STARTING_SERVER_SOCKET, host, port));
 		}
 		
 		return future;
@@ -94,13 +98,8 @@ public class ServerImpl implements Server {
 
 		final CompletableFuture<ServerBootstrap> future = new CompletableFuture<ServerBootstrap>();
 
-		EventLoopGroup bossGroup = new NioEventLoopGroup();
-		EventLoopGroup workerGroup = new NioEventLoopGroup();
-
-		try {
-
 			ServerBootstrap b = new ServerBootstrap();
-			b.group(bossGroup, workerGroup).channel(NioServerSocketChannel.class)
+			b.group(new NioEventLoopGroup(), new NioEventLoopGroup()).channel(NioServerSocketChannel.class)
 					.childHandler(new ChannelInitializer<SocketChannel>() {
 						@Override
 						public void initChannel(SocketChannel ch) throws Exception {
@@ -114,11 +113,6 @@ public class ServerImpl implements Server {
 
 			future.complete(b);
 
-		} finally {
-			workerGroup.shutdownGracefully();
-			bossGroup.shutdownGracefully();
-		}
-		
 		return future;
 	}
 }

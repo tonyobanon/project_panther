@@ -45,8 +45,8 @@ public interface Table {
 	
 	Index createGSI(IndexDefinition definition);
 	
-	default TableDescription delete() {
-        return getDatabase().deleteTable(name());
+	default void delete() {
+        getDatabase().deleteTable(name());
     }
 	
 	TableDescription waitForActive();

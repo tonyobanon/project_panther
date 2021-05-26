@@ -2,7 +2,7 @@ package com.re.paas.api.runtime.spi;
 
 import java.util.Collection;
 
-import com.re.paas.api.designpatterns.Singleton;
+import com.re.paas.api.Singleton;
 import com.re.paas.api.runtime.SecureMethod;
 
 public interface SpiBase {

@@ -1,9 +1,12 @@
 package com.re.paas.internal.crypto.impl;
 
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 
+import com.re.paas.api.classes.Exceptions;
 import com.re.paas.api.cryto.KeyStoreProperties;
-import com.re.paas.internal.infra.filesystem.FileSystemProviders;
+import com.re.paas.api.infra.filesystem.NativeFileSystem;
 
 public class DefaultKeyStoreProperties extends KeyStoreProperties {
 
@@ -13,7 +16,15 @@ public class DefaultKeyStoreProperties extends KeyStoreProperties {
 	public DefaultKeyStoreProperties() {
 		super();
 		this.type = "PKCS12";
-		this.keyStorePath = FileSystemProviders.getResourcePath().resolve("/crypto/keystore.p12");
+		this.keyStorePath = NativeFileSystem.get().getResourcePath().resolve("/crypto/keystore.p12");
+		
+		if (!Files.exists(keyStorePath)) {
+			try {
+				Files.createDirectories(keyStorePath);
+			} catch (IOException e) {
+				Exceptions.throwRuntime(e);
+			}
+		}
 	}
 
 	@Override

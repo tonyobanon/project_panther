@@ -10,4 +10,9 @@ public abstract class AbstractCryptoAdapterDelegate extends AbstractAdapterDeleg
 		return getProvider(false);
 	}
 
+	@Override
+	public final Class<?> getLocatorClassType() {
+		return CryptoAdapter.class;
+	}
+	
 }

@@ -3,7 +3,7 @@ package com.re.paas.api.infra.database.model;
 public class LocalSecondaryIndexDescription extends IndexDefinition {
 
 	public LocalSecondaryIndexDescription(String tableName, String indexName) {
-		super(tableName, indexName);
+		super(tableName, indexName, Type.LSI);
 	}
 
 	/**

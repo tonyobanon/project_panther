@@ -3,7 +3,6 @@ package com.re.paas.internal.events.impl;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -19,7 +18,7 @@ import com.re.paas.api.events.EventError;
 import com.re.paas.api.events.EventListener;
 import com.re.paas.api.events.Subscribe;
 import com.re.paas.api.runtime.spi.DelegateInitResult;
-import com.re.paas.api.utils.ClassUtils;
+import com.re.paas.api.runtime.spi.ResourceStatus;
 import com.re.paas.internal.compute.Scheduler;
 
 public class EventDelegate extends AbstractEventDelegate {
@@ -29,10 +28,10 @@ public class EventDelegate extends AbstractEventDelegate {
 
 	@Override
 	public DelegateInitResult init() {
-		Consumer<Class<EventListener>> consumer = (c) -> {
-			registerListener(c);
-		};
-		return forEach(consumer);
+
+		addResources(this::add);
+		
+		return DelegateInitResult.SUCCESS;
 	}
 
 	@SuppressWarnings("unchecked")
@@ -47,29 +46,15 @@ public class EventDelegate extends AbstractEventDelegate {
 		volatileListeners.get(eventClass).add((Consumer<BaseEvent>) consumer);
 	}
 
-	@Override
-	protected void add(List<Class<EventListener>> classes) {
-		classes.forEach(c -> {
-			registerListener(c);
-		});
-	}
 
-	@Override
-	protected List<Class<EventListener>> remove(List<Class<EventListener>> classes) {
-		classes.forEach(c -> {
-			unregisterListener(c);
-		});
-		return Collections.emptyList();
-	}
-
-	private static void unregisterListener(Class<?> c) {
+	protected ResourceStatus remove(Class<EventListener> c) {
 
 		for (Method m : c.getMethods()) {
 
 			Subscribe s = m.getAnnotation(Subscribe.class);
 
 			if (s == null) {
-				return;
+				continue;
 			}
 
 			if (BaseEvent.class.isAssignableFrom(m.getParameterTypes()[0])
@@ -79,10 +64,11 @@ public class EventDelegate extends AbstractEventDelegate {
 				listeners.get(eventClass).remove(m);
 			}
 		}
-
+		
+		return ResourceStatus.UPDATED;
 	}
 
-	private static void registerListener(Class<?> c) {
+	protected ResourceStatus add(Class<EventListener> c) {
 
 		Object o = com.re.paas.internal.classes.ClassUtil.createInstance(c);
 
@@ -91,7 +77,7 @@ public class EventDelegate extends AbstractEventDelegate {
 			Subscribe s = m.getAnnotation(Subscribe.class);
 
 			if (s == null) {
-				return;
+				continue;
 			}
 
 			if (BaseEvent.class.isAssignableFrom(m.getParameterTypes()[0])
@@ -118,7 +104,8 @@ public class EventDelegate extends AbstractEventDelegate {
 				});
 			}
 		}
-
+		
+		return ResourceStatus.UPDATED;
 	}
 
 	public void dispatch(BaseEvent evt) {

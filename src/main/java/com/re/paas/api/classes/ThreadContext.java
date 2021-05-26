@@ -8,7 +8,6 @@ import com.re.paas.api.annotations.develop.Todo;
 @Todo("Due to time-sensitive scenarios in which ThreadContext is used, probe performance")
 public class ThreadContext {
 
-	public static final String REALM_VARIABLES = "r_variables";
 	private static final String IS_REQUEST_CONTEXT = "is_request_ctx";
 	private static final String APP_ID = "app_id";
 
@@ -50,7 +49,9 @@ public class ThreadContext {
 	public static ThreadContext newRequestContext() {
 		Map<String, Object> o = threadAttrs.get();
 		assert o.isEmpty();
+		
 		o.put(IS_REQUEST_CONTEXT, true);
+		
 		return instance;
 	}
 

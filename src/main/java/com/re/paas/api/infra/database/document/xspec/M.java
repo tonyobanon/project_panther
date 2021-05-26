@@ -3,9 +3,6 @@
 
 import java.util.Map;
 
-import com.amazonaws.annotation.Beta;
-import com.amazonaws.annotation.Immutable;
-
 /**
  * A path operand that refers to a <a href=
  * "http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_AttributeValue.html"
@@ -13,8 +10,6 @@ import com.amazonaws.annotation.Immutable;
  * <p>
  * Use {@link ExpressionSpecBuilder#M(String)} to instantiate this class.
  */
-@Beta
-@Immutable
 public final class M extends PathOperand {
 
     M(String attrName) {

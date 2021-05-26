@@ -5,9 +5,6 @@ import java.nio.ByteBuffer;
 import java.util.LinkedList;
 import java.util.List;
 
-import com.amazonaws.annotation.Beta;
-import com.amazonaws.annotation.Immutable;
-
 /**
  * A path operand that refers to a <a href=
  * "http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_AttributeValue.html"
@@ -15,8 +12,6 @@ import com.amazonaws.annotation.Immutable;
  * <p>
  * Use {@link ExpressionSpecBuilder#B(String)} to instantiate this class.
  */
-@Beta
-@Immutable
 public final class B extends PathOperand {
 
     B(String path) {

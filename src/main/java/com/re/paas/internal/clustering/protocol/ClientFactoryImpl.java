@@ -109,7 +109,9 @@ public class ClientFactoryImpl implements ClientFactory {
 		}
 
 		Sync.tier1Lock.unlock();
-		Sync.tier1Lock.notify();
+		synchronized (Sync.tier1Lock) {
+			Sync.tier1Lock.notify();
+		}
 	}
 
 	/**
@@ -305,7 +307,9 @@ public class ClientFactoryImpl implements ClientFactory {
 		}
 
 		Sync.tier2Lock[nodeId].unlock();
-		Sync.tier2Lock[nodeId].notify();
+		synchronized (Sync.tier2Lock[nodeId]) {
+			Sync.tier2Lock[nodeId].notify();
+		}
 
 		ClientImpl client;
 
@@ -395,7 +399,9 @@ public class ClientFactoryImpl implements ClientFactory {
 		}
 
 		Sync.tier2Lock[memberId].unlock();
-		Sync.tier2Lock[memberId].notify();
+		synchronized (Sync.tier2Lock[memberId]) {
+			Sync.tier2Lock[memberId].notify();
+		}
 
 		Sync.tier2Lock[memberId] = null;
 	}
@@ -567,7 +573,9 @@ public class ClientFactoryImpl implements ClientFactory {
 		clientStatuses.get(memberId).set(clientId, b);
 
 		Sync.tier3Lock[memberId][clientId].unlock();
-		Sync.tier3Lock[memberId][clientId].notify();
+		synchronized (Sync.tier3Lock[memberId][clientId]) {
+			Sync.tier3Lock[memberId][clientId].notify();
+		}
 	}
 
 	private static class Sync {

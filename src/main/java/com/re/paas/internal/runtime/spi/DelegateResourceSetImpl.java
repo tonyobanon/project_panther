@@ -7,11 +7,11 @@ import com.re.paas.api.runtime.spi.DelegateResorceSet;
 
 public class DelegateResourceSetImpl implements DelegateResorceSet {
 
-	private final Map<String, Map<String, Object>> distributedStores;
+	private final Map<String, AsyncDistributedMap<String, Object>> distributedStores;
 	private final Map<Object, Object> localStore;
 
 	public DelegateResourceSetImpl(Map<Object, Object> localStore,
-			Map<String, Map<String, Object>> distributedStores) {
+			Map<String, AsyncDistributedMap<String, Object>> distributedStores) {
 		this.distributedStores = distributedStores;
 		this.localStore = localStore;
 	}
@@ -22,7 +22,7 @@ public class DelegateResourceSetImpl implements DelegateResorceSet {
 	}
 
 	@Override
-	public Map<String, Map<String, Object>> getDistributedStores() {
+	public Map<String, AsyncDistributedMap<String, Object>> getDistributedStores() {
 		return distributedStores;
 	}
 }

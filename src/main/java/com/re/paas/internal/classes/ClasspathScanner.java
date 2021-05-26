@@ -16,16 +16,12 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.google.common.collect.Lists;
 import com.re.paas.api.classes.Exceptions;
 import com.re.paas.api.logging.Logger;
 import com.re.paas.api.runtime.spi.BaseSPILocator.ShuffleStrategy;
-import com.re.paas.api.runtime.ClassLoaders;
 import com.re.paas.api.runtime.spi.ClassIdentityType;
 import com.re.paas.api.utils.ClassUtils;
-import com.re.paas.api.utils.Utils;
 import com.re.paas.internal.runtime.spi.Classpaths;
 
 public class ClasspathScanner<T> {
@@ -34,7 +30,7 @@ public class ClasspathScanner<T> {
 
 	private Map<ShuffleStrategy, Function<ArrayList<Class<? extends T>>, ArrayList<Class<? extends T>>>> shuffleStrategies = new HashMap<>();
 
-	private ClassLoader cl;
+	private final ClassLoader cl;
 
 	private final String fileExtension;
 	private final Iterable<String> nameSuffixes;
@@ -56,11 +52,13 @@ public class ClasspathScanner<T> {
 		this.fileExtension = fileExtension;
 
 		this.classIdentityType = null;
+		
+		this.cl = type.getClassLoader();
 		this.classType = type;
 	}
 
-	public ClasspathScanner(Class<T> type) {
-		this("", type);
+	public ClasspathScanner(Class<T> type, ClassLoader cl) {
+		this(Lists.newArrayList(""), type, ClassIdentityType.ASSIGNABLE_FROM, cl);
 	}
 
 	public ClasspathScanner(String nameSuffix, Class<T> type) {
@@ -68,18 +66,20 @@ public class ClasspathScanner<T> {
 	}
 
 	public ClasspathScanner(String nameSuffix, Class<T> type, ClassIdentityType identityType) {
-		this(Lists.newArrayList(nameSuffix), type, identityType);
+		this(Lists.newArrayList(nameSuffix), type, identityType, ClassLoader.getSystemClassLoader());
 	}
 
 	/**
 	 * This constructor should be used for classes
 	 */
-	public ClasspathScanner(Iterable<String> nameSuffixes, Class<T> type, ClassIdentityType identityType) {
+	public ClasspathScanner(Iterable<String> nameSuffixes, Class<T> type, ClassIdentityType identityType, ClassLoader cl) {
 
 		this.nameSuffixes = nameSuffixes;
 		this.fileExtension = "class";
 
 		this.classIdentityType = identityType;
+		
+		this.cl = cl;
 		this.classType = type;
 
 		addShuffleStategies();
@@ -89,82 +89,13 @@ public class ClasspathScanner<T> {
 	 * This constructor should be used for classes
 	 */
 	public ClasspathScanner(Class<T> type, ClassIdentityType identityType) {
-		this((Iterable<String>) null, type, identityType);
+		// Todo: null should be an actual iterable of ""?
+		this((Iterable<String>) null, type, identityType, ClassLoader.getSystemClassLoader());
 	}
-
-	private static boolean isExtensionSiupported(String ext) {
-		return /* ext.equals("json") || */ext.equals("xml");
-	}
-
-	public List<T> scanArtifacts() {
-
-		if (!isExtensionSiupported(fileExtension)) {
-			Exceptions.throwRuntime(new RuntimeException("The specified file extension is not supported"));
-		}
-
-		if (classType == null) {
-			return new ArrayList<>();
-		}
-
-		final List<T> classes = new ArrayList<T>();
-
-		// Scan classpath
-
-		try {
-
-			ClassLoader cl = this.cl != null ? this.cl : ClassLoaders.getClassLoader();
-			Path basePath = Classpaths.get(cl);
-
-			Files.walkFileTree(basePath, new SimpleFileVisitor<Path>() {
-				@Override
-				public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-
-					boolean hasNameSuffix = false;
-
-					for (String nameSuffix : nameSuffixes) {
-						if (file.getFileName().toString().endsWith(nameSuffix + "." + fileExtension)) {
-							hasNameSuffix = true;
-						}
-					}
-
-					if (!hasNameSuffix) {
-						return FileVisitResult.CONTINUE;
-					}
-
-					try {
-
-						ObjectMapper xmlMapper = new XmlMapper();
-						T o = xmlMapper.readValue(Utils.getString(file), classType);
-						classes.add(o);
-
-					} finally {
-						// Do nothing
-					}
-
-					if (maxCount != -1 && maxCount >= classes.size()) {
-						return FileVisitResult.TERMINATE;
-					}
-
-					return FileVisitResult.CONTINUE;
-				}
-
-				@Override
-				public FileVisitResult postVisitDirectory(Path file, IOException e) throws IOException {
-					if (e == null) {
-						return FileVisitResult.CONTINUE;
-					} else {
-						// directory iteration failed
-						throw e;
-					}
-				}
-			});
-
-		} catch (IOException e) {
-			Exceptions.throwRuntime(e);
-		}
-
-		return classes;
-
+	
+	public ClasspathScanner(Class<T> type, ClassIdentityType identityType, ClassLoader cl) {
+		// Todo: null should be an actual iterable of ""?
+		this((Iterable<String>) null, type, identityType, cl);
 	}
 
 	public List<Class<? extends T>> scanClasses() {
@@ -173,13 +104,15 @@ public class ClasspathScanner<T> {
 			return new ArrayList<>();
 		}
 
+		assert classType.getClassLoader() == this.cl;
+		
 		final ArrayList<Class<? extends T>> classes = new ArrayList<Class<? extends T>>();
 
 		// Scan classpath
 
 		try {
 
-			ClassLoader cl = this.cl != null ? this.cl : ClassLoaders.getClassLoader();
+			ClassLoader cl = this.cl;
 			Path basePath = Classpaths.get(cl);
 
 			Files.walkFileTree(basePath, new SimpleFileVisitor<Path>() {
@@ -206,15 +139,15 @@ public class ClasspathScanner<T> {
 
 					try {
 
-						// System.out.println(className);
-
 						Class<? extends T> clazz = null;
 
 						try {
 							clazz = (Class<? extends T>) cl.loadClass(className);
 						} catch (Error e) {
+							
 							// Possibly some compilation problem, skip
 							// System.out.println("skipping " + className);
+							
 							return FileVisitResult.CONTINUE;
 						}
 
@@ -249,16 +182,20 @@ public class ClasspathScanner<T> {
 								return FileVisitResult.CONTINUE;
 							}
 						}
+						
 
 						boolean b = false;
 
 						switch (classIdentityType) {
+
 						case ASSIGNABLE_FROM:
 							b = classType.isAssignableFrom(clazz) && !ClassUtils.equals(classType, clazz);
 							break;
+
 						case DIRECT_SUPER_CLASS:
 							b = ClassUtils.isDirectChild(classType, clazz);
 							break;
+
 						}
 
 						if (b) {
@@ -309,11 +246,6 @@ public class ClasspathScanner<T> {
 
 	public ClassLoader getClassLoader() {
 		return cl;
-	}
-
-	public ClasspathScanner<T> setClassLoader(ClassLoader cl) {
-		this.cl = cl;
-		return this;
 	}
 
 	public ShuffleStrategy getShuffleStrategy() {

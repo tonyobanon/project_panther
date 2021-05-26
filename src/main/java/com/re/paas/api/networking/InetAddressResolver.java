@@ -2,7 +2,7 @@ package com.re.paas.api.networking;
 
 import java.net.InetAddress;
 
-import com.re.paas.api.designpatterns.Singleton;
+import com.re.paas.api.Singleton;
 
 public interface InetAddressResolver {
 	

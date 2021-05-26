@@ -7,9 +7,8 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Consumer;
+import java.util.function.Function;
 
-import com.re.paas.api.annotations.develop.BlockerTodo;
 import com.re.paas.api.classes.Exceptions;
 import com.re.paas.api.classes.ObjectWrapper;
 import com.re.paas.api.events.AbstractEventDelegate;
@@ -19,18 +18,18 @@ import com.re.paas.api.roles.AbstractNodeRoleDelegate;
 import com.re.paas.api.roles.AbstractRole;
 import com.re.paas.api.runtime.spi.DelegateInitResult;
 import com.re.paas.api.runtime.spi.DelegateSpec;
+import com.re.paas.api.runtime.spi.ResourceStatus;
 import com.re.paas.api.runtime.spi.SpiType;
+import com.re.paas.api.utils.ClassUtils;
 import com.re.paas.internal.compute.Scheduler;
 
-@BlockerTodo("Add logic for SpiDelegate.remove(..), store nodeRoles as SPI Resource")
-
-@DelegateSpec(dependencies = { SpiType.CLOUD_ENVIRONMENT, SpiType.EVENT, SpiType.FUNCTION })
+@DelegateSpec(dependencies = { SpiType.EVENT, SpiType.FUNCTION })
 public class NodeRoleDelegate extends AbstractNodeRoleDelegate {
 
 	private static AbstractMasterRole masterNodeRole;
 
-	private static Map<String, AbstractRole> nodeRoles = Collections.synchronizedMap(new LinkedHashMap<String, AbstractRole>());
-	private static Map<String, AbstractRole> allRoles = Collections.synchronizedMap(new HashMap<String, AbstractRole>());
+	private static Map<String, AbstractRole> nodeRoles = Collections
+			.synchronizedMap(new LinkedHashMap<String, AbstractRole>());
 
 	private static final Integer nodeRoleStartTimeout = 10000;
 
@@ -39,37 +38,86 @@ public class NodeRoleDelegate extends AbstractNodeRoleDelegate {
 
 		Map<String, AbstractRole> roles = new HashMap<>();
 
-		Consumer<Class<AbstractRole>> consumer = c -> {
+		Function<Class<AbstractRole>, ResourceStatus> consumer = c -> {
 
-			if (Modifier.isAbstract(c.getModifiers())) {
-				return;
+			AbstractRole role = getRoleInstance(c);
+
+			if (role == null) {
+				return ResourceStatus.NOT_UPDATED;
 			}
 
-			AbstractRole role = com.re.paas.internal.classes.ClassUtil.createInstance(c);
-
-			allRoles.put(role.name(), role);
-
 			roles.put(role.name(), role);
+
+			return ResourceStatus.UPDATED;
 		};
 
-		DelegateInitResult r = forEach(consumer);
-
+		this.addResources(consumer);
+	
 		processRoles(roles);
-		
-		return r;
+
+		return DelegateInitResult.SUCCESS;
 	}
 
 	@Override
-	protected void add(List<Class<AbstractRole>> classes) {
+	protected ResourceStatus add(Class<AbstractRole> c) {
+
+		AbstractRole role = getRoleInstance(c);
+
+		if (role == null) {
+			return ResourceStatus.NOT_UPDATED;
+		}
+
+		try {
+			processRole(role);
+			
+		} catch (Exception e) {
+			return ResourceStatus.ERROR.setMessage(e.getMessage());
+		}
+
+		return ResourceStatus.UPDATED;
+	}
+
+	private AbstractRole getRoleInstance(Class<AbstractRole> c) {
+
+		if (Modifier.isAbstract(c.getModifiers())) {
+			return null;
+		}
+
+		return com.re.paas.internal.classes.ClassUtil.createInstance(c);
+	}
+
+	@Override
+	protected ResourceStatus remove(Class<AbstractRole> c) {
+
+		AbstractRole role = getRoleInstance(c);
+
+		if (role == null) {
+			return ResourceStatus.NOT_UPDATED;
+		}
+
+		assert getNodeRoles().containsKey(role.name());
+		
+		try {
+			
+			if (ClassUtils.equals(c, masterNodeRole.getClass())) {
+				Exceptions.throwRuntime("Cannot remove the MasterRole: " + role.name());
+			}
+			
+			role.stop();
+			
+		} catch (Exception e) {
+			return ResourceStatus.ERROR.setMessage(e.getMessage());
+		}
+
+		getNodeRoles().remove(role.name());
+
+		return ResourceStatus.UPDATED;
+	}
+
+	private void processRole(AbstractRole newRole) {
 
 		Map<String, AbstractRole> roles = new HashMap<>();
-
-		classes.forEach(c -> {
-			AbstractRole o = com.re.paas.internal.classes.ClassUtil.createInstance(c);
-			allRoles.put(o.name(), o);
-
-			roles.put(o.name(), o);
-		});
+		roles.put(newRole.name(), newRole);
 
 		processRoles(roles);
 	}
@@ -175,18 +223,13 @@ public class NodeRoleDelegate extends AbstractNodeRoleDelegate {
 		return applies;
 	}
 
-	@Override
-	public Map<String, AbstractRole> getAllRoles() {
-		return allRoles;
-	}
-
 	public Map<String, AbstractRole> getNodeRoles() {
 		return nodeRoles;
 	}
 
 	@Override
 	public void shutdown() {
-		
+
 		nodeRoles.values().forEach(role -> {
 			role.stop();
 		});

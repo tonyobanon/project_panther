@@ -3,12 +3,12 @@ package com.re.paas.api.roles;
 import java.util.List;
 import java.util.Map;
 
+import com.re.paas.api.Singleton;
 import com.re.paas.api.classes.FluentArrayList;
 import com.re.paas.api.clustering.classes.MemberStatus;
 import com.re.paas.api.clustering.events.MemberJoinEvent;
 import com.re.paas.api.clustering.events.MemberLeaveEvent;
 import com.re.paas.api.clustering.events.MemberStateChangeEvent;
-import com.re.paas.api.designpatterns.Singleton;
 import com.re.paas.api.events.AbstractEventDelegate;
 import com.re.paas.api.runtime.spi.AbstractResource;
 import com.re.paas.api.runtime.spi.SpiType;

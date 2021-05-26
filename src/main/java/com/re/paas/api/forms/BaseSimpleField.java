@@ -1,10 +1,8 @@
 package com.re.paas.api.forms;
 
-import com.re.paas.api.classes.ClientRBRef;
-
 public abstract class BaseSimpleField extends AbstractField {
 
-	private Object title;
+	private String title;
 	private Object helperText;
 	
 	private Integer sortOrder;
@@ -14,7 +12,7 @@ public abstract class BaseSimpleField extends AbstractField {
 	private Boolean isVisible;
 	private Boolean isDefault;
 
-	public BaseSimpleField(Object id, Object title) {
+	public BaseSimpleField(Object id, String title) {
 		super(id != null ? id.toString() : null);
 		this.title = title;
 		this.sortOrder = 0;
@@ -24,15 +22,11 @@ public abstract class BaseSimpleField extends AbstractField {
 		this.isDefault = false;
 	}
 
-	public Object getTitle() {
+	public String getTitle() {
 		return title;
 	}
-	
-	public ClientRBRef getTitleAsRBRef() {
-		return (ClientRBRef) title;
-	}
 
-	public BaseSimpleField setTitle(Object title) {
+	public BaseSimpleField setTitle(String title) {
 		this.title = title;
 		return this;
 	}

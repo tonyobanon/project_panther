@@ -19,13 +19,15 @@ import com.re.paas.api.utils.ClassUtils;
 public class Json {
 
 	private static final Logger LOG = LoggerFactory.get().getLog(Json.class);
-	private static final Gson instance = createInstance();
+	private static Gson instance = createInstance();
 
 	private static Gson createInstance() {
-
+		
+		instance = new Gson();
+		
 		GsonBuilder builder = new GsonBuilder().enableComplexMapKeySerialization().setDateFormat(DateFormat.LONG)
 				.setFieldNamingPolicy(FieldNamingPolicy.IDENTITY).setPrettyPrinting();
-
+		
 		registerTypeAdapters(builder);
 
 		return builder.create();
@@ -48,17 +50,20 @@ public class Json {
 
 	private static void registerTypeAdapters(GsonBuilder builder, Class<?> typeAdapterClass) {
 
-		Class<?> type = ClassUtils.getParameterizedClass(typeAdapterClass.getClassLoader(), typeAdapterClass.getGenericInterfaces()[0]).getGenericTypes().get(0).getType();
+		Class<?> type = ClassUtils
+				.getParameterizedClass(typeAdapterClass.getClassLoader(), typeAdapterClass.getGenericInterfaces()[0])
+				.getGenericTypes().get(0).getType();
 		builder.registerTypeAdapter(type, com.re.paas.internal.classes.ClassUtil.createInstance(typeAdapterClass));
 
-		LOG.debug("==== " + ClassUtils.toString(type) + ": " + ClassUtils.toString(typeAdapterClass) + "====");
+		// LOG.debug("==== " + ClassUtils.toString(type) + ": " +
+		// ClassUtils.toString(typeAdapterClass) + "====");
 	}
 
 	@BlockerTodo("Make this method private")
 	public static Gson getGson() {
 		return instance;
 	}
-	
+
 	public static <T> String toJson(T o) {
 		return instance.toJson(o);
 	}
@@ -66,14 +71,13 @@ public class Json {
 	public static <T> T fromJson(String json, Class<T> type) {
 		return instance.fromJson(json, type);
 	}
-	
+
 	public static <T> T fromMap(Map<String, Object> map, Class<T> type) {
 		return fromJson(new JsonObject(map).toString(), type);
 	}
 
-	
 	public static <T, V> Map<String, Object> toMap(T obj) {
 		return new JsonObject(instance.toJson(obj)).getMap();
 	}
-	
+
 }

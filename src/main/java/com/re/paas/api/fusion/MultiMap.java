@@ -4,7 +4,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import javax.annotation.Nullable;
 
 /**
  * This class represents a MultiMap of String keys to a List of String values.
@@ -33,7 +32,7 @@ public interface MultiMap extends Iterable<Map.Entry<String, String>> {
    * @param name The name of the header to search
    * @return The first header value or {@code null} if there is no such entry
    */
-  @Nullable String get(String name);
+  String get(String name);
 
   /**
    * Returns the values with the specified name
@@ -143,7 +142,7 @@ public interface MultiMap extends Iterable<Map.Entry<String, String>> {
   /**
    * Like {@link #set(String, String)} but accepting {@code CharSequence} as parameters
    */
-  MultiMap set(CharSequence name, CharSequence[] value);
+  MultiMap set(CharSequence name, CharSequence... values);
   
   /**
    * Sets values for the specified name.

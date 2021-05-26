@@ -9,14 +9,14 @@ import java.lang.reflect.Method;
 import java.util.Arrays;
 
 import com.re.paas.api.Platform;
+import com.re.paas.api.Singleton;
 import com.re.paas.api.classes.Exceptions;
-import com.re.paas.api.designpatterns.Singleton;
 import com.re.paas.api.runtime.SecureMethod;
 import com.re.paas.api.runtime.SecureMethod.CustomValidatorContext;
 import com.re.paas.api.runtime.SecureMethod.Validator;
 import com.re.paas.api.runtime.RuntimeIdentity;
 import com.re.paas.api.utils.Utils;
-import com.re.paas.internal.jvmtools.ClassTools;
+import com.re.paas.internal.instrumentation.BytecodeTools;
 
 import net.bytebuddy.implementation.bind.annotation.AllArguments;
 import net.bytebuddy.implementation.bind.annotation.Origin;
@@ -47,7 +47,7 @@ public class MethodInterceptor {
 		/**
 		 * Get annotations
 		 */
-		Annotation[] contexts = ClassTools.getAnnotations(method.getAnnotations(), SecureMethod.class);
+		Annotation[] contexts = BytecodeTools.getAnnotations(method.getAnnotations(), SecureMethod.class);
 
 		if (debugMode) {
 			System.out.println(
@@ -55,14 +55,13 @@ public class MethodInterceptor {
 							+ ", target-method=" + method.getName() + ", annotation=" + Arrays.toString(contexts));
 		}
 
-		Boolean failGreedily = false;
 		Boolean allow = null;
 
 		for (Annotation annotation : contexts) {
 
 			SecureMethod ctx = (SecureMethod) annotation;
 
-			StackFrame frame = StackFrameUtilImpl.getCaller(3 + 1, ctx.jvmOnly(), true);
+			StackFrame frame = StackFrameUtilImpl.getCaller(3, ctx.jvmOnly(), true);
 
 			Class<?> callerClass = frame.getDeclaringClass();
 
@@ -87,7 +86,6 @@ public class MethodInterceptor {
 			if (ctx.jvmOnly()) {
 
 				allow = Utils.startsWith(callerClass.getName(), Platform.getJvmPackages());
-				failGreedily = true;
 			}
 
 			if (allow == null && !ctx.validator().equals(Validator.class)) {
@@ -160,7 +158,7 @@ public class MethodInterceptor {
 
 							case SINGLETON:
 
-								if (Singleton.get(c).getClass().equals(callerClass)) {
+								if (Singleton.get(c) != null && Singleton.get(c).getClass().equals(callerClass)) {
 									allow = true;
 									break;
 								}
@@ -173,12 +171,15 @@ public class MethodInterceptor {
 					break;
 				}
 			}
+			
+			if (allow == null) {
+				allow = false;
+			}
 
 			if (allow) {
-
 				break;
-
-			} else if (failGreedily && (allow == null || !allow)) {
+				
+			} else {
 
 				String source = callerClass.getName() + "#" + frame.getMethodName();
 

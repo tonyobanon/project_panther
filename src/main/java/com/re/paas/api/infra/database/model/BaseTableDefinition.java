@@ -83,6 +83,8 @@ public class BaseTableDefinition {
 	
 	private boolean ttlEnabled;
 	
+	private ProvisionedThroughput provisionedThroughput;
+	
 
 	/**
 	 * <p>
@@ -458,4 +460,14 @@ public class BaseTableDefinition {
 		this.ttlEnabled = ttlEnabled;
 		return this;
 	}
+	
+	public ProvisionedThroughput getProvisionedThroughput() {
+		return provisionedThroughput;
+	}
+
+	public BaseTableDefinition setProvisionedThroughput(ProvisionedThroughput provisionedThroughput) {
+		this.provisionedThroughput = provisionedThroughput;
+		return this;
+	}
+	
 }

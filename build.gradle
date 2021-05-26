@@ -27,70 +27,64 @@ dependencies {
     // Use JUnit test framework
     testImplementation 'junit:junit:4.12'
     
+    
+    
+    implementation "org.apache.httpcomponents.client5:httpclient5:5.0-alpha3"
+    	
     implementation "com.google.code.gson:gson:2.8.2"
 	implementation "org.apache.pdfbox:pdfbox:2.0.8"
 	implementation "org.bouncycastle:bcpkix-jdk15on:1.47"
-	implementation "com.fasterxml.jackson.core:jackson-core:2.9.2"
-	implementation "com.fasterxml.jackson.dataformat:jackson-dataformat-xml:2.9.2"
 	implementation "com.google.guava:guava:23.5-jre"
-	implementation "org.apache.httpcomponents.client5:httpclient5:5.0-alpha3"
+	
+
+	
 	implementation "commons-io:commons-io:2.6"
-	implementation "org.apache.commons:commons-lang3:3.7"
-	implementation "org.apache.commons:commons-collections4:4.1"
 	implementation "org.apache.tika:tika-core:1.16"
-	implementation "com.github.zafarkhaja:java-semver:0.9.0"
-	implementation "org.jsoup:jsoup:1.11.2"
-	implementation "org.apache.velocity:velocity-engine-core:2.0"
-	implementation "org.apache.httpcomponents:fluent-hc:4.5.5"
+
 	implementation "com.ibm.icu:icu4j-localespi:60.2"
 	implementation "com.ibm.icu:icu4j-charset:60.2"
-	implementation "com.google.cloud:google-cloud-translate:1.14.0"
-	implementation "com.adyen:adyen-java-api-library:2.4.0"
-	implementation "io.netty:netty-all:4.1.22.Final"
-	implementation "com.infobip:infobip-api-java-client:2.1.0"
+	
+	implementation "io.netty:netty-all:5.0.0.Alpha2"
+	
+	
 	implementation "commons-net:commons-net:3.6"
-	implementation "com.microsoft.azure:azure:1.8.0"
+
 	implementation "com.amazonaws:aws-java-sdk:1.11.642"
-	implementation "javax.json:javax.json-api:1.1.2"
-	implementation "org.glassfish:javax.json:1.1"
+	
 	implementation "org.slf4j:slf4j-api:1.8.0-beta2"
 	implementation "org.slf4j:slf4j-nop:1.8.0-beta2"
-	implementation "org.mapdb:mapdb:3.0.5" 
-	implementation "net.lingala.zip4j:zip4j:1.3.2"
-	implementation "io.lettuce:lettuce-core:5.1.0.M1"
-	//compile group: 'org.eclipse.jetty.alpn', name: 'alpn-api', version: '1.1.3.v20160715'
-	implementation "org.eclipse.jetty.http2:http2-server:9.4.11.v20180605"
-	compile group: 'org.eclipse.jetty', name: 'jetty-alpn-server', version: '9.4.11.v20180605'
-	compile group: 'org.mortbay.jetty.alpn', name: 'alpn-boot', version: '8.1.12.v20180117'
-	implementation "org.jsoup:jsoup:1.11.2"
-	compile group: 'javax.servlet', name: 'javax.servlet-api', version: '4.0.1'
+
+	
+	
+	implementation "org.eclipse.jetty.http2:http2-server:11.0.2"
+	implementation 'org.eclipse.jetty:jetty-alpn-java-server:11.0.2'
+	
+	implementation 'org.mortbay.jetty.alpn:alpn-boot:8.1.12.v20180117'
+	
 	implementation "javax.xml.bind:jaxb-api:2.4.0-b180830.0359"
 	
 	implementation "io.lettuce:lettuce-core:5.1.0.M1"
 	
-	implementation "org.apache.calcite:calcite-core:1.17.0"
-	implementation "org.apache.calcite:calcite-server:1.17.0"
-	
-	implementation "com.github.oshi:oshi-core:3.8.4"
-	
-	// DB Adapters
-	implementation "com.google.cloud:google-cloud-nio:0.87.0-alpha"
+
 	implementation "com.upplication:s3fs:2.2.2"
-	implementation "com.google.jimfs:jimfs:1.1"
 	
 	
-   	implementation "net.bytebuddy:byte-buddy:1.10.0"
+   	implementation "net.bytebuddy:byte-buddy:1.11.0"
+   	
+   	
 	implementation "org.javassist:javassist:3.26.0-GA"
 	
-	implementation "com.timgroup:java-statsd-client:3.1.0"
 	
 	implementation "org.apache.lucene:lucene-core:8.1.1"
 	
-	implementation "org.infinispan:infinispan-core:10.1.0.CR1"
+	implementation "org.infinispan:infinispan-core:12.1.1.Final"
 	implementation "org.infinispan:infinispan-cloud:10.0.0.Beta5"
-	implementation "org.infinispan:infinispan-multimap:10.1.0.CR1"
+	implementation "org.infinispan:infinispan-multimap:12.1.1.Final"
 	
 	implementation "com.cronutils:cron-utils:9.0.1"
+	
+	implementation "org.apache.logging.log4j:log4j-core:2.14.1"
+	
 
 }
 

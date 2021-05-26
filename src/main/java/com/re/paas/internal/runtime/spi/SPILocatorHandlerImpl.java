@@ -1,6 +1,5 @@
 package com.re.paas.internal.runtime.spi;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -36,7 +35,6 @@ public class SPILocatorHandlerImpl implements SpiLocatorHandler {
 	static Map<SpiType, Map<String, List<Class<?>>>> spiClasses = Collections
 			.synchronizedMap(new HashMap<SpiType, Map<String, List<Class<?>>>>());
 
-	static Map<String, List<String>> appDependencies = new HashMap<>();
 
 	private static BaseSPILocator findLocator(SpiType type) {
 		String key = SPILocatorHandlerImpl.getLocatorConfigKey(type);
@@ -95,8 +93,8 @@ public class SPILocatorHandlerImpl implements SpiLocatorHandler {
 			return;
 		}
 
-		ClasspathScanner<?> cs = new ClasspathScanner<>(spi.classSuffix(), spi.classType(), spi.classIdentity())
-				.setMaxCount(spi.spiType().getCount()).setClassLoader(cl).setLoadAbstractClasses(true)
+		ClasspathScanner<?> cs = new ClasspathScanner<>(spi.classSuffix(), spi.classType(), spi.classIdentity(), cl)
+				.setMaxCount(spi.spiType().getCount()).setLoadAbstractClasses(true)
 				.setShuffleStrategy(spi.shuffleStrategy());
 
 		List<?> classes = cs.scanClasses();
@@ -184,46 +182,4 @@ public class SPILocatorHandlerImpl implements SpiLocatorHandler {
 		}
 	}
 
-	@Override
-	public void addDependencyPath(String source, List<String> targets) {
-		addDependencyPath0(source, targets);
-	}
-
-	static void addDependencyPath0(String child, List<String> parents) {
-
-		List<String> deps = appDependencies.get(child);
-
-		// Check for circular dependency
-
-		parents.forEach(p -> {
-			if (hasDependency(p, child)) {
-				Exceptions.throwRuntime("Detected circular dependency between apps: " + p + " and " + child);
-			}
-		});
-
-		if (deps == null) {
-			deps = new ArrayList<>();
-			appDependencies.put(child, deps);
-		}
-
-		deps.addAll(parents);
-	}
-
-	private static boolean hasDependency(String child, String parent) {
-		List<String> deps = appDependencies.get(child);
-		return deps != null && deps.contains(parent);
-	}
-
-	static List<String> getDependants(String appId) {
-
-		List<String> r = new ArrayList<>();
-
-		AppProvisionerImpl.listApps0().forEach(a -> {
-			if (hasDependency(a, appId)) {
-				r.add(a);
-			}
-		});
-
-		return r;
-	}
 }

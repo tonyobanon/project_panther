@@ -5,9 +5,10 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Set;
 
-import com.re.paas.api.collections.MapEntryImpl;
+import com.re.paas.api.classes.MapEntryImpl;
+
+import java.util.Set;
 
 public class Collections {
 

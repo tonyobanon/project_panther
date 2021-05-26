@@ -1,10 +1,8 @@
 package com.re.paas.api.adapters;
 
 import java.io.FileNotFoundException;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.function.BiConsumer;
 
@@ -17,11 +15,12 @@ import com.re.paas.api.runtime.SecureMethod.Factor;
 import com.re.paas.api.runtime.SecureMethod.IdentityStrategy;
 import com.re.paas.api.runtime.spi.DelegateInitResult;
 import com.re.paas.api.runtime.spi.DelegateSpec;
+import com.re.paas.api.runtime.spi.ResourceStatus;
 import com.re.paas.api.runtime.spi.SpiDelegate;
 import com.re.paas.api.runtime.spi.SpiType;
 import com.re.paas.api.utils.ClassUtils;
 import com.re.paas.api.utils.Collections;
-import com.re.paas.integrated.fusion.services.SystemAdapterService;
+import com.re.paas.internal.fusion.services.SystemAdapterService;
 
 
 @DelegateSpec(dependencies = { SpiType.NODE_ROLE })
@@ -34,11 +33,11 @@ public abstract class AbstractAdapterDelegate<U extends Object, T extends Adapte
 
 		createResourceMaps();
 
-		DelegateInitResult r = forEach(this::add0);
+		this.addResources(this::add0);
 
 		// At least one adapter resource must have been discovered
 		if (getAdapters().isEmpty()) {
-			return DelegateInitResult.FAILURE.setError("There was no adapter found");
+			return DelegateInitResult.FAILURE.setErrorMessage("There was no adapter found");
 		}
 
 		// If this is the master, load adapter if configuration is available
@@ -64,7 +63,7 @@ public abstract class AbstractAdapterDelegate<U extends Object, T extends Adapte
 			} catch (Exception e) {
 
 				if (Exceptions.recurseCause(e) instanceof FileNotFoundException) {
-					return DelegateInitResult.PENDING_ADAPTER_CONFIGURATION.setType(type);
+					return DelegateInitResult.PENDING_ADAPTER_CONFIGURATION.setAdapterType(type);
 				}
 
 				throw e;
@@ -77,7 +76,7 @@ public abstract class AbstractAdapterDelegate<U extends Object, T extends Adapte
 		// * If this is not a master, then the adapter configuration will be ingested
 		// when this node joins the cluster
 
-		return r;
+		return DelegateInitResult.SUCCESS;
 	}
 	
 	protected Collection<?> getResourceObjects() {
@@ -117,41 +116,40 @@ public abstract class AbstractAdapterDelegate<U extends Object, T extends Adapte
 	}
 
 	@Override
-	protected final void add(List<Class<T>> classes) {
-		classes.forEach(this::add0);
+	protected final ResourceStatus add(Class<T> clazz) {
+		return this.add0(clazz);
 	}
 	
-	private void add0(Class<T> c) {
+	private ResourceStatus add0(Class<T> c) {
 		
 		Map<String, T> adapters = getAdapters();
 		
 		T o = com.re.paas.internal.classes.ClassUtil.createInstance(c);
 		if (adapters.containsKey(o.name())) {
-			Exceptions.throwRuntime("An adapter already exists with the name: " + o.name());
+			return ResourceStatus.ERROR.setMessage("An adapter already exists with the name: " + o.name());
 		}
+		
 		adapters.put(o.name(), o);
+		return ResourceStatus.UPDATED;
 	}
-
+	
 	@Override
-	protected final List<Class<T>> remove(List<Class<T>> classes) {
-
+	protected final ResourceStatus remove(Class<T> c) {
 		Map<String, T> adapters = getAdapters();
-		List<Class<T>> result = new ArrayList<>();
-
-		classes.forEach(c -> {
-
-			if (ClassUtils.equals(c, getAdapter().getClass())) {
-				// Do not remove if active
-				result.add(c);
-				return;
-			}
-
-			T o = com.re.paas.internal.classes.ClassUtil.createInstance(c);
-			adapters.remove(o.name());
-		});
-
-		return result;
+		
+		if (ClassUtils.equals(c, getAdapter().getClass())) {
+			return ResourceStatus.ERROR.setMessage(
+					"Adapter: " + getAdapter().getClass().getName() + " is still active"
+			);
+		}
+		
+		
+		T o = com.re.paas.internal.classes.ClassUtil.createInstance(c);
+		adapters.remove(o.name());
+		
+		return ResourceStatus.UPDATED;
 	}
+	
 
 	private void createResourceMaps() {
 		getLocalStore().put(ADAPTERS_RESOURCE_NAMESPACE, new HashMap<>());

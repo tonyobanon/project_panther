@@ -3,7 +3,7 @@ package com.re.paas.api.runtime.spi;
 import java.util.Map;
 import java.util.function.Function;
 
-import com.re.paas.api.designpatterns.Singleton;
+import com.re.paas.api.Singleton;
 import com.re.paas.api.runtime.SecureMethod;
 import com.re.paas.api.runtime.SecureMethod.Factor;
 import com.re.paas.api.runtime.SecureMethod.IdentityStrategy;
@@ -36,6 +36,6 @@ public interface SpiDelegateHandler {
 	
 	@SecureMethod(factor = Factor.CALLER, identityStrategy = IdentityStrategy.SAME, allowed = {
 			SpiDelegate.class })
-	<T> DelegateInitResult forEach(SpiType type, Function<Class<T>, ResourceStatus> function);
+	<T> ResourcesInitResult addResources(SpiType type, Function<Class<T>, ResourceStatus> function);
 
 }

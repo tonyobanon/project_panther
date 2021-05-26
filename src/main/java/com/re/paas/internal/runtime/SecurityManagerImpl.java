@@ -1,6 +1,7 @@
 package com.re.paas.internal.runtime;
 
 import java.lang.StackWalker.StackFrame;
+import java.security.AccessControlContext;
 import java.security.Permission;
 
 import com.re.paas.api.classes.JvmConstants;
@@ -20,6 +21,7 @@ public class SecurityManagerImpl extends SecurityManager {
 	 * 
 	 * This field prevents a recursive call to the checkPermission(...) method <br>
 	 * <br>
+	 * 
 	 * <b>ImplNotes:</b><br>
 	 * There is every possibility that a StackOverflowError or ClassCircularityError
 	 * is thrown when this method is called. The actual error thrown depends on the
@@ -31,6 +33,18 @@ public class SecurityManagerImpl extends SecurityManager {
 	 */
 	static ThreadLocal<Boolean> activeContext = ThreadLocal.withInitial(() -> false);
 
+	@Override
+	public void checkPermission(Permission perm, Object context) {
+		
+//		if (context instanceof AccessControlContext) {
+//            ((AccessControlContext)context).checkPermission(perm);
+//        } else {
+//            throw new SecurityException();
+//        }
+		
+		this.checkPermission(perm);
+	}
+	
 	@Override
 	public void checkPermission(Permission perm) {
 		

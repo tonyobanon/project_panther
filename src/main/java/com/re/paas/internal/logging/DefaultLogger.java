@@ -5,6 +5,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 
+import com.re.paas.api.Platform;
 import com.re.paas.api.annotations.develop.PlatformInternal;
 import com.re.paas.api.classes.SingleThreadExecutor;
 import com.re.paas.api.classes.ThreadContext;
@@ -199,21 +200,29 @@ public class DefaultLogger extends Logger {
 
 	private static void logDelegate(VerboseLevel level, String namespace, String message) {
 		
-		SingleThreadExecutor.execute(() -> {
-				String[] lines = format(namespace, message, level);
+		Runnable logToPipeline = () -> {
+			String[] lines = format(namespace, message, level);
 
-				if (getPipeline() != null) {
-					for (String line : lines) {
-						getPipeline().println(level, line);
-					}
+			if (getPipeline() != null) {
+				for (String line : lines) {
+					getPipeline().println(level, line);
 				}
+			}
 
-				if (isSnapshotEnabled) {
-					for (String line : lines) {
-						logEntries.add(line);
-					}
+			if (isSnapshotEnabled) {
+				for (String line : lines) {
+					logEntries.add(line);
 				}
-		});
+			}
+		};
+		
+		if (Platform.isDevMode()) {
+			logToPipeline.run();
+		} else {
+			SingleThreadExecutor.execute(() -> {
+				logToPipeline.run();
+			});
+		}
 	}
 
 	private static final String _getNamespace() {

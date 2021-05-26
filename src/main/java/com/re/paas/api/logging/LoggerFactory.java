@@ -1,6 +1,6 @@
 package com.re.paas.api.logging;
 
-import com.re.paas.api.designpatterns.Singleton;
+import com.re.paas.api.Singleton;
 
 public interface LoggerFactory {
 

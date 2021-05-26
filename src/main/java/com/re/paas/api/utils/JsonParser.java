@@ -2,7 +2,8 @@ package com.re.paas.api.utils;
 
 import java.util.Map;
 
-import com.re.paas.api.designpatterns.Singleton;
+import com.re.paas.api.Singleton;
+import com.re.paas.api.fusion.Buffer;
 
 public interface JsonParser {
 
@@ -10,11 +11,13 @@ public interface JsonParser {
 		return Singleton.get(JsonParser.class);
 	}
 	
-	String toPrettyJson(Object value);
+	String toPrettyString(Object value);
 	
-	<T> String toJson(T o);
+	<T> String toString(T o);
+	
+	<T> Buffer toBuffer(T o);
 
-	<T> T fromJson(String json, Class<T> type);
+	<T> T fromString(String json, Class<T> type);
 	
 	<T> T fromMap(Map<String, Object> map, Class<T> type);
 

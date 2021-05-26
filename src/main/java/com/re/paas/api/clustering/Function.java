@@ -6,10 +6,10 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
+import com.re.paas.api.Singleton;
 import com.re.paas.api.clustering.classes.ClusterDestination;
 import com.re.paas.api.clustering.classes.ClusteringUtils;
 import com.re.paas.api.clustering.protocol.Client;
-import com.re.paas.api.designpatterns.Singleton;
 import com.re.paas.api.runtime.spi.Resource;
 import com.re.paas.api.runtime.spi.SpiType;
 import com.re.paas.api.utils.Collections;

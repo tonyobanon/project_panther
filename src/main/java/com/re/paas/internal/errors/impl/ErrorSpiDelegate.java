@@ -1,33 +1,30 @@
 package com.re.paas.internal.errors.impl;
 
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.function.Consumer;
 
 import com.re.paas.api.errors.AbstractErrorSpiDelegate;
 import com.re.paas.api.errors.Error;
 import com.re.paas.api.runtime.spi.DelegateInitResult;
+import com.re.paas.api.runtime.spi.ResourceStatus;
 
 public class ErrorSpiDelegate extends AbstractErrorSpiDelegate {
 
 	@Override
 	public DelegateInitResult init() {
-
-		Consumer<Class<Error>> consumer = c -> {
-			addError(c);
-		};
-
-		return forEach(consumer);
+		
+		addResources(this::add);
+		
+		return DelegateInitResult.SUCCESS;
+		
 	}
 
-	private void addError(Class<Error> c) {
+	protected ResourceStatus add(Class<Error> c) {
 
 		Error[] errors = c.getEnumConstants();
 
 		if (errors.length == 0) {
-			return;
+			return ResourceStatus.NOT_UPDATED;
 		}
 
 		String namespace = errors[0].namespace();
@@ -44,23 +41,26 @@ public class ErrorSpiDelegate extends AbstractErrorSpiDelegate {
 		if (existingMap == null) {
 			getLocalStore().put(namespace, errorMap);
 		} else {
-
-			errorMap.forEach((k, v) -> {
-				if (existingMap.containsKey(k)) {
-					throw new RuntimeException(
-							"Namespace: " + namespace + " already contains code: " + k + " => " + c.getName());
+			
+			for(Map.Entry<Integer,String> e  : errorMap.entrySet()) {
+				
+				if (existingMap.containsKey(e.getKey())) {
+					return ResourceStatus.ERROR.setMessage("Namespace: " + namespace + " already contains code: " + e.getKey() + " => " + c.getName());
 				}
-				existingMap.put(k, v);
-			});
+				
+				existingMap.put(e.getKey(), e.getValue());
+			}
 		}
+		
+		return ResourceStatus.UPDATED;
 	}
 
-	private void removeError(Class<Error> c) {
+	protected ResourceStatus remove(Class<Error> c) {
 
 		Error[] errors = c.getEnumConstants();
 
 		if (errors.length > 0) {
-			return;
+			return ResourceStatus.NOT_UPDATED;
 		}
 
 		String namespace = errors[0].namespace();
@@ -75,6 +75,8 @@ public class ErrorSpiDelegate extends AbstractErrorSpiDelegate {
 		if (existingMap.isEmpty()) {
 			getLocalStore().remove(namespace);
 		}
+		
+		return ResourceStatus.UPDATED;
 	}
 
 	@Override
@@ -90,18 +92,4 @@ public class ErrorSpiDelegate extends AbstractErrorSpiDelegate {
 		return null;
 	}
 
-	@Override
-	protected void add(List<Class<Error>> classes) {
-		classes.forEach(c -> {
-			addError(c);
-		});
-	}
-
-	@Override
-	protected List<Class<Error>> remove(List<Class<Error>> classes) {
-		classes.forEach(c -> {
-			removeError(c);
-		});
-		return Collections.emptyList();
-	}
 }

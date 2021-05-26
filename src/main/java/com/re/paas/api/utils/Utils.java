@@ -32,7 +32,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import com.re.paas.api.annotations.develop.BlockerTodo;
-import com.re.paas.api.classes.ClientResources.HtmlCharacterEntities;
 import com.re.paas.api.fusion.JsonArray;
 import com.re.paas.api.fusion.JsonObject;
 import com.re.paas.api.classes.Exceptions;
@@ -356,15 +355,6 @@ public class Utils {
 			output.append(word).append(" ");
 		}
 		return output.toString() + " ...";
-	}
-
-	public static String getTimeOffsetAsString(TimeUnit unit, Long offset) {
-
-		boolean isNegative = offset < 0;
-
-		return !isNegative ? "in" + HtmlCharacterEntities.SPACE
-				: "" + Math.abs(offset) + HtmlCharacterEntities.SPACE + unit.name().toLowerCase()
-						+ (isNegative ? HtmlCharacterEntities.SPACE + "ago" : "");
 	}
 
 	public static Long getTimeOffset(TimeUnit unit, Date to) {

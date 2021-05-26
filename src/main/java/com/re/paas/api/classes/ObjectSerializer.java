@@ -2,7 +2,7 @@ package com.re.paas.api.classes;
 
 import java.nio.ByteBuffer;
 
-import com.re.paas.api.designpatterns.Singleton;
+import com.re.paas.api.Singleton;
 
 
 public interface ObjectSerializer {

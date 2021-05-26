@@ -1,6 +1,17 @@
 package com.re.paas.api.infra.database.document.xspec;
 
-import static com.re.paas.api.infra.database.document.xspec.ExpressionSpecBuilder.*;
+import static com.re.paas.api.infra.database.document.xspec.ExpressionSpecBuilder.B;
+import static com.re.paas.api.infra.database.document.xspec.ExpressionSpecBuilder.BOOL;
+import static com.re.paas.api.infra.database.document.xspec.ExpressionSpecBuilder.BS;
+import static com.re.paas.api.infra.database.document.xspec.ExpressionSpecBuilder.D;
+import static com.re.paas.api.infra.database.document.xspec.ExpressionSpecBuilder.L;
+import static com.re.paas.api.infra.database.document.xspec.ExpressionSpecBuilder.M;
+import static com.re.paas.api.infra.database.document.xspec.ExpressionSpecBuilder.N;
+import static com.re.paas.api.infra.database.document.xspec.ExpressionSpecBuilder.NS;
+import static com.re.paas.api.infra.database.document.xspec.ExpressionSpecBuilder.NULL;
+import static com.re.paas.api.infra.database.document.xspec.ExpressionSpecBuilder.S;
+import static com.re.paas.api.infra.database.document.xspec.ExpressionSpecBuilder.SS;
+import static com.re.paas.api.infra.database.document.xspec.ExpressionSpecBuilder.parenthesize;
 
 import java.nio.ByteBuffer;
 import java.util.Collections;
@@ -8,7 +19,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
 
 import com.re.paas.api.infra.database.document.PrimaryKey;
 import com.re.paas.api.utils.ValueType;

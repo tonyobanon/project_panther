@@ -1,6 +1,5 @@
 package com.re.paas.api.infra.database.document;
 
-import com.amazonaws.services.dynamodbv2.document.Attribute;
 import com.re.paas.api.infra.database.document.utils.ItemUtils;
 
 /**

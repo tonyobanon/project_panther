@@ -5,9 +5,6 @@ import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-import com.amazonaws.annotation.Beta;
-import com.amazonaws.annotation.Immutable;
-
 /**
  * A path operand that refers to a <a href=
  * "http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_AttributeValue.html"
@@ -15,8 +12,6 @@ import com.amazonaws.annotation.Immutable;
  * <p>
  * Use {@link ExpressionSpecBuilder#SS(String)} to instantiate this class.
  */
-@Beta
-@Immutable
 public final class SS extends PathOperand {
     SS(String path) {
         super(path);

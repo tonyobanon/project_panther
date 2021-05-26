@@ -3,8 +3,6 @@
 
 import static com.re.paas.api.infra.database.document.xspec.ExpressionSpecBuilder.__;
 
-import com.amazonaws.annotation.Beta;
-
 /**
  * Represents a <a href=
  * "http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.SpecifyingConditions.html#ConditionExpressionReference">negation</a>
@@ -18,7 +16,6 @@ import com.amazonaws.annotation.Beta;
  * <p>
  * This object is as immutable (or unmodifiable) as the underlying condition.
  */
-@Beta
 public final class NegationCondition extends Condition {
     private final Condition condition;
 

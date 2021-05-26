@@ -18,13 +18,13 @@ import com.re.paas.api.classes.PlatformException;
 import com.re.paas.api.fusion.JsonObject;
 import com.re.paas.api.infra.database.document.Database;
 import com.re.paas.api.infra.database.document.Table;
+import com.re.paas.api.infra.filesystem.NativeFileSystem;
 import com.re.paas.api.logging.Logger;
 import com.re.paas.api.runtime.RuntimeIdentity;
 import com.re.paas.api.runtime.spi.AppProvisioner;
 import com.re.paas.api.runtime.spi.SpiBase;
 import com.re.paas.api.utils.Utils;
 import com.re.paas.internal.errors.SpiError;
-import com.re.paas.internal.infra.filesystem.FileSystemProviders;
 import com.re.paas.internal.runtime.RuntimeIdentityImpl;
 
 @BlockerTodo("Create ThreadGroup(s) for each application, so that ThreadSecurity#newThread can use it")
@@ -39,9 +39,10 @@ public class AppProvisionerImpl implements AppProvisioner {
 
 	static Map<String, JsonObject> appConfig = Collections.synchronizedMap(new HashMap<String, JsonObject>());
 
-	private static final Path basePath = FileSystemProviders.getResourcePath().resolve("apps");
+	private static final Path basePath = NativeFileSystem.get().getResourcePath().resolve("apps");
 
 	public AppProvisionerImpl() {
+		
 		if (!Files.exists(basePath)) {
 			try {
 				Files.createDirectories(basePath);
@@ -117,7 +118,7 @@ public class AppProvisionerImpl implements AppProvisioner {
 		appConfig.put(appId, config);
 
 		// Create classloader
-		AppClassLoader cl = AppClassLoader.get(appId);
+		AppClassLoader cl = new AppClassLoaderImpl(ClassLoader.getSystemClassLoader(), appId);
 
 		// Load RuntimeIdentity
 		load(cl);

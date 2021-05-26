@@ -30,6 +30,7 @@ public class UriHelper {
 	}
 
 	static String transform(FileSystemProviderImpl provider, String path) {
+		
 		if (provider.getProvider().equals(FileSystemProviders.getInternal().provider())) {
 			// Do not modify the uri, if the backing provider is system internal
 			return path;

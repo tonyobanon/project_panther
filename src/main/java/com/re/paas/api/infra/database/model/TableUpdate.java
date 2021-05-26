@@ -3,8 +3,6 @@ package com.re.paas.api.infra.database.model;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.amazonaws.services.dynamodbv2.model.AttributeDefinition;
-
 public class TableUpdate {
     /**
      * <p>
@@ -23,6 +21,8 @@ public class TableUpdate {
 	private List<GlobalSecondaryIndexUpdate> globalSecondaryIndexUpdates = new ArrayList<>();
 	
 	private Boolean ttlEnabled;
+	
+	private ProvisionedThroughput provisionedThroughput;
 
 	public java.util.List<AttributeDefinition> getAttributeDefinitions() {
 		return attributeDefinitions;
@@ -64,4 +64,14 @@ public class TableUpdate {
 		this.ttlEnabled = ttlEnabled;
 		return this;
 	}
+
+	public ProvisionedThroughput getProvisionedThroughput() {
+		return provisionedThroughput;
+	}
+
+	public TableUpdate setProvisionedThroughput(ProvisionedThroughput provisionedThroughput) {
+		this.provisionedThroughput = provisionedThroughput;
+		return this;
+	}
+
 }

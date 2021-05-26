@@ -1,9 +1,6 @@
 
  package com.re.paas.api.infra.database.document.xspec;
 
-import com.amazonaws.annotation.Beta;
-
-
 /**
  * Represents an operand for building expressions.
  * <p>
@@ -21,6 +18,5 @@ import com.amazonaws.annotation.Beta;
  * @see FunctionOperand
  * @see LiteralOperand
  */
-@Beta
 public abstract class Operand extends UnitOfExpression {
 }

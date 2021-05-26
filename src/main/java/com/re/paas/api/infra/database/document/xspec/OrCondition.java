@@ -3,8 +3,6 @@
 
 import static com.re.paas.api.infra.database.document.xspec.ExpressionSpecBuilder.__;
 
-import com.amazonaws.annotation.Beta;
-
 /**
  * Represents an <a href=
  * "http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.SpecifyingConditions.html#ConditionExpressionReference"
@@ -12,7 +10,6 @@ import com.amazonaws.annotation.Beta;
  * <p>
  * This object is as immutable (or unmodifiable) as the underlying conditions.
  */
-@Beta
 public final class OrCondition extends Condition {
     private final Condition lhs;
     private final Condition rhs;

@@ -2,10 +2,10 @@
 package com.re.paas.api.infra.database.document;
 
 import static com.re.paas.api.infra.database.document.utils.ItemUtils.valToString;
+import static com.re.paas.api.utils.BinaryUtils.copyAllBytesFrom;
+import static com.re.paas.api.utils.BinaryUtils.copyBytesFrom;
 import static com.re.paas.api.utils.ValidationUtils.assertNotEmpty;
 import static com.re.paas.api.utils.ValidationUtils.assertNotNull;
-import static com.re.paas.internal.utils.BinaryUtils.copyAllBytesFrom;
-import static com.re.paas.internal.utils.BinaryUtils.copyBytesFrom;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -22,8 +22,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import com.re.paas.api.Singleton;
 import com.re.paas.api.classes.Exceptions;
-import com.re.paas.api.designpatterns.Singleton;
 import com.re.paas.api.infra.database.document.utils.ItemUtils;
 import com.re.paas.api.infra.database.document.utils.ItemValueConformer;
 import com.re.paas.api.utils.Base64;
@@ -878,7 +878,7 @@ public class Item {
 	 */
 	public Item withJSON(String attrName, String json) {
 		ItemUtils.checkInvalidAttribute(attrName, json);
-		attributes.put(attrName, valueConformer.transform(jsonParser.fromJson(json, Object.class)));
+		attributes.put(attrName, valueConformer.transform(jsonParser.fromString(json, Object.class)));
 		return this;
 	}
 
@@ -894,7 +894,7 @@ public class Item {
 	public String getJSON(String attrName) {
 		ItemUtils.checkInvalidAttrName(attrName);
 		Object val = attributes.get(attrName);
-		return val == null ? null : jsonParser.toJson(val);
+		return val == null ? null : jsonParser.toString(val);
 	}
 
 	/**
@@ -909,7 +909,7 @@ public class Item {
 	public String getJSONPretty(String attrName) {
 		ItemUtils.checkInvalidAttrName(attrName);
 		Object val = attributes.get(attrName);
-		return val == null ? null : jsonParser.toPrettyJson(val);
+		return val == null ? null : jsonParser.toPrettyString(val);
 	}
 
 	/**
@@ -1173,7 +1173,7 @@ public class Item {
 		if (json == null)
 			return null;
 		@SuppressWarnings("unchecked")
-		Map<String, Object> map = (Map<String, Object>) valueConformer.transform(jsonParser.fromJson(json, Map.class));
+		Map<String, Object> map = (Map<String, Object>) valueConformer.transform(jsonParser.fromString(json, Map.class));
 		return fromMap(map);
 	}
 
@@ -1182,7 +1182,7 @@ public class Item {
 	 * encoded in the resultant string.
 	 */
 	public String toJSON() {
-		return jsonParser.toJson(this.attributes);
+		return jsonParser.toString(this.attributes);
 	}
 
 	/**
@@ -1306,7 +1306,7 @@ public class Item {
 	 * base-64 encoded in the resultant string.
 	 */
 	public String toJSONPretty() {
-		return jsonParser.toPrettyJson(this.attributes);
+		return jsonParser.toPrettyString(this.attributes);
 	}
 
 	@Override

@@ -1,9 +1,6 @@
 
  package com.re.paas.api.infra.database.document.xspec;
 
-import com.amazonaws.annotation.Beta;
-import com.amazonaws.annotation.Immutable;
-
 /**
  * A path operand that refers to a <a href=
  * "http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_AttributeValue.html"
@@ -11,8 +8,6 @@ import com.amazonaws.annotation.Immutable;
  * <p>
  * Use {@link ExpressionSpecBuilder#NULL(String)} to instantiate this class.
  */
-@Beta
-@Immutable
 public class NULL extends PathOperand {
 
     NULL(String path) {

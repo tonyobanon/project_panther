@@ -1,7 +1,5 @@
 package com.re.paas.api;
 
-import com.re.paas.api.designpatterns.Singleton;
-
 public interface Activator {
 
 	public static Activator get() {
@@ -9,4 +7,7 @@ public interface Activator {
 	}
 
 	public Boolean isInstalled();
+	
+	public void restartNeeded();
+	
 }

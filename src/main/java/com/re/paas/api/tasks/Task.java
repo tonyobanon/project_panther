@@ -13,7 +13,7 @@ public abstract class Task extends AbstractResource implements Cloneable, Serial
 	private static final String DEFAULT_GROUP = "default";
 	
 	public Task() {
-		super(SpiType.TASK);
+		super(SpiType.SCHEDULED_TASK);
 	}
 
 	public abstract String id();

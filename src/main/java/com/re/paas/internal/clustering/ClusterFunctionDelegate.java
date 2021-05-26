@@ -1,21 +1,17 @@
 package com.re.paas.internal.clustering;
 
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.function.Consumer;
 
 import com.re.paas.api.clustering.AbstractClusterFunction;
 import com.re.paas.api.clustering.AbstractClusterFunctionDelegate;
 import com.re.paas.api.clustering.Function;
-import com.re.paas.api.logging.Logger;
 import com.re.paas.api.roles.AbstractRole;
 import com.re.paas.api.runtime.spi.DelegateInitResult;
 import com.re.paas.api.runtime.spi.DelegateSpec;
+import com.re.paas.api.runtime.spi.ResourceStatus;
 import com.re.paas.api.runtime.spi.SpiType;
-import com.re.paas.api.utils.ClassUtils;
 
 @DelegateSpec(dependencies = { SpiType.NODE_ROLE, SpiType.FUNCTION })
 public class ClusterFunctionDelegate extends AbstractClusterFunctionDelegate {
@@ -25,50 +21,58 @@ public class ClusterFunctionDelegate extends AbstractClusterFunctionDelegate {
 
 	@Override
 	public DelegateInitResult init() {
-		return forEach(ClusterFunctionDelegate::processClusterFunction);
+		addResources(this::add);
+		return DelegateInitResult.SUCCESS;
 	}
 
 	@Override
-	protected void add(List<Class<AbstractClusterFunction<Object, Object>>> classes) {
-		classes.forEach(ClusterFunctionDelegate::processClusterFunction);
+	protected ResourceStatus add(Class<AbstractClusterFunction<Object, Object>> c) {
+		
+		AbstractClusterFunction<Object, Object> f = com.re.paas.internal.classes.ClassUtil.createInstance(c);
+		
+		if (!hasValidRole(f)) {
+			return ResourceStatus.ERROR.setMessage("Cluster function: " + c.getName().toString() + " does not have a valid role");
+		}
+		
+
+		Short functionId = Function.getId(f.id());
+		
+		if (functions.containsKey(functionId)) {
+			return ResourceStatus.ERROR.setMessage("Cluster function: " + f.id() + " already exists");
+		}
+		
+		functions.put(functionId, f);
+		
+		return ResourceStatus.UPDATED;
 	}
-	
-	
 	
 	@Override
-	protected Collection<?> getResourceObjects() {
-		// TODO Auto-generated method stub
-		return null;
+	protected ResourceStatus remove(Class<AbstractClusterFunction<Object, Object>> c) {
+		
+		AbstractClusterFunction<Object, Object> f = com.re.paas.internal.classes.ClassUtil.createInstance(c);
+		
+		Short functionId = Function.getId(f.id());
+		
+		if (!functions.containsKey(functionId)) {
+			return ResourceStatus.NOT_UPDATED.setMessage("Cluster function: " + f.id() + " does not exist");
+		}
+		
+		functions.remove(functionId);
+		
+		return ResourceStatus.UPDATED;
 	}
-
-	private static void processClusterFunction(Class<AbstractClusterFunction<Object, Object>> c) {
-
-		AbstractClusterFunction<Object, Object> o = com.re.paas.internal.classes.ClassUtil.createInstance(c);
-
+	
+	
+	private Boolean hasValidRole(AbstractClusterFunction<Object, Object> f) {
 		boolean b = false;
 
 		for (AbstractRole role : AbstractRole.get().values()) {
-			b = o.role().equals(role.getClass());
+			b = f.role().equals(role.getClass());
 			if (b) {
 				break;
 			}
 		}
-		
-		Short functionId = Function.getId(o.id());
-
-		if (b) {
-
-			if (functions.containsKey(functionId)) {
-				Logger.get().info("Adding Cluster Function: " + o.id());
-				functions.put(functionId, o);
-			}
-
-		} else {
-			if (functions.containsKey(functionId)) {
-				Logger.get().info("Removing Cluster Function: " + o.id());
-				functions.remove(functionId);
-			}
-		}
+		return b;
 	}
 	
 	@Override

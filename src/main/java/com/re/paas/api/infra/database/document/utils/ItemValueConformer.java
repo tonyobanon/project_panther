@@ -1,6 +1,6 @@
 package com.re.paas.api.infra.database.document.utils;
 
-import static com.amazonaws.util.BinaryUtils.copyBytesFrom;
+import static com.re.paas.api.utils.BinaryUtils.copyBytesFrom;
 
 import java.math.BigDecimal;
 import java.nio.ByteBuffer;

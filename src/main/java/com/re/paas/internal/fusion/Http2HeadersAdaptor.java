@@ -9,8 +9,10 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import com.google.common.collect.Lists;
 import com.re.paas.api.fusion.MultiMap;
 
+import io.netty.handler.codec.AsciiString;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http2.Http2Headers;
 
@@ -40,12 +42,12 @@ public class Http2HeadersAdaptor implements MultiMap {
 
 	public Http2HeadersAdaptor(Http2Headers headers) {
 
-		List<CharSequence> cookies = headers.getAll(HttpHeaderNames.COOKIE);
+		List<AsciiString> cookies = headers.getAll(HttpHeaderNames.COOKIE);
 		if (cookies != null && cookies.size() > 1) {
 			// combine the cookie values into 1 header entry.
 			// https://tools.ietf.org/html/rfc7540#section-8.1.2.5
 			String value = cookies.stream().collect(Collectors.joining("; "));
-			headers.set(HttpHeaderNames.COOKIE, value);
+			headers.set(HttpHeaderNames.COOKIE, AsciiString.of(value));
 		}
 
 		this.headers = headers;
@@ -53,13 +55,13 @@ public class Http2HeadersAdaptor implements MultiMap {
 
 	@Override
 	public String get(String name) {
-		CharSequence val = headers.get(toLowerCase(name));
+		AsciiString val = headers.get(AsciiString.of(toLowerCase(name)));
 		return val != null ? val.toString() : null;
 	}
 
 	@Override
 	public List<String> getAll(String name) {
-		List<CharSequence> all = headers.getAll(toLowerCase(name));
+		List<AsciiString> all = headers.getAll(AsciiString.of(toLowerCase(name)));
 		if (all != null) {
 			return new AbstractList<String>() {
 				@Override
@@ -85,7 +87,7 @@ public class Http2HeadersAdaptor implements MultiMap {
 
 	@Override
 	public boolean contains(String name) {
-		return headers.contains(toLowerCase(name));
+		return headers.contains(AsciiString.of(toLowerCase(name)));
 	}
 
 	@Override
@@ -99,7 +101,7 @@ public class Http2HeadersAdaptor implements MultiMap {
 			names = new AbstractSet<String>() {
 				@Override
 				public Iterator<String> iterator() {
-					Iterator<CharSequence> it = headers.names().iterator();
+					Iterator<AsciiString> it = headers.names().iterator();
 					return new Iterator<String>() {
 						@Override
 						public boolean hasNext() {
@@ -124,13 +126,14 @@ public class Http2HeadersAdaptor implements MultiMap {
 
 	@Override
 	public MultiMap add(String name, String value) {
-		headers.add(toLowerCase(name), value);
+		headers.add(AsciiString.of(toLowerCase(name)), AsciiString.of(value));
 		return this;
 	}
 
 	@Override
 	public MultiMap add(String name, Iterable<String> values) {
-		headers.add(toLowerCase(name), values);
+		headers.add(AsciiString.of(toLowerCase(name)),
+				Lists.newArrayList(values).stream().map(v -> AsciiString.of(v)).collect(Collectors.toList()));
 		return this;
 	}
 
@@ -152,19 +155,21 @@ public class Http2HeadersAdaptor implements MultiMap {
 
 	@Override
 	public MultiMap set(String name, String value) {
-		headers.set(toLowerCase(name), value);
+		headers.set(AsciiString.of(toLowerCase(name)), AsciiString.of(value));
 		return this;
 	}
-	
+
 	@Override
-	public MultiMap set(CharSequence name, CharSequence[] values) {
-		headers.set(toLowerCase(name), values);
+	public MultiMap set(CharSequence name, CharSequence... values) {
+		headers.set(AsciiString.of(toLowerCase(name)),
+				Lists.newArrayList(values).stream().map(v -> AsciiString.of(v)).collect(Collectors.toList()));
 		return this;
 	}
 
 	@Override
 	public MultiMap set(String name, Iterable<String> values) {
-		headers.set(toLowerCase(name), values);
+		headers.set(AsciiString.of(toLowerCase(name)),
+				Lists.newArrayList(values).stream().map(v -> AsciiString.of(v)).collect(Collectors.toList()));
 		return this;
 	}
 
@@ -179,7 +184,7 @@ public class Http2HeadersAdaptor implements MultiMap {
 
 	@Override
 	public MultiMap remove(String name) {
-		headers.remove(toLowerCase(name));
+		headers.remove(AsciiString.of(toLowerCase(name)));
 		return this;
 	}
 
@@ -209,48 +214,50 @@ public class Http2HeadersAdaptor implements MultiMap {
 
 	@Override
 	public String get(CharSequence name) {
-		CharSequence val = headers.get(toLowerCase(name));
+		CharSequence val = headers.get(AsciiString.of(toLowerCase(name)));
 		return val != null ? val.toString() : null;
 	}
 
 	@Override
 	public List<String> getAll(CharSequence name) {
-		List<CharSequence> all = headers.getAll(toLowerCase(name));
+		List<AsciiString> all = headers.getAll(AsciiString.of(toLowerCase(name)));
 		return all != null ? all.stream().map(CharSequence::toString).collect(Collectors.toList()) : null;
 	}
 
 	@Override
 	public boolean contains(CharSequence name) {
-		return headers.contains(toLowerCase(name));
+		return headers.contains(AsciiString.of(toLowerCase(name)));
 	}
 
 	@Override
 	public MultiMap add(CharSequence name, CharSequence value) {
-		headers.add(toLowerCase(name), value);
+		headers.add(AsciiString.of(toLowerCase(name)), AsciiString.of(value));
 		return this;
 	}
 
 	@Override
 	public MultiMap add(CharSequence name, Iterable<CharSequence> values) {
-		headers.add(toLowerCase(name), values);
+		headers.add(AsciiString.of(toLowerCase(name)), 
+				Lists.newArrayList(values).stream().map(v -> AsciiString.of(v)).collect(Collectors.toList()));
 		return this;
 	}
 
 	@Override
 	public MultiMap set(CharSequence name, CharSequence value) {
-		headers.set(toLowerCase(name), value);
+		headers.set(AsciiString.of(toLowerCase(name)), AsciiString.of(value));
 		return this;
 	}
 
 	@Override
 	public MultiMap set(CharSequence name, Iterable<CharSequence> values) {
-		headers.set(toLowerCase(name), values);
+		headers.set(AsciiString.of(toLowerCase(name)), 
+				Lists.newArrayList(values).stream().map(v -> AsciiString.of(v)).collect(Collectors.toList()));
 		return this;
 	}
 
 	@Override
 	public MultiMap remove(CharSequence name) {
-		headers.remove(toLowerCase(name));
+		headers.remove(AsciiString.of(toLowerCase(name)));
 		return this;
 	}
 }

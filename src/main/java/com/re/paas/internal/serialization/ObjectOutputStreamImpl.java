@@ -22,7 +22,10 @@ public class ObjectOutputStreamImpl extends ObjectOutputStream {
 		
 		String appId = ClassLoaders.getId(desc.forClass().getClassLoader());
 
-		writeObject(appId);
+		assert appId != null;
+		
+		writeUTF(appId);
+	
 	}
 
 }

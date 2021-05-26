@@ -7,6 +7,8 @@ import java.util.Locale;
 
 public interface RoutingContext extends Serializable {
 
+	Route route();
+	
 	Cookie getCookie(String name);
 
 	RoutingContext addCookie(Cookie cookie);

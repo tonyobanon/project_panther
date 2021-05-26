@@ -1,16 +1,13 @@
 package com.re.paas.internal.clustering;
 
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.function.Consumer;
 
-import com.re.paas.api.classes.Exceptions;
 import com.re.paas.api.classes.PlatformException;
 import com.re.paas.api.clustering.AbstractFunctionDelegate;
 import com.re.paas.api.clustering.Function;
 import com.re.paas.api.runtime.spi.DelegateInitResult;
+import com.re.paas.api.runtime.spi.ResourceStatus;
 import com.re.paas.api.utils.ClassUtils;
 import com.re.paas.internal.errors.ClusterFunctionError;
 
@@ -21,15 +18,15 @@ public class FunctionDelegate extends AbstractFunctionDelegate {
 
 	@Override
 	public DelegateInitResult init() {
-		Consumer<Class<Function>> consumer = c -> {
-			addFunction(c);
-		};
-		return forEach(consumer);
+		
+		this.addResources(this::add);
+		
+		return DelegateInitResult.SUCCESS;
 	}
-	
+
 	@Override
 	public Function getFunction(String namespace, Short contextId) {
-		
+
 		@SuppressWarnings("unchecked")
 		Map<Short, Function> functionMap = (Map<Short, Function>) getLocalStore().get(namespace);
 
@@ -54,32 +51,17 @@ public class FunctionDelegate extends AbstractFunctionDelegate {
 		return function.namespace() + "_" + function.contextId();
 	}
 
-	@Override
-	protected void add(List<Class<Function>> classes) {
+	protected ResourceStatus add(Class<Function> c) {
 
-		if (classes.size() + functionIds.size() > Short.MAX_VALUE) {
-			Exceptions.throwRuntime(PlatformException.get(ClusterFunctionError.MAX_NUMBER_OF_FUNCTIONS_REACHED));
+		if (functionIds.size() + 1 > Short.MAX_VALUE) {
+			return ResourceStatus.ERROR.setMessage(
+					PlatformException.get(ClusterFunctionError.MAX_NUMBER_OF_FUNCTIONS_REACHED).getMessage());
 		}
-
-		classes.forEach(c -> {
-			addFunction(c);
-		});
-	}
-
-	@Override
-	protected List<Class<Function>> remove(List<Class<Function>> classes) {
-		classes.forEach(c -> {
-			removeFunction(c);
-		});
-		return Collections.emptyList();
-	}
-
-	private void addFunction(Class<Function> c) {
 
 		Function[] functions = c.getEnumConstants();
 
 		if (functions.length == 0) {
-			return;
+			return ResourceStatus.NOT_UPDATED;
 		}
 
 		String namespace = functions[0].namespace();
@@ -96,30 +78,35 @@ public class FunctionDelegate extends AbstractFunctionDelegate {
 		if (existingMap == null) {
 			getLocalStore().put(namespace, functionMap);
 		} else {
-			
-			functionMap.forEach((k, v) -> {
-				if(existingMap.containsKey(k)) {
-					throw new RuntimeException("Namespace: " + namespace + " already contains context-id: " + k + " => " + ClassUtils.toString(c));
+
+			for (Map.Entry<Short, Function> e : functionMap.entrySet()) {
+
+				if (existingMap.containsKey(e.getKey())) {
+					return ResourceStatus.ERROR.setMessage("Namespace: " + namespace + " already contains context-id: "
+							+ e.getKey() + " => " + ClassUtils.toString(c));
 				}
-				existingMap.put(k, v);
-			});
+
+				existingMap.put(e.getKey(), e.getValue());
+			}
 		}
-		
+
 		for (Function f : functions) {
-			
+
 			Short id = (short) functionIds.size();
-			
+
 			functionIds.put(toString(f), id);
 			FunctionDelegate.functions.put(id, f);
 		}
+
+		return ResourceStatus.UPDATED;
 	}
 
-	private void removeFunction(Class<Function> c) {
+	protected ResourceStatus remove(Class<Function> c) {
 
 		Function[] functions = c.getEnumConstants();
-		
+
 		if (functions.length > 0) {
-			return;
+			return ResourceStatus.NOT_UPDATED;
 		}
 
 		String namespace = functions[0].namespace();
@@ -134,11 +121,13 @@ public class FunctionDelegate extends AbstractFunctionDelegate {
 		if (existingMap.isEmpty()) {
 			getLocalStore().remove(namespace);
 		}
-		
+
 		for (Function f : functions) {
 			Short id = functionIds.remove(toString(f));
 			FunctionDelegate.functions.remove(id);
 		}
+
+		return ResourceStatus.UPDATED;
 	}
-	
+
 }

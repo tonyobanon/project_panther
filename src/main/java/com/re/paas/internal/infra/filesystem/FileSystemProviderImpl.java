@@ -48,7 +48,7 @@ public class FileSystemProviderImpl extends AbstractFileSystemProvider {
 
 	private static FileSystemProvider provider;
 	private static FileSystem fs;
-	
+
 	public FileSystemProviderImpl() {
 		this(provider);
 	}
@@ -89,7 +89,7 @@ public class FileSystemProviderImpl extends AbstractFileSystemProvider {
 		if (fs == null) {
 			Exceptions.throwRuntime(new FileSystemNotFoundException(uri.toString()));
 		}
-		return new FileSystemImpl(this);
+		return new FileSystemWrapper(new FileSystemImpl(this));
 	}
 
 	@Override
@@ -551,11 +551,6 @@ public class FileSystemProviderImpl extends AbstractFileSystemProvider {
 	@Override
 	public Integer getReferenceCount() {
 		return referenceCount.get();
-	}
-
-	@Override
-	public String toString() {
-		return "tony";
 	}
 
 }

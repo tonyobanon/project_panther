@@ -12,6 +12,7 @@ import com.re.paas.api.infra.database.model.TableDescription;
 import com.re.paas.api.infra.database.model.TableUpdate;
 import com.re.paas.api.infra.database.modelling.BaseTable;
 import com.re.paas.api.infra.database.textsearch.TextSearch;
+import com.re.paas.internal.infra.database.ThrottlePolicy;
 
 @BlockerTodo
 public interface Database {
@@ -33,10 +34,12 @@ public interface Database {
 	default Table getTable(Class<? extends BaseTable> clazz) {
 		return getTable(clazz.getSimpleName());
 	}
+	
+	ThrottlePolicy throttlePolicy();
 
-	TableDescription createTable(TableDefinition request);
+	Table createTable(TableDefinition request);
 
-	TableDescription deleteTable(String name);
+	Table deleteTable(String name);
 
 	public List<String> listTables();
 

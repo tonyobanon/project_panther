@@ -1,15 +1,15 @@
 package com.re.paas.api.fusion.services;
 
-import com.re.paas.api.fusion.FusionEndpoint;
+import com.re.paas.api.fusion.Endpoint;
 
 public class ServiceDescriptor {
 
 	private final String className;
 	private final String methodName;
-	private final FusionEndpoint endpoint;
+	private final Endpoint endpoint;
 
 	
-	public ServiceDescriptor(String className, String methodName, FusionEndpoint endpoint) {
+	public ServiceDescriptor(String className, String methodName, Endpoint endpoint) {
 		this.className = className;
 		this.methodName = methodName;
 		this.endpoint = endpoint;
@@ -23,7 +23,12 @@ public class ServiceDescriptor {
 		return methodName;
 	}
 
-	public FusionEndpoint getEndpoint() {
+	public Endpoint getEndpoint() {
 		return endpoint;
+	}
+	
+	@Override
+	public String toString() {
+		return className + "#" + methodName;
 	}
 }

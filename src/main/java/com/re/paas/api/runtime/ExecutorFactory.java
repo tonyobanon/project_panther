@@ -2,10 +2,10 @@ package com.re.paas.api.runtime;
 
 import java.util.concurrent.CompletableFuture;
 
+import com.re.paas.api.Factory;
 import com.re.paas.api.annotations.develop.PlatformInternal;
+import com.re.paas.api.classes.ExecutorFactoryStats;
 import com.re.paas.api.classes.ObjectWrapper;
-import com.re.paas.api.concurrency.ExecutorFactoryStats;
-import com.re.paas.api.designpatterns.Factory;
 import com.re.paas.api.runtime.spi.SpiBase;
 
 public abstract class ExecutorFactory {

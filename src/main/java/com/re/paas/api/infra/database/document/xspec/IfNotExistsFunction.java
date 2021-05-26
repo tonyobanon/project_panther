@@ -1,8 +1,6 @@
 
  package com.re.paas.api.infra.database.document.xspec;
 
-import com.amazonaws.annotation.Beta;
-
 /**
  * Represents an <a href=
  * "http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.Modifying.html"
@@ -14,7 +12,6 @@ import com.amazonaws.annotation.Beta;
  * This object is as immutable (or unmodifiable) as the underlying operand given
  * during construction.
  */
-@Beta
 public final class IfNotExistsFunction<T> extends FunctionOperand {
     private final PathOperand attr;
     private final Operand operand;

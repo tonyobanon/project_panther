@@ -11,7 +11,7 @@ public class ScheduledTaskSPILocator extends BaseSPILocator {
 
 	@Override
 	public SpiType spiType() {
-		return SpiType.TASK;
+		return SpiType.SCHEDULED_TASK;
 	}
 
 	@Override

@@ -1,12 +1,16 @@
 package com.re.paas.api.infra.database.textsearch;
 
-import com.re.paas.api.classes.IndexedNameSpec;
+import java.util.function.Consumer;
+
+import com.re.paas.api.infra.database.document.Item;
 
 public interface TextSearch {
+
+	public QueryModel getQueryModel();
 	
-	public void add(IndexedNameSpec spec, Integer type);
-	
-	void remove(IndexedNameSpec spec, Integer type);
-	
-	void get(Integer type, String phrase);
+	boolean search(String checkpointId, Consumer<Item> consumer);
+
+	void add(SearchGraphId id, Integer entityType, String[] matrix);
+
+	void remove(SearchGraphId id);
 }

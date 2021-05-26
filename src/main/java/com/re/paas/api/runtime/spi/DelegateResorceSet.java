@@ -8,6 +8,6 @@ public interface DelegateResorceSet {
 
 	Map<Object, Object> getLocalStore();
 
-	Map<String, Map<String, Object>> getDistributedStores();
+	Map<String, AsyncDistributedMap<String, Object>> getDistributedStores();
 	
 }

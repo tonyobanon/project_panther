@@ -1,10 +1,11 @@
 package com.re.paas.api.clustering;
 
+import java.io.IOException;
 import java.util.Map;
 import java.util.function.Predicate;
 
+import com.re.paas.api.Singleton;
 import com.re.paas.api.clustering.protocol.Server;
-import com.re.paas.api.designpatterns.Singleton;
 import com.re.paas.api.runtime.ParameterizedExecutable;
 import com.re.paas.api.runtime.SecureMethod;
 import com.re.paas.internal.clustering.MetricsAggregator;
@@ -16,7 +17,9 @@ public interface ClusteringServices {
 	}
 
 	@SecureMethod
-	void start();
+	void start() throws IOException;
+	
+	Boolean isStarted();
 
 	@SecureMethod
 	Object getMultimapCacheManager();

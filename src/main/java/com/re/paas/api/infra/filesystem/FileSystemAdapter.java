@@ -4,8 +4,8 @@ import java.nio.file.FileSystem;
 import java.util.Map;
 
 import com.re.paas.api.Adapter;
+import com.re.paas.api.Singleton;
 import com.re.paas.api.adapters.AdapterType;
-import com.re.paas.api.designpatterns.Singleton;
 import com.re.paas.api.runtime.spi.SpiType;
 
 public interface FileSystemAdapter extends Adapter<FileSystem> {

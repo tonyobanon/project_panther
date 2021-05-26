@@ -6,12 +6,10 @@ import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.re.paas.api.annotations.develop.BlockerTodo;
 import com.re.paas.api.runtime.SecureMethod;
 import com.re.paas.api.runtime.spi.AppProvisioner;
 import com.re.paas.api.utils.Utils;
 
-@BlockerTodo("Implement Platform.State")
 public class Platform {
 
 	private static final String PLATFORM_PACKAGE = "com.re.paas";
@@ -25,6 +23,10 @@ public class Platform {
 
 	private static final String[] JVM_PACKAGES = new String[] { "sun", "com.sun", "jdk.internal", "java", "javax",
 			"jdk" };
+	
+	private static final String FUSION_CLIENT_JARNAME = "fusion-ui.jar";
+	
+	public static final String COMPONENT_BASE_PKG = API_PACKAGE + ".fusion.components";
 
 	private static boolean IS_SAFE_MODE;
 	private static boolean IS_ADVANCED_MODE;
@@ -98,12 +100,11 @@ public class Platform {
 	}
 
 	public static boolean isProduction() {
-		String env = System.getenv("REALIGNITE_ENVIRONMENT");
-		return env == null || !env.equals("development");
+		return !isDevMode();
 	}
 
 	public static final String getPlatformPrefix() {
-		return "realignite";
+		return "kylantis";
 	}
 
 	public static String getNodePrefix() {
@@ -111,7 +112,7 @@ public class Platform {
 	}
 
 	public static String getPlatformName() {
-		return "Real Ignite SaaS Solution";
+		return "Kylantis";
 	}
 
 	public static Path getBaseDir() {
@@ -138,6 +139,14 @@ public class Platform {
 
 	public static String[] getJvmPackages() {
 		return JVM_PACKAGES;
+	}
+	
+	public static String getFusionClientJarname() {
+		return FUSION_CLIENT_JARNAME;
+	}
+	
+	public static String getComponentBasePkg() {
+		return COMPONENT_BASE_PKG;
 	}
 
 	public static enum State {

@@ -4,7 +4,7 @@ import com.re.paas.api.clustering.Function;
 
 public enum MasterFunction implements Function {
 
-	MEMBER_SETUP(0, false);
+	;
 
 	private short id;
 	private boolean isAsync;
@@ -17,9 +17,6 @@ public enum MasterFunction implements Function {
 	public static MasterFunction from(int value) {
 
 		switch (value) {
-		
-		case 0:
-			return MEMBER_SETUP;
 	
 		default:
 			throw new IllegalArgumentException("An invalid value was provided");

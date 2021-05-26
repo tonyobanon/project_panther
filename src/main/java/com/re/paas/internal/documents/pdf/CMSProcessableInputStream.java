@@ -10,7 +10,7 @@ import org.bouncycastle.asn1.cms.CMSObjectIdentifiers;
 import org.bouncycastle.cms.CMSException;
 import org.bouncycastle.cms.CMSTypedData;
 
-import com.re.paas.internal.utils.IOUtils;
+import com.re.paas.api.utils.IOUtils;
 
 /**
  * Wraps a InputStream into a CMSProcessable object for bouncy castle. It's a memory saving

@@ -15,4 +15,9 @@ public abstract class AbstractDatabaseAdapterDelegate extends AbstractAdapterDel
 	public final boolean requiresMigration() {
 		return true;
 	}
+	
+	@Override
+	public final Class<?> getLocatorClassType() {
+		return DatabaseAdapter.class;
+	}
 }

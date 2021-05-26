@@ -10,6 +10,12 @@ public enum RealmError implements Error {
 	REALM_NAME_INVALID(7,
 			"The realm definition: {ref1} must use name: {ref2}"),
 	
+	REALM_ILLEGAL_OVERRIDE(8,
+			"The realm definition: {ref1} should not override the method: {ref2}()"),
+	
+	REALM_ILLEGAL_PARENT(9,
+			"The realm definition: {ref1} should not cannot be a child of realm: {ref2}"),
+	
 	REALM_NAME_ALREADY_EXISTS(10, "The realm name: {ref1} defined in {ref2} is already being used"),
 
 	DUPLICATE_FUNCTIONALITY(15, "Functionality: {ref1} defined by {ref2} is already in use by the specified realm"),
@@ -76,6 +82,10 @@ public enum RealmError implements Error {
 			return REALM_NAME_MISMATCH;
 		case 7:
 			return REALM_NAME_INVALID;
+		case 8:
+			return RealmError.REALM_ILLEGAL_OVERRIDE;
+		case 9:
+			return RealmError.REALM_ILLEGAL_PARENT;
 		case 10:
 			return REALM_NAME_ALREADY_EXISTS;
 		case 15:

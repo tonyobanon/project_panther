@@ -2,7 +2,7 @@ package com.re.paas.api.clustering.protocol;
 
 import java.net.InetSocketAddress;
 
-import com.re.paas.api.designpatterns.Singleton;
+import com.re.paas.api.Singleton;
 
 public interface ClientFactory {
 

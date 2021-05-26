@@ -1,8 +1,6 @@
 package com.re.paas.internal;
 
-import static com.re.paas.api.clustering.generic.GenericFunction.ASYNC_DISPATCH_EVENT;
-
-import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.net.InetAddress;
 import java.security.Security;
@@ -13,28 +11,21 @@ import java.util.concurrent.Callable;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
 import com.re.paas.api.Activator;
+import com.re.paas.api.Factory;
 import com.re.paas.api.Platform;
-import com.re.paas.api.annotations.develop.BlockerTodo;
+import com.re.paas.api.Platform.State;
+import com.re.paas.api.Singleton;
 import com.re.paas.api.annotations.develop.PlatformInternal;
-import com.re.paas.api.apps.AppClassLoader;
 import com.re.paas.api.classes.ObjectSerializer;
 import com.re.paas.api.clustering.ClusteringServices;
-import com.re.paas.api.clustering.Function;
-import com.re.paas.api.clustering.Member;
-import com.re.paas.api.clustering.classes.ClusterDestination;
-import com.re.paas.api.clustering.classes.MemberStatus;
-import com.re.paas.api.clustering.events.MemberStateChangeEvent;
 import com.re.paas.api.clustering.protocol.ClientFactory;
 import com.re.paas.api.clustering.protocol.Server;
-import com.re.paas.api.designpatterns.Factory;
-import com.re.paas.api.designpatterns.Singleton;
 import com.re.paas.api.infra.filesystem.NativeFileSystem;
 import com.re.paas.api.logging.LogPipeline;
 import com.re.paas.api.logging.LoggerFactory;
 import com.re.paas.api.networking.InetAddressResolver;
 import com.re.paas.api.runtime.ExecutorFactory;
 import com.re.paas.api.runtime.ExecutorFactoryConfig;
-import com.re.paas.api.runtime.RuntimeIdentity;
 import com.re.paas.api.runtime.SecureMethod;
 import com.re.paas.api.runtime.spi.AppProvisioner;
 import com.re.paas.api.runtime.spi.SpiBase;
@@ -54,9 +45,7 @@ import com.re.paas.internal.logging.DefaultLoggerFactory;
 import com.re.paas.internal.networking.InetAddressResolverImpl;
 import com.re.paas.internal.runtime.ExecutorFactoryImpl;
 import com.re.paas.internal.runtime.Permissions;
-import com.re.paas.internal.runtime.RuntimeIdentityImpl;
 import com.re.paas.internal.runtime.SecurityManagerImpl;
-import com.re.paas.internal.runtime.spi.AppClassLoaderImpl;
 import com.re.paas.internal.runtime.spi.AppProvisionerImpl;
 import com.re.paas.internal.runtime.spi.SPILocatorHandlerImpl;
 import com.re.paas.internal.runtime.spi.SpiBaseImpl;
@@ -73,14 +62,9 @@ public class AppDelegate implements Callable<Void> {
 	public static void addFinalizer(Runnable task) {
 		finalizers.add(task);
 	}
+	
 
-	@BlockerTodo("Attend to 'Todo' comments")
 	private static void addPlatformObjects() {
-
-		FileSystemProviders.init();
-		RuntimeIdentity.setInstance(new RuntimeIdentityImpl());
-
-		// Register Singletons
 
 		Singleton.register(LoggerFactory.class, new DefaultLoggerFactory());
 
@@ -89,6 +73,14 @@ public class AppDelegate implements Callable<Void> {
 		} else {
 			// Todo: Create proper mechanism for logging on production
 		}
+		
+		
+		// Register Singletons
+		
+		Singleton.register(JsonParser.class, new JsonParserImpl());
+
+		Singleton.register(NativeFileSystem.class, new NativeFileSystemImpl());
+		Singleton.register(Activator.class, new ActivatorImpl());
 
 		Singleton.register(AppProvisioner.class, new AppProvisionerImpl());
 		Singleton.register(SpiBase.class, new SpiBaseImpl());
@@ -98,23 +90,18 @@ public class AppDelegate implements Callable<Void> {
 		Singleton.register(InetAddressResolver.class, new InetAddressResolverImpl());
 		Singleton.register(ClusteringServices.class, new ClusteringServicesImpl());
 		Singleton.register(ClientFactory.class, new ClientFactoryImpl());
-		Singleton.register(JsonParser.class, new JsonParserImpl());
 		Singleton.register(Base64.class, new Base64Impl());
 
 		Singleton.register(ObjectSerializer.class, new DefaultObjectSerializer());
-
-		Singleton.register(NativeFileSystem.class, new NativeFileSystemImpl());
-		Singleton.register(Activator.class, new ActivatorImpl());
+		
 
 		// Register factories
 
-		Factory.register(AppClassLoader.class,
-				p -> new AppClassLoaderImpl(ClassLoader.getSystemClassLoader(), (String) p[0]));
 		Factory.register(Server.class, p -> new ServerImpl((InetAddress) p[0], (Integer) p[1]));
 
 		Factory.register(ExecutorFactory.class,
 				p -> new ExecutorFactoryImpl((String) p[0], (ExecutorFactoryConfig) p[1]));
-
+		
 		ExecutorFactory.create(new ExecutorFactoryConfig(ExecutorFactory.MAX_THREAD_COUNT));
 	}
 
@@ -126,12 +113,14 @@ public class AppDelegate implements Callable<Void> {
 
 	@PlatformInternal
 	public static void main() throws InstantiationException, IllegalAccessException, ClassNotFoundException,
-			NoSuchMethodException, SecurityException, IllegalArgumentException, InvocationTargetException {
+			NoSuchMethodException, SecurityException, IllegalArgumentException, InvocationTargetException, IOException {
 
-		// Register platform objects, including singletons and factories
 		addPlatformObjects();
 
-		// Reload file system
+
+		// We need to re-assign the defaultFileSystem to hold an instance of the 
+		// FileSystemImpl loaded by this classloader
+		
 		FileSystemProviders.reload();
 
 		// Scan permission sets
@@ -139,10 +128,18 @@ public class AppDelegate implements Callable<Void> {
 
 		// TODO Allow users to specify custom security provider
 		Security.addProvider(new BouncyCastleProvider());
+		
+		List<Runnable> allFinalizers = new ArrayList<>();
+		
+		allFinalizers.addAll(finalizers);
+		allFinalizers.addAll(getDefaultFinalizers());
 
 		// Add Jvm shutdown hook
 		Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-			for (Runnable r : finalizers) {
+			
+			Platform.setState(State.STOPPING);
+			
+			for (Runnable r : allFinalizers) {
 				r.run();
 			}
 		}));
@@ -150,58 +147,49 @@ public class AppDelegate implements Callable<Void> {
 		// Set security manager
 		System.setSecurityManager(new SecurityManagerImpl());
 
-		// Start clustering services
-		ClusteringServices.get().start();
 
-		
+		Platform.setState(State.STARTING);
+
 		// Start application services
 
 		if (!Platform.isSafeMode()) {
-			
+
 			// Discover
 			AppProvisioner.get().start();
 		}
+		
+
+		// Start clustering services
+		// ClusteringServices.get().start();
+
 
 		if (Activator.get().isInstalled() || Platform.isDevMode()) {
-			
+
 			// Boot up
 			SpiBase.get().start(AppProvisioner.get().listApps());
 		}
 
-		System.out.println(AppProvisioner.get().listApps());
+		// System.out.println(AppProvisioner.get().listApps());
 
 		// Start web server
 		WebServer.start();
 
 		// Set member status to online
-		Member member = ClusteringServices.get().getMember().setStatus(MemberStatus.ONLINE);
+//		Member member = ClusteringServices.get().getMember().setStatus(MemberStatus.ONLINE);
+//
+//		Function.execute(ClusterDestination.ALL_NODES, ASYNC_DISPATCH_EVENT,
+//				new MemberStateChangeEvent().setMemberId(member.getMemberId()).setNewState(member.getStatus()));
 
-		Function.execute(ClusterDestination.ALL_NODES, ASYNC_DISPATCH_EVENT,
-				new MemberStateChangeEvent().setMemberId(member.getMemberId()).setNewState(member.getStatus()));
 
+		Platform.setState(State.RUNNING);
 	}
 
-	public static String getPlatformName() {
-		return "Kylantis Enterprise Suite";
-	}
-
-	public static String BaseConfigDir() {
-		return System.getProperty("java.io.tmpdir") + AppDelegate.getPlatformName() + File.separator
-				+ "internal_config";
-	}
-
-	static {
-
-		// Add finalizers
-		finalizers.add(
+	private static List<Runnable> getDefaultFinalizers() {
+		return List.of(
 				// Stop Embedded Web Server
-				WebServer::stop);
-
-		finalizers.add(
+				WebServer::stop,
 				// Stop application(s)
-				SpiBase.get()::stop);
-
-		finalizers.add(
+				SpiBase.get()::stop,
 				// Shutdown default executor
 				Scheduler.getDefaultExecutor()::shutdownNow);
 	}

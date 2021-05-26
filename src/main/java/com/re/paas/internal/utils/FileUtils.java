@@ -7,12 +7,16 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Comparator;
 import java.util.Enumeration;
+import java.util.stream.Stream;
 import java.util.zip.DataFormatException;
 import java.util.zip.Deflater;
 import java.util.zip.Inflater;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
+
+import com.re.paas.api.classes.Exceptions;
 
 public class FileUtils {
 
@@ -54,19 +58,19 @@ public class FileUtils {
 	public static void extractZipped(File zipped, Path outputFolder) {
 
 		try {
-			
+
 			// Open the zip file
 			ZipFile zipFile = new ZipFile(zipped);
 			Enumeration<?> enu = zipFile.entries();
-			
+
 			while (enu.hasMoreElements()) {
 				ZipEntry zipEntry = (ZipEntry) enu.nextElement();
 
 				String name = zipEntry.getName();
-				
-				//long size = zipEntry.getSize();
-				//long compressedSize = zipEntry.getCompressedSize();
-				
+
+				// long size = zipEntry.getSize();
+				// long compressedSize = zipEntry.getCompressedSize();
+
 				// Do we need to create a directory ?
 				Path file = outputFolder.resolve(name);
 				if (name.endsWith("/")) {
@@ -82,13 +86,13 @@ public class FileUtils {
 				// Extract the file
 				InputStream is = zipFile.getInputStream(zipEntry);
 				OutputStream fos = Files.newOutputStream(file);
-				
+
 				byte[] bytes = new byte[1024];
 				int length;
 				while ((length = is.read(bytes)) >= 0) {
 					fos.write(bytes, 0, length);
 				}
-				
+
 				is.close();
 				fos.close();
 
@@ -96,6 +100,19 @@ public class FileUtils {
 			zipFile.close();
 		} catch (IOException e) {
 			e.printStackTrace();
+		}
+	}
+
+	public static void deleteDirectory(Path path) throws IOException {
+
+		try (Stream<Path> walk = Files.walk(path)) {
+			walk.sorted(Comparator.reverseOrder()).forEach((p) -> {
+				try {
+					Files.delete(p);
+				} catch (IOException e) {
+					Exceptions.throwRuntime(e);
+				}
+			});
 		}
 	}
 

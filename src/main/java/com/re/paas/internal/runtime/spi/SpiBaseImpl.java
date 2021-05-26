@@ -10,9 +10,8 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
-import com.re.paas.api.Platform;
-import com.re.paas.api.Platform.State;
 import com.re.paas.api.annotations.develop.BlockerTodo;
 import com.re.paas.api.apps.AppClassLoader;
 import com.re.paas.api.classes.Exceptions;
@@ -39,6 +38,14 @@ public class SpiBaseImpl implements SpiBase {
 	private static JsonArray trustedAppsConfig;
 
 	public SpiBaseImpl() {
+		
+		if (!Files.exists(spiConfigBasePath)) {
+			try {
+				Files.createDirectories(spiConfigBasePath);
+			} catch (IOException e) {
+				Exceptions.throwRuntime(e);
+			}
+		}
 
 		createResourceFiles();
 
@@ -79,8 +86,6 @@ public class SpiBaseImpl implements SpiBase {
 
 	public void start(Collection<String> apps) {
 
-		Platform.setState(State.STARTING);
-		
 		LOG.debug("Discovering classes ..");
 
 		ClassLoader cl = ClassLoaders.getClassLoader();
@@ -110,9 +115,9 @@ public class SpiBaseImpl implements SpiBase {
 		boolean needsPlatformRestart = SpiDelegateHandlerImpl.start(cl, SpiType.values(), null);
 
 		if (needsPlatformRestart) {
-			
+
 			// Restart platform
-			
+
 		} else {
 			BaseEvent.dispatch(new AppStartEvent(appId, true));
 		}
@@ -154,8 +159,6 @@ public class SpiBaseImpl implements SpiBase {
 	@BlockerTodo("Process result of delegate.init()")
 	static void stop(ClassLoader cl) {
 
-		Platform.setState(State.STOPPING);
-		
 		String appId = ClassLoaders.getId(cl);
 
 		// Remove locator type suffixes
@@ -171,7 +174,13 @@ public class SpiBaseImpl implements SpiBase {
 			if (classes != null) {
 
 				// Unload app classes from current delegate
-				delegate.remove0(classes);
+				Collection<?> l = delegate.remove0(classes);
+
+				if (l.size() > 0) {
+					Exceptions
+							.throwRuntime("Delegate: " + delegate.getClass().getName() + " could not remove resources: \n"
+									+ l.stream().map(c -> ((Class<?>) c).getName()).collect(Collectors.toList()));
+				}
 			}
 
 			if (ClassLoaders.getId(delegate.getClass()).equals(appId)) {
@@ -201,16 +210,6 @@ public class SpiBaseImpl implements SpiBase {
 	}
 
 	static void uninstall(ClassLoader cl) {
-
-		// Ensure that no other app depends on the app
-		String appId = ((AppClassLoader) cl).getAppId();
-
-		List<String> dependants = SPILocatorHandlerImpl.getDependants(appId);
-
-		if (!dependants.isEmpty()) {
-			Exceptions.throwRuntime("App: " + appId + " has the following dependants : " + dependants);
-		}
-
 		SpiDelegateHandlerImpl.uninstall(cl);
 	}
 

@@ -56,6 +56,7 @@ public class Permissions {
 			// No permission set exists for this class
 			return true;
 		}
+		
 
 		String context = null;
 		List<String> parts = Splitter.on(Permissions.DOT_PATTERN).limit(2).splitToList(permission.getName());
@@ -74,6 +75,10 @@ public class Permissions {
 
 		// return if index is neither accept or deny
 		if (index == DENY) {
+			
+
+			System.out.println(perm.toString());
+			
 			return false;
 		} else if (index == ALLOW) {
 			return true;

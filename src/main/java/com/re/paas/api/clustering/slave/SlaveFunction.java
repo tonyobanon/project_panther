@@ -3,8 +3,7 @@ package com.re.paas.api.clustering.slave;
 import com.re.paas.api.clustering.Function;
 
 public enum SlaveFunction implements Function {
-
-	INGEST_ADAPTER_CONFIG(0, false);
+	;
 	
 	private short id;
 	private boolean isAsync;
@@ -18,8 +17,6 @@ public enum SlaveFunction implements Function {
 
 		switch (value) {
 		
-		case 0:
-			return INGEST_ADAPTER_CONFIG;
 	
 		default:
 			throw new IllegalArgumentException("An invalid value was provided");

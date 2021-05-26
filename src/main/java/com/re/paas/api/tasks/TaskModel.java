@@ -3,8 +3,7 @@ package com.re.paas.api.tasks;
 import java.util.List;
 import java.util.Map;
 
-import com.re.paas.api.classes.ClientRBRef;
-import com.re.paas.api.designpatterns.Singleton;
+import com.re.paas.api.Singleton;
 import com.re.paas.api.forms.Section;
 import com.re.paas.api.runtime.spi.AbstractResource;
 import com.re.paas.api.runtime.spi.SpiType;
@@ -16,12 +15,12 @@ public abstract class TaskModel extends AbstractResource {
 	}
 	
 	public TaskModel() {
-		super(SpiType.TASK);
+		super(SpiType.SCHEDULED_TASK);
 	}
 
 	public abstract String name();
 
-	public abstract ClientRBRef title();
+	public abstract String title();
 
 	public abstract List<Section> fields();
 

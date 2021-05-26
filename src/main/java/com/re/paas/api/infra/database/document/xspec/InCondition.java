@@ -3,8 +3,6 @@
 
 import java.util.List;
 
-import com.amazonaws.annotation.Beta;
-
 /**
  * Represents a <a href=
  * "http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.SpecifyingConditions.html#ConditionExpressionReference"
@@ -19,7 +17,6 @@ import com.amazonaws.annotation.Beta;
  * This object is as immutable (or unmodifiable) as the underlying set of
  * operands.
  */
-@Beta
 public final class InCondition extends Condition {
     private final PathOperand attribute;
     private final List<? extends Operand> operands;

@@ -1,9 +1,6 @@
 
  package com.re.paas.api.infra.database.document.xspec;
 
-import com.amazonaws.annotation.Beta;
-
-
 /**
  * Represents a function call in building expression.
  * <p>
@@ -15,6 +12,5 @@ import com.amazonaws.annotation.Beta;
  *      ;
  * </pre>
  */
-@Beta
 public abstract class FunctionOperand extends Operand {
 }

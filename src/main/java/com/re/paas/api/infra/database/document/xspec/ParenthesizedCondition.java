@@ -1,15 +1,12 @@
 
  package com.re.paas.api.infra.database.document.xspec;
 
-import com.amazonaws.annotation.Beta;
-
 /**
  * An explicitly parenthesized condition, ie '(' condition ')', used in building
  * condition expressions.
  * <p>
  * This object is as immutable (or unmodifiable) as the underlying condition.
  */
-@Beta
 public final class ParenthesizedCondition extends Condition {
     private final Condition condition;
 

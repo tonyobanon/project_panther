@@ -16,4 +16,8 @@ public abstract class AbstractCacheAdapterDelegate
 		return true;
 	}
 
+	@Override
+	public final Class<?> getLocatorClassType() {
+		return CacheAdapter.class;
+	}
 }

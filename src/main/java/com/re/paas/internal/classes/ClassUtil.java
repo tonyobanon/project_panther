@@ -15,15 +15,14 @@ import java.util.regex.Pattern;
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Lists;
-
-import com.re.paas.api.annotations.develop.BlockerTodo;
+import com.re.paas.api.Platform;
 import com.re.paas.api.classes.Exceptions;
 import com.re.paas.api.classes.JvmConstants;
 import com.re.paas.api.runtime.ClassLoaders;
 import com.re.paas.api.runtime.SecureMethod;
 import com.re.paas.api.utils.ClassUtils;
+import com.re.paas.api.utils.Utils;
 
-@BlockerTodo("Replace usage of guava, then merge with it's API counterpart")
 public class ClassUtil {
 
 	private static final Pattern DOT_PATTERN = Pattern.compile(Pattern.quote("."));
@@ -87,7 +86,6 @@ public class ClassUtil {
 		}
 	}
 
-	@BlockerTodo("Add support for caching")
 	@SecureMethod
 	public static <T> T createInstance(Class<T> clazz) {
 
@@ -166,19 +164,18 @@ public class ClassUtil {
 		return result;
 	}
 
-	@BlockerTodo("Factor in nested classes as well")
 	public static String getPackageName(String className) {
 		List<String> parts = new ArrayList<>(Splitter.on(DOT_PATTERN).splitToList(className));
 		parts.remove(parts.size() - 1);
 		return Joiner.on(".").join(parts);
 	}
 
-	@BlockerTodo("Perform investigations here to determine how all syncthentic methods look like.. Because "
-			+ "1. This only take lambda meta-methods into consideration, there may be other scenarios"
-			+ "2. As the Jvm evolves, this is subject to change")
-
 	public static Boolean isFrameSynthetic(StackFrame frame) {
 		return frame.getMethodName().startsWith(JvmConstants.LAMBDA_SYNTHETIC_METHOD_PREFIX);
+	}
+	
+	public static Boolean isJvmFrame(StackFrame frame) {
+		return Utils.startsWith(frame.getClassName(), Platform.getJvmPackages());
 	}
 
 }

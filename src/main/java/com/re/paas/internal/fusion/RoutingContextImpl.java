@@ -4,10 +4,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
 
-import javax.annotation.Nullable;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
 import com.re.paas.api.fusion.Buffer;
 import com.re.paas.api.fusion.Cookie;
 import com.re.paas.api.fusion.FileUpload;
@@ -17,29 +13,42 @@ import com.re.paas.api.fusion.HttpStatusCodes;
 import com.re.paas.api.fusion.JsonArray;
 import com.re.paas.api.fusion.JsonObject;
 import com.re.paas.api.fusion.MultiMap;
+import com.re.paas.api.fusion.Route;
 import com.re.paas.api.fusion.RoutingContext;
 import com.re.paas.api.fusion.Session;
 import com.re.paas.api.runtime.SecureMethod;
 
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+
 public class RoutingContextImpl implements RoutingContext {
 
 	private static final long serialVersionUID = 1L;
+	
+	private final Route route;
 	
 	private final HttpServerRequest request;
 	private HttpServerResponse response;
 
 	private final Session<String, Object> session;
 
-	RoutingContextImpl(HttpServletRequest req, HttpServletResponse resp, Boolean addSession) {
+	RoutingContextImpl(Route route, HttpServletRequest req, HttpServletResponse resp, Boolean addSession) {
 
+		this.route = route;
+		
 		this.request = new HttpServerRequestImpl(req);
 		this.response = new HttpServerResponseImpl(resp);
 
 		this.session = addSession ? new SessionImpl(this) : null;
 	}
+	
+	@Override
+	public Route route() {
+		return route;
+	}
 
 	@Override
-	public @Nullable Cookie getCookie(String name) {
+	public Cookie getCookie(String name) {
 		return request.cookies().get(name);
 	}
 
@@ -105,7 +114,7 @@ public class RoutingContextImpl implements RoutingContext {
 	}
 
 	@Override
-	public @Nullable List<String> queryParam(String query) {
+	public List<String> queryParam(String query) {
 		return request.params().getAll(query);
 	}
 

@@ -7,3 +7,4 @@ target/
 .DS_Store
 .gradle/
 .eclipse-pmd
+/dist/

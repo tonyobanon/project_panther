@@ -3,26 +3,19 @@ package com.re.paas.internal.runtime;
 import java.lang.StackWalker.StackFrame;
 import java.util.Iterator;
 
-import com.re.paas.api.Platform;
 import com.re.paas.api.classes.Exceptions;
 import com.re.paas.api.classes.IntegerWrapper;
 import com.re.paas.api.classes.ObjectWrapper;
-import com.re.paas.api.logging.Logger;
-import com.re.paas.api.logging.LoggerFactory;
-import com.re.paas.api.utils.Utils;
 import com.re.paas.internal.classes.ClassUtil;
 
 public class StackFrameUtilImpl {
 
-	private static final Logger LOG = LoggerFactory.get().getLog(StackFrameUtilImpl.class);
+	// private static final Logger LOG = LoggerFactory.get().getLog(StackFrameUtilImpl.class);
 	private static final Integer MAX_SYNTHETIC_SKIPS = 25;
-
-	public static StackFrame getCaller(Integer skipsOffset) {
-		return getCaller(skipsOffset + 1, false, false);
-	}
+	
 
 	public static StackFrame getCaller(Integer skipsOffset, Boolean jvmInstrinsic, Boolean retainReference) {
-
+		
 		Permissions.bypass.set(true);
 		StackWalker sw = retainReference ? StackWalker.getInstance(StackWalker.Option.RETAIN_CLASS_REFERENCE)
 				: StackWalker.getInstance();
@@ -60,24 +53,22 @@ public class StackFrameUtilImpl {
 
 					StackFrame f = it.next();
 
-					if (!Utils.startsWith(f.getClassName(), Platform.getJvmPackages())) {
+					if (!ClassUtil.isJvmFrame(f)) {
 						frame.set(f);
 						break;
 					}
 				}
-
 			}
 
 			// Now that we have computed the real caller frame, we need to make sure that
-			// it's
-			// non-synthetic. If it's synthetic, we bubble-up until we find it's
+			// it's non-synthetic. If it's synthetic, we bubble-up until we find it's
 			// non-synthetic ancestor
 
 			if (ClassUtil.isFrameSynthetic(frame.get())) {
 
 				StackFrame f = it.next();
 
-				while (ClassUtil.isFrameSynthetic(f)) {
+				while (ClassUtil.isFrameSynthetic(f) || ClassUtil.isJvmFrame(f)) {
 
 					if (MAX_SYNTHETIC_SKIPS > 0 && syntheticSkips.get().intValue() >= MAX_SYNTHETIC_SKIPS) {
 						Exceptions.throwRuntime("Maxiumum synthetic skips reached.. ");
@@ -87,12 +78,24 @@ public class StackFrameUtilImpl {
 					syntheticSkips.add();
 				}
 
-				LOG.debug("Returning non-synthetic frame: " + f + " instead of " + frame.get());
+				// LOG.debug("Returning non-synthetic frame: " + f + " instead of " + frame.get());
 
 				// Finally re-assign
 				frame.set(f);
 			}
-
+			
+			
+			String[] isSyntheticFrame = frame.get().getMethodName().split("\\Q$original$\\E");
+			
+			if (isSyntheticFrame.length == 2) {
+				
+				StackFrame next = it.next();
+				
+				assert next.getMethodName().equals(isSyntheticFrame[0]);
+				
+				frame.set(next);
+			}
+			
 			return null;
 		});
 

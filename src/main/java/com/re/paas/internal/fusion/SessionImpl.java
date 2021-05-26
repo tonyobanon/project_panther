@@ -3,12 +3,9 @@ package com.re.paas.internal.fusion;
 import java.util.Date;
 import java.util.Map;
 
-import com.re.paas.api.classes.FluentHashMap;
 import com.re.paas.api.fusion.Cookie;
 import com.re.paas.api.fusion.RoutingContext;
 import com.re.paas.api.fusion.Session;
-import com.re.paas.api.infra.cache.Cache;
-import com.re.paas.api.infra.cache.PersistenceType;
 import com.re.paas.api.utils.Dates;
 import com.re.paas.api.utils.Utils;
 
@@ -47,11 +44,10 @@ public class SessionImpl implements Session<String, Object> {
 			// Create hash in cache, for session data
 			Object now = Dates.currentDate();
 			
-			Cache.get().hset(cacheKey, DATE_CREATED_HASH_FIELD, now);
-			Cache.get().hset(cacheKey, DATE_UPDATED_HASH_FIELD, now);
+			// Todo: set createdAt and updatedAt
 
 			// add cookie
-			ctx.response().addCookie(new Cookie(SESSION_COOKIE, sessionId).setMaxAge(-1));
+			ctx.response().addCookie(new CookieImpl(SESSION_COOKIE, sessionId).setMaxAge(-1));
 
 		} else {
 
@@ -59,8 +55,7 @@ public class SessionImpl implements Session<String, Object> {
 
 			cacheKey = getCacheKey(sessionId);
 
-			// update expiry
-			Cache.get().expire(cacheKey, SESSION_PERSISTENCE);
+			// Todo: Set expiry on <cacheKey>
 		}
 
 		this.id = sessionId;
@@ -84,37 +79,29 @@ public class SessionImpl implements Session<String, Object> {
 
 	@Override
 	public Object get(String k) {
-		return Cache.get().hget(cacheKey, k).join();
+		return null;
 	}
 
 	@Override
 	public void put(String k, Object v) {
-		Cache<String, Object> cache = Cache.get();
-		cache.hset(cacheKey, DATE_UPDATED_HASH_FIELD, Dates.now().toString());
-		cache.hset(cacheKey, k, v);
 	}
 
 	@Override
 	public void delete(String k) {
-		Cache<String, Object> cache = Cache.get();
-		cache.hset(cacheKey, DATE_UPDATED_HASH_FIELD, Dates.now().toString());
-		cache.hdel(cacheKey, k);
 	}
 
 	@Override
 	public Map<String, Object> data() {
-		return Cache.get().hgetall(cacheKey).join();
+		return null;
 	}
 
 	@Override
 	public Date dateCreated() {
-		String dateString = (String) Cache.get().hget(cacheKey, DATE_CREATED_HASH_FIELD).join();
-		return Dates.toDate(dateString);
+		return null;
 	}
 
 	@Override
 	public Date dateUpdated() {
-		String dateString = (String) Cache.get().hget(cacheKey, DATE_UPDATED_HASH_FIELD).join();
-		return Dates.toDate(dateString);
+		return null;
 	}
 }

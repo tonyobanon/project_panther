@@ -1,8 +1,6 @@
 
  package com.re.paas.api.infra.database.document.xspec;
 
-import com.amazonaws.annotation.Beta;
-
 /**
  * Represents the <a href=
  * "http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.Modifying.html"
@@ -14,7 +12,6 @@ import com.amazonaws.annotation.Beta;
  * <p>
  * This object is as immutable (or unmodifiable) as the values in it's operands.
  */
-@Beta
 public final class ListAppendFunction extends FunctionOperand {
     private final Operand first;
     private final Operand second;

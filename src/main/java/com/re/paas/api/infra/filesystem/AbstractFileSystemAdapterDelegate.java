@@ -11,4 +11,9 @@ public abstract class AbstractFileSystemAdapterDelegate extends AbstractAdapterD
 		return true;
 	}
 	
+	@Override
+	public final Class<?> getLocatorClassType() {
+		return FileSystemAdapter.class;
+	}
+	
 }

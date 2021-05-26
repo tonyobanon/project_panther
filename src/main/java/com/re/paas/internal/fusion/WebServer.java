@@ -1,16 +1,11 @@
 package com.re.paas.internal.fusion;
 
 import java.io.IOException;
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
-
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import java.util.Deque;
+import java.util.LinkedList;
 
 import org.eclipse.jetty.alpn.ALPN;
 import org.eclipse.jetty.alpn.server.ALPNServerConnectionFactory;
-import org.eclipse.jetty.http2.HTTP2Cipher;
 import org.eclipse.jetty.http2.server.HTTP2ServerConnectionFactory;
 import org.eclipse.jetty.server.HttpConfiguration;
 import org.eclipse.jetty.server.HttpConnectionFactory;
@@ -21,19 +16,24 @@ import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.server.SslConnectionFactory;
 import org.eclipse.jetty.server.handler.AbstractHandler;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
+import org.eclipse.jetty.util.thread.QueuedThreadPool;
 
+import com.google.common.base.Joiner;
 import com.re.paas.api.Activator;
+import com.re.paas.api.Platform;
+import com.re.paas.api.Platform.State;
 import com.re.paas.api.annotations.develop.BlockerTodo;
 import com.re.paas.api.classes.Exceptions;
 import com.re.paas.api.cryto.CryptoAdapter;
 import com.re.paas.api.cryto.KeyStoreProperties;
 import com.re.paas.api.cryto.SSLContext;
+import com.re.paas.api.fusion.HttpMethod;
+import com.re.paas.api.fusion.HttpStatusCodes;
+import com.re.paas.api.fusion.Route;
 import com.re.paas.api.fusion.RoutingContext;
-import com.re.paas.api.fusion.assets.AbstractClientAssetDelegate;
-import com.re.paas.api.fusion.services.AbstractServiceDelegate;
 import com.re.paas.api.fusion.services.BaseService;
 import com.re.paas.api.logging.Logger;
-import com.re.paas.api.networking.InetAddressResolver;
+import com.re.paas.api.runtime.ClassLoaders;
 import com.re.paas.api.runtime.SecureMethod;
 
 @BlockerTodo("Optimize the way requests are handled, as the current impl is thread expensive.")
@@ -43,30 +43,22 @@ public class WebServer {
 
 	// The port on the node through which the service available through
 	// https://matthewpalmer.net/kubernetes-app-developer/articles/kubernetes-ports-targetport-nodeport-service.html
-	private static final Integer serviceHttpPort = 80;
-	private static final Integer serviceHttpsPort = 433;
+	private static final Integer serviceHttpPort = 8080;
+	private static final Integer serviceHttpsPort = 8433;
+
 
 	@SecureMethod
 	public static void start() {
 
 		Logger.get().info("Launching embedded web server ..");
-		
-		InetAddress host = InetAddressResolver.get().getInetAddress();
 
-		server = new Server(new InetSocketAddress(host, serviceHttpPort));
-		server.setHandler(new WebServer.RequestHandler());
+		// Create and configure a ThreadPool.
+		QueuedThreadPool threadPool = new QueuedThreadPool();
+		threadPool.setName("server");
 
-		ALPNServerConnectionFactory alpn = new ALPNServerConnectionFactory();
-		alpn.setDefaultProtocol("h2");
+		server = new Server(threadPool);
 
-		// HTTP Configuration
-		HttpConfiguration http_config = new HttpConfiguration();
-
-		// HTTPS Configuration
-		HttpConfiguration https_config = null;
-
-		// SSL Connection Factory
-		SslConnectionFactory ssl = null;
+		ServerConnector connector = null;
 
 		KeyStoreProperties keyStoreProperties = null;
 		SSLContext sslContext;
@@ -76,14 +68,26 @@ public class WebServer {
 						.keyStoreEnabled()
 				&& (sslContext = keyStoreProperties.getSslContext()) != null) {
 
-			http_config.setSecureScheme("https");
-			http_config.setSecurePort(serviceHttpsPort);
+			// The HTTP configuration object.
+			HttpConfiguration httpConfig = new HttpConfiguration();
+			// Add the SecureRequestCustomizer because we are using TLS.
+			httpConfig.addCustomizer(new SecureRequestCustomizer());
 
-			https_config = new HttpConfiguration(http_config);
-			https_config.addCustomizer(new SecureRequestCustomizer());
+			// The ConnectionFactory for HTTP/1.1.
+			HttpConnectionFactory http11 = new HttpConnectionFactory(httpConfig);
 
-			// SSL Context Factory for HTTPS and HTTP/2
-			SslContextFactory sslContextFactory = new SslContextFactory();
+			// The ConnectionFactory for HTTP/2.
+			HTTP2ServerConnectionFactory h2 = new HTTP2ServerConnectionFactory(httpConfig);
+
+			// The ALPN ConnectionFactory.
+			ALPNServerConnectionFactory alpn = new ALPNServerConnectionFactory();
+			// The default protocol to use in case there is no negotiation.
+			alpn.setDefaultProtocol(http11.getProtocol());
+
+			ALPN.debug = true;
+
+			// Configure the SslContextFactory with the keyStore information.
+			SslContextFactory.Server sslContextFactory = new SslContextFactory.Server();
 
 			sslContextFactory.setKeyStoreType(keyStoreProperties.getType());
 
@@ -91,30 +95,27 @@ public class WebServer {
 			sslContextFactory.setKeyStore(keyStoreProperties.getKeystore());
 			sslContextFactory.setKeyStorePassword(keyStoreProperties.getKeyStorePassword());
 
-			sslContextFactory.setCipherComparator(HTTP2Cipher.COMPARATOR);
+			// The ConnectionFactory for TLS.
+			SslConnectionFactory tls = new SslConnectionFactory(sslContextFactory, alpn.getProtocol());
 
-			ssl = new SslConnectionFactory(sslContextFactory, alpn.getProtocol());
+			// The ServerConnector instance.
+			connector = new ServerConnector(server, tls, alpn, h2, http11);
+			connector.setPort(serviceHttpsPort);
+
+		} else {
+
+			// Create the ServerConnector.
+			connector = new ServerConnector(server);
+			connector.setPort(serviceHttpPort);
 		}
 
-		// HTTP/2 Connection Factory
-		HTTP2ServerConnectionFactory h2 = new HTTP2ServerConnectionFactory(
-				https_config != null ? https_config : http_config);
+		server.addConnector(connector);
 
-		// NegotiatingServerConnectionFactory.checkProtocolNegotiationAvailable();
-
-		// HTTP/2 Connector
-		ServerConnector http2Connector = new ServerConnector(server, ssl, alpn, h2,
-				new HttpConnectionFactory(https_config != null ? https_config : http_config));
-		http2Connector.setPort(serviceHttpsPort);
-
-		server.addConnector(http2Connector);
-
-		ALPN.debug = false;
+		server.setHandler(new WebServer.RequestHandler());
 
 		try {
 
 			server.start();
-			server.join();
 
 		} catch (Exception e) {
 			Exceptions.throwRuntime(e);
@@ -142,29 +143,64 @@ public class WebServer {
 		}
 
 		@Override
-		public void handle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response)
-				throws IOException, ServletException {
+		public void handle(String target, Request baseRequest, jakarta.servlet.http.HttpServletRequest request,
+				jakarta.servlet.http.HttpServletResponse response)
+				throws IOException, jakarta.servlet.ServletException {
 
-			String path = request.getServletPath() + (request.getPathInfo() != null ? request.getPathInfo() : "");
+			baseRequest.setHandled(true);
 
-			RoutingContext ctx = new RoutingContextImpl(request, response,
-					path.equals(AbstractServiceDelegate.BASE_PATH));
+			String reqPath = request.getServletPath() + (request.getPathInfo() != null ? request.getPathInfo() : "");
 
-			switch (path) {
+			if (reqPath.equals("/")) {
 
-			case AbstractClientAssetDelegate.BASE_PATH:
-				
-				// This is still being fleshed out
-				// ClientAsset.getDelegate().handler(ctx);
-				
-				ctx.response().setStatusCode(HttpServletResponse.SC_OK);
-				break;
+				response.setStatus(HttpStatusCodes.SC_MOVED_PERMANENTLY);
+				response.addHeader("Location", "/platform");
 
-			case AbstractServiceDelegate.BASE_PATH:
-				BaseService.getDelegate().handler(ctx);
-				break;
+				return;
 			}
+
+			Deque<String> parts = new LinkedList<>();
+
+			for (String p : reqPath.split("/")) {
+				if (!p.isEmpty()) {
+					parts.addLast(p);
+				}
+			}
+
+			// Create route object
+
+			String appId = parts.removeFirst();
+
+
+			if (ClassLoaders.getClassLoader(appId) == null) {
+				// App not found
+				response.setStatus(HttpStatusCodes.SC_NOT_FOUND);
+				response.getWriter().write("Unknown appId: " + appId);
+				return;
+			}
+
+			if (Platform.getState(appId) != State.RUNNING) {
+				// App not ready
+				response.setStatus(HttpStatusCodes.SC_SERVICE_UNAVAILABLE);
+				response.getWriter().write("App not running: " + appId);
+				return;
+			}
+
+			if (parts.peekFirst() != null && parts.peekFirst().equals("static")) {
+				// Todo: Render static file
+				return;
+			}
+
+			String path = "/" + Joiner.on('/').join(parts);
+
+			Route route = new Route(appId, path, HttpMethod.valueOf(request.getMethod()));
+
+			RoutingContext ctx = new RoutingContextImpl(route, request, response, true);
+
+			BaseService.getDelegate().handler(ctx);
+
 		}
+
 	}
 
 }

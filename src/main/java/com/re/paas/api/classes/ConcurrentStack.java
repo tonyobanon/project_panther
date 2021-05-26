@@ -2,7 +2,6 @@ package com.re.paas.api.classes;
 
 import java.util.concurrent.atomic.AtomicReference;
 
-import net.jcip.annotations.ThreadSafe;
 
 /**
  * ConcurrentStack
@@ -11,7 +10,6 @@ import net.jcip.annotations.ThreadSafe;
  *
  * @author Brian Goetz and Tim Peierls
  */
-@ThreadSafe
 public class ConcurrentStack <E> {
     AtomicReference<Node<E>> top = new AtomicReference<Node<E>>();
 

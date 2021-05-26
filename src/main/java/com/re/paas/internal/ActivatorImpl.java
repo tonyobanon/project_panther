@@ -4,7 +4,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 import com.re.paas.api.Activator;
-import com.re.paas.internal.infra.filesystem.FileSystemProviders;
+import com.re.paas.api.infra.filesystem.NativeFileSystem;
 
 public class ActivatorImpl implements Activator {
 
@@ -13,11 +13,15 @@ public class ActivatorImpl implements Activator {
 	public Boolean isInstalled() {
 
 		if (isInstalled == null) {
-			Path p = FileSystemProviders.getResourcePath().resolve(".installed");
+			Path p = NativeFileSystem.get().getResourcePath().resolve(".installed");
 			isInstalled = Files.exists(p);
 		}
 
 		return isInstalled;
 	}
-
+	
+	@Override
+	public void restartNeeded() {
+		// Todo
+	}
 }

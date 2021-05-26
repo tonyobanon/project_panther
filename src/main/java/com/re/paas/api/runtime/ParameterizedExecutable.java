@@ -3,9 +3,6 @@ package com.re.paas.api.runtime;
 import java.io.Serializable;
 import java.util.function.Function;
 
-import com.re.paas.api.runtime.SecureMethod.Factor;
-import com.re.paas.api.runtime.SecureMethod.IdentityStrategy;
-
 /**
  * 
  * This represents a parameterized function that has been packaged for
@@ -23,7 +20,7 @@ public class ParameterizedExecutable<P, R> implements Serializable {
 	private final Function<P, R> function;
 	private final P parameter;
 
-	@SecureMethod(factor = Factor.CALLER, identityStrategy = IdentityStrategy.SINGLETON, allowed = ExecutorFactory.class)
+	@SecureMethod
 	public ParameterizedExecutable(Function<P, R> function, P parameter) {
 		this.function = function;
 		this.parameter = parameter;

@@ -3,12 +3,10 @@
 
 import static com.re.paas.api.infra.database.document.xspec.ExpressionSpecBuilder.__;
 
-import com.amazonaws.annotation.Beta;
 
 /**
  * Represents a condition for building condition expression.
  */
-@Beta
 public abstract class Condition extends UnitOfExpression {
     /**
      * Returns a new condition based on the negation of the current condition.
@@ -47,7 +45,6 @@ public abstract class Condition extends UnitOfExpression {
     
     /**
      * Returns the precedence of this condition.
-     * See http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.SpecifyingConditions.html#ConditionExpressionReference
      */
     abstract int precedence();
 }

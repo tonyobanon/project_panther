@@ -2,7 +2,7 @@ package com.re.paas.api.events;
 
 import java.util.function.Consumer;
 
-import com.re.paas.api.designpatterns.Singleton;
+import com.re.paas.api.Singleton;
 import com.re.paas.api.runtime.spi.SpiDelegate;
 
 public abstract class AbstractEventDelegate extends SpiDelegate<EventListener> {

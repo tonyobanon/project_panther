@@ -11,6 +11,10 @@ public interface BaseTable {
 		return true;
 	}
 	
+	default String name() {
+		return this.getClass().getSimpleName();
+	}
+	
 	String hashKey();
 	
 	default String rangeKey(){

@@ -2,6 +2,7 @@ package com.re.paas.internal.runtime.spi;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -11,32 +12,31 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
-import org.infinispan.Cache;
-import org.infinispan.configuration.cache.Configuration;
-import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.context.Flag;
+import org.infinispan.configuration.cache.ConfigurationChildBuilder;
 import org.infinispan.manager.DefaultCacheManager;
-import org.infinispan.multimap.api.embedded.MultimapCache;
-import org.infinispan.multimap.api.embedded.MultimapCacheManager;
 
+import com.re.paas.api.Platform;
+import com.re.paas.api.Platform.State;
+import com.re.paas.api.Singleton;
 import com.re.paas.api.annotations.develop.BlockerBlockerTodo;
 import com.re.paas.api.annotations.develop.BlockerTodo;
 import com.re.paas.api.classes.AsyncDistributedMap;
-import com.re.paas.api.classes.ClientRBRef;
 import com.re.paas.api.classes.Exceptions;
 import com.re.paas.api.classes.KeyValuePair;
 import com.re.paas.api.clustering.ClusteringServices;
-import com.re.paas.api.designpatterns.Singleton;
 import com.re.paas.api.logging.Logger;
 import com.re.paas.api.runtime.ClassLoaders;
 import com.re.paas.api.runtime.SecureMethod;
 import com.re.paas.api.runtime.SecureMethod.Factor;
 import com.re.paas.api.runtime.SecureMethod.IdentityStrategy;
+import com.re.paas.api.runtime.spi.AbstractResource;
 import com.re.paas.api.runtime.spi.AppProvisioner;
 import com.re.paas.api.runtime.spi.BaseSPILocator;
 import com.re.paas.api.runtime.spi.ClassIdentityType;
 import com.re.paas.api.runtime.spi.DelegateInitResult;
+import com.re.paas.api.runtime.spi.ResourcesInitResult;
 import com.re.paas.api.runtime.spi.DelegateResorceSet;
 import com.re.paas.api.runtime.spi.DelegateSpec;
 import com.re.paas.api.runtime.spi.DistributedStoreConfig;
@@ -45,10 +45,10 @@ import com.re.paas.api.runtime.spi.SpiDelegate;
 import com.re.paas.api.runtime.spi.SpiDelegateHandler;
 import com.re.paas.api.runtime.spi.SpiType;
 import com.re.paas.api.utils.ClassUtils;
+import com.re.paas.internal.classes.CacheBackedMap;
 import com.re.paas.internal.classes.ClasspathScanner;
-import com.re.paas.internal.classes.MultimapBackedMap;
 import com.re.paas.internal.clustering.ClusteringServicesImpl;
-import com.re.paas.internal.fusion.imagineui.UIContext;
+import com.re.paas.internal.fusion.UIContext;
 import com.re.paas.internal.runtime.spi.SpiDelegateConfigHandler.Tier;
 
 public class SpiDelegateHandlerImpl implements SpiDelegateHandler {
@@ -79,7 +79,7 @@ public class SpiDelegateHandlerImpl implements SpiDelegateHandler {
 			Class<SpiDelegate<?>> delegateType = (Class<SpiDelegate<?>>) locator.delegateType();
 
 			List<Class<? extends SpiDelegate<?>>> delegateClasses = new ClasspathScanner<>(delegateType,
-					ClassIdentityType.ASSIGNABLE_FROM).setMaxCount(1).setClassLoader(cl).scanClasses();
+					ClassIdentityType.ASSIGNABLE_FROM, cl).setMaxCount(1).scanClasses();
 
 			if (delegateClasses.isEmpty()) {
 				result.put(type, null);
@@ -95,14 +95,11 @@ public class SpiDelegateHandlerImpl implements SpiDelegateHandler {
 
 		String appName = AppProvisioner.get().getAppName(appId);
 
-		String confirmMessage = ClientRBRef.get("app.confirm.set.default.delegate").add(type + ".action").toString();
+		boolean useAsDefault = UIContext.confirm(appName, "{app.confirm.set.default.delegate}", type.toString());
 
-		boolean useAsDefault = UIContext.confirm(appName, confirmMessage);
+		if (useAsDefault && type.classification().requiresTrustedDelegate() && !SpiBaseImpl.isAppTrusted(appId)) {
 
-		if (useAsDefault && type.classification().requiresTrustedDelegate()) {
-
-			String confirmTrust = ClientRBRef.get("app.confirm.trust.set.default.delegate").toString();
-			useAsDefault = UIContext.confirm(appName, confirmTrust);
+			useAsDefault = UIContext.confirm(appName, "{app.confirm.trust}");
 
 			if (useAsDefault) {
 				SpiBaseImpl.registerTrustedApp(appId);
@@ -159,7 +156,7 @@ public class SpiDelegateHandlerImpl implements SpiDelegateHandler {
 	@BlockerTodo("Implement persistence as defined in DistributedStoreConfig")
 
 	static Boolean start(ClassLoader cl, SpiType[] types, String dependants) {
-
+		
 		for (SpiType type : types) {
 
 			SpiDelegate<?> delegate = delegates.get(type);
@@ -167,11 +164,10 @@ public class SpiDelegateHandlerImpl implements SpiDelegateHandler {
 			Boolean isDelegateLoaded = delegate != null;
 
 			if (!isDelegateLoaded) {
+				
 
-				delegate = ClassUtils
-						.createInstance(SpiDelegateConfigHandler.get(type, Tier.all()));
-
-				@SuppressWarnings("unchecked")
+				delegate = ClassUtils.createInstance(SpiDelegateConfigHandler.get(type, Tier.all()));
+				
 				Class<? extends SpiDelegate<?>> delegateClass = (Class<? extends SpiDelegate<?>>) delegate.getClass();
 
 				/**
@@ -192,7 +188,7 @@ public class SpiDelegateHandlerImpl implements SpiDelegateHandler {
 				}
 
 				if (delegate.getType() == null) {
-					Exceptions.throwRuntime("The specified generic type do not conform to any SpiType");
+					Exceptions.throwRuntime("The specified generic type do not conform to any SpiType: " + delegateLocatorClassType.getName());
 				}
 
 				if (!delegate.getSpiType().equals(type)) {
@@ -241,13 +237,11 @@ public class SpiDelegateHandlerImpl implements SpiDelegateHandler {
 
 				LOG.info("Starting new SPI Delegate, type = " + type.toString());
 
-				@SuppressWarnings("unchecked")
 				Class<SpiDelegate<?>> delegateType = (Class<SpiDelegate<?>>) locator.delegateType();
 
 				// Register delegate instance as singleton
 				Singleton.register(delegateType, delegate);
 
-	
 				if (delegates.containsKey(type)) {
 					delegates.remove(type).shutdown();
 				}
@@ -262,9 +256,9 @@ public class SpiDelegateHandlerImpl implements SpiDelegateHandler {
 				}
 
 				Map<Object, Object> inMemoryStore = new HashMap<>();
-				Map<String, Map<String, Object>> distributedStores = null;
+				Map<String, AsyncDistributedMap<String, Object>> distributedStores = null;
 
-				if (delegate.requiresDistributedStore()) {
+				if (delegate.requiresDistributedStore() && ClusteringServices.get().isStarted()) {
 
 					List<Object> stores = delegate.distributedStoreNames();
 
@@ -285,14 +279,16 @@ public class SpiDelegateHandlerImpl implements SpiDelegateHandler {
 
 						DefaultCacheManager cm = (DefaultCacheManager) ClusteringServices.get().getCacheManager();
 
-						// Create or get multimap cache
-						Cache<String, Object> cache = cm.getCache(cacheName);
+						ConfigurationChildBuilder cacheConfig = ClusteringServicesImpl.getDefaultCacheConfiguration();
 
-						if (config.getAlwaysReturnValue()) {
-							
-							cm.defineConfiguration(cacheName,
-									new ConfigurationBuilder().unsafe().unreliableReturnValues(true).build());
-						}
+						cm.defineConfiguration(cacheName,
+								config.getAlwaysReturnValue()
+										? cacheConfig.unsafe().unreliableReturnValues(true).build()
+										: cacheConfig.build());
+
+						// Create or get multimap cache
+
+						AsyncDistributedMap<String, Object> cache = new CacheBackedMap(cm.getCache(cacheName, true));
 
 						// Note: No need to cm.defineConfiguration(...), since the default
 						// configuration configures cache mode to DIST_SYNC
@@ -305,14 +301,13 @@ public class SpiDelegateHandlerImpl implements SpiDelegateHandler {
 
 				// Initialize delegate
 				DelegateInitResult r = startDelegate(delegate);
-				
-				
-				
 
-				// Todo: Process result
+				if (r == DelegateInitResult.FAILURE) {
+					Exceptions.throwRuntime(r.getErrorMessage());
+				}
 
-			} else {
-
+			} else if (Platform.getState() != State.STARTING) {
+				
 				// Transfer only application-specific classes to the existing delegate
 				// Note: other classes must have been registered when the delegate was
 				// instantiated
@@ -343,7 +338,13 @@ public class SpiDelegateHandlerImpl implements SpiDelegateHandler {
 						classes.sort((Comparator<? super Class<?>>) comparator);
 					}
 
-					delegate.add0(classes);
+					Collection<?> l = delegate.add0(classes);
+
+					if (l.size() > 0) {
+						Logger.get().warn("Delegate: " + delegate.getClass().getName() + " could not add resources: \n"
+								+ l.stream().map(c -> ((Class<?>) c).getName()).collect(Collectors.toList()));
+					}
+
 				}
 			}
 		}
@@ -414,34 +415,35 @@ public class SpiDelegateHandlerImpl implements SpiDelegateHandler {
 	public void releaseResources(SpiType type) {
 
 		DelegateResorceSet rSet = resources.remove(type);
-		
+
 		rSet.getLocalStore().clear();
 
 		Map<String, AsyncDistributedMap<String, Object>> stores = rSet.getDistributedStores();
-		
+
 		if (stores != null) {
 
 			List<CompletableFuture<?>> futures = new ArrayList<>(stores.size());
 
 			stores.forEach((k, v) -> {
-				
+
 				LOG.info("Clearing distributed cache: " + k);
 				futures.add(v.clear());
 			});
-			
+
 			LOG.info("Waiting for all caches to be cleared");
 			CompletableFuture.allOf(futures.toArray(new CompletableFuture[futures.size()])).join();
 		}
 	}
 
+	@SuppressWarnings("unchecked")
 	@BlockerBlockerTodo("Ensure that the SPIs are tranversed in the correct order")
 	@BlockerTodo("In scenarios where a delegate for a given type is replaced in SpiBase, how is this handled")
-	
-	@SecureMethod(factor = Factor.CALLER, identityStrategy = IdentityStrategy.SAME, allowed = { SpiDelegate.class })
-	public final <T> DelegateInitResult forEach(SpiType type, Function<Class<T>, ResourceStatus> consumer) {
 
-		DelegateResorceSet rSet = resources.get(type);
-		Long rSetSize = rSet.getSize();
+	@SecureMethod(factor = Factor.CALLER, identityStrategy = IdentityStrategy.SAME, allowed = { SpiDelegate.class })
+	public final <T> ResourcesInitResult addResources(SpiType type, Function<Class<T>, ResourceStatus> consumer) {
+
+		Integer loadedClasses = 0;
+		ResourcesInitResult result = null;
 
 		// to do
 		// Maintain a loop count, and ensure that the delegate's resource map has exact
@@ -452,26 +454,35 @@ public class SpiDelegateHandlerImpl implements SpiDelegateHandler {
 		loop: for (List<Class<?>> l : allClasses.values()) {
 			for (Class<?> c : l) {
 
-				@SuppressWarnings("unchecked")
 				Class<T> clazz = (Class<T>) c;
 
 				ResourceStatus b = consumer.apply(clazz);
 
-				if (type.getCount() != -1 && rSetSize == type.getCount()) {
+				if (b == ResourceStatus.ERROR) {
+
+					result = result != null ? result : ResourcesInitResult.PARTIAL_SUCCESS;
+					result.addError((Class<? extends AbstractResource>) c, b.getMessage());
+
+				} else {
+
+					// Note that at this point, ResourceStatus can either be UPDATED or NOT_UPDATED
+					// both
+					// of which acknowledge ingestion of the resource into the system
+
+					loadedClasses++;
+				}
+
+				if (type.getCount() != -1 && loadedClasses == type.getCount()) {
+
+					// In some cases - though not very common, a specific spiType may require only a
+					// specific number
+					// of resource classes to be loaded, in which case we select
 					LOG.debug("All resources has been added successfully for SpiType: " + type.name() + " ..");
 					break loop;
 				}
 			}
 		}
 
-		// Validate resource count
-
-		if (type.getCount() != -1 && rSetSize > type.getCount()) {
-			Exceptions.throwRuntime("SpiType: " + type.name() + " should have " + type.getCount() + " resource(s)");
-		}
-
-		if (rSetSize == 0) {
-			LOG.warn("No resource class(es) were registered for the SpiType: " + type.name());
-		}
+		return (result != null ? result : ResourcesInitResult.SUCCESS).setCount(loadedClasses);
 	}
 }

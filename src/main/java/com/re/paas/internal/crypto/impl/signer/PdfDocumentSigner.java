@@ -14,11 +14,6 @@ import org.apache.pdfbox.pdmodel.interactive.digitalsignature.ExternalSigningSup
 import org.apache.pdfbox.pdmodel.interactive.digitalsignature.PDSignature;
 import org.apache.pdfbox.pdmodel.interactive.digitalsignature.SignatureInterface;
 
-import com.re.paas.integrated.models.ConfigModel;
-import com.re.paas.internal.core.keys.ConfigKeys;
-import com.re.paas.internal.i18n.LocationModel;
-
-
 public class PdfDocumentSigner extends AbstractDocumentSigner implements SignatureInterface {
 
 	/**
@@ -40,8 +35,6 @@ public class PdfDocumentSigner extends AbstractDocumentSigner implements Signatu
 		signature.setFilter(PDSignature.FILTER_ADOBE_PPKLITE);
 		signature.setSubFilter(PDSignature.SUBFILTER_ADBE_PKCS7_DETACHED);
 
-		signature.setName(ConfigModel.get(ConfigKeys.ORGANIZATION_NAME));
-		signature.setLocation(LocationModel.getCountryName(ConfigModel.get(ConfigKeys.ORGANIZATION_COUNTRY)));
 
 		signature.setReason("I agree...");
 		// TODO extract the above details from the signing certificate? Reason

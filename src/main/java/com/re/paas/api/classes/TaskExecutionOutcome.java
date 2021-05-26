@@ -33,11 +33,6 @@ public enum TaskExecutionOutcome {
 	public Object getMessage() {
 		return message;
 	}
-
-	public TaskExecutionOutcome setMessage(ClientRBRef message) {
-		this.message = message;
-		return this;
-	}
 	
 	public TaskExecutionOutcome setMessage(String message) {
 		this.message = message;

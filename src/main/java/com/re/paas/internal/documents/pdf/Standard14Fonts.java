@@ -109,8 +109,8 @@ final class Standard14Fonts
             STANDARD14_AFM_MAP.put(fontName, STANDARD14_AFM_MAP.get(afmName));
         }
 
-        String resourceName = "org/apache/pdfbox/resources/afm/" + afmName + ".afm";
-        URL url = PDType1Font.class.getClassLoader().getResource(resourceName);
+        String resourceName = "pdfbox/afm/" + afmName + ".afm";
+        URL url = ClassLoader.getSystemClassLoader().getResource(resourceName);
         if (url != null)
         {
             InputStream afmStream = url.openStream();

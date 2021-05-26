@@ -41,60 +41,38 @@ public class FileUploadImpl implements FileUpload {
 		this.fileName = tmpFile.getAbsolutePath();
 	}
 
-	/* (non-Javadoc)
-	 * @see com.re.paas.api.fusion.server.FileUpload#name()
-	 */
 	@Override
 	public String name() {
 		return fileName;
 	}
 
-	/* (non-Javadoc)
-	 * @see com.re.paas.api.fusion.server.FileUpload#uploadedFileName()
-	 */
 	@Override
 	public String uploadedFileName() {
 		return fileName;
 	}
 
-	/* (non-Javadoc)
-	 * @see com.re.paas.api.fusion.server.FileUpload#fileName()
-	 */
 	@Override
 	public String fileName() {
 		return fileName;
 	}
 
-	/* (non-Javadoc)
-	 * @see com.re.paas.api.fusion.server.FileUpload#size()
-	 */
 	@Override
 	public long size() {
 		return size;
 	}
 
-	/* (non-Javadoc)
-	 * @see com.re.paas.api.fusion.server.FileUpload#contentType()
-	 */
 	@Override
 	public String contentType() {
 		return mimeType;
 	}
 
-	/* (non-Javadoc)
-	 * @see com.re.paas.api.fusion.server.FileUpload#contentTransferEncoding()
-	 */
 	@Override
 	public String contentTransferEncoding() {
 		return "UTF-8";
 	}
 
-	/* (non-Javadoc)
-	 * @see com.re.paas.api.fusion.server.FileUpload#charSet()
-	 */
 	@Override
 	public String charSet() {
 		return Charset.defaultCharset().name();
 	}
-
 }

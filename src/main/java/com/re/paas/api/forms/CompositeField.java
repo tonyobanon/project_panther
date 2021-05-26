@@ -18,13 +18,10 @@ public class CompositeField extends BaseSimpleField {
 	}
 
 	@Override
-	public CompositeField importData(AbstractField source, boolean copyReference) {
+	public CompositeField importData(AbstractField source) {
 
 		CompositeField sourceField = (CompositeField) source;
 
-		if (copyReference && sourceField.getReference() != null) {
-			this.setReference(sourceField.getReference());
-		}
 		
 		if (sourceField.getId() != null) {
 			this.setId(sourceField.getId());
@@ -73,11 +70,11 @@ public class CompositeField extends BaseSimpleField {
 		return this;
 	}
 
-	public CompositeField(Object title) {
+	public CompositeField(String title) {
 		this(null, title);
 	}
 
-	public CompositeField(Object id, Object title) {
+	public CompositeField(Object id, String title) {
 		super(id, title);
 		items = new HashMap<>();
 	}

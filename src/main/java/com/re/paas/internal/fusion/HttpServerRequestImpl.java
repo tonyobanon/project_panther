@@ -9,10 +9,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.Part;
-
 import org.apache.commons.io.IOUtils;
 
 import com.re.paas.api.classes.Exceptions;
@@ -20,13 +16,15 @@ import com.re.paas.api.classes.FluentArrayList;
 import com.re.paas.api.classes.FluentHashMap;
 import com.re.paas.api.fusion.Buffer;
 import com.re.paas.api.fusion.Cookie;
-import com.re.paas.api.fusion.CookieUtil;
 import com.re.paas.api.fusion.FileUpload;
 import com.re.paas.api.fusion.HttpMethod;
 import com.re.paas.api.fusion.HttpServerRequest;
 import com.re.paas.api.fusion.MultiMap;
 
 import io.netty.handler.codec.http2.DefaultHttp2Headers;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.Part;
 
 public class HttpServerRequestImpl implements HttpServerRequest {
 
@@ -93,7 +91,7 @@ public class HttpServerRequestImpl implements HttpServerRequest {
 		// Add cookies
 
 		if (request.getCookies() != null) {
-			for (javax.servlet.http.Cookie c : request.getCookies()) {
+			for (jakarta.servlet.http.Cookie c : request.getCookies()) {
 				cookies.put(c.getName(), CookieUtil.toFusionCookie(c));
 			}
 		}
@@ -131,11 +129,8 @@ public class HttpServerRequestImpl implements HttpServerRequest {
 			Locale locale = locales.nextElement();
 			this.locales.add(locale);
 		}
-		
 	}
 	
-	
-
 	@Override
 	public Map<String, Cookie> cookies() {
 		return cookies;

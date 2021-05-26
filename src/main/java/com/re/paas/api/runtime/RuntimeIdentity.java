@@ -3,6 +3,8 @@ package com.re.paas.api.runtime;
 import java.lang.StackWalker.StackFrame;
 
 import com.re.paas.api.annotations.AppClassLoaderInstrinsic;
+import com.re.paas.api.apps.AppClassLoader;
+import com.re.paas.internal.runtime.RuntimeIdentityImpl;
 
 @AppClassLoaderInstrinsic
 public abstract class RuntimeIdentity {
@@ -24,7 +26,7 @@ public abstract class RuntimeIdentity {
 	}
 	
 	public static Boolean isExternalContext() {
-		return getInstance().isPlatformExternal();
+		return getInstance() != null ? getInstance().isPlatformExternal() : false;
 	}
 
 	protected abstract String getApplicationId();
@@ -34,5 +36,10 @@ public abstract class RuntimeIdentity {
 	public abstract Boolean isTrusted(Integer skipsOffset);
 	
 	public abstract Boolean isTrusted(StackFrame frame);
+	
+	static {
+		ClassLoader cl = RuntimeIdentity.class.getClassLoader();
+		instance = new RuntimeIdentityImpl(cl instanceof AppClassLoader ? cl : null);
+	}
 	
 }

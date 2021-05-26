@@ -2,7 +2,6 @@ package com.re.paas.internal.runtime.permissions;
 
 import com.re.paas.api.Platform;
 import com.re.paas.api.annotations.develop.BlockerTodo;
-import com.re.paas.api.apps.AppClassLoader;
 import com.re.paas.api.utils.Utils;
 import com.re.paas.internal.runtime.Permissions;
 import com.re.paas.internal.runtime.spi.AppClassLoaderImpl;
@@ -88,7 +87,7 @@ public class RuntimePermissions implements BasePermission {
 
 		case PermissionNames.DEFINE_CLASS_IN_PACKAGE:
 
-			if (AppClassLoaderImpl.isAppIntrinsic(context)) {
+			if (AppClassLoaderImpl.isIntrinsic(context)) {
 
 				if (Utils.startsWith(context, Platform.getDefineForbiddenPackages())) {
 					return Permissions.DENY;

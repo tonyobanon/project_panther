@@ -40,10 +40,10 @@ import org.bouncycastle.util.Store;
 import com.re.paas.api.classes.Exceptions;
 import com.re.paas.api.logging.Logger;
 import com.re.paas.api.logging.LoggerFactory;
+import com.re.paas.api.utils.IOUtils;
 import com.re.paas.internal.documents.DocumentConstants;
 import com.re.paas.internal.documents.SignatureInfo;
 import com.re.paas.internal.documents.pdf.PdfDocumentSpec;
-import com.re.paas.internal.utils.IOUtils;
 
 public final class PdfSignatureUtil {
 

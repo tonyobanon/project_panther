@@ -3,7 +3,6 @@ package com.re.paas.internal.fusion;
 import com.re.paas.api.fusion.Buffer;
 import com.re.paas.api.fusion.BufferFactory;
 
-import io.netty.buffer.ByteBuf;
 
 public class BufferFactoryImpl implements BufferFactory {
 
@@ -35,8 +34,4 @@ public class BufferFactoryImpl implements BufferFactory {
 		return new BufferImpl(bytes);
 	}
 
-	@Override
-	public Buffer buffer(ByteBuf byteBuffer) {
-		return new BufferImpl(byteBuffer);
-	}
 }

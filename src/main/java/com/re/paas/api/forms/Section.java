@@ -9,7 +9,6 @@ import java.util.function.Predicate;
 public class Section implements Cloneable {
 
 	private String id;
-	private SectionReference reference;
 	private Object title;
 	private Object summary;
 	private List<AbstractField> fields = new ArrayList<AbstractField>();
@@ -17,13 +16,13 @@ public class Section implements Cloneable {
 	@Override
 	public Section clone() {
 		Section s = new Section();
-		s.importData(this, true, false);
+		s.importData(this, false);
 		return s;
 	}
 
 	public Section deepClone() {
 		Section s = new Section();
-		s.importData(this, true, true);
+		s.importData(this, true);
 		return s;
 	}
 
@@ -35,14 +34,10 @@ public class Section implements Cloneable {
 	 * @param withFields    Indicates that fields should also be copied. Note: a
 	 *                      deep copy is created for the fields
 	 */
-	public Section importData(Section source, boolean copyReference, boolean withFields) {
+	public Section importData(Section source, boolean withFields) {
 
 		if (this == source) {
 			return this;
-		}
-
-		if (copyReference && source.getReference() != null) {
-			this.setReference(source.getReference());
 		}
 
 		if (source.getId() != null) {
@@ -60,20 +55,11 @@ public class Section implements Cloneable {
 		if (withFields && !source.getFields().isEmpty()) {
 
 			source.getFields().forEach(f -> {
-				this.withField(AbstractField.copyOf(f, true));
+				this.withField(AbstractField.copyOf(f));
 			});
 		}
 
 		return this;
-	}
-
-	public AbstractField getField(Reference reference) {
-		for (AbstractField field : fields) {
-			if (field.getReference().value().equals(reference.value())) {
-				return field;
-			}
-		}
-		return null;
 	}
 
 	public AbstractField getField(String id) {
@@ -99,21 +85,7 @@ public class Section implements Cloneable {
 		return fields;
 	}
 
-	public void removeField(Reference reference) {
-		Iterator<AbstractField> it = fields.iterator();
-		while (it.hasNext()) {
-			if (it.next().getReference().asString().equals(reference.asString())) {
-				it.remove();
-				break;
-			}
-		}
-	}
-
 	public Section withField(AbstractField field) {
-
-		// First, remove any existing field with same reference
-		this.filter(f -> !f.getReference().value().equals(field.getReference().value()));
-
 		this.fields.add(field);
 		return this;
 	}
@@ -162,15 +134,6 @@ public class Section implements Cloneable {
 
 	public Section setId(String id) {
 		this.id = id;
-		return this;
-	}
-
-	public SectionReference getReference() {
-		return reference;
-	}
-
-	public Section setReference(SectionReference reference) {
-		this.reference = reference;
 		return this;
 	}
 }

@@ -4,9 +4,6 @@
 import static com.re.paas.api.infra.database.document.xspec.ExpressionSpecBuilder.attribute_exists;
 import static com.re.paas.api.infra.database.document.xspec.ExpressionSpecBuilder.attribute_not_exists;
 
-import com.amazonaws.annotation.Beta;
-import com.amazonaws.annotation.Immutable;
-
 /**
  * A path operand used in building DynamooDB expressions such as update
  * expressions and condition (aka filter) expressions. In general, a path
@@ -22,8 +19,6 @@ import com.amazonaws.annotation.Immutable;
  * 
  * @see ExpressionSpecBuilder
  */
-@Beta
-@Immutable
 public class PathOperand extends Operand {
     private final Path path;
     private final String pathString;    // This is a performance optimization; not strictly necessary.

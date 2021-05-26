@@ -1,27 +1,21 @@
 package com.re.paas.api.runtime.spi;
 
-import java.lang.StackWalker.Option;
-import java.lang.StackWalker.StackFrame;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
-import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import com.re.paas.api.Singleton;
 import com.re.paas.api.annotations.develop.BlockerTodo;
-import com.re.paas.api.apps.AppClassLoader;
 import com.re.paas.api.classes.AsyncDistributedMap;
 import com.re.paas.api.classes.KeyValuePair;
 import com.re.paas.api.classes.ParameterizedClass;
-import com.re.paas.api.designpatterns.Singleton;
-import com.re.paas.api.logging.Logger;
 import com.re.paas.api.runtime.ClassLoaders;
 import com.re.paas.api.runtime.ConcreteIntrinsic;
 import com.re.paas.api.runtime.SecureMethod;
@@ -30,7 +24,6 @@ import com.re.paas.api.runtime.SecureMethod.Factor;
 import com.re.paas.api.runtime.SecureMethod.IdentityStrategy;
 import com.re.paas.api.runtime.SecureMethod.Validator;
 import com.re.paas.api.utils.ClassUtils;
-import com.re.paas.api.utils.Utils;
 
 public abstract class SpiDelegate<T> {
 
@@ -46,10 +39,11 @@ public abstract class SpiDelegate<T> {
 
 	/**
 	 * Note: the distributed map returned cannot be modified using it's iterator
+	 * 
 	 * @param name
 	 * @return
 	 */
-	protected final Map<String, ?> getDistributedStore(String name) {
+	protected final AsyncDistributedMap<String, ?> getDistributedStore(String name) {
 		return getResourceSet(getSpiType()).getDistributedStores().get(name);
 	}
 
@@ -57,10 +51,14 @@ public abstract class SpiDelegate<T> {
 		return SpiDelegateHandler.get().getResources(type);
 	}
 
-	public final Class<?> getLocatorClassType() {
+	public Class<?> getLocatorClassType() {
 
+		Class<?> abstractSuperclass = ClassUtils.getSuperclass(getClass(), getClass().getSuperclass());
+		
+		assert abstractSuperclass.getSuperclass().equals(SpiDelegate.class);
+		
 		ParameterizedClass c = ClassUtils.getParameterizedClass(getClass().getClassLoader(),
-				getClass().getSuperclass().getGenericSuperclass());
+				abstractSuperclass.getGenericSuperclass());
 
 		return c.getGenericTypes().get(0).getType();
 	}
@@ -80,12 +78,8 @@ public abstract class SpiDelegate<T> {
 		return type.getKey();
 	}
 
-	protected abstract Collection<?> getResourceObjects();
-
-	@BlockerTodo("Most delegates should return this in their init(..) functions")
-	
-	protected final DelegateInitResult forEach(Function<Class<T>, ResourceStatus> consumer) {
-		return SpiDelegateHandler.get().forEach(getSpiType(), consumer);
+	protected final ResourcesInitResult addResources(Function<Class<T>, ResourceStatus> consumer) {
+		return SpiDelegateHandler.get().addResources(getSpiType(), consumer);
 	}
 
 	/**
@@ -112,7 +106,7 @@ public abstract class SpiDelegate<T> {
 	@SecureMethod(factor = Factor.CALLER, allowed = {
 			SpiBase.class }, identityStrategy = IdentityStrategy.SINGLETON, restrictHierarchyAccess = true)
 	public final void release() {
-		
+
 		MetaFactoryValidators.ResourceValidator.remove(this);
 		SpiDelegateHandler.get().releaseResources(getSpiType());
 	}
@@ -137,19 +131,23 @@ public abstract class SpiDelegate<T> {
 
 	@SecureMethod(factor = Factor.CALLER, allowed = {
 			SpiDelegateHandler.class }, identityStrategy = IdentityStrategy.SINGLETON, restrictHierarchyAccess = true)
-	public final void add0(List<Class<?>> classes) {
-
-		add(Utils.toGenericList((classes)));
-
+	public final Collection<Class<T>> add0(List<Class<?>> classes) {
+		return this.processClasses(classes, this::add);
 	}
 
 	@SecureMethod(factor = Factor.CALLER, allowed = {
 			SpiBase.class }, identityStrategy = IdentityStrategy.SINGLETON, restrictHierarchyAccess = true)
+	public final Collection<Class<T>> remove0(List<Class<?>> classes) {
+		return this.processClasses(classes, this::remove);
+	}
 
-	public final List<Class<T>> remove0(List<Class<?>> classes) {
-
-		return remove(Utils.toGenericList(classes));
-
+	@SuppressWarnings("unchecked")
+	private Collection<Class<T>> processClasses(List<Class<?>> classes, Function<Class<T>, ResourceStatus> function) {
+		return classes.stream().map(c -> {
+			return com.re.paas.api.utils.Collections.asEntry((Class<T>) c, function.apply((Class<T>) c));
+		}).filter(e -> e.getValue() == ResourceStatus.ERROR).collect(Collectors
+				.toMap(Map.Entry<Class<T>, ResourceStatus>::getKey, Map.Entry<Class<T>, ResourceStatus>::getValue))
+				.keySet();
 	}
 
 	@SecureMethod(factor = Factor.CALLER, allowed = {

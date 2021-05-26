@@ -5,7 +5,6 @@ import java.io.InputStream;
 import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -26,9 +25,9 @@ import com.re.paas.api.apps.AppClassLoader;
 import com.re.paas.api.classes.Exceptions;
 import com.re.paas.api.classes.ParameterizedClass;
 import com.re.paas.api.runtime.RuntimeIdentity;
+import com.re.paas.api.runtime.SystemClassLoader;
 import com.re.paas.api.runtime.spi.AppProvisioner;
 
-@BlockerTodo("Refractor this, I see it's accessing a lot of internal stuff, i.e it's calling AppClassLoader, e.t.c")
 public class ClassUtils<T> {
 
 	private static final Pattern nonGenericlassNamePattern = Pattern
@@ -159,6 +158,18 @@ public class ClassUtils<T> {
 		return appId + "#" + clazz.getName();
 	}
 
+	public static Class<?> getSuperclass(Class<?> clazz, Class<?> superclass) {
+
+		while ((clazz = clazz.getSuperclass()) != null) {
+
+			if (clazz.equals(superclass)) {
+				return clazz;
+			}
+		}
+
+		return null;
+	}
+
 	/**
 	 * This function determines whether the current context is allowed to access the
 	 * specified class
@@ -168,12 +179,10 @@ public class ClassUtils<T> {
 	 */
 	public static boolean isAccessible(Class<?> clazz) {
 
-		// Before, I used to do ThreadSecurity, but ....
-
-		// It's will pass since
-
+		SystemClassLoader scl = (SystemClassLoader) ClassLoader.getSystemClassLoader();
+		
 		// If this is a platform class, allow access
-		if (clazz.getClassLoader().equals(ClassLoader.getSystemClassLoader())) {
+		if (scl.isPlatformClass(clazz)) {
 			return true;
 		}
 
@@ -191,6 +200,7 @@ public class ClassUtils<T> {
 		try {
 
 			Field f = clazz.getDeclaredField(name);
+
 			f.setAccessible(true);
 
 			return f.get(instance);
@@ -201,28 +211,6 @@ public class ClassUtils<T> {
 		}
 	}
 
-	public static void updateField(Class<?> clazz, String name, Object value) {
-		updateField(clazz, null, name, value);
-	}
-
-	public static void updateField(Class<?> clazz, Object instance, String name, Object value) {
-
-		try {
-
-			Field f = clazz.getDeclaredField(name);
-			f.setAccessible(true);
-
-			Field modifiersField = Field.class.getDeclaredField("modifiers");
-			modifiersField.setAccessible(true);
-			modifiersField.setInt(f, f.getModifiers() & ~Modifier.FINAL);
-
-			f.set(instance, value);
-
-		} catch (NoSuchFieldException | SecurityException | IllegalArgumentException | IllegalAccessException e) {
-			Exceptions.throwRuntime(e);
-		}
-	}
-
 	/**
 	 * This implementation may change in the future
 	 * 
@@ -230,7 +218,7 @@ public class ClassUtils<T> {
 	 * @param class2
 	 * @return
 	 */
-	@BlockerTodo("Vaerify that this works in a distributed scenario")
+	@BlockerTodo("Verify that this works in a distributed scenario")
 	public static boolean equals(Class<?> class1, Class<?> class2) {
 		return class1.equals(class2);
 	}

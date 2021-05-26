@@ -3,8 +3,6 @@ package com.re.paas.api.fusion;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 
-import io.netty.buffer.ByteBuf;
-
 public abstract class Buffer {
 
 	protected static BufferFactory factory;
@@ -62,28 +60,6 @@ public abstract class Buffer {
 	 */
 	public static Buffer buffer(byte[] bytes) {
 		return factory.buffer(bytes);
-	}
-
-	/**
-	 * <p>
-	 * Create a new buffer from a Netty {@code ByteBuf}. <i>Note that</i> the
-	 * returned buffer is backed by given Netty ByteBuf, so changes in the returned
-	 * buffer are reflected in given Netty ByteBuf, and vice-versa.
-	 * </p>
-	 * <p>
-	 * For example, both buffers in the code below share their data:
-	 * </p>
-	 * 
-	 * <pre>
-	 * Buffer src = Buffer.buffer();
-	 * Buffer clone = Buffer.buffer(src.getByteBuf());
-	 * </pre>
-	 *
-	 * @param byteBuf the Netty ByteBuf
-	 * @return the buffer
-	 */
-	public static Buffer buffer(ByteBuf byteBuf) {
-		return factory.buffer(byteBuf);
 	}
 
 	/**
@@ -810,7 +786,7 @@ public abstract class Buffer {
 	public abstract int readFromBuffer(int pos, Buffer buffer);
 
 	/**
-	 * Returns the Buffer as a Netty {@code ByteBuf}.
+	 * Returns the underlying Buffer
 	 * <p>
 	 * The returned buffer is a duplicate.
 	 * <p>
@@ -819,6 +795,6 @@ public abstract class Buffer {
 	 * <p>
 	 */
 
-	public abstract ByteBuf getByteBuf();
+	public abstract Object getByteBuf();
 
 }

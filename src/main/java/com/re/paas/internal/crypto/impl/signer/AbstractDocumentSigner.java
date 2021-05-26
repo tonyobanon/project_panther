@@ -3,10 +3,16 @@ package com.re.paas.internal.crypto.impl.signer;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
+import java.math.BigInteger;
+import java.net.URL;
+import java.net.URLConnection;
 import java.security.GeneralSecurityException;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
+import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
 import java.security.Signature;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
@@ -14,6 +20,14 @@ import java.security.interfaces.RSAPrivateKey;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+
+import org.bouncycastle.asn1.nist.NISTObjectIdentifiers;
+import org.bouncycastle.asn1.oiw.OIWObjectIdentifiers;
+import org.bouncycastle.tsp.TSPException;
+import org.bouncycastle.tsp.TimeStampRequest;
+import org.bouncycastle.tsp.TimeStampRequestGenerator;
+import org.bouncycastle.tsp.TimeStampResponse;
+import org.bouncycastle.tsp.TimeStampToken;
 
 import org.bouncycastle.asn1.ASN1Encodable;
 import org.bouncycastle.asn1.ASN1EncodableVector;
@@ -37,7 +51,7 @@ import org.bouncycastle.operator.ContentSigner;
 import org.bouncycastle.operator.OperatorCreationException;
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
 import org.bouncycastle.operator.jcajce.JcaDigestCalculatorProviderBuilder;
-import org.bouncycastle.tsp.TSPException;
+
 import org.bouncycastle.util.Store;
 
 import com.re.paas.api.classes.Exceptions;
@@ -45,8 +59,10 @@ import com.re.paas.api.cryto.CryptoProvider;
 import com.re.paas.api.cryto.KeyStoreProperties;
 import com.re.paas.api.cryto.SignContext;
 import com.re.paas.api.cryto.TSAClient;
+import com.re.paas.api.logging.Logger;
+import com.re.paas.api.logging.LoggerFactory;
+import com.re.paas.api.utils.IOUtils;
 import com.re.paas.internal.documents.DocumentConstants;
-import com.re.paas.internal.utils.IOUtils;
 
 /**
  * A utility for signing a document with bouncy castle. A keystore can be
@@ -57,6 +73,8 @@ import com.re.paas.internal.utils.IOUtils;
  *
  */
 public abstract class AbstractDocumentSigner implements DocumentSigner {
+
+    private static final Logger LOG = LoggerFactory.get().getLog(AbstractDocumentSigner.class);
 
 	private final KeyStoreProperties keyStoreProperties;
 	
@@ -133,7 +151,7 @@ public abstract class AbstractDocumentSigner implements DocumentSigner {
 			vector = unsignedAttributes.toASN1EncodableVector();
 		}
 
-		byte[] token = this.tsaClient.getTimeStampToken(signer.getSignature());
+		byte[] token = getTimeStampToken(this.tsaClient, signer.getSignature());
 
 		ASN1ObjectIdentifier oid = PKCSObjectIdentifiers.id_aa_signatureTimeStampToken;
 		ASN1Encodable signatureTimeStamp = new Attribute(oid, new DERSet(ASN1Primitive.fromByteArray(token)));
@@ -151,7 +169,129 @@ public abstract class AbstractDocumentSigner implements DocumentSigner {
 
 		return newSigner;
 	}
+	
+	/**
+    *
+    * @param messageImprint imprint of message contents
+    * @return the encoded time stamp token
+    * @throws IOException if there was an error with the connection or data from the TSA server,
+    *                     or if the time stamp response could not be validated
+    * @throws NoSuchAlgorithmException 
+    */
+	private byte[] getTimeStampToken(TSAClient client, byte[] messageImprint) throws IOException, NoSuchAlgorithmException {
 
+    	MessageDigest digest = MessageDigest.getInstance(client.getDigest());
+    			
+    	digest.reset();
+        byte[] hash = digest.digest(messageImprint);
+
+        // 32-bit cryptographic nonce
+        SecureRandom random = new SecureRandom();
+        int nonce = random.nextInt();
+
+        // generate TSA request
+        TimeStampRequestGenerator tsaGenerator = new TimeStampRequestGenerator();
+        tsaGenerator.setCertReq(true);
+        ASN1ObjectIdentifier oid = getHashObjectIdentifier(digest.getAlgorithm());
+        TimeStampRequest request = tsaGenerator.generate(oid, hash, BigInteger.valueOf(nonce));
+
+        // get TSA response
+        byte[] tsaResponse = getTSAResponse(client, request.getEncoded());
+
+        TimeStampResponse response;
+        try
+        {
+            response = new TimeStampResponse(tsaResponse);
+            response.validate(request);
+        }
+        catch (TSPException e)
+        {
+            throw new IOException(e);
+        }
+        
+        TimeStampToken token = response.getTimeStampToken();
+        if (token == null)
+        {
+            throw new IOException("Response does not have a time stamp token");
+        }
+
+        return token.getEncoded();
+	}
+	
+    // gets response data for the given encoded TimeStampRequest data
+    // throws IOException if a connection to the TSA cannot be established
+    private byte[] getTSAResponse(TSAClient client, byte[] request) throws IOException
+    {
+        LOG.debug("Opening connection to TSA server");
+
+        // todo: support proxy servers
+        URLConnection connection = new URL(client.getUrl()).openConnection();
+        connection.setDoOutput(true);
+        connection.setDoInput(true);
+        connection.setRequestProperty("Content-Type", "application/timestamp-query");
+
+        LOG.debug("Established connection to TSA server");
+
+        if (client.getUsername() != null && client.getPassword() != null && !client.getUsername().isEmpty() && !client.getPassword().isEmpty())
+        {
+            connection.setRequestProperty(client.getUsername(), client.getPassword());
+        }
+
+        // read response
+        OutputStream output = null;
+        try
+        {
+            output = connection.getOutputStream();
+            output.write(request);
+        }
+        finally
+        {
+            IOUtils.closeQuietly(output);
+        }
+
+        LOG.debug("Waiting for response from TSA server");
+
+        InputStream input = null;
+        byte[] response;
+        try
+        {
+            input = connection.getInputStream();
+            response = IOUtils.toByteArray(input);
+        }
+        finally
+        {
+            IOUtils.closeQuietly(input);
+        }
+
+        LOG.debug("Received response from TSA server");
+
+        return response;
+    }
+
+    // returns the ASN.1 OID of the given hash algorithm
+    private ASN1ObjectIdentifier getHashObjectIdentifier(String algorithm)
+    {
+        switch (algorithm)
+        {
+            case "MD2":
+                return new ASN1ObjectIdentifier(PKCSObjectIdentifiers.md2.getId());
+            case "MD5":
+                return new ASN1ObjectIdentifier(PKCSObjectIdentifiers.md5.getId());
+            case "SHA-1":
+                return new ASN1ObjectIdentifier(OIWObjectIdentifiers.idSHA1.getId());
+            case "SHA-224":
+                return new ASN1ObjectIdentifier(NISTObjectIdentifiers.id_sha224.getId());
+            case "SHA-256":
+                return new ASN1ObjectIdentifier(NISTObjectIdentifiers.id_sha256.getId());
+            case "SHA-384":
+                return new ASN1ObjectIdentifier(NISTObjectIdentifiers.id_sha384.getId());
+            case "SHA-512":
+                return new ASN1ObjectIdentifier(NISTObjectIdentifiers.id_sha512.getId());
+            default:
+                return new ASN1ObjectIdentifier(algorithm);
+        }
+    }
+    
 	/**
 	 * This method creates the PKCS #7 signature. The given InputStream contains the
 	 * bytes that are given by the byte range.

@@ -3,7 +3,6 @@ package com.re.paas.api.tasks;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
-import com.re.paas.api.classes.ClientRBRef;
 import com.re.paas.api.runtime.ParameterizedExecutable;
 import com.re.paas.api.runtime.SecureMethod;
 import com.re.paas.api.runtime.spi.SpiDelegate;
@@ -19,7 +18,7 @@ public abstract class AbstractTaskDelegate extends SpiDelegate<TaskModel> {
 	
 	public abstract void removeTask(String id);
 	
-	public abstract Map<String, ClientRBRef> getTaskModelNames();
+	public abstract Map<String, String> getTaskModelNames();
 	
 	public abstract TaskModel getTaskModel(String name);
 	

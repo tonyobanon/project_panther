@@ -92,7 +92,9 @@ public class ObjectUtils {
 	public static void awaitLock(ReentrantLock lock, boolean force) {
 		if (force || lock.isLocked()) {
 			try {
+				synchronized (lock) {
 				lock.wait();
+			}
 			} catch (InterruptedException e) {
 				return;
 			}

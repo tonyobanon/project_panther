@@ -1,5 +1,7 @@
 package com.re.paas.api.runtime;
 
+import java.net.URLClassLoader;
+
 import com.re.paas.api.apps.AppClassLoader;
 import com.re.paas.api.fusion.JsonObject;
 import com.re.paas.api.runtime.spi.AppProvisioner;
@@ -22,6 +24,20 @@ public class ClassLoaders {
 	}
 
 	public static String getId(ClassLoader cl) {
+		
+		AppProvisioner provisioner = AppProvisioner.get();
+		
+		if (cl instanceof URLClassLoader) {
+			// Look for the app that owns this URLClassLoader
+			for(String appId : provisioner.listApps()) {
+				if (provisioner.getClassloader(appId).getLibraryClassLoader() == cl) {
+					return appId;
+				}
+			};
+		}
+		
+		assert !(cl instanceof URLClassLoader);
+		
 		return cl != null && cl instanceof AppClassLoader ? ((AppClassLoader) cl).getAppId()
 				: AppProvisioner.DEFAULT_APP_ID;
 	}

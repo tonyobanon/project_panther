@@ -5,7 +5,6 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoField;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -22,7 +21,7 @@ import com.cronutils.model.definition.CronDefinitionBuilder;
 import com.cronutils.model.time.ExecutionTime;
 import com.cronutils.parser.CronParser;
 import com.re.paas.api.annotations.develop.BlockerTodo;
-import com.re.paas.api.classes.ClientRBRef;
+import com.re.paas.api.classes.AsyncDistributedMap;
 import com.re.paas.api.classes.Exceptions;
 import com.re.paas.api.classes.TaskExecutionOutcome;
 import com.re.paas.api.clustering.ClusteringServices;
@@ -32,6 +31,7 @@ import com.re.paas.api.clustering.classes.ClusterDestination;
 import com.re.paas.api.clustering.generic.GenericFunction;
 import com.re.paas.api.runtime.ExecutorFactory;
 import com.re.paas.api.runtime.ParameterizedExecutable;
+import com.re.paas.api.runtime.spi.ResourcesInitResult;
 import com.re.paas.api.runtime.spi.DelegateInitResult;
 import com.re.paas.api.runtime.spi.DelegateSpec;
 import com.re.paas.api.runtime.spi.ResourceStatus;
@@ -77,7 +77,7 @@ public class TaskDelegate extends AbstractTaskDelegate {
 					delegate.createResourceMaps();
 
 					// Register task models
-					DelegateInitResult r = delegate.forEach(delegate::add0);
+					ResourcesInitResult r = delegate.addResources(delegate::add0);
 
 					taskExecutor = Executors.newScheduledThreadPool(1);
 
@@ -126,10 +126,6 @@ public class TaskDelegate extends AbstractTaskDelegate {
 		return Arrays.asList(TASK_DEFINITION_STORE_NAME);
 	}
 
-	@Override
-	protected Collection<?> getResourceObjects() {
-		return getTaskModelResourceMap().values();
-	}
 
 	private static final CronParser getCronParser() {
 		CronParser parser = new CronParser(CronDefinitionBuilder.instanceDefinitionFor(CronType.UNIX));
@@ -146,27 +142,27 @@ public class TaskDelegate extends AbstractTaskDelegate {
 
 		ExecutorFactory execFactory = ExecutorFactory.get();
 
-		getTaskDefinitions().values().forEach(definition -> {
+		getTaskDefinitions().values().join().forEach(definition -> {
 
-				Task task = definition.getTask();
+			Task task = definition.getTask();
 
-				setNextExecutionTime(definition);
+			setNextExecutionTime(definition);
 
-				Boolean execute = canExecuteRightNow(now, definition);
+			Boolean execute = canExecuteRightNow(now, definition);
 
-				if (execute) {
+			if (execute) {
 
-					ParameterizedExecutable<Task, TaskExecutionOutcome> executable = execFactory.buildFunction((p) -> {
-						return p.call();
-					}, task);
+				ParameterizedExecutable<Task, TaskExecutionOutcome> executable = execFactory.buildFunction((p) -> {
+					return p.call();
+				}, task);
 
-					// Execute task
-					execute0(executable, false);
+				// Execute task
+				execute0(executable, false);
 
-					// Set Last execution time
-					definition.setLastExecutionTime(Dates.getInstant());
-				}
-			});
+				// Set Last execution time
+				definition.setLastExecutionTime(Dates.getInstant());
+			}
+		});
 
 	}
 
@@ -307,9 +303,9 @@ public class TaskDelegate extends AbstractTaskDelegate {
 
 		// Remove task definitions created from this model
 
-		for (TaskDefinition t : getTaskDefinitions().values()) {
+		for (TaskDefinition t : getTaskDefinitions().values().join()) {
 			if (t.getModelName().equals(o.name())) {
-				
+
 				getTaskDefinitions().remove(t.getTask().id());
 				break;
 			}
@@ -330,13 +326,13 @@ public class TaskDelegate extends AbstractTaskDelegate {
 			Exceptions.throwRuntime("Task: " + task.id() + " must have an interval that is apart by at least "
 					+ intervalInSecs() * 2 + " seconds");
 		}
-		
-		Map<String, TaskDefinition> m = getTaskDefinitions();
 
-		if (m.containsKey(task.id())) {
+		AsyncDistributedMap<String, TaskDefinition> m = getTaskDefinitions();
+
+		if (m.containsKey(task.id()).join()) {
 			Exceptions.throwRuntime("Task '" + task.id() + "' already exists");
 		}
-	
+
 		m.put(task.id(), def.setDateAdded(Dates.getInstant()));
 	}
 
@@ -358,22 +354,22 @@ public class TaskDelegate extends AbstractTaskDelegate {
 	@Override
 	public void removeTask(String id) {
 
-		TaskDefinition def = getTaskDefinitions().remove(id);
+		TaskDefinition def = getTaskDefinitions().remove(id).join();
 
 		if (def == null) {
 			Exceptions.throwRuntime("Task '" + id + "' cannot be deleted - Not found");
 		}
 
 		if (!def.getIsDeletable()) {
-			getTaskDefinitions().put(id, def);
+			getTaskDefinitions().put(id, def).join();
 			Exceptions.throwRuntime("Task '" + id + "' cannot be deleted - Not allowed");
 		}
 	}
 
 	@Override
-	public Map<String, ClientRBRef> getTaskModelNames() {
+	public Map<String, String> getTaskModelNames() {
 
-		Map<String, ClientRBRef> result = new HashMap<>();
+		Map<String, String> result = new HashMap<>();
 
 		getTaskModelResourceMap().values().forEach((v) -> {
 
@@ -394,9 +390,10 @@ public class TaskDelegate extends AbstractTaskDelegate {
 		return (TaskModel) getTaskModelResourceMap().get(name);
 	}
 
-	private final Map<String, TaskDefinition> getTaskDefinitions() {
+	private final AsyncDistributedMap<String, TaskDefinition> getTaskDefinitions() {
 		@SuppressWarnings("unchecked")
-		Map<String, TaskDefinition> r = (Map<String, TaskDefinition>) super.getDistributedStore(TASK_DEFINITION_STORE_NAME);
+		AsyncDistributedMap<String, TaskDefinition> r = (AsyncDistributedMap<String, TaskDefinition>) super.getDistributedStore(
+				TASK_DEFINITION_STORE_NAME);
 		return r;
 	}
 

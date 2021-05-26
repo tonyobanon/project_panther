@@ -1,14 +1,11 @@
 
  package com.re.paas.api.infra.database.document.xspec;
 
-import com.amazonaws.annotation.Immutable;
-
 /**
  * <a href=
  * "http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.SpecifyingConditions.html#ConditionExpressionReference"
  * >Precedence</a> of various Conditions.
  */
-@Immutable
 enum Precedence {
     Comparator(700),    // = <> < <= > >=
     IN(600),

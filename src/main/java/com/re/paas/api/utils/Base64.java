@@ -1,6 +1,6 @@
 package com.re.paas.api.utils;
 
-import com.re.paas.api.designpatterns.Singleton;
+import com.re.paas.api.Singleton;
 
 public interface Base64 {
 	
