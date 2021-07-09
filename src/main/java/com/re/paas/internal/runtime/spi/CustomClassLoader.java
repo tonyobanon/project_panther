@@ -43,15 +43,14 @@ public class CustomClassLoader extends ClassLoader {
 	private final Map<String, byte[]> _classBytes = new HashMap<>();
 
 	private BiConsumer<Class<?>, byte[]> listener;
-
-	CustomClassLoader() {
-		this(false);
-	}
-
-	CustomClassLoader(Boolean pool) {
+	
+	private final String name;
+	
+	CustomClassLoader(Boolean pool, String name) {
 		super(CustomClassLoader.acl);
 
 		this.pool = pool;
+		this.name = name;
 
 		try {
 
@@ -60,6 +59,10 @@ public class CustomClassLoader extends ClassLoader {
 		} catch (URISyntaxException e) {
 			throw new RuntimeException(e);
 		}
+	}
+	
+	CustomClassLoader(Boolean pool) {
+		this(pool, null);
 	}
 
 	static void setJvmAppClassLoader(ClassLoader cl) {
@@ -79,8 +82,7 @@ public class CustomClassLoader extends ClassLoader {
 
 	@Override
 	public String getName() {
-		// Todo: Add name
-		return super.getName();
+		return this.name != null ? this.name : super.getName();
 	}
 
 	CustomClassLoader listener(BiConsumer<Class<?>, byte[]> listener) {

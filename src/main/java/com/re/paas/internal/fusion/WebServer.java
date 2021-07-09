@@ -1,9 +1,13 @@
 package com.re.paas.internal.fusion;
 
+import java.io.File;
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.nio.file.Path;
 import java.util.Deque;
 import java.util.LinkedList;
 
+import org.apache.tika.Tika;
 import org.eclipse.jetty.alpn.ALPN;
 import org.eclipse.jetty.alpn.server.ALPNServerConnectionFactory;
 import org.eclipse.jetty.http2.server.HTTP2ServerConnectionFactory;
@@ -35,17 +39,18 @@ import com.re.paas.api.fusion.services.BaseService;
 import com.re.paas.api.logging.Logger;
 import com.re.paas.api.runtime.ClassLoaders;
 import com.re.paas.api.runtime.SecureMethod;
+import com.re.paas.internal.runtime.spi.FusionClassloaders;
 
 @BlockerTodo("Optimize the way requests are handled, as the current impl is thread expensive.")
 public class WebServer {
 
+	private static Tika TIKA_INSTANCE = new Tika();
 	private static Server server;
 
 	// The port on the node through which the service available through
 	// https://matthewpalmer.net/kubernetes-app-developer/articles/kubernetes-ports-targetport-nodeport-service.html
 	private static final Integer serviceHttpPort = 8080;
 	private static final Integer serviceHttpsPort = 8433;
-
 
 	@SecureMethod
 	public static void start() {
@@ -167,38 +172,56 @@ public class WebServer {
 				}
 			}
 
-			// Create route object
+			if (ClassLoaders.getClassLoader(parts.peekFirst()) != null) {
 
-			String appId = parts.removeFirst();
+				String appId = parts.removeFirst();
 
+				if (Platform.getState(appId) != State.RUNNING) {
 
-			if (ClassLoaders.getClassLoader(appId) == null) {
-				// App not found
-				response.setStatus(HttpStatusCodes.SC_NOT_FOUND);
-				response.getWriter().write("Unknown appId: " + appId);
+					response.setStatus(HttpStatusCodes.SC_SERVICE_UNAVAILABLE);
+					return;
+				}
+
+				String path = "/" + Joiner.on('/').join(parts);
+
+				Route route = new Route(appId, path, HttpMethod.valueOf(request.getMethod()));
+
+				RoutingContext ctx = new RoutingContextImpl(route, request, response, true);
+
+				BaseService.getDelegate().handler(ctx);
+
 				return;
+
+			} else {
+
+				String appId = CookieUtil.getCookie(request.getCookies(), FusionClassloaders.APP_ID_COOKIE);
+
+				if (appId == null) {
+					response.setStatus(HttpStatusCodes.SC_NOT_FOUND);
+					return;
+				}
+
+				String path = Joiner.on(File.separatorChar).join(parts);
+				Path p = FusionClassloaders.getStaticPath(appId, path);
+
+				String content = FusionClassloaders.getStaticAsset(appId, path);
+
+				if (content == null) {
+					response.setStatus(HttpStatusCodes.SC_NOT_FOUND);
+					return;
+				}
+				
+
+				String contentType = TIKA_INSTANCE.detect(p.getFileName().toString());
+				
+				response.setContentType(contentType);
+
+				PrintWriter writer = response.getWriter();
+
+				writer.write(content);
+
+				writer.flush();
 			}
-
-			if (Platform.getState(appId) != State.RUNNING) {
-				// App not ready
-				response.setStatus(HttpStatusCodes.SC_SERVICE_UNAVAILABLE);
-				response.getWriter().write("App not running: " + appId);
-				return;
-			}
-
-			if (parts.peekFirst() != null && parts.peekFirst().equals("static")) {
-				// Todo: Render static file
-				return;
-			}
-
-			String path = "/" + Joiner.on('/').join(parts);
-
-			Route route = new Route(appId, path, HttpMethod.valueOf(request.getMethod()));
-
-			RoutingContext ctx = new RoutingContextImpl(route, request, response, true);
-
-			BaseService.getDelegate().handler(ctx);
-
 		}
 
 	}

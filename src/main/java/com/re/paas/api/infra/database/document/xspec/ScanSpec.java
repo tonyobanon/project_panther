@@ -4,10 +4,9 @@ import java.util.Collections;
 import java.util.Map;
 
 import com.re.paas.api.infra.database.document.PrimaryKey;
+import com.re.paas.api.infra.database.model.Select;
 
 public final class ScanSpec extends BaseSpec {
-
-	private String indexName;
 
 	private final String projectionExpression;
 	private final String filterExpression;
@@ -17,7 +16,12 @@ public final class ScanSpec extends BaseSpec {
 
 	private PrimaryKey exclusiveStartKey;
 	private Boolean consistentRead;
-	private Integer limit;
+	
+	private Select select;
+	
+	private Integer pageLimit;
+	private Integer resultLimit;
+	
 	private Integer totalSegments;
 	private Integer segment;
 
@@ -30,15 +34,6 @@ public final class ScanSpec extends BaseSpec {
 		this.nameMap = nameMap == null ? null : Collections.unmodifiableMap(nameMap);
 		Map<String, Object> valueMap = context.getValueMap();
 		this.valueMap = valueMap == null ? null : Collections.unmodifiableMap(valueMap);
-	}
-
-	public String getIndexName() {
-		return indexName;
-	}
-
-	public ScanSpec setIndexName(String indexName) {
-		this.indexName = indexName;
-		return this;
 	}
 
 	public PrimaryKey getExclusiveStartKey() {
@@ -79,7 +74,7 @@ public final class ScanSpec extends BaseSpec {
 		return valueMap;
 	}
 
-	public Boolean getConsistentRead() {
+	public Boolean isConsistentRead() {
 		return consistentRead;
 	}
 
@@ -88,12 +83,30 @@ public final class ScanSpec extends BaseSpec {
 		return this;
 	}
 
-	public Integer getLimit() {
-		return limit;
+	public Select getSelect() {
+		return select;
 	}
 
-	public ScanSpec setLimit(Integer limit) {
-		this.limit = limit;
+	public ScanSpec setSelect(Select select) {
+		this.select = select;
+		return this;
+	}
+
+	public Integer getPageLimit() {
+		return pageLimit;
+	}
+
+	public ScanSpec setPageLimit(Integer pageLimit) {
+		this.pageLimit = pageLimit;
+		return this;
+	}
+
+	public Integer getResultLimit() {
+		return resultLimit;
+	}
+
+	public ScanSpec setResultLimit(Integer resultLimit) {
+		this.resultLimit = resultLimit;
 		return this;
 	}
 

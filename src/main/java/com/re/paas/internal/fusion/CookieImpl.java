@@ -1,13 +1,13 @@
 package com.re.paas.internal.fusion;
 
-import io.netty.handler.codec.http.cookie.DefaultCookie;
-import io.netty.handler.codec.http.cookie.ServerCookieEncoder;
+import io.netty.handler.codec.http.DefaultCookie;
+import io.netty.handler.codec.http.ServerCookieEncoder;
 
 import com.re.paas.api.fusion.Cookie;
 
 public class CookieImpl implements Cookie {
 
-	private final io.netty.handler.codec.http.cookie.Cookie nettyCookie;
+	private final io.netty.handler.codec.http.Cookie nettyCookie;
 	private boolean changed;
 	private boolean fromUserAgent;
 
@@ -16,7 +16,7 @@ public class CookieImpl implements Cookie {
 		this.changed = true;
 	}
 
-	public CookieImpl(io.netty.handler.codec.http.cookie.Cookie nettyCookie) {
+	public CookieImpl(io.netty.handler.codec.http.Cookie nettyCookie) {
 		this.nettyCookie = nettyCookie;
 		fromUserAgent = true;
 	}
@@ -86,7 +86,7 @@ public class CookieImpl implements Cookie {
 	}
 
 	public String encode() {
-		return ServerCookieEncoder.STRICT.encode(nettyCookie);
+		return ServerCookieEncoder.encode(nettyCookie);
 	}
 
 	public boolean isChanged() {

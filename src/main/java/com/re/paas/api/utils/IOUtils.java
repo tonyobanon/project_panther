@@ -4,7 +4,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -15,8 +14,12 @@ public class IOUtils {
 
 	public static byte[] toByteArray(File f) {
 		try {
-			return toByteArray(new FileInputStream(f));
-		} catch (FileNotFoundException e) {
+
+			FileInputStream in = new FileInputStream(f);
+			byte[] bytes = toByteArray(in);
+			in.close();
+			return bytes;
+		} catch (IOException e) {
 			Exceptions.throwRuntime(e);
 			return null;
 		}
@@ -30,9 +33,19 @@ public class IOUtils {
 	 * @throws IOException if an I/O error occurs
 	 */
 	public static byte[] toByteArray(InputStream in) {
-		ByteArrayOutputStream baout = new ByteArrayOutputStream();
-		copy(in, baout);
-		return baout.toByteArray();
+		try {
+			
+			ByteArrayOutputStream baout = new ByteArrayOutputStream();
+			
+			copy(in, baout);
+			in.close();
+			
+			return baout.toByteArray();
+			
+		} catch (IOException e) {
+			Exceptions.throwRuntime(e);
+			return null;
+		}
 	}
 
 	/**

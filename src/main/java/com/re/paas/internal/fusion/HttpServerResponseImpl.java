@@ -1,6 +1,7 @@
 package com.re.paas.internal.fusion;
 
 import java.io.IOException;
+import java.util.Locale;
 import java.util.Map;
 
 import org.apache.commons.io.IOUtils;
@@ -11,12 +12,17 @@ import com.re.paas.api.fusion.Buffer;
 import com.re.paas.api.fusion.Cookie;
 import com.re.paas.api.fusion.HttpServerResponse;
 import com.re.paas.api.fusion.MultiMap;
+import com.re.paas.api.utils.JsonParser;
+import com.re.paas.internal.runtime.spi.CustomClassLoader;
+import com.re.paas.internal.runtime.spi.FusionClassloaders;
 
 import io.netty.handler.codec.http2.DefaultHttp2Headers;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 public class HttpServerResponseImpl implements HttpServerResponse {
 
+	HttpServletRequest req;
 	HttpServletResponse resp;
 
 	private boolean isEnded;
@@ -26,7 +32,8 @@ public class HttpServerResponseImpl implements HttpServerResponse {
 
 	private int bytesWritten;
 
-	HttpServerResponseImpl(HttpServletResponse response) {
+	HttpServerResponseImpl(HttpServletRequest request, HttpServletResponse response) {
+		this.req = request;
 		this.resp = response;
 	}
 
@@ -119,14 +126,48 @@ public class HttpServerResponseImpl implements HttpServerResponse {
 			throw new RuntimeException(e);
 		}
 	}
-	
+
+	private static Boolean isRtlLocale(Locale l) {
+		// Todo
+		return false;
+	}
+
+	@Override
+	public HttpServerResponse render(BaseComponent component, Boolean testMode) {
+
+		CustomClassLoader cl = (CustomClassLoader) component.getClass().getClassLoader();
+
+		String appId = cl.getName();
+
+		String assetId = component.getAssetId();
+
+		Boolean rtl = isRtlLocale(req.getLocale());
+
+		String clientHtml = FusionClassloaders.getComponentHtmlClient(appId, assetId);
+
+		// Add RTL setting
+		clientHtml = clientHtml.replace("\"{{rtl}}\"", Boolean.toString(rtl));
+
+		// Set testMode
+		clientHtml = clientHtml.replace("\"{{testMode}}\"", Boolean.toString(testMode));
+
+		if (!testMode) {
+
+			String data = JsonParser.get().toString(component);
+
+			clientHtml.replace("\"{{data}}\"", data);
+		}
+
+		headers().add("Content-Type", "text/html");
+		addCookie(new CookieImpl(FusionClassloaders.APP_ID_COOKIE, appId).setPath("/").setMaxAge(84900));
+
+		write(clientHtml);
+		return this;
+	}
+
 	@Override
 	public HttpServerResponse render(BaseComponent component) {
-		
-		
-		// Set appId cookie, this will be used to resolve static assets
-		
-		return this;
+		return render(component, false);
 	}
 
 	@Override

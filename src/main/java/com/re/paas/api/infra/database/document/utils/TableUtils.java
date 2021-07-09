@@ -3,19 +3,14 @@ package com.re.paas.api.infra.database.document.utils;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.function.Consumer;
 
 import com.re.paas.api.classes.Exceptions;
-import com.re.paas.api.infra.database.document.Database;
 import com.re.paas.api.infra.database.model.AttributeDefinition;
-import com.re.paas.api.infra.database.model.GlobalSecondaryIndexDescription;
-import com.re.paas.api.infra.database.model.IndexDefinition;
-import com.re.paas.api.infra.database.model.IndexDescriptor;
-import com.re.paas.api.infra.database.model.IndexDescriptor.Type;
+import com.re.paas.api.infra.database.model.GlobalSecondaryIndexDefinition;
 import com.re.paas.api.infra.database.model.KeySchemaElement;
 import com.re.paas.api.infra.database.model.KeyType;
-import com.re.paas.api.infra.database.model.LocalSecondaryIndexDescription;
-import com.re.paas.api.infra.database.model.ProvisionedThroughput;
+import com.re.paas.api.infra.database.model.LocalSecondaryIndexDefinition;
 import com.re.paas.api.infra.database.model.TableDefinition;
 import com.re.paas.api.infra.database.modelling.BaseTable;
 import com.re.paas.api.logging.Logger;
@@ -25,26 +20,44 @@ public class TableUtils {
 
 	private static final Logger LOG = Logger.get(Logger.class);
 
-	private static ProvisionedThroughput defaultProvisionedthroughput = new ProvisionedThroughput(3000l, 1000l);
-
-
-	public static Boolean createTable(Class<? extends BaseTable> entity) {
+	public static TableDefinition toTableDefinition(Class<? extends BaseTable> entity) {
 
 		BaseTable table = ClassUtils.createInstance(entity);
 
 		if (!table.enabled()) {
 			LOG.info("Skipping table '" + entity.getSimpleName() + "'");
-			return false;
+			return null;
+		}
+
+		if (table.name().contains("/")) {
+			Exceptions.throwRuntime("Invalid table name: " + table.name());
 		}
 
 		LOG.info("Creating table '" + entity.getSimpleName() + "'");
 
+		TableDefinition def = new TableDefinition(table.name());
+
 		
-		TableDefinition request = new TableDefinition();
+		List<AttributeDefinition> attributeDefinitions = new ArrayList<>();
 		
-		request.setTableName(table.name());
+		Consumer<AttributeDefinition> addAttribute = (attr) -> {
+			
+			// If already exists, return
+			for (AttributeDefinition a : attributeDefinitions) {
+				if (a.getAttributeName().equals(attr.getAttributeName())) {
+					return;
+				}
+			}
+			
+			attributeDefinitions.add(attr);
+		};
 		
-		request.setProvisionedThroughput(defaultProvisionedthroughput);
+	
+		addAttribute.accept(new AttributeDefinition(table.hashKey(), ItemUtils.getScalarType(entity, table.hashKey())));
+
+		if (table.rangeKey() != null) {
+			addAttribute.accept(new AttributeDefinition(table.rangeKey(), ItemUtils.getScalarType(entity, table.rangeKey())));
+		}
 
 		
 		Collection<KeySchemaElement> primaryKeys = new ArrayList<>();
@@ -54,89 +67,69 @@ public class TableUtils {
 		if (table.rangeKey() != null) {
 			primaryKeys.add(new KeySchemaElement(table.rangeKey(), KeyType.RANGE));
 		}
-		request.setKeySchema(primaryKeys);
 
-		List<AttributeDefinition> attributeDefinitions = new ArrayList<>();
+		def.setKeySchema(primaryKeys);
 
-		
-		attributeDefinitions
-				.add(new AttributeDefinition(table.hashKey(), ItemUtils.getScalarType(entity, table.hashKey())));
 
-		if (table.rangeKey() != null) {
-			attributeDefinitions
-					.add(new AttributeDefinition(table.rangeKey(), ItemUtils.getScalarType(entity, table.rangeKey())));
-		}
+		List<LocalSecondaryIndexDefinition> localSecondaryIndexes = new ArrayList<LocalSecondaryIndexDefinition>();
 
-		List<IndexDefinition> localSecondaryIndexes = new ArrayList<IndexDefinition>();
+		for (LocalSecondaryIndexDefinition index : table.localSecondaryIndexes()) {
 
-		List<IndexDefinition> globalSecondaryIndexes = new ArrayList<IndexDefinition>();
+			String rangeKey = ItemUtils.getSchemaKey(index.getKeySchema(), KeyType.RANGE);
 
-		for (IndexDefinition index : table.indexes().stream().filter(i -> i.getType() == Type.LSI)
-				.collect(Collectors.toList())) {
-
-			if (index.getKeySchema().size() > 1) {
-				Exceptions.throwRuntime(
-						entity.getName() + ": Index '" + index.getIndexName() + "' should have 1 KeySchemaElement");
+			if (rangeKey == null) {
+				throw new RuntimeException("Empty rangeKey for index: " + index.getIndexName());
 			}
 
-			localSecondaryIndexes.add(new LocalSecondaryIndexDescription(request.getTableName(), index.getIndexName())
-					.withKeySchema(index.getKeySchema()).withProjection(index.getProjection()));
+			localSecondaryIndexes.add(index);
 
-			attributeDefinitions.add(new AttributeDefinition(index.getKeySchema().get(0).getAttributeName(),
-					ItemUtils.getScalarType(entity, index.getKeySchema().get(0).getAttributeName())));
+			addAttribute.accept(new AttributeDefinition(rangeKey, ItemUtils.getScalarType(entity, rangeKey)));	
 		}
 
-		for (IndexDefinition index : table.indexes().stream().filter(i -> i.getType() == Type.GSI)
-				.collect(Collectors.toList())) {
+		if (localSecondaryIndexes.size() > 0) {
+			def.setLocalSecondaryIndexes(localSecondaryIndexes);
+		}
+
+		List<GlobalSecondaryIndexDefinition> globalSecondaryIndexes = new ArrayList<GlobalSecondaryIndexDefinition>();
+
+		for (GlobalSecondaryIndexDefinition index : table.globalSecondaryIndexes()) {
 
 			String hashKey = ItemUtils.getSchemaKey(index.getKeySchema(), KeyType.HASH);
 			String rangeKey = ItemUtils.getSchemaKey(index.getKeySchema(), KeyType.RANGE);
 
-
-			if (index.isQueryOptimzed() && !ItemUtils.isNumber(entity, hashKey)) {
-				throw new RuntimeException("Only Number-Typed hash attributes are allowed for this GSI");
+			if (hashKey == null) {
+				throw new RuntimeException("Empty hashKey for index: " + index.getIndexName());
 			}
 
-			if (rangeKey != null && !ItemUtils.isScalarType(entity, rangeKey)) {
-				throw new RuntimeException("Only Scalar-Typed range attributes are allowed for GSIs");
+			if (index.forTextSearch()) {
+
+				if (!ItemUtils.isNumber(entity, hashKey)) {
+					throw new RuntimeException(
+							table.name() + ": Only Number-Typed hash attributes are allowed for this GSI");
+				}
+
+				if (index.getQueryType() == null) {
+					throw new RuntimeException(
+							table.name() + "/" + index.getIndexName() + ": " + "A query type must be provided");
+				}
 			}
-			
 
+			globalSecondaryIndexes.add(index);
 
-			globalSecondaryIndexes.add(
-					new GlobalSecondaryIndexDescription(request.getTableName(), index.getIndexName()).addHashKey(hashKey)
-							.addRangeKey(rangeKey).withProjection(index.getProjection()).setProvisionedThroughput(
-									index.getProvisionedThroughput() != null ? index.getProvisionedThroughput()
-											: defaultProvisionedthroughput));
-
-			attributeDefinitions.add(new AttributeDefinition(hashKey, ItemUtils.getScalarType(entity, hashKey)));
+			addAttribute.accept(new AttributeDefinition(hashKey, ItemUtils.getScalarType(entity, hashKey)));
 
 			if (rangeKey != null) {
-				attributeDefinitions.add(new AttributeDefinition(rangeKey, ItemUtils.getScalarType(entity, rangeKey)));
+				addAttribute.accept(new AttributeDefinition(rangeKey, ItemUtils.getScalarType(entity, rangeKey)));
 			}
-			
-			Database.get().getTextSearch().getQueryModel().newQueryOptimizedGSI(new IndexDescriptor(request.getTableName(), index.getIndexName()),
-					index.getProjection().getNonKeyAttributes(), index.getQueryType(), hashKey, rangeKey,
-					index.getProvisionedThroughput().getReadCapacityUnits(), table.hashKey(), table.rangeKey());
 		}
 
 		if (globalSecondaryIndexes.size() > 0) {
-			request.setGlobalSecondaryIndexes(globalSecondaryIndexes);
+			def.setGlobalSecondaryIndexes(globalSecondaryIndexes);
 		}
 
-		if (localSecondaryIndexes.size() > 0) {
-			request.setLocalSecondaryIndexes(localSecondaryIndexes);
-		}
+		def.setAttributeDefinitions(attributeDefinitions);
 
-		request.setAttributeDefinitions(attributeDefinitions);
-
-		Database.get().createTable(request).waitForActive();
-
-		return true;
-	}
-	
-	public static String getTableNameDelimiter() {
-		return "_";
+		return def;
 	}
 
 }

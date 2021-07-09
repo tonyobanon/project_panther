@@ -37,7 +37,9 @@ public class SystemAdapterService extends BaseService {
 		JsonArray res = new JsonArray();
 
 		for (AdapterType type : AdapterType.values()) {
-			res.add(type.toString());
+			if (!type.isPlatformIntrinsic()) {
+				res.add(type.toString());
+			}
 		}
 
 		ctx.response().write(res.encode());
@@ -137,7 +139,6 @@ public class SystemAdapterService extends BaseService {
 			
 			ctx.response().setStatusCode(HttpStatusCodes.SC_INTERNAL_SERVER_ERROR).write(err);
 		}
-
 
 	}
 

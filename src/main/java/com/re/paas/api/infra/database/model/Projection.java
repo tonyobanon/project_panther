@@ -2,25 +2,26 @@ package com.re.paas.api.infra.database.model;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 public class Projection {
 
-	private String projectionType;
+	private ProjectionType projectionType;
 
 	private List<String> nonKeyAttributes;
 
-	public void setProjectionType(String projectionType) {
+	public Projection(ProjectionType projectionType) {
+		this(projectionType, Collections.emptyList());
+	}
+	
+	public Projection(ProjectionType projectionType, List<String> nonKeyAttributes) {
 		this.projectionType = projectionType;
+		this.nonKeyAttributes = nonKeyAttributes;
 	}
 
-	public String getProjectionType() {
+	public ProjectionType getProjectionType() {
 		return this.projectionType;
-	}
-
-	public Projection withProjectionType(String projectionType) {
-		setProjectionType(projectionType);
-		return this;
 	}
 
 	public void setProjectionType(ProjectionType projectionType) {
@@ -28,7 +29,7 @@ public class Projection {
 	}
 
 	public Projection withProjectionType(ProjectionType projectionType) {
-		this.projectionType = projectionType.toString();
+		this.projectionType = projectionType;
 		return this;
 	}
 

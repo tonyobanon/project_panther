@@ -37,7 +37,7 @@ public class RoutingContextImpl implements RoutingContext {
 		this.route = route;
 		
 		this.request = new HttpServerRequestImpl(req);
-		this.response = new HttpServerResponseImpl(resp);
+		this.response = new HttpServerResponseImpl(req, resp);
 
 		this.session = addSession ? new SessionImpl(this) : null;
 	}

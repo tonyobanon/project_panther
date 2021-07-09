@@ -25,7 +25,7 @@ public class BaseGetItemSpec extends BaseSpec {
         return nameMap;
     }
 
-	public Boolean getConsistentRead() {
+	public Boolean isConsistentRead() {
 		return consistentRead;
 	}
 

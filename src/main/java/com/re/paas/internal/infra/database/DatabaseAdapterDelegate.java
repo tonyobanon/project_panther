@@ -6,9 +6,11 @@ import com.re.paas.api.adapters.LoadPhase;
 import com.re.paas.api.annotations.develop.BlockerTodo;
 import com.re.paas.api.infra.database.AbstractDatabaseAdapterDelegate;
 import com.re.paas.api.infra.database.document.Database;
-import com.re.paas.api.roles.AbstractRole;
+import com.re.paas.api.infra.database.modelling.BaseTable;
+import com.re.paas.api.runtime.spi.ClassIdentityType;
 import com.re.paas.api.runtime.spi.DelegateSpec;
 import com.re.paas.api.runtime.spi.SpiType;
+import com.re.paas.internal.classes.ClasspathScanner;
 
 @DelegateSpec(dependencies = SpiType.NODE_ROLE)
 public class DatabaseAdapterDelegate extends AbstractDatabaseAdapterDelegate {
@@ -17,21 +19,17 @@ public class DatabaseAdapterDelegate extends AbstractDatabaseAdapterDelegate {
 
 	@Override
 	public Boolean load(LoadPhase phase) {
-		Database db = getDatabase(true);
 
-		if (AbstractRole.getDelegate().isMaster()) {
-			switch (phase) {
-			case PLATFORM_SETUP: // Needs db.load as newly created artifacts may need to be loaded
-				setupTables(); 
-				break;
-			case START: // Needs db.load as existing artifacts may need to be loaded
-				updateSchemas(); 
-				break;
-			case MIGRATE: // Does not need db.load as no artifacts exists
-				break;
-			}
-			db.load();
+		if (phase == LoadPhase.PLATFORM_SETUP) {
+
+			// Create platform tables
+			Database db = getDatabase(true);
+
+			new ClasspathScanner<>(BaseTable.class, ClassIdentityType.ASSIGNABLE_FROM).scanClasses().forEach(clazz -> {
+				db.createTable(clazz);
+			});
 		}
+
 		return true;
 	}
 
@@ -46,14 +44,6 @@ public class DatabaseAdapterDelegate extends AbstractDatabaseAdapterDelegate {
 
 		database = db;
 		return database;
-	}
-
-	private void setupTables() {
-		// auto creation of new table(s)
-	}
-
-	private void updateSchemas() {
-		// update existing tables (if necessary)
 	}
 
 	@Override

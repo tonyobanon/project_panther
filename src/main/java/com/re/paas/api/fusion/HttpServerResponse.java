@@ -22,6 +22,8 @@ public interface HttpServerResponse extends Cloneable {
 
 	HttpServerResponse write(String chunk);
 	
+	HttpServerResponse render(BaseComponent component, Boolean testMode);
+	
 	HttpServerResponse render(BaseComponent component);
 
 	void end();

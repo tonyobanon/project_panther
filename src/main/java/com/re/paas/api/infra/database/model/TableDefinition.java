@@ -1,27 +1,18 @@
 package com.re.paas.api.infra.database.model;
 
-/**
-* <p>
-* Represents the input of a <code>CreateTable</code> operation.
-* </p>
-* 
-*/
+
 public class TableDefinition extends BaseTableDefinition {
 
-
-   private java.util.List<IndexDefinition> localSecondaryIndexes;
+   private java.util.List<LocalSecondaryIndexDefinition> localSecondaryIndexes;
    
-   private java.util.List<IndexDefinition> globalSecondaryIndexes;
+   private java.util.List<GlobalSecondaryIndexDefinition> globalSecondaryIndexes;
 
-   public TableDefinition() {
-   }
 
-   public TableDefinition(String tableName, java.util.List<KeySchemaElement> keySchema) {
+   public TableDefinition(String tableName) {
        setTableName(tableName);
-       setKeySchema(keySchema);
    }
 
-   public TableDefinition(java.util.List<AttributeDefinition> attributeDefinitions, String tableName, java.util.List<KeySchemaElement> keySchema) {
+   public TableDefinition(String tableName, java.util.List<AttributeDefinition> attributeDefinitions, java.util.List<KeySchemaElement> keySchema) {
        setAttributeDefinitions(attributeDefinitions);
        setTableName(tableName);
        setKeySchema(keySchema);
@@ -32,61 +23,61 @@ public class TableDefinition extends BaseTableDefinition {
        return this;
    }
 
-   public java.util.List<IndexDefinition> getLocalSecondaryIndexes() {
+   public java.util.List<LocalSecondaryIndexDefinition> getLocalSecondaryIndexes() {
        return localSecondaryIndexes;
    }
 
-   public void setLocalSecondaryIndexes(java.util.Collection<IndexDefinition> localSecondaryIndexes) {
+   public void setLocalSecondaryIndexes(java.util.Collection<LocalSecondaryIndexDefinition> localSecondaryIndexes) {
        if (localSecondaryIndexes == null) {
            this.localSecondaryIndexes = null;
            return;
        }
 
-       this.localSecondaryIndexes = new java.util.ArrayList<IndexDefinition>(localSecondaryIndexes);
+       this.localSecondaryIndexes = new java.util.ArrayList<LocalSecondaryIndexDefinition>(localSecondaryIndexes);
    }
  
-   public TableDefinition withLocalSecondaryIndexes(IndexDefinition... localSecondaryIndexes) {
+   public TableDefinition withLocalSecondaryIndexes(LocalSecondaryIndexDefinition... localSecondaryIndexes) {
        if (this.localSecondaryIndexes == null) {
-           setLocalSecondaryIndexes(new java.util.ArrayList<IndexDefinition>(localSecondaryIndexes.length));
+           setLocalSecondaryIndexes(new java.util.ArrayList<LocalSecondaryIndexDefinition>(localSecondaryIndexes.length));
        }
-       for (IndexDefinition ele : localSecondaryIndexes) {
+       for (LocalSecondaryIndexDefinition ele : localSecondaryIndexes) {
            this.localSecondaryIndexes.add(ele);
        }
        return this;
    }
 
 
-   public TableDefinition withLocalSecondaryIndexes(java.util.Collection<IndexDefinition> localSecondaryIndexes) {
+   public TableDefinition withLocalSecondaryIndexes(java.util.Collection<LocalSecondaryIndexDefinition> localSecondaryIndexes) {
        setLocalSecondaryIndexes(localSecondaryIndexes);
        return this;
    }
 
 
-   public java.util.List<IndexDefinition> getGlobalSecondaryIndexes() {
+   public java.util.List<GlobalSecondaryIndexDefinition> getGlobalSecondaryIndexes() {
        return globalSecondaryIndexes;
    }
 
 
-   public void setGlobalSecondaryIndexes(java.util.Collection<IndexDefinition> globalSecondaryIndexes) {
+   public void setGlobalSecondaryIndexes(java.util.Collection<GlobalSecondaryIndexDefinition> globalSecondaryIndexes) {
        if (globalSecondaryIndexes == null) {
            this.globalSecondaryIndexes = null;
            return;
        }
 
-       this.globalSecondaryIndexes = new java.util.ArrayList<IndexDefinition>(globalSecondaryIndexes);
+       this.globalSecondaryIndexes = new java.util.ArrayList<GlobalSecondaryIndexDefinition>(globalSecondaryIndexes);
    }
 
-   public TableDefinition withGlobalSecondaryIndexes(IndexDefinition... globalSecondaryIndexes) {
+   public TableDefinition withGlobalSecondaryIndexes(GlobalSecondaryIndexDefinition... globalSecondaryIndexes) {
        if (this.globalSecondaryIndexes == null) {
-           setGlobalSecondaryIndexes(new java.util.ArrayList<IndexDefinition>(globalSecondaryIndexes.length));
+           setGlobalSecondaryIndexes(new java.util.ArrayList<GlobalSecondaryIndexDefinition>(globalSecondaryIndexes.length));
        }
-       for (IndexDefinition ele : globalSecondaryIndexes) {
+       for (GlobalSecondaryIndexDefinition ele : globalSecondaryIndexes) {
            this.globalSecondaryIndexes.add(ele);
        }
        return this;
    }
 
-   public TableDefinition withGlobalSecondaryIndexes(java.util.Collection<IndexDefinition> globalSecondaryIndexes) {
+   public TableDefinition withGlobalSecondaryIndexes(java.util.Collection<GlobalSecondaryIndexDefinition> globalSecondaryIndexes) {
        setGlobalSecondaryIndexes(globalSecondaryIndexes);
        return this;
    }

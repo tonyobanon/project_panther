@@ -10,7 +10,7 @@ public class UpdateItemSpec extends BaseSpec {
 	
 	private PrimaryKey primaryKey;
 	
-    private String returnValues = ReturnValue.NONE.toString();
+    private ReturnValue returnValues;
     
     private final String updateExpression;
     private final String conditionExpression;
@@ -37,18 +37,13 @@ public class UpdateItemSpec extends BaseSpec {
 		return this;
 	}
 
-	public UpdateItemSpec setReturnValues(String returnValues) {
+	public UpdateItemSpec setReturnValues(ReturnValue returnValues) {
 		this.returnValues = returnValues;
 		return this;
 	}
 
-	public String getReturnValues() {
+	public ReturnValue getReturnValues() {
         return this.returnValues;
-    }
-
-    public UpdateItemSpec withReturnValues(ReturnValue returnValues) {
-    	this.returnValues = returnValues.toString();
-        return this;
     }
     
     /**

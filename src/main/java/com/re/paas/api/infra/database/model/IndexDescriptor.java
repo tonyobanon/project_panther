@@ -18,13 +18,12 @@ public class IndexDescriptor {
 	private final String indexName;
 	
 	private final Type type;
-	
 
 	public IndexDescriptor(String tableName, String indexName) {
 		this(tableName, indexName, null);
 	}
 	
-	public IndexDescriptor(String tableName, String indexName, Type type) {
+	IndexDescriptor(String tableName, String indexName, Type type) {
 		this.tableName = tableName;
 		this.indexName = indexName;
 		this.type = type;

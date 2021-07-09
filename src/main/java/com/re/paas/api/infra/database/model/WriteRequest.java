@@ -1,35 +1,29 @@
 package com.re.paas.api.infra.database.model;
 
 import com.re.paas.api.infra.database.document.Item;
-import com.re.paas.api.infra.database.document.xspec.DeleteItemSpec;
-import com.re.paas.api.infra.database.document.xspec.PutItemSpec;
+import com.re.paas.api.infra.database.document.PrimaryKey;
 
 public class WriteRequest {
 
-	private final DeleteItemSpec deleteRequest;
+	private final PrimaryKey deleteRequest;
 	
-	private final PutItemSpec putRequest;
+	private final Item putRequest;
 	
-	public WriteRequest(DeleteItemSpec deleteRequest) {
+	public WriteRequest(PrimaryKey deleteRequest) {
 		this.deleteRequest = deleteRequest;
 		this.putRequest = null;
 	}
 	
-	public WriteRequest(PutItemSpec putRequest) {
-		this.deleteRequest = null;
-		this.putRequest = putRequest;
-	}
-	
 	public WriteRequest(Item i) {
 		this.deleteRequest = null;
-		this.putRequest = PutItemSpec.forItem(i);
+		this.putRequest = i;
 	}
 
-	public DeleteItemSpec getDeleteRequest() {
+	public PrimaryKey getDeleteRequest() {
 		return deleteRequest;
 	}
 
-	public PutItemSpec getPutRequest() {
+	public Item getPutRequest() {
 		return putRequest;
 	}
 	

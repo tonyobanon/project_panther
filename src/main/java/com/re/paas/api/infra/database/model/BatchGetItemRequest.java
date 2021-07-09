@@ -17,10 +17,6 @@ public class BatchGetItemRequest {
 		this.requestItems = requestItems;
 		return this;
 	}
-
-	public BatchGetItemRequest addRequestItem(Class<?> table, GetItemsSpec spec) {
-		return addRequestItem(table.getSimpleName(), spec);
-	}
 	
 	public BatchGetItemRequest addRequestItem(String tableName, GetItemsSpec spec) {
 		this.requestItems.put(tableName, spec);

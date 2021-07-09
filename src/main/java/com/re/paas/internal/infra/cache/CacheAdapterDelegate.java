@@ -13,6 +13,9 @@ public class CacheAdapterDelegate extends AbstractCacheAdapterDelegate {
 
 	@Override
 	public Boolean load(LoadPhase phase) {
+		
+		assert phase == LoadPhase.START;
+		
 		getCacheFactory(true);
 		return true;
 	}

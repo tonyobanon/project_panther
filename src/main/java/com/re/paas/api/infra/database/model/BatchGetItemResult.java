@@ -4,7 +4,6 @@ import java.util.List;
 import java.util.Map;
 
 import com.re.paas.api.infra.database.document.Item;
-import com.re.paas.api.infra.database.modelling.BaseTable;
 
 public class BatchGetItemResult {
 
@@ -15,17 +14,25 @@ public class BatchGetItemResult {
 	 * </p>
 	 */
 	private Map<String, List<Item>> responses;
+	
+	private BatchGetItemRequest unprocessedKeys;
 
 	public Map<String, List<Item>> getResponses() {
 		return responses;
-	}
-	
-	public List<Item> getResponses(Class<? extends BaseTable> table) {
-		return getResponses().get(table.getSimpleName());
 	}
 
 	public BatchGetItemResult setResponses(Map<String, List<Item>> responses) {
 		this.responses = responses;
 		return this;
 	}
+
+	public BatchGetItemRequest getUnprocessedKeys() {
+		return unprocessedKeys;
+	}
+
+	public BatchGetItemResult setUnprocessedKeys(BatchGetItemRequest unprocessedKeys) {
+		this.unprocessedKeys = unprocessedKeys;
+		return this;
+	}
+
 }

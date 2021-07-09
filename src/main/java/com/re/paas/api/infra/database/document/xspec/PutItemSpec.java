@@ -10,7 +10,7 @@ public class PutItemSpec extends BaseSpec {
 	
     private Item item;
 	
-    private String returnValues;
+    private ReturnValue returnValues;
 	
     private final String conditionExpression;
 
@@ -29,16 +29,18 @@ public class PutItemSpec extends BaseSpec {
     public Item getItem() {
         return item;
     }
+    
     public PutItemSpec withItem(Item item) {
         this.item = item;
         return this;
     }
-    public String getReturnValues() {
+    
+    public ReturnValue getReturnValues() {
         return this.returnValues;
     }
 
     public PutItemSpec withReturnValues(ReturnValue returnValues) {
-    	this.returnValues = returnValues.toString();
+    	this.returnValues = returnValues;
         return this;
     }
 

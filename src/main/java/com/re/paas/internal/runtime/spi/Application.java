@@ -27,7 +27,7 @@ public abstract class Application {
 		if (performMetaFactoryScan) {
 
 			// Perform Meta factory scan
-			RuntimeTransformers.apply();
+			// RuntimeTransformers.apply();
 		}
 
 		// Start application delegate

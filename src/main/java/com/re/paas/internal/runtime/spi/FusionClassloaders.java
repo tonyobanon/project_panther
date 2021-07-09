@@ -2,7 +2,10 @@ package com.re.paas.internal.runtime.spi;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.lang.management.ManagementFactory;
+import java.nio.charset.Charset;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -17,13 +20,18 @@ import java.util.zip.ZipInputStream;
 
 import com.re.paas.api.Platform;
 import com.re.paas.api.classes.Exceptions;
+import com.re.paas.api.runtime.SecureMethod;
 import com.re.paas.api.runtime.spi.AppProvisioner;
+import com.re.paas.api.utils.IOUtils;
 import com.re.paas.internal.infra.filesystem.FileSystemProviders;
 import com.re.paas.internal.utils.FileUtils;
 
 public class FusionClassloaders {
+	
+	public static String APP_ID_COOKIE = "appId";
 
 	private static final Map<String, ClassLoader> fusionClassloaders = new HashMap<>();
+	private static String appIdLock;
 
 	static void init() {
 
@@ -45,7 +53,8 @@ public class FusionClassloaders {
 				try {
 					WatchService watchService = FileSystemProviders.getInternal().newWatchService();
 
-					jarFile.getParent().register(watchService, StandardWatchEventKinds.ENTRY_MODIFY);
+					jarFile.getParent().register(watchService, StandardWatchEventKinds.ENTRY_MODIFY,
+							StandardWatchEventKinds.ENTRY_CREATE);
 
 					WatchKey key;
 					while ((key = watchService.take()) != null) {
@@ -91,7 +100,11 @@ public class FusionClassloaders {
 
 			Files.createFile(p);
 
-			zip.transferTo(Files.newOutputStream(p));
+			OutputStream out = Files.newOutputStream(p);
+
+			zip.transferTo(out);
+
+			out.close();
 
 		} catch (IOException e) {
 			Exceptions.throwRuntime(e);
@@ -100,14 +113,22 @@ public class FusionClassloaders {
 
 	private static void updateFusionClient(String appId, Path jarFile) {
 
+		// Indicate that this appId is being updated
+		appIdLock = appId;
+
 		// Extract classes and static assets
 
 		Path staticDir = refreshPath(getFusionStaticPath().resolve(appId));
 		Path classesDir = refreshPath(getFusionClassesPath().resolve(appId));
 
+		if (!Files.exists(jarFile)) {
+			return;
+		}
+
 		try (var fileIn = Files.newInputStream(jarFile)) {
 
 			ZipInputStream zip = new ZipInputStream(fileIn);
+
 			for (ZipEntry entry = zip.getNextEntry(); entry != null; entry = zip.getNextEntry()) {
 
 				if (entry.isDirectory() || entry.getName().startsWith("META-INF/")) {
@@ -133,13 +154,18 @@ public class FusionClassloaders {
 
 				write(zip, p);
 			}
+
+			zip.close();
+
 		} catch (IOException e) {
 			Exceptions.throwRuntime(e);
 		}
 
-		CustomClassLoader cl = new CustomClassLoader(false).disableForwarding().setPath(classesDir.toUri());
+		CustomClassLoader cl = new CustomClassLoader(false, appId).disableForwarding().setPath(classesDir.toUri());
 
 		fusionClassloaders.put(appId, cl);
+
+		appIdLock = null;
 	}
 
 	private static Path getPlatformFusionClient() {
@@ -201,6 +227,55 @@ public class FusionClassloaders {
 		}
 
 		return appId;
+	}
+
+	private static void acquireLock(String appId) {
+		if (appIdLock != null && appIdLock.equals(appId)) {
+			// This appId is being updated, wait until completion
+			while (appIdLock != null) {
+				try {
+					Thread.sleep(500);
+				} catch (InterruptedException e) {
+				}
+			}
+		}
+	}
+
+	public static String getComponentHtmlClient(String appId, String assetId) {
+		String s = getStaticAsset(appId, "components" + File.separator + assetId + File.separator + "client.html");
+
+		if (s == null) {
+			Exceptions.throwRuntime("Cannot find html client; appId=" + appId + ", assetId=" + assetId);
+		}
+
+		return s;
+	}
+
+	@SecureMethod
+	public static Path getStaticPath(String appId, String path) {
+		return getFusionStaticPath().resolve(appId).resolve(path);
+	}
+	
+	public static String getStaticAsset(String appId, String path) {
+
+		acquireLock(appId);
+
+		Path p = getStaticPath(appId, path);
+
+		if (!Files.exists(p)) {
+			return null;
+		}
+
+		try {
+			InputStream in = Files.newInputStream(p);
+
+			byte[] bytes = IOUtils.toByteArray(in);
+			return new String(bytes, Charset.defaultCharset());
+
+		} catch (IOException ex) {
+			Exceptions.throwRuntime(ex);
+			return null;
+		}
 	}
 
 }

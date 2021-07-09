@@ -21,6 +21,7 @@ import java.util.Map;
 import java.util.Set;
 
 import com.re.paas.api.infra.database.document.PrimaryKey;
+import com.re.paas.api.infra.database.model.Select;
 import com.re.paas.api.utils.ValueType;
 
 public final class QuerySpec extends BaseSpec {
@@ -34,16 +35,20 @@ public final class QuerySpec extends BaseSpec {
 
 	private final Map<String, String> nameMap;
 	private final Map<String, Object> valueMap;
-
+	
 	private PrimaryKey exclusiveStartKey;
 	private Boolean consistentRead;
 	private Boolean scanIndexForward;
 
-	private Integer limit;
+	private Select select;
+	
+	private Integer pageLimit;
+	private Integer resultLimit;
 
 	QuerySpec(ExpressionSpecBuilder builder) {
 
 		SubstitutionContext context = new SubstitutionContext();
+		
 		this.keyConditionExpression = builder.buildKeyConditionExpression(context);
 		this.filterExpression = builder.buildConditionExpression(context);
 		this.projectionExpression = builder.buildProjectionExpression(context);
@@ -52,6 +57,18 @@ public final class QuerySpec extends BaseSpec {
 		this.nameMap = nameMap == null ? null : Collections.unmodifiableMap(nameMap);
 		Map<String, Object> valueMap = context.getValueMap();
 		this.valueMap = valueMap == null ? null : Collections.unmodifiableMap(valueMap);
+	}
+	
+	@SuppressWarnings("unused")
+	private QuerySpec(String indexName, String keyConditionExpression, String projectionExpression, String filterExpression,
+			Map<String, String> nameMap, Map<String, Object> valueMap) {
+		super();
+		this.indexName = indexName;
+		this.keyConditionExpression = keyConditionExpression;
+		this.projectionExpression = projectionExpression;
+		this.filterExpression = filterExpression;
+		this.nameMap = nameMap;
+		this.valueMap = valueMap;
 	}
 
 	public String getIndexName() {
@@ -98,6 +115,15 @@ public final class QuerySpec extends BaseSpec {
 	public Map<String, Object> getValueMap() {
 		return valueMap;
 	}
+	
+	public Select getSelect() {
+		return select;
+	}
+
+	public QuerySpec setSelect(Select select) {
+		this.select = select;
+		return this;
+	}
 
 	public PrimaryKey getExclusiveStartKey() {
 		return exclusiveStartKey;
@@ -108,7 +134,7 @@ public final class QuerySpec extends BaseSpec {
 		return this;
 	}
 
-	public Boolean getConsistentRead() {
+	public Boolean isConsistentRead() {
 		return consistentRead;
 	}
 
@@ -126,12 +152,21 @@ public final class QuerySpec extends BaseSpec {
 		return this;
 	}
 
-	public Integer getLimit() {
-		return limit;
+	public Integer getPageLimit() {
+		return pageLimit;
 	}
 
-	public QuerySpec setLimit(Integer limit) {
-		this.limit = limit;
+	public QuerySpec setPageLimit(Integer pageLimit) {
+		this.pageLimit = pageLimit;
+		return this;
+	}
+
+	public Integer getResultLimit() {
+		return resultLimit;
+	}
+
+	public QuerySpec setResultLimit(Integer resultLimit) {
+		this.resultLimit = resultLimit;
 		return this;
 	}
 

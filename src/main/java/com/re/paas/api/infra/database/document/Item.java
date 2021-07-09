@@ -57,6 +57,7 @@ public class Item {
 	private static final String DUPLICATE_VALUES_FOUND_IN_INPUT = "Duplicate values found in input";
 
 	private final Map<String, Object> attributes = new LinkedHashMap<String, Object>();
+	
 	private static final ItemValueConformer valueConformer = new ItemValueConformer();
 
 	private static final JsonParser jsonParser = Singleton.get(JsonParser.class);

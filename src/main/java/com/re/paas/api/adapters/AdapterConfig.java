@@ -1,6 +1,5 @@
 package com.re.paas.api.adapters;
 
-import java.io.FileNotFoundException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
@@ -9,10 +8,14 @@ import java.util.Map;
 
 import com.re.paas.api.classes.Exceptions;
 import com.re.paas.api.infra.filesystem.NativeFileSystem;
+import com.re.paas.api.logging.Logger;
+import com.re.paas.api.logging.LoggerFactory;
 import com.re.paas.api.utils.JsonParser;
 import com.re.paas.api.utils.Utils;
 
 public class AdapterConfig {
+	
+	private static final Logger LOG = LoggerFactory.get().getLog(AdapterConfig.class);
 
 	private static transient final Map<AdapterType, AdapterConfig> instances = Collections
 			.synchronizedMap(new HashMap<AdapterType, AdapterConfig>());
@@ -33,8 +36,8 @@ public class AdapterConfig {
 	public AdapterConfig load() {
 
 		if (!Files.exists(file)) {
-			Exceptions.throwRuntime(
-					new FileNotFoundException("Adapter config file: " + file.toString() + " does not exist"));
+			LOG.warn("Adapter config file: " + file.toString() + " does not exist");
+			return null;
 		}
 
 		AdapterConfig instance = instances.get(type);

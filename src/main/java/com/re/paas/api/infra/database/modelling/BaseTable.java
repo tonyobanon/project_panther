@@ -3,7 +3,8 @@ package com.re.paas.api.infra.database.modelling;
 import java.util.Collections;
 import java.util.List;
 
-import com.re.paas.api.infra.database.model.IndexDefinition;
+import com.re.paas.api.infra.database.model.GlobalSecondaryIndexDefinition;
+import com.re.paas.api.infra.database.model.LocalSecondaryIndexDefinition;
 
 public interface BaseTable {
 	
@@ -21,7 +22,11 @@ public interface BaseTable {
 		return null;
 	}
 	
-	default List<IndexDefinition> indexes() {
+	default List<GlobalSecondaryIndexDefinition> globalSecondaryIndexes() {
+		return Collections.emptyList();
+	}
+	
+	default List<LocalSecondaryIndexDefinition> localSecondaryIndexes() {
 		return Collections.emptyList();
 	}
 }

@@ -11,6 +11,11 @@ public final class GetItemsSpec extends BaseGetItemSpec {
 	
 	private Collection<PrimaryKey> primaryKeys = new ArrayList<>();
 
+	public GetItemsSpec(String projectionExpression, Map<String, String> nameMap) {
+		this.projectionExpression = projectionExpression;
+		this.nameMap = nameMap;
+	}
+	
     GetItemsSpec(ExpressionSpecBuilder builder) {
         SubstitutionContext context = new SubstitutionContext();
         this.projectionExpression = builder.buildProjectionExpression(context);

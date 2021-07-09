@@ -9,13 +9,14 @@ import com.re.paas.api.infra.database.document.xspec.QuerySpec;
 import com.re.paas.api.infra.database.document.xspec.ScanSpec;
 import com.re.paas.api.infra.database.document.xspec.UpdateItemSpec;
 import com.re.paas.api.infra.database.model.DeleteItemResult;
-import com.re.paas.api.infra.database.model.IndexDefinition;
+import com.re.paas.api.infra.database.model.GlobalSecondaryIndexDefinition;
+import com.re.paas.api.infra.database.model.IndexDescriptor;
 import com.re.paas.api.infra.database.model.PutItemResult;
 import com.re.paas.api.infra.database.model.QueryResult;
 import com.re.paas.api.infra.database.model.ScanResult;
 import com.re.paas.api.infra.database.model.TableDescription;
-import com.re.paas.api.infra.database.model.TableUpdate;
 import com.re.paas.api.infra.database.model.UpdateItemResult;
+import com.re.paas.api.infra.database.model.UpdateTableSpec;
 
 public interface Table {
 	
@@ -35,15 +36,15 @@ public interface Table {
 	
 	DeleteItemResult deleteItem(DeleteItemSpec spec);
 	
-	Stream<QueryResult> query(QuerySpec spec);
+	QueryResult query(QuerySpec spec);
 	
-	Stream<ScanResult> scan(ScanSpec spec);
+	ScanResult scan(ScanSpec spec);
 	
-	default TableDescription update(TableUpdate spec) {
-		return getDatabase().updateTable(spec);
-	}
+	Index createGSI(GlobalSecondaryIndexDefinition definition);
 	
-	Index createGSI(IndexDefinition definition);
+	void deleteGSI(IndexDescriptor index);
+	
+	TableDescription updateTable(UpdateTableSpec update);
 	
 	default void delete() {
         getDatabase().deleteTable(name());
