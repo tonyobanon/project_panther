@@ -20,7 +20,7 @@ public class AsyncExecuteInvokableFunction extends ExecuteInvokableFunction {
 	
 	@Override
 	public Object delegate(ParameterizedExecutable<Object, ?> function) {
-		ExecutorFactory.get().execute(function).join();
+		ExecutorFactory.get().executeLocal(function).join();
 		return null;
 	}
 }

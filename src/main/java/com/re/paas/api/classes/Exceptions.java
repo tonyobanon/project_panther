@@ -43,7 +43,7 @@ public class Exceptions {
 	public static Object throwRuntime(PlatformException err) {
 		Error error = err.getError();
 
-		Boolean isRequestCtx = ThreadContext.isRequestContext();
+		Boolean isRequestCtx = ThreadContext.isWebRequest();
 		
 		String header = err.getMessage();
 		String body = error.isFatal() ? getStackTrace(err) : null;

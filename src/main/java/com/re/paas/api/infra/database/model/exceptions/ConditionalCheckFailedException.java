@@ -1,4 +1,4 @@
-package com.re.paas.api.infra.database.model;
+package com.re.paas.api.infra.database.model.exceptions;
 
 public class ConditionalCheckFailedException extends RuntimeException {
 

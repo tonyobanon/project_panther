@@ -4,7 +4,7 @@ import com.re.paas.api.infra.database.textsearch.QueryType;
 
 public class GlobalSecondaryIndexDefinition extends IndexDefinition {
 
-	private boolean queryOptimzed;
+	private Boolean queryOptimzed;
 
 	private QueryType queryType;
 	
@@ -16,11 +16,11 @@ public class GlobalSecondaryIndexDefinition extends IndexDefinition {
 		this(null, indexName);
 	}
 	
-	public boolean forTextSearch() {
+	public Boolean forTextSearch() {
 		return queryOptimzed;
 	}
 
-	public GlobalSecondaryIndexDefinition setQueryOptimzed(boolean queryOptimzed) {
+	public GlobalSecondaryIndexDefinition setQueryOptimzed(Boolean queryOptimzed) {
 		this.queryOptimzed = queryOptimzed;
 		return this;
 	}

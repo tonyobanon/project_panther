@@ -3,6 +3,7 @@ package com.re.paas.api.utils;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -36,5 +37,22 @@ public class Collections {
 		HashSet<V> s = new HashSet<>(col.size());
 		col.forEach(v -> s.add((V) v));
 		return s;
+	}
+	
+	public static <T> Set<T> findDuplicates(List<T> l) {
+		 
+		final Set<T> setToReturn = new HashSet<T>();
+		final Set<T> set1 = new HashSet<T>();
+ 
+		for (T yourInt : l) {
+			if (!set1.add(yourInt)) {
+				setToReturn.add(yourInt);
+			}
+		}
+		return setToReturn;
+	}
+	
+	public static <T> boolean hasUniqueElements(List<T> l) {
+		return findDuplicates(l).isEmpty();
 	}
 }

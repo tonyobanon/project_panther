@@ -1,4 +1,4 @@
-package com.re.paas.internal.infra.database.tools;
+package com.re.paas.internal.infra.database.textsearch;
 
 import java.util.Collection;
 import java.util.Map.Entry;

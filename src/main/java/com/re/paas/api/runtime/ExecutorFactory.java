@@ -7,6 +7,7 @@ import com.re.paas.api.annotations.develop.PlatformInternal;
 import com.re.paas.api.classes.ExecutorFactoryStats;
 import com.re.paas.api.classes.ObjectWrapper;
 import com.re.paas.api.runtime.spi.SpiBase;
+import com.re.paas.api.tasks.Affinity;
 
 public abstract class ExecutorFactory {
 
@@ -37,8 +38,8 @@ public abstract class ExecutorFactory {
 	}
 
 	public abstract String getName();
-
-	public abstract <P, R> CompletableFuture<R> execute(ParameterizedExecutable<P, R> e);
+	
+	public abstract <P, R> CompletableFuture<R> executeLocal(ParameterizedExecutable<P, R> e);
 
 	@SecureMethod
 	public abstract void shutdown();
@@ -54,10 +55,10 @@ public abstract class ExecutorFactory {
 	 * @param task
 	 * @return
 	 */
-	public abstract <P, R> ParameterizedExecutable<P, R> buildFunction(ParameterizedInvokable<P, R> task, P parameter);
+	public abstract <P, R> ParameterizedExecutable<P, R> buildFunction(ParameterizedInvokable<P, R> task, P parameter, Affinity affinity);
 
 	@PlatformInternal
 	@SecureMethod
-	public abstract <P, R> ParameterizedExecutable<P, R> buildFunction(ObjectWrapper<ClassLoader> cl, ParameterizedInvokable<P, R> task, P parameter);
+	public abstract <P, R> ParameterizedExecutable<P, R> buildFunction(ObjectWrapper<ClassLoader> cl, ParameterizedInvokable<P, R> task, P parameter, ExternalContext ctx);
 	
 }

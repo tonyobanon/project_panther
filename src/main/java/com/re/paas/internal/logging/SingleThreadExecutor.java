@@ -1,4 +1,4 @@
-package com.re.paas.api.classes;
+package com.re.paas.internal.logging;
 
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;

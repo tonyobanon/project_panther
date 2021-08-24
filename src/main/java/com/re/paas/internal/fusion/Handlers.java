@@ -2,25 +2,19 @@ package com.re.paas.internal.fusion;
 
 import java.util.function.Consumer;
 
-import com.re.paas.api.classes.ThreadContext;
 import com.re.paas.api.fusion.RoutingContext;
 
 public class Handlers {
 
-	static Consumer<RoutingContext> defaultTailHandler() {
+	static Consumer<RoutingContext> defaultTailHandler(String appId) {
 		return (ctx -> {
-			// Remove thread local data
-			ThreadContext.clear();
+			// Todo: Add any initialization task(s) here
 		});
 	}
 
-	static Consumer<RoutingContext> defaultHeadHandler() {
+	static Consumer<RoutingContext> defaultHeadHandler(String appId) {
 		return (ctx -> {
-
-			// Note: container pools request threads, we need to create new LocalThread
-			// context
-			ThreadContext.newRequestContext();
+			// Todo: Add any finalization task(s) here
 		});
 	}
-
 }

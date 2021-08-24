@@ -4,8 +4,8 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 
 import com.re.paas.api.fusion.services.DefaultServiceAuthenticator;
-import com.re.paas.api.fusion.services.ServiceAffinity;
 import com.re.paas.api.fusion.services.ServiceAuthenticator;
+import com.re.paas.api.tasks.Affinity;
 
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Endpoint {
@@ -32,5 +32,11 @@ public @interface Endpoint {
 	
 	Class<? extends ServiceAuthenticator> customAuthenticator() default DefaultServiceAuthenticator.class;
 
-	ServiceAffinity affinity() default ServiceAffinity.DISTRIBUTED;
+	/**
+	 * Note: If a client request matches multiple {@link Endpoint}s, the affinity of the first match is used
+	 * for the entire request
+	 * 
+	 * @return
+	 */
+	Affinity affinity() default Affinity.ANY;
 }

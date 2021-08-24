@@ -1,17 +1,16 @@
 package com.re.paas.api.infra.database.model;
 
-import com.re.paas.api.infra.database.document.Item;
 
 public class PutItemResult {
 	
-	private Item item;
+    private java.util.Map<String, Object> attributes;
 
-	public Item getItem() {
-		return item;
+	public java.util.Map<String, Object> getAttributes() {
+		return attributes;
 	}
 
-	public PutItemResult setItem(Item item) {
-		this.item = item;
+	public PutItemResult setAttributes(java.util.Map<String, Object> attributes) {
+		this.attributes = attributes;
 		return this;
 	}
 	

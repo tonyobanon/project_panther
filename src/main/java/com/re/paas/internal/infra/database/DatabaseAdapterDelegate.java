@@ -6,11 +6,8 @@ import com.re.paas.api.adapters.LoadPhase;
 import com.re.paas.api.annotations.develop.BlockerTodo;
 import com.re.paas.api.infra.database.AbstractDatabaseAdapterDelegate;
 import com.re.paas.api.infra.database.document.Database;
-import com.re.paas.api.infra.database.modelling.BaseTable;
-import com.re.paas.api.runtime.spi.ClassIdentityType;
 import com.re.paas.api.runtime.spi.DelegateSpec;
 import com.re.paas.api.runtime.spi.SpiType;
-import com.re.paas.internal.classes.ClasspathScanner;
 
 @DelegateSpec(dependencies = SpiType.NODE_ROLE)
 public class DatabaseAdapterDelegate extends AbstractDatabaseAdapterDelegate {
@@ -19,18 +16,8 @@ public class DatabaseAdapterDelegate extends AbstractDatabaseAdapterDelegate {
 
 	@Override
 	public Boolean load(LoadPhase phase) {
-
-		if (phase == LoadPhase.PLATFORM_SETUP) {
-
-			// Create platform tables
-			Database db = getDatabase(true);
-
-			new ClasspathScanner<>(BaseTable.class, ClassIdentityType.ASSIGNABLE_FROM).scanClasses().forEach(clazz -> {
-				db.createTable(clazz);
-			});
-		}
-
-		return true;
+		DatabaseImpl db = (DatabaseImpl) getDatabase(true);
+		return db.load(phase);
 	}
 
 	@Override
@@ -49,11 +36,6 @@ public class DatabaseAdapterDelegate extends AbstractDatabaseAdapterDelegate {
 	@Override
 	@BlockerTodo
 	public void migrate(Database outgoing, BiConsumer<Integer, String> listener) {
-
-		// Create tables
-
-		// Create Indexes
-
-		// Scan each table
+		// Todo: migrate tables and indexes
 	}
 }

@@ -43,4 +43,6 @@ public abstract class Task extends AbstractResource implements Cloneable, Serial
 	public Date stopDate() {
 		return null;
 	}
+	
+	public abstract Affinity affinity();
 }

@@ -23,7 +23,4 @@ public abstract class AbstractTaskDelegate extends SpiDelegate<TaskModel> {
 	public abstract TaskModel getTaskModel(String name);
 	
 	public abstract <P, R> CompletableFuture<R> execute(ParameterizedExecutable<P, R> executable);
-	
-	public abstract CompletableFuture<Void> execute(Runnable executable);
-	
 }

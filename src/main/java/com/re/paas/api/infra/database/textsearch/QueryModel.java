@@ -19,8 +19,8 @@ public interface QueryModel {
 	String newSearchKey(String keyword, int limit, Integer... entityTypes);
 
 	void parallelQuery(IndexDescriptor index, Condition rangeCondition, Consumer<Item> consumer, String... projections);
-
-	void newQueryOptimizedGSI(IndexDescriptor index, List<String> projections, QueryType queryType, String indexHashKey,
+	
+	void addIndex(IndexDescriptor index, List<String> projections, QueryType queryType, String indexHashKey,
 			String indexRangeKey, Long readThroughputCapacity, String tableHashKey, String tableRangeKey);
 
 	Integer partitionCount(IndexDescriptor index);

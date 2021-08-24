@@ -1,15 +1,24 @@
 package com.re.paas.internal.infra.database;
 
+import static com.re.paas.internal.infra.database.DynamoDBConstants.TableStatuses.ARCHIVED;
+import static com.re.paas.internal.infra.database.DynamoDBConstants.TableStatuses.ARCHIVING;
+import static com.re.paas.internal.infra.database.DynamoDBConstants.TableStatuses.INACCESSIBLE_ENCRYPTION_CREDENTIALS;
+
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
 import com.amazonaws.services.dynamodbv2.document.ItemUtils;
+import com.amazonaws.services.dynamodbv2.document.TableKeysAndAttributes;
+import com.amazonaws.services.dynamodbv2.document.TableWriteItems;
 import com.amazonaws.services.dynamodbv2.model.AttributeValue;
-import com.amazonaws.services.dynamodbv2.model.DeleteRequest;
+import com.amazonaws.services.dynamodbv2.model.CreateGlobalSecondaryIndexAction;
+import com.amazonaws.services.dynamodbv2.model.GlobalSecondaryIndex;
 import com.amazonaws.services.dynamodbv2.model.KeysAndAttributes;
-import com.amazonaws.services.dynamodbv2.model.PutRequest;
+import com.amazonaws.services.dynamodbv2.model.ProvisionedThroughput;
 import com.amazonaws.services.dynamodbv2.model.ReturnConsumedCapacity;
 import com.amazonaws.services.dynamodbv2.model.Select;
 import com.re.paas.api.classes.Exceptions;
@@ -26,11 +35,12 @@ import com.re.paas.api.infra.database.document.xspec.QuerySpec;
 import com.re.paas.api.infra.database.document.xspec.ScanSpec;
 import com.re.paas.api.infra.database.document.xspec.UpdateItemSpec;
 import com.re.paas.api.infra.database.model.AttributeDefinition;
-import com.re.paas.api.infra.database.model.BatchGetItemRequest;
 import com.re.paas.api.infra.database.model.BatchGetItemResult;
-import com.re.paas.api.infra.database.model.BatchWriteItemRequest;
+import com.re.paas.api.infra.database.model.BatchGetItemSpec;
 import com.re.paas.api.infra.database.model.BatchWriteItemResult;
+import com.re.paas.api.infra.database.model.BatchWriteItemSpec;
 import com.re.paas.api.infra.database.model.CapacityUnits;
+import com.re.paas.api.infra.database.model.GlobalSecondaryIndexDefinition;
 import com.re.paas.api.infra.database.model.GlobalSecondaryIndexDescription;
 import com.re.paas.api.infra.database.model.IndexDescriptor;
 import com.re.paas.api.infra.database.model.IndexStatus;
@@ -45,11 +55,12 @@ import com.re.paas.api.infra.database.model.ScanResult;
 import com.re.paas.api.infra.database.model.TableDescription;
 import com.re.paas.api.infra.database.model.TableStatus;
 import com.re.paas.api.infra.database.model.WriteRequest;
+import com.re.paas.api.infra.database.model.exceptions.TableNotReadyException;
 import com.re.paas.api.infra.database.textsearch.QueryType;
 import com.re.paas.internal.infra.database.tables.attributes.IndexPartitionSpec;
 import com.re.paas.internal.infra.database.tables.attributes.IndexPropertySpec;
 
-public class Marshallers {
+class Marshallers {
 
 	private static AttributeDefinition fromAttributeDefinition(
 			com.amazonaws.services.dynamodbv2.model.AttributeDefinition a) {
@@ -110,17 +121,6 @@ public class Marshallers {
 		return r;
 	}
 
-	private static Map<String, AttributeValue> toAttributeValueMap(PrimaryKey a) {
-
-		Map<String, AttributeValue> r = new HashMap<>(2);
-
-		a.getComponents().forEach(ka -> {
-			r.put(ka.getName(), com.amazonaws.services.dynamodbv2.document.ItemUtils.toAttributeValue(ka.getValue()));
-		});
-
-		return r;
-	}
-
 	private static Map<String, AttributeValue> toAttributeValueMap(Item a) {
 
 		Map<String, AttributeValue> r = new HashMap<>(2);
@@ -130,13 +130,6 @@ public class Marshallers {
 		});
 
 		return r;
-	}
-
-	private static KeysAndAttributes toKeysAndAttributes(GetItemsSpec a) {
-		return new KeysAndAttributes().withConsistentRead(a.isConsistentRead())
-				.withExpressionAttributeNames(a.getNameMap()).withProjectionExpression(a.getProjectionExpression())
-				.withKeys(
-						a.getPrimaryKeys().stream().map(Marshallers::toAttributeValueMap).collect(Collectors.toList()));
 	}
 
 	private static GetItemsSpec fromKeysAndAttributes(KeysAndAttributes a) {
@@ -156,14 +149,6 @@ public class Marshallers {
 		return r;
 	}
 
-	private static com.amazonaws.services.dynamodbv2.model.WriteRequest toWriteRequest(WriteRequest a) {
-		return a.getPutRequest() != null
-				? new com.amazonaws.services.dynamodbv2.model.WriteRequest(
-						new PutRequest(toAttributeValueMap(a.getPutRequest())))
-				: new com.amazonaws.services.dynamodbv2.model.WriteRequest(
-						new DeleteRequest(toAttributeValueMap(a.getDeleteRequest())));
-	}
-
 	private static WriteRequest fromWriteRequest(com.amazonaws.services.dynamodbv2.model.WriteRequest a) {
 		return a.getPutRequest() != null ? new WriteRequest(toItem(a.getPutRequest().getItem()))
 				: new WriteRequest(fromPrimaryKey(fromAttributeValueMap(a.getDeleteRequest().getKey())));
@@ -179,12 +164,16 @@ public class Marshallers {
 		return new com.amazonaws.services.dynamodbv2.model.AttributeDefinition(a.getAttributeName(),
 				a.getAttributeType().toString());
 	}
-	
-	public static TableDescription fromTableDescription(Database db,
-			com.amazonaws.services.dynamodbv2.model.TableDescription a) {
 
-		// For query optimized GSIs, this gets the query type
-		Table indexTable = db.getTable(IndexPropertySpec.TABLE_NAME);
+	public static TableDescription fromTableDescription(Database db,
+			com.amazonaws.services.dynamodbv2.model.TableDescription a, boolean loadTextSearchInfo) {
+
+		String[] unsupportedStatuses = new String[] { INACCESSIBLE_ENCRYPTION_CREDENTIALS, ARCHIVING, ARCHIVED };
+
+		if (Arrays.binarySearch(unsupportedStatuses, a.getTableStatus()) >= 0) {
+			// We were not expecting this status
+			throw new TableNotReadyException(a.getTableName());
+		}
 
 		TableDescription b = new TableDescription();
 		b.setAttributeDefinitions(a.getAttributeDefinitions().stream().map(Marshallers::fromAttributeDefinition)
@@ -193,10 +182,20 @@ public class Marshallers {
 		b.setCreationDateTime(a.getCreationDateTime());
 		b.setGlobalSecondaryIndexes(a.getGlobalSecondaryIndexes().stream().map((c) -> {
 
-			var indexSpec = indexTable.getItem(GetItemSpec.forKey(IndexPartitionSpec.ID,
-					new IndexDescriptor(a.getTableName(), c.getIndexName()).toString(), IndexPropertySpec.QUERY_TYPE));
+			Item indexSpec = null;
 
-			return Marshallers.fromGlobalSecondaryIndexDescription(a.getTableName(), indexSpec != null,
+			if (loadTextSearchInfo) {
+
+				// For query optimized GSIs, this gets the query type
+				Table indexTable = db.getTable(IndexPropertySpec.TABLE_NAME);
+
+				indexSpec = indexTable.getItem(GetItemSpec.forKey(IndexPartitionSpec.ID,
+						new IndexDescriptor(a.getTableName(), c.getIndexName()).toString(),
+						IndexPropertySpec.QUERY_TYPE));
+			}
+
+			return Marshallers.fromGlobalSecondaryIndexDescription(a.getTableName(),
+					loadTextSearchInfo ? indexSpec != null : null,
 					indexSpec != null ? QueryType.parse(indexSpec.getString(IndexPropertySpec.QUERY_TYPE)) : null, c);
 		}).collect(Collectors.toList()));
 
@@ -310,16 +309,24 @@ public class Marshallers {
 
 	}
 
-	public static com.amazonaws.services.dynamodbv2.model.BatchGetItemRequest toBatchGetItemRequest(
-			BatchGetItemRequest a) {
-		com.amazonaws.services.dynamodbv2.model.BatchGetItemRequest b = new com.amazonaws.services.dynamodbv2.model.BatchGetItemRequest()
-				.withReturnConsumedCapacity(ReturnConsumedCapacity.TOTAL);
+	public static com.amazonaws.services.dynamodbv2.document.spec.BatchGetItemSpec toBatchGetItemRequest(
+			BatchGetItemSpec a) {
+
+		var tableKeyAndAttributes = new ArrayList<TableKeysAndAttributes>();
 
 		a.getRequestItems().forEach((k, v) -> {
-			b.addRequestItemsEntry(k, toKeysAndAttributes(v));
+
+			List<com.amazonaws.services.dynamodbv2.document.PrimaryKey> keys = v.getPrimaryKeys().stream()
+					.map(Marshallers::toPrimaryKey).collect(Collectors.toList());
+
+			new TableKeysAndAttributes(k).withConsistentRead(v.isConsistentRead()).withNameMap(v.getNameMap())
+					.withProjectionExpression(v.getProjectionExpression()).withPrimaryKeys(
+							keys.toArray(new com.amazonaws.services.dynamodbv2.document.PrimaryKey[keys.size()]));
 		});
 
-		return b;
+		return new com.amazonaws.services.dynamodbv2.document.spec.BatchGetItemSpec()
+				.withReturnConsumedCapacity(ReturnConsumedCapacity.TOTAL).withTableKeyAndAttributes(
+						tableKeyAndAttributes.toArray(new TableKeysAndAttributes[tableKeyAndAttributes.size()]));
 	}
 
 	@HandlesThrouphput
@@ -327,7 +334,7 @@ public class Marshallers {
 			com.amazonaws.services.dynamodbv2.model.BatchGetItemResult a) {
 
 		Map<String, List<Item>> responses = new HashMap<>();
-		BatchGetItemRequest unprocessedKeys = new BatchGetItemRequest();
+		BatchGetItemSpec unprocessedKeys = new BatchGetItemSpec();
 
 		a.getResponses().entrySet().forEach(e -> {
 			responses.put(e.getKey(), e.getValue().stream().map(Marshallers::toItem).collect(Collectors.toList()));
@@ -337,26 +344,42 @@ public class Marshallers {
 			unprocessedKeys.addRequestItem(k, fromKeysAndAttributes(v));
 		});
 
-		return new BatchGetItemResult().setResponses(responses).setUnprocessedKeys(unprocessedKeys);
+		return new BatchGetItemResult().setResponses(responses).setNext(unprocessedKeys);
 	}
 
-	public static com.amazonaws.services.dynamodbv2.model.BatchWriteItemRequest toBatchWriteItemRequest(
-			BatchWriteItemRequest a) {
-		com.amazonaws.services.dynamodbv2.model.BatchWriteItemRequest b = new com.amazonaws.services.dynamodbv2.model.BatchWriteItemRequest()
-				.withReturnConsumedCapacity(ReturnConsumedCapacity.TOTAL);
+	public static com.amazonaws.services.dynamodbv2.document.spec.BatchWriteItemSpec toBatchWriteItemRequest(
+			BatchWriteItemSpec a) {
+
+		List<TableWriteItems> tableWriteItems = new ArrayList<>();
 
 		a.getRequestItems().forEach((k, v) -> {
-			b.addRequestItemsEntry(k, v.stream().map(Marshallers::toWriteRequest).collect(Collectors.toList()));
+
+			TableWriteItems t = new TableWriteItems(k);
+
+			v.forEach(r -> {
+				if (r.getPutRequest() != null) {
+					t.addItemToPut(ItemUtils.toItem(toAttributeValueMap(r.getPutRequest())));
+				}
+
+				// Don't do else if - in case the user has both in a single write request
+				if (r.getDeleteRequest() != null) {
+					t.addPrimaryKeyToDelete(toPrimaryKey(r.getDeleteRequest()));
+				}
+			});
+
+			tableWriteItems.add(t);
 		});
 
-		return b;
+		return new com.amazonaws.services.dynamodbv2.document.spec.BatchWriteItemSpec()
+				.withReturnConsumedCapacity(ReturnConsumedCapacity.TOTAL)
+				.withTableWriteItems(tableWriteItems.toArray(new TableWriteItems[tableWriteItems.size()]));
 	}
 
 	@HandlesThrouphput
 	public static BatchWriteItemResult fromBatchWriteItemResult(
 			com.amazonaws.services.dynamodbv2.model.BatchWriteItemResult a) {
 
-		BatchWriteItemRequest unprocessedKeys = new BatchWriteItemRequest();
+		BatchWriteItemSpec unprocessedKeys = new BatchWriteItemSpec();
 
 		a.getUnprocessedItems().forEach((k, v) -> {
 			if (!v.isEmpty()) {
@@ -411,6 +434,31 @@ public class Marshallers {
 	}
 
 	public static CapacityUnits fromConsumedCapacity(com.amazonaws.services.dynamodbv2.model.ConsumedCapacity a) {
-		return new CapacityUnits(a.getReadCapacityUnits().doubleValue(), a.getWriteCapacityUnits().doubleValue());
+		return new CapacityUnits(a.getReadCapacityUnits().longValue(), a.getWriteCapacityUnits().longValue());
 	}
+
+	public static CreateGlobalSecondaryIndexAction toCreateGlobalSecondaryIndexAction(
+			GlobalSecondaryIndexDefinition definition, CapacityUnits capacity) {
+		return new CreateGlobalSecondaryIndexAction().withIndexName(definition.getIndexName())
+				.withProjection(new com.amazonaws.services.dynamodbv2.model.Projection()
+						.withProjectionType(definition.getProjection().getProjectionType().toString())
+						.withNonKeyAttributes(definition.getProjection().getNonKeyAttributes()))
+				.withKeySchema(definition.getKeySchema().stream().map(Marshallers::toKeySchemaElement)
+						.collect(Collectors.toList()))
+				.withProvisionedThroughput(new ProvisionedThroughput(capacity.getReadCapacityUnits().longValue(),
+						capacity.getWriteCapacityUnits().longValue()));
+	}
+
+	public static GlobalSecondaryIndex toGlobalSecondaryIndex(GlobalSecondaryIndexDefinition definition,
+			CapacityUnits capacity) {
+		return new GlobalSecondaryIndex().withIndexName(definition.getIndexName())
+				.withProjection(new com.amazonaws.services.dynamodbv2.model.Projection()
+						.withProjectionType(definition.getProjection().getProjectionType().toString())
+						.withNonKeyAttributes(definition.getProjection().getNonKeyAttributes()))
+				.withKeySchema(definition.getKeySchema().stream().map(Marshallers::toKeySchemaElement)
+						.collect(Collectors.toList()))
+				.withProvisionedThroughput(new ProvisionedThroughput(capacity.getReadCapacityUnits().longValue(),
+						capacity.getWriteCapacityUnits().longValue()));
+	}
+
 }

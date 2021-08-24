@@ -9,17 +9,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.re.paas.api.annotations.develop.BlockerTodo;
+
 /**
  * A request-centric Expression Specification Builder that can be used to
  * construct valid expressions, and the respective name maps and value maps, for
- * various DynamoDB requests in a typeful manner. This includes <a href=
- * "http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.Modifying.html"
- * >Update expression</a>, <a href=
- * "http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.SpecifyingConditions.html"
- * >Condition expression</a> (including Filter expression and Key Condition
- * expression), and <a href=
- * "http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.AccessingItemAttributes.html"
- * >Projection expression</a>. This class is the API entry point to this
+ * various DynamoDB requests in a typeful manner. This includes Update expression, 
+ * Condition expression (including Filter expression and Key Condition
+ * expression), and Projection expression. This class is the API entry point to this
  * library.
  * <p>
  * This builder object is not thread-safe but you can reuse or build on (the
@@ -29,7 +26,7 @@ import java.util.Set;
  * <h3>Sample Usage 1: Conditional Updates with Expressions</h3>
  *
  * <pre class="brush: java">
- * import static com.amazonaws.services.dynamodbv2.xspec.ExpressionSpecBuilder.*;
+ * import static com.re.paas.api.infra.database.document.xspec.ExpressionSpecBuilder.*;
  * ...
  * Table table = dynamo.getTable(TABLE_NAME);
  *
@@ -65,7 +62,7 @@ import java.util.Set;
  * <p>
  *
  * <pre class="brush: java">
- * import static com.amazonaws.services.dynamodbv2.xspec.ExpressionSpecBuilder.*;
+ * import static com.re.paas.api.infra.database.document.xspec.ExpressionSpecBuilder.*;
  * ...
  * Table table = dynamo.getTable(TABLE_NAME);
  *
@@ -147,6 +144,7 @@ import java.util.Set;
  * @see PathOperand
  */
 
+@BlockerTodo("Update Javadocs")
 public final class ExpressionSpecBuilder {
 	
 	private final Map<String, List<UpdateAction>> updates;

@@ -23,9 +23,13 @@ import com.re.paas.api.classes.Exceptions;
 import com.re.paas.api.classes.ObjectWrapper;
 import com.re.paas.api.infra.cache.CacheAdapter;
 import com.re.paas.api.logging.Logger;
+import com.re.paas.api.runtime.ClassLoaders;
 import com.re.paas.api.runtime.ExecutorFactory;
+import com.re.paas.api.runtime.ExternalContext;
 import com.re.paas.api.runtime.ParameterizedExecutable;
 import com.re.paas.api.runtime.ParameterizedInvokable;
+import com.re.paas.api.runtime.spi.AppProvisioner;
+import com.re.paas.api.tasks.Affinity;
 import com.re.paas.api.tasks.TaskModel;
 import com.re.paas.api.utils.Dates;
 
@@ -109,44 +113,31 @@ public class CacheEvicter {
 
 			List<List<String>> subLists = Lists.partition(spec.getKeys(), perThreadBatchSize);
 
-			ExecutorFactory execFactory = ExecutorFactory.get();
-
 			Date now = Dates.now();
 
 			AtomicInteger deletedCount = new AtomicInteger(0);
-
-			CompletableFuture<?>[] futures = new CompletableFuture[subLists.size()];
 
 			for (int i = 0; i < subLists.size(); i++) {
 
 				List<String> l = subLists.get(i);
 
-				ParameterizedExecutable<List<String>, Void> function = execFactory.buildFunction((list) -> {
+				for (String key : l) {
 
-					for (String key : list) {
+					String dateStr = null;
 
-						String dateStr = null;
-
-						try {
-							dateStr = new String(
-									client.getObject(spec.getBucket(), key).getObjectContent().readAllBytes());
-						} catch (SdkClientException | IOException e) {
-							Exceptions.throwRuntime(e);
-						}
-
-						if (Dates.toDate(dateStr).after(now)) {
-							client.deleteObject(spec.getBucket(), key);
-							deletedCount.addAndGet(1);
-						}
+					try {
+						dateStr = new String(
+								client.getObject(spec.getBucket(), key).getObjectContent().readAllBytes());
+					} catch (SdkClientException | IOException e) {
+						Exceptions.throwRuntime(e);
 					}
 
-					return null;
-				}, l);
-
-				futures[i] = execFactory.execute(function);
+					if (Dates.toDate(dateStr).after(now)) {
+						client.deleteObject(spec.getBucket(), key);
+						deletedCount.addAndGet(1);
+					}
+				}
 			}
-
-			CompletableFuture.allOf(futures).join();
 
 			return deletedCount.get();
 		};
@@ -154,11 +145,16 @@ public class CacheEvicter {
 		List<CompletableFuture<?>> futures = new ArrayList<>();
 		ObjectWrapper<AtomicInteger> deletedCount = new ObjectWrapper<>();
 
+		
 		EvictionContext ctx = new EvictionContext(perNodeBatchSize, spec -> {
 
-			ParameterizedExecutable<EvictionSpec, Integer> i = ExecutorFactory.get().buildFunction(invokable, spec);
+			ParameterizedExecutable<EvictionSpec, Integer> i = ExecutorFactory.get().buildFunction(
+					new ObjectWrapper<ClassLoader>(ClassLoaders.getClassLoader()), invokable, spec,
+					new ExternalContext(AppProvisioner.DEFAULT_APP_ID, false, Affinity.ANY)
+			);
 
-			CompletableFuture<?> f = TaskModel.getDelegate().execute(i).thenAccept(delta -> {
+			CompletableFuture<?> f = TaskModel.getDelegate().execute(i)
+					.thenAccept(delta -> {
 				deletedCount.get().addAndGet(delta);
 			});
 

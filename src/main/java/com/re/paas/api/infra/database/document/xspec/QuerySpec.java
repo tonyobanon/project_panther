@@ -58,18 +58,6 @@ public final class QuerySpec extends BaseSpec {
 		Map<String, Object> valueMap = context.getValueMap();
 		this.valueMap = valueMap == null ? null : Collections.unmodifiableMap(valueMap);
 	}
-	
-	@SuppressWarnings("unused")
-	private QuerySpec(String indexName, String keyConditionExpression, String projectionExpression, String filterExpression,
-			Map<String, String> nameMap, Map<String, Object> valueMap) {
-		super();
-		this.indexName = indexName;
-		this.keyConditionExpression = keyConditionExpression;
-		this.projectionExpression = projectionExpression;
-		this.filterExpression = filterExpression;
-		this.nameMap = nameMap;
-		this.valueMap = valueMap;
-	}
 
 	public String getIndexName() {
 		return indexName;

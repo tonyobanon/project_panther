@@ -7,7 +7,6 @@ import java.util.concurrent.TimeUnit;
 
 import com.re.paas.api.Platform;
 import com.re.paas.api.annotations.develop.PlatformInternal;
-import com.re.paas.api.classes.SingleThreadExecutor;
 import com.re.paas.api.classes.ThreadContext;
 import com.re.paas.api.logging.LogPipeline;
 import com.re.paas.api.logging.Logger;
@@ -226,7 +225,7 @@ public class DefaultLogger extends Logger {
 	}
 
 	private static final String _getNamespace() {
-		return ThreadContext.isRequestContext() ? requestNamespace : defaultNamespace;
+		return ThreadContext.isWebRequest() ? requestNamespace : defaultNamespace;
 	}
 	
 	@Override

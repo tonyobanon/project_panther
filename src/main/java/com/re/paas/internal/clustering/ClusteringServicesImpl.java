@@ -3,6 +3,7 @@ package com.re.paas.internal.clustering;
 import static com.re.paas.api.clustering.generic.GenericFunction.DISPATCH_EVENT;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.util.Collections;
@@ -11,7 +12,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import org.infinispan.commons.CacheConfigurationException;
@@ -40,13 +40,13 @@ import com.re.paas.api.clustering.protocol.Server;
 import com.re.paas.api.logging.Logger;
 import com.re.paas.api.logging.LoggerFactory;
 import com.re.paas.api.networking.InetAddressResolver;
-import com.re.paas.api.runtime.ParameterizedExecutable;
 import com.re.paas.api.utils.Utils;
 import com.re.paas.internal.AppDelegate;
 import com.re.paas.internal.compute.Scheduler;
 import com.re.paas.internal.infra.cache.infinispan.InfinispanMashaller;
 
 @Prototype
+@BlockerTodo("Always return a cloned version of Member objects from datagrid")
 public class ClusteringServicesImpl implements ClusteringServices {
 
 	private static Logger LOG = LoggerFactory.get().getLog(ClusteringServicesImpl.class);
@@ -58,12 +58,12 @@ public class ClusteringServicesImpl implements ClusteringServices {
 	private static final String unassignedMemberIds = "unassignedMemberIds";
 
 	private static boolean isStarted = false;
-	
+
 	private static DefaultCacheManager cacheManager;
 	private static Server server;
 
 	private static Short memberId;
-	private static final Map<String, ParameterizedExecutable<?, ?>> masterOnboardingTasks = new HashMap<>();
+	private static final Map<String, MasterOnboardingTask> masterOnboardingTasks = new HashMap<>();
 
 	public static ConfigurationChildBuilder getDefaultCacheConfiguration() {
 
@@ -174,10 +174,10 @@ public class ClusteringServicesImpl implements ClusteringServices {
 			// Stop the cache manager and release all resources
 			cacheManager.stop();
 		});
-		
+
 		isStarted = true;
 	}
-	
+
 	@Override
 	public Boolean isStarted() {
 		return isStarted;
@@ -308,28 +308,29 @@ public class ClusteringServicesImpl implements ClusteringServices {
 	 * 
 	 */
 	@Override
-	public void addMasterOnboardingTask(String name, ParameterizedExecutable<Object, Object> task,
-			Predicate<?> predicate, Long initialExecutionDelay) {
+	public void addMasterOnboardingTask(String name, MasterOnboardingTask task) {
 
 		if (isStarted() && isMaster() && !masterOnboardingTasks.containsKey(name)) {
-
-			// register task
+			
 			masterOnboardingTasks.put(name, task);
+			
+			Runnable r = getRunnable(task);
 
-			Runnable r = () -> {
-
-				// execute task
-				Object response = task.getFunction().apply(task.getParameter());
-
-				LOG.info("Executed master onboarding task: " + name + " and got response: " + response);
-			};
-
-			if (initialExecutionDelay == null) {
+			if (task.getInitialExecutionDelay() == null) {
 				r.run();
 			} else {
-				Scheduler.schedule(r, initialExecutionDelay, TimeUnit.SECONDS);
+				Scheduler.schedule(r, task.getInitialExecutionDelay(), TimeUnit.SECONDS);
 			}
 		}
+	}
+
+	private static Runnable getRunnable(MasterOnboardingTask task) {
+		return (Runnable & Serializable) (() -> {
+			
+			if (task.getPredicate().getAsBoolean()) {
+				task.getTask().run();
+			}
+		});
 	}
 
 }

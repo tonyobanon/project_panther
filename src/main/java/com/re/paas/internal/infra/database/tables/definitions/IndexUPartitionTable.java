@@ -2,10 +2,10 @@ package com.re.paas.internal.infra.database.tables.definitions;
 
 import java.util.List;
 
+import com.re.paas.api.infra.database.model.BaseTable;
 import com.re.paas.api.infra.database.model.LocalSecondaryIndexDefinition;
 import com.re.paas.api.infra.database.model.Projection;
 import com.re.paas.api.infra.database.model.ProjectionType;
-import com.re.paas.api.infra.database.modelling.BaseTable;
 import com.re.paas.internal.infra.database.tables.attributes.IndexUPartitionSpec;
 
 public class IndexUPartitionTable implements BaseTable {

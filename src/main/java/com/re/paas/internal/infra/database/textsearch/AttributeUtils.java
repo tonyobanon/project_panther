@@ -1,4 +1,4 @@
-package com.re.paas.internal.infra.database.tools;
+package com.re.paas.internal.infra.database.textsearch;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -11,11 +11,10 @@ import java.util.Set;
 
 import com.amazonaws.services.dynamodbv2.model.AttributeValue;
 import com.re.paas.api.annotations.develop.Todo;
+import com.re.paas.internal.infra.database.DynamoDBConstants;
 
 public class AttributeUtils {
 	
-	private static final int OVERHEAD_SIZE_FOR_DYNAMODB_COLLECTIONS = 3;
-
 	@Todo("This is only a prototype! Remember it denotes binary length")
 	public
 	static int binarySize(ByteBuffer b) {
@@ -55,7 +54,7 @@ public class AttributeUtils {
 				itemSize += getValueSize(it.next());
 			}
 	
-			return itemSize + AttributeUtils.OVERHEAD_SIZE_FOR_DYNAMODB_COLLECTIONS;
+			return itemSize + DynamoDBConstants.OVERHEAD_SIZE_FOR_COLLECTIONS;
 	
 		} else if (o instanceof Map) {
 	
@@ -67,7 +66,7 @@ public class AttributeUtils {
 				itemSize += e.getKey().length() + getValueSize(e.getValue());
 			}
 	
-			return itemSize + AttributeUtils.OVERHEAD_SIZE_FOR_DYNAMODB_COLLECTIONS;
+			return itemSize + DynamoDBConstants.OVERHEAD_SIZE_FOR_COLLECTIONS;
 		}
 	
 		return stringSize((String) o);

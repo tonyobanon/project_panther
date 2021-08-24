@@ -1,14 +1,15 @@
 package com.re.paas.internal.infra.database.tables.definitions;
 
-import com.re.paas.api.infra.database.modelling.BaseTable;
+
+import com.re.paas.api.infra.database.model.BaseTable;
 import com.re.paas.internal.infra.database.tables.attributes.IndexEntrySpec;
 
 public class IndexEntryTable implements BaseTable {
 
 	public String entryId;
 	public String indexName;
-	public int partitionId;
-	public int size;
+	public Number partitionId;
+	public Number size;
 	
 	@Override
 	public String name() {

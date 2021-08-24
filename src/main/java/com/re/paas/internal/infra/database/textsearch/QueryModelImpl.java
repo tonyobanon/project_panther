@@ -1,4 +1,4 @@
-package com.re.paas.internal.infra.database.tools;
+package com.re.paas.internal.infra.database.textsearch;
 
 import static com.re.paas.api.infra.database.document.xspec.ExpressionSpecBuilder.N;
 import static com.re.paas.api.infra.database.document.xspec.ExpressionSpecBuilder.S;
@@ -51,7 +51,7 @@ import com.re.paas.internal.infra.database.tables.attributes.IndexUPartitionSpec
 
 @Todo("Implement all comments in this class")
 
-public class QueryModelImpl implements QueryModel {
+class QueryModelImpl implements QueryModel {
 
 	// Set to a reasonable value in production
 	private static final Integer QUERY_TIMEOUT_IN_MILLIS = 10000;
@@ -78,9 +78,15 @@ public class QueryModelImpl implements QueryModel {
 			.synchronizedMap(new HashMap<String, Boolean>());
 
 	private static final Logger LOG = Logger.get(QueryModelImpl.class);
+	
+	private final AttributeModel attrModel;
 
-	private static AttributeModel getAttributeModel() {
-		return new AttributeModelImpl();
+	private AttributeModel getAttributeModel() {
+		return attrModel;
+	}
+	
+	QueryModelImpl() {
+		attrModel = new AttributeModelImpl(this);
 	}
 
 	@Override
@@ -101,7 +107,7 @@ public class QueryModelImpl implements QueryModel {
 						String tableRangeKey = item.getString(IndexPropertySpec.TABLE_RANGE_KEY);
 						QueryType queryType = QueryType.parse(item.getString(IndexPropertySpec.QUERY_TYPE));
 
-						getAttributeModel().newRangeKey(index, projections, indexHashKey, indexRangeKey,
+						getAttributeModel().addIndex(index, projections, indexHashKey, indexRangeKey,
 								readThroughputCapacity, queryType, tableHashKey, tableRangeKey);
 
 						openQueries.put(index.getId(), 0);
@@ -250,7 +256,7 @@ public class QueryModelImpl implements QueryModel {
 	}
 
 	@Override
-	public void newQueryOptimizedGSI(IndexDescriptor index, List<String> projections, QueryType queryType,
+	public void addIndex(IndexDescriptor index, List<String> projections, QueryType queryType,
 			String indexHashKey, String indexRangeKey, Long readThroughputCapacity, String tableHashKey,
 			String tableRangeKey) {
 
@@ -279,7 +285,7 @@ public class QueryModelImpl implements QueryModel {
 
 		table.putItem(new ExpressionSpecBuilder().buildForPut().withItem(item));
 
-		getAttributeModel().newRangeKey(index, projections, indexHashKey, indexRangeKey, readThroughputCapacity,
+		getAttributeModel().addIndex(index, projections, indexHashKey, indexRangeKey, readThroughputCapacity,
 				queryType, tableHashKey, tableRangeKey);
 
 		openQueries.put(index.getId(), 0);
@@ -497,9 +503,9 @@ public class QueryModelImpl implements QueryModel {
 				.setReturnValues(ReturnValue.ALL_NEW);
 
 		// Decrement by size
-		Item item = indexUPartition.updateItem(uSpec).getItem();
+		Map<String,Object> attrs = indexUPartition.updateItem(uSpec).getAttributes();
 
-		if (item.getInt(IndexUPartitionSpec.SIZE) == 0) {
+		if (((Integer) attrs.get(IndexUPartitionSpec.SIZE)) == 0) {
 
 			DeleteItemSpec dSpec = new ExpressionSpecBuilder().buildForDeleteItem().setPrimaryKey(new PrimaryKey(
 					IndexUPartitionSpec.ID, index.getId(), IndexUPartitionSpec.PARTITION_ID, partitionId));

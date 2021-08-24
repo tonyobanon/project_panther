@@ -4,11 +4,11 @@ import java.util.List;
 
 import com.re.paas.api.annotations.develop.BlockerTodo;
 import com.re.paas.api.infra.database.DatabaseAdapter;
-import com.re.paas.api.infra.database.model.BatchGetItemRequest;
+import com.re.paas.api.infra.database.model.BaseTable;
+import com.re.paas.api.infra.database.model.BatchGetItemSpec;
 import com.re.paas.api.infra.database.model.BatchGetItemResult;
-import com.re.paas.api.infra.database.model.BatchWriteItemRequest;
+import com.re.paas.api.infra.database.model.BatchWriteItemSpec;
 import com.re.paas.api.infra.database.model.BatchWriteItemResult;
-import com.re.paas.api.infra.database.modelling.BaseTable;
 import com.re.paas.api.infra.database.textsearch.TextSearch;
 
 @BlockerTodo
@@ -20,15 +20,13 @@ public interface Database {
 	
 	Table getTable(String name);
 	
-	Table createTable(Class<? extends BaseTable> clazz);
+	Table createTable(Class<? extends BaseTable> model);
 
-	void deleteTable(String name);
+	List<String> listTables();
 
-	public List<String> listTables();
+	BatchGetItemResult batchGetItem(BatchGetItemSpec batchGetItemRequest);
 
-	BatchGetItemResult batchGetItem(BatchGetItemRequest batchGetItemRequest);
-
-	BatchWriteItemResult batchWriteItem(BatchWriteItemRequest batchWriteItemRequest);
+	BatchWriteItemResult batchWriteItem(BatchWriteItemSpec batchWriteItemRequest);
 
 	TextSearch getTextSearch();
 }

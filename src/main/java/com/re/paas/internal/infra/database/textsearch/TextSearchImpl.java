@@ -1,4 +1,4 @@
-package com.re.paas.internal.infra.database;
+package com.re.paas.internal.infra.database.textsearch;
 
 import static com.re.paas.api.infra.database.document.xspec.ExpressionSpecBuilder.N;
 import static com.re.paas.api.infra.database.document.xspec.ExpressionSpecBuilder.S;
@@ -15,7 +15,7 @@ import com.re.paas.api.infra.database.document.Table;
 import com.re.paas.api.infra.database.document.xspec.DeleteItemSpec;
 import com.re.paas.api.infra.database.document.xspec.ExpressionSpecBuilder;
 import com.re.paas.api.infra.database.document.xspec.QuerySpec;
-import com.re.paas.api.infra.database.model.BatchWriteItemRequest;
+import com.re.paas.api.infra.database.model.BatchWriteItemSpec;
 import com.re.paas.api.infra.database.model.IndexDescriptor;
 import com.re.paas.api.infra.database.model.QueryResult;
 import com.re.paas.api.infra.database.model.WriteRequest;
@@ -24,7 +24,6 @@ import com.re.paas.api.infra.database.textsearch.SearchGraphId;
 import com.re.paas.api.infra.database.textsearch.TextSearch;
 import com.re.paas.api.infra.database.textsearch.TextSearchCheckpoint;
 import com.re.paas.internal.infra.database.tables.attributes.MatrixSpec;
-import com.re.paas.internal.infra.database.tools.QueryModelImpl;
 
 public class TextSearchImpl implements TextSearch {
 
@@ -111,7 +110,7 @@ public class TextSearchImpl implements TextSearch {
 	}
 
 	/**
-	 * Note to generate a matrix, use this helper function: {@code Utils#}
+	 * Todo: Add helper function to generate matrix
 	 * 
 	 * @param id
 	 * @param entityType
@@ -122,7 +121,7 @@ public class TextSearchImpl implements TextSearch {
 
 		remove(id);
 
-		BatchWriteItemRequest req = new BatchWriteItemRequest();
+		BatchWriteItemSpec req = new BatchWriteItemSpec();
 
 		for (int i = 0; i < matrix.length; i++) {
 

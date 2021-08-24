@@ -18,6 +18,7 @@ import com.re.paas.api.annotations.develop.Todo;
 import com.re.paas.api.apps.AppClassLoader;
 import com.re.paas.api.classes.Exceptions;
 import com.re.paas.api.runtime.ClassLoaders;
+import com.re.paas.api.runtime.Invokable;
 import com.re.paas.api.runtime.ParameterizedInvokable;
 import com.re.paas.api.runtime.RuntimeIdentity;
 import com.re.paas.internal.classes.ClassUtil;
@@ -263,6 +264,7 @@ public class AppClassLoaderImpl extends AppClassLoader {
 
 		intrinsicClasses.add(RuntimeIdentity.class.getName());
 		intrinsicClasses.add(ParameterizedInvokable.class.getName());
+		intrinsicClasses.add(Invokable.class.getName());
 		intrinsicClasses.add(RoutingContextHandler.class.getName());
 	}
 }

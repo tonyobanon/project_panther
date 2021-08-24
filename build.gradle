@@ -18,17 +18,15 @@ repositories {
 
 dependencies {
 
-    // This dependency is exported to consumers, that is to say found on their compile classpath.
-    api 'org.apache.commons:commons-math3:3.6.1'
 
+    // Use JUnit test framework
+    testImplementation "junit:junit:4.12"
+    
     // This dependency is used internally, and not exposed to consumers on their own compile classpath.
     implementation 'com.google.guava:guava:23.0'
 
-    // Use JUnit test framework
-    testImplementation 'junit:junit:4.12'
     
-    
-    
+   
     implementation "org.apache.httpcomponents.client5:httpclient5:5.0-alpha3"
     	
     implementation "com.google.code.gson:gson:2.8.2"
@@ -37,7 +35,6 @@ dependencies {
 	implementation "com.google.guava:guava:23.5-jre"
 	
 
-	
 	implementation "commons-io:commons-io:2.6"
 	implementation "org.apache.tika:tika-core:1.16"
 
@@ -57,9 +54,9 @@ dependencies {
 	
 	
 	implementation "org.eclipse.jetty.http2:http2-server:11.0.2"
-	implementation 'org.eclipse.jetty:jetty-alpn-java-server:11.0.2'
+	implementation "org.eclipse.jetty:jetty-alpn-java-server:11.0.2" 
 	
-	implementation 'org.mortbay.jetty.alpn:alpn-boot:8.1.12.v20180117'
+	implementation "org.mortbay.jetty.alpn:alpn-boot:8.1.12.v20180117"
 	
 	implementation "javax.xml.bind:jaxb-api:2.4.0-b180830.0359"
 	

@@ -2,24 +2,20 @@ package com.re.paas.api.classes;
 
 public class NumberBound {
 	
-	private Integer min;
-	private Integer max;
+	private final Integer min;
+	private final Integer max;
 	
+	public NumberBound(Integer min, Integer max) {
+		this.min = min;
+		this.max = max;
+	}
+
 	public Integer getMin() {
 		return min;
 	}
-	
-	public NumberBound setMin(Integer min) {
-		this.min = min;
-		return this;
-	}
-	
+
 	public Integer getMax() {
 		return max;
 	}
 	
-	public NumberBound setMax(Integer max) {
-		this.max = max;
-		return this;
-	}	
 }

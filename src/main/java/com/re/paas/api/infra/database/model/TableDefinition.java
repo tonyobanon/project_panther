@@ -2,7 +2,7 @@ package com.re.paas.api.infra.database.model;
 
 
 public class TableDefinition extends BaseTableDefinition {
-
+	
    private java.util.List<LocalSecondaryIndexDefinition> localSecondaryIndexes;
    
    private java.util.List<GlobalSecondaryIndexDefinition> globalSecondaryIndexes;

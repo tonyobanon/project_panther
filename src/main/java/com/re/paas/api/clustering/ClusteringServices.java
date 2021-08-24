@@ -2,12 +2,11 @@ package com.re.paas.api.clustering;
 
 import java.io.IOException;
 import java.util.Map;
-import java.util.function.Predicate;
 
 import com.re.paas.api.Singleton;
 import com.re.paas.api.clustering.protocol.Server;
-import com.re.paas.api.runtime.ParameterizedExecutable;
 import com.re.paas.api.runtime.SecureMethod;
+import com.re.paas.internal.clustering.MasterOnboardingTask;
 import com.re.paas.internal.clustering.MetricsAggregator;
 
 public interface ClusteringServices {
@@ -54,7 +53,7 @@ public interface ClusteringServices {
 	 */
 	Short getAvailableMember(SelectionMetric metric);
 
-	void addMasterOnboardingTask(String name, ParameterizedExecutable<Object, Object> task, Predicate<?> predicate,
-			Long initialExecutionDelay);
+	@SecureMethod
+	void addMasterOnboardingTask(String name, MasterOnboardingTask task);
 
 }

@@ -1,10 +1,10 @@
-package com.re.paas.api.infra.database.modelling;
+package com.re.paas.api.infra.database.model;
 
 import java.util.Collections;
 import java.util.List;
 
-import com.re.paas.api.infra.database.model.GlobalSecondaryIndexDefinition;
-import com.re.paas.api.infra.database.model.LocalSecondaryIndexDefinition;
+import com.re.paas.api.infra.database.document.Database;
+import com.re.paas.api.infra.database.document.Table;
 
 public interface BaseTable {
 	
@@ -28,5 +28,9 @@ public interface BaseTable {
 	
 	default List<LocalSecondaryIndexDefinition> localSecondaryIndexes() {
 		return Collections.emptyList();
+	}
+	
+	default Table get() {
+		return Database.get().getTable(name());
 	}
 }

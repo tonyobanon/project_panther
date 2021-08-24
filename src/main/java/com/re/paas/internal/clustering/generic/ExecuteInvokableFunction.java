@@ -21,7 +21,7 @@ public class ExecuteInvokableFunction extends AbstractClusterFunction<Parameteri
 	
 	@Override
 	public Object delegate(ParameterizedExecutable<Object, ?> function) {	
-		Object r = ExecutorFactory.get().execute(function).join();
+		Object r = ExecutorFactory.get().executeLocal(function).join();
 		return r;
 	}
 }

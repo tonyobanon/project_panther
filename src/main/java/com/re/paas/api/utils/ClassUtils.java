@@ -30,14 +30,46 @@ import com.re.paas.api.runtime.spi.AppProvisioner;
 
 public class ClassUtils<T> {
 
-	private static final Pattern nonGenericlassNamePattern = Pattern
-			.compile("(([\\p{L}_$][\\p{L}\\p{N}_$]*\\.)*[\\p{L}_$][\\p{L}\\p{N}_$]*)");
+	private static final Pattern simpleName = Pattern
+			.compile("((([\\p{L}_$][\\p{L}\\p{N}_$]*\\.)*[\\p{L}_$][\\p{L}\\p{N}_$]*)|\\Q?\\E)");
 
-	private static final Pattern classNamePatternAll = Pattern.compile(nonGenericlassNamePattern + "(\\Q<\\E"
-			+ nonGenericlassNamePattern + "(\\s*\\Q,\\E\\s*" + nonGenericlassNamePattern + ")*" + "\\Q>\\E){0,1}");
+	private static final Pattern className = Pattern.compile(createClassNamePattern(
+			// The maximum depth for which we want to recognize match generic types in the
+			// class name
+			10));
 
-	private static final Pattern GENERIC_TYPE_PATTERN = Pattern.compile("((?<=\\Q<\\E)" + classNamePatternAll
-			+ "(\\s*\\Q,\\E\\s*" + classNamePatternAll + ")*" + "(?=\\Q>\\E\\z){1}){1}");
+	private static final Pattern GENERIC_TYPE_PATTERN = Pattern
+			.compile("((?<=\\Q<\\E)" + className + "(\\s*\\Q,\\E\\s*" + className + ")*" + "(?=\\Q>\\E\\z){1}){1}");
+
+	private static String replaceString(Integer i, String word, String subString) {
+		return i == 0 ? word
+				: word.replace(
+						subString,
+						ClassUtils.replaceString(i - 1, word, subString)
+				);
+	}
+
+	private static String createClassNamePattern(Integer maxDepth) {
+
+		// This can be any string, as long it does not conflict with any other sequence
+		// in the regex
+		final String genericTypeMarker = Utils.randomString(3);
+		
+		// System.out.println(genericTypeMarker);
+
+		final String classNamePattern = simpleName + "(\\Q<\\E" + genericTypeMarker + "(\\s*\\Q,\\E\\s*"
+				+ genericTypeMarker + ")*" + "\\Q>\\E){0,1}";
+
+		String result = replaceString(maxDepth, classNamePattern, genericTypeMarker);
+
+		// System.out.println(result);
+		
+		result = result.replace(genericTypeMarker, simpleName.toString());
+
+		// System.out.println(result);
+
+		return result;
+	}
 
 	public static boolean isMethodOverrriden(final Method myMethod) {
 		Class<?> declaringClass = myMethod.getDeclaringClass();
@@ -89,32 +121,48 @@ public class ClassUtils<T> {
 	 * @param typeName
 	 * @return Class | List<><Class>
 	 */
+	@BlockerTodo("Use tokenization to parse type tokens, instead of regex")
+	@Deprecated(forRemoval = true)
 	public static ParameterizedClass getParameterizedClass(ClassLoader cl, String typeName) {
 
-		Matcher m = nonGenericlassNamePattern.matcher(typeName);
+		Matcher m = simpleName.matcher(typeName);
 		m.find();
 
+		String className = m.group();
+
+		// System.out.println("\n" + className);
+		// System.out.println(typeName);
+
 		ParameterizedClass result = null;
+
 		try {
-			result = new ParameterizedClass(cl.loadClass(m.group()));
+
+			Class<?> c = cl.loadClass(className);
+			result = new ParameterizedClass(c);
+
 		} catch (ClassNotFoundException e) {
-			Exceptions.throwRuntime(e);
+			throw new IllegalArgumentException("Unknown class: " + className);
 		}
 
 		Matcher m1 = GENERIC_TYPE_PATTERN.matcher(typeName);
 
 		boolean b = m1.find();
 
+		// System.out.println(b);
+
 		if (b) {
 
 			String classes = m1.group();
 
-			Matcher m2 = classNamePatternAll.matcher(classes);
+			// System.out.println(classes);
+
+			Matcher m2 = ClassUtils.className.matcher(classes);
 
 			while (m2.find()) {
 				result.addGenericType(getParameterizedClass(cl, m2.group()));
 			}
 		}
+
 		return result;
 	}
 
@@ -180,7 +228,7 @@ public class ClassUtils<T> {
 	public static boolean isAccessible(Class<?> clazz) {
 
 		SystemClassLoader scl = (SystemClassLoader) ClassLoader.getSystemClassLoader();
-		
+
 		// If this is a platform class, allow access
 		if (scl.isPlatformClass(clazz)) {
 			return true;

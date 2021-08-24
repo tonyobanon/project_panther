@@ -2,13 +2,13 @@ package com.re.paas.api.infra.database.model;
 
 public class BatchWriteItemResult {
 
-	private final BatchWriteItemRequest unprocessedItems;
+	private final BatchWriteItemSpec unprocessedItems;
 
-	public BatchWriteItemResult(BatchWriteItemRequest unprocessedItems) {
+	public BatchWriteItemResult(BatchWriteItemSpec unprocessedItems) {
 		this.unprocessedItems = unprocessedItems;
 	}
 
-	public BatchWriteItemRequest getUnprocessedItems() {
+	public BatchWriteItemSpec getUnprocessedItems() {
 		return unprocessedItems;
 	}
 

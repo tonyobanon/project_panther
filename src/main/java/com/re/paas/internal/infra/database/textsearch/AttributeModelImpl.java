@@ -1,4 +1,4 @@
-package com.re.paas.internal.infra.database.tools;
+package com.re.paas.internal.infra.database.textsearch;
 
 import static com.re.paas.api.infra.database.document.xspec.ExpressionSpecBuilder.N;
 import static com.re.paas.api.infra.database.document.xspec.ExpressionSpecBuilder.S;
@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import com.re.paas.api.annotations.develop.BlockerTodo;
 import com.re.paas.api.infra.database.document.Database;
 import com.re.paas.api.infra.database.document.Item;
 import com.re.paas.api.infra.database.document.KeyAttribute;
@@ -27,9 +28,10 @@ import com.re.paas.api.infra.database.textsearch.QueryType;
 import com.re.paas.api.logging.Logger;
 import com.re.paas.internal.infra.database.tables.attributes.IndexEntrySpec;
 
-public class AttributeModelImpl implements AttributeModel {
+class AttributeModelImpl implements AttributeModel {
 
 	private static Logger LOG = Logger.get(AttributeModelImpl.class);
+	
 
 	// K: table/rangeKey, V: indexName
 	protected static Map<String, String> rangeKeyToIndexName = Collections.synchronizedMap(new HashMap<>());
@@ -50,16 +52,22 @@ public class AttributeModelImpl implements AttributeModel {
 	// K: tableName, V: rangeKey
 	protected static Map<String, String> tableToRangeKey = Collections.synchronizedMap(new HashMap<>());
 
+	private final QueryModel queryModel;
+	
 	private QueryModel getQueryModel() {
-		return new QueryModelImpl();
+		return queryModel;
 	}
-
+	
+	AttributeModelImpl(QueryModel queryModel) {
+		this.queryModel = queryModel;
+	}
+	
 	@Override
-	public void newRangeKey(IndexDescriptor index, List<String> projections, String hashAttribute,
+	public void addIndex(IndexDescriptor index, List<String> projections, String hashAttribute,
 			String rangeAttribute, Long readThroughputCapacity, QueryType queryType, String tableHashKey,
 			String tableRangeKey) {
 
-		LOG.info("Registering new index in " + AttributeModelImpl.class.getSimpleName());
+		LOG.info("Adding index: " + index.getId());
 
 		if (!rangeKeyToIndexName.containsKey(index.getTableName() + "/" + rangeAttribute)) {
 			rangeKeyToIndexName.put(index.getTableName() + "/" + rangeAttribute, index.getIndexName());

@@ -18,6 +18,7 @@ import com.re.paas.api.annotations.develop.BlockerTodo;
 import com.re.paas.api.classes.Exceptions;
 import com.re.paas.api.classes.ExecutorFactoryStats;
 import com.re.paas.api.classes.ObjectWrapper;
+import com.re.paas.api.classes.ThreadContext;
 import com.re.paas.api.events.AbstractEventDelegate;
 import com.re.paas.api.logging.Logger;
 import com.re.paas.api.logging.LoggerFactory;
@@ -26,8 +27,12 @@ import com.re.paas.api.runtime.ComputeException;
 import com.re.paas.api.runtime.ComputeQuotaExceededEvent;
 import com.re.paas.api.runtime.ExecutorFactory;
 import com.re.paas.api.runtime.ExecutorFactoryConfig;
+import com.re.paas.api.runtime.ExternalContext;
 import com.re.paas.api.runtime.ParameterizedExecutable;
 import com.re.paas.api.runtime.ParameterizedInvokable;
+import com.re.paas.api.runtime.RuntimeIdentity;
+import com.re.paas.api.runtime.UnknownIdentityException;
+import com.re.paas.api.tasks.Affinity;
 import com.re.paas.api.utils.Utils;
 
 @BlockerTodo("In this class, find alternative to HashMap and ArrayList for high performance")
@@ -109,11 +114,11 @@ public class ExecutorFactoryImpl extends ExecutorFactory {
 	public String getName() {
 		return this.name;
 	}
-
+	
 	@BlockerTodo("Create mechanism to monitor the number of spawned threads per application..")
 	@BlockerTodo("Enforce a timeout policy, so that calls to i.call() don't take forever..")
 	@Override
-	public <P, R> CompletableFuture<R> execute(ParameterizedExecutable<P, R> executable) {
+	public <P, R> CompletableFuture<R> executeLocal(ParameterizedExecutable<P, R> executable) {
 
 		if (free.isEmpty()) {
 			Exceptions.throwRuntime(new ComputeException("No executor(s) available to run this task"));
@@ -211,6 +216,7 @@ public class ExecutorFactoryImpl extends ExecutorFactory {
 
 		// Add a no-op task to force thread spawning
 		e.execute(() -> {
+			
 		});
 
 		Permissions.bypass.set(false);
@@ -288,13 +294,20 @@ public class ExecutorFactoryImpl extends ExecutorFactory {
 	}
 
 	@Override
-	public <P, R> ParameterizedExecutable<P, R> buildFunction(ParameterizedInvokable<P, R> task, P parameter) {
-		return buildFunction(new ObjectWrapper<ClassLoader>(), task, parameter);
+	public <P, R> ParameterizedExecutable<P, R> buildFunction(ParameterizedInvokable<P, R> task, P parameter, Affinity affinity) {
+		
+		String appId = ThreadContext.getAppId();
+		
+		if (appId == null && RuntimeIdentity.isExternalContext()) {
+			throw new UnknownIdentityException();
+		}
+		
+		return buildFunction(new ObjectWrapper<ClassLoader>(task.getClass().getClassLoader()), task, parameter, new ExternalContext(appId, false, affinity));
 	}
 
 	@Override
 	public <P, R> ParameterizedExecutable<P, R> buildFunction(ObjectWrapper<ClassLoader> cl,
-			ParameterizedInvokable<P, R> task, P parameter) {
+			ParameterizedInvokable<P, R> task, P parameter, ExternalContext ctx) {
 		
 		if (cl.get() == null) {
 			cl.set(task.getClass().getClassLoader());
@@ -307,6 +320,9 @@ public class ExecutorFactoryImpl extends ExecutorFactory {
 
 			LOG.debug("Executing function: " + task + " by " + classloader);
 
+			ThreadContext.newRequestContext(ctx.getAppId(), ctx.getIsWebRequest());
+			
+			
 			Thread thread = Thread.currentThread();
 
 			// Set thread context loader
@@ -328,10 +344,13 @@ public class ExecutorFactoryImpl extends ExecutorFactory {
 			thread.setContextClassLoader(null);
 			Permissions.bypass.set(false);
 
+			
+			ThreadContext.clear();
+			
 			return result;
 		};
 
-		return new ParameterizedExecutable<P, R>(function, (P) parameter);
+		return new ParameterizedExecutable<P, R>(function, (P) parameter, ctx.getAffinity());
 	}
 
 }

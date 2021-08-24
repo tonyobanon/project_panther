@@ -15,7 +15,7 @@ import com.re.paas.api.forms.Section;
 import com.re.paas.api.forms.SimpleField;
 import com.re.paas.api.infra.cache.CacheAdapter;
 import com.re.paas.api.infra.cache.CacheFactory;
-import com.re.paas.api.runtime.ParameterizedExecutable;
+import com.re.paas.internal.clustering.MasterOnboardingTask;
 
 public class S3Adapter implements CacheAdapter {
 
@@ -85,22 +85,21 @@ public class S3Adapter implements CacheAdapter {
 
 		BasicAWSCredentials awsCreds = new BasicAWSCredentials(access_key_id, secret_key_id);
 
+		
 		// Register cache eviction task
+		
+		MasterOnboardingTask task = new MasterOnboardingTask(() -> {
+			
+			S3CacheFactory factory = (S3CacheFactory) CacheAdapter.getDelegate().getCacheFactory();
 
-		ClusteringServices.get().addMasterOnboardingTask("evictS3Factory",
+			CacheEvicter evicter = new CacheEvicter(factory);
+			evicter.start();
 
-				new ParameterizedExecutable<Object, Object>((p) -> {
+			this.setCacheEvicter(evicter);
+			
+		}, () -> CacheAdapter.getDelegate().getCacheFactory() instanceof S3CacheFactory, 5l);
 
-					S3CacheFactory factory = (S3CacheFactory) CacheAdapter.getDelegate().getCacheFactory();
-
-					CacheEvicter evicter = new CacheEvicter(factory);
-					evicter.start();
-
-					this.setCacheEvicter(evicter);
-
-					return null;
-
-				}, null), (p) -> CacheAdapter.getDelegate().getCacheFactory() instanceof S3CacheFactory, 5l);
+		ClusteringServices.get().addMasterOnboardingTask("evictS3Factory", task);
 
 		return new S3CacheFactory(this, "default", awsCreds, region, endpoint());
 	}

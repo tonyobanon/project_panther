@@ -1,4 +1,4 @@
-package com.re.paas.internal.infra.database.tools;
+package com.re.paas.internal.infra.database.textsearch;
 
 import java.util.Collection;
 import java.util.List;
@@ -10,7 +10,7 @@ import com.re.paas.api.infra.database.textsearch.QueryType;
 
 public interface AttributeModel {
 
-	void newRangeKey(IndexDescriptor index, List<String> projections, String hashAttribute, String rangeAttribute,
+	void addIndex(IndexDescriptor index, List<String> projections, String hashAttribute, String rangeAttribute,
 			Long readThroughputCapacity, QueryType queryType, String tableHashKey, String tableRangeKey);
 
 	Integer getIndexSize(IndexDescriptor index, String indexRangeKey, Object indexRangeKeyValue, Item item);

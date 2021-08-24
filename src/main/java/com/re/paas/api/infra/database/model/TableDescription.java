@@ -1,5 +1,10 @@
 package com.re.paas.api.infra.database.model;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
 public class TableDescription extends BaseTableDefinition {
 
 	private TableStatus tableStatus;
@@ -28,9 +33,9 @@ public class TableDescription extends BaseTableDefinition {
 	 */
 	private java.util.Date creationDateTime;
 
-	private java.util.List<LocalSecondaryIndexDescription> localSecondaryIndexes;
+	private java.util.List<LocalSecondaryIndexDescription> localSecondaryIndexes = new ArrayList<>();
 
-	private java.util.List<GlobalSecondaryIndexDescription> globalSecondaryIndexes;
+	private java.util.List<GlobalSecondaryIndexDescription> globalSecondaryIndexes = new ArrayList<>();
 
 	public TableStatus getTableStatus() {
 		return tableStatus;
@@ -86,6 +91,14 @@ public class TableDescription extends BaseTableDefinition {
 			java.util.List<GlobalSecondaryIndexDescription> globalSecondaryIndexes) {
 		this.globalSecondaryIndexes = globalSecondaryIndexes;
 		return this;
+	}
+	
+	public List<String> getIndexNames() {
+		return Stream.concat(
+				this.getLocalSecondaryIndexes().stream().map(lsi -> lsi.getIndexName()),
+				this.getGlobalSecondaryIndexes().stream().map(gsi -> gsi.getIndexName())
+		)
+                .collect(Collectors.toList());
 	}
 
 }

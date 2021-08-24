@@ -12,6 +12,7 @@ import com.re.paas.api.adapters.AbstractAdapterDelegate;
 import com.re.paas.api.adapters.AdapterConfig;
 import com.re.paas.api.adapters.AdapterType;
 import com.re.paas.api.adapters.LoadPhase;
+import com.re.paas.api.annotations.develop.Todo;
 import com.re.paas.api.fusion.Endpoint;
 import com.re.paas.api.fusion.HttpMethod;
 import com.re.paas.api.fusion.HttpStatusCodes;
@@ -19,7 +20,7 @@ import com.re.paas.api.fusion.JsonArray;
 import com.re.paas.api.fusion.JsonObject;
 import com.re.paas.api.fusion.RoutingContext;
 import com.re.paas.api.fusion.services.BaseService;
-import com.re.paas.api.fusion.services.ServiceAffinity;
+import com.re.paas.api.tasks.Affinity;
 import com.re.paas.internal.classes.Json;
 import com.re.paas.internal.fusion.UIContext;
 import com.re.paas.internal.utils.ObjectUtils;
@@ -68,7 +69,7 @@ public class SystemAdapterService extends BaseService {
 		ctx.response().write(res.encode());
 	}
 
-	@Endpoint(uri = "/parameters", affinity = ServiceAffinity.MASTER_ONLY)
+	@Endpoint(uri = "/parameters", affinity = Affinity.MASTER)
 	public static void getParameters(RoutingContext ctx) {
 
 		AdapterType type = AdapterType.from(ctx.request().getParam("type"));
@@ -83,7 +84,8 @@ public class SystemAdapterService extends BaseService {
 		ctx.response().write(parameters);
 	}
 
-	@Endpoint(uri = "/configure", method = HttpMethod.POST, affinity = ServiceAffinity.MASTER_ONLY)
+	@Todo("Remember to save .installed file, when user clicks on finish")
+	@Endpoint(uri = "/configure", method = HttpMethod.POST, affinity = Affinity.MASTER)
 	public static void configure(RoutingContext ctx) {
 
 		JsonObject body = ctx.getBodyAsJson();

@@ -15,7 +15,7 @@ public class BatchGetItemResult {
 	 */
 	private Map<String, List<Item>> responses;
 	
-	private BatchGetItemRequest unprocessedKeys;
+	private BatchGetItemSpec next;
 
 	public Map<String, List<Item>> getResponses() {
 		return responses;
@@ -26,12 +26,12 @@ public class BatchGetItemResult {
 		return this;
 	}
 
-	public BatchGetItemRequest getUnprocessedKeys() {
-		return unprocessedKeys;
+	public BatchGetItemSpec getNext() {
+		return next;
 	}
 
-	public BatchGetItemResult setUnprocessedKeys(BatchGetItemRequest unprocessedKeys) {
-		this.unprocessedKeys = unprocessedKeys;
+	public BatchGetItemResult setNext(BatchGetItemSpec next) {
+		this.next = next;
 		return this;
 	}
 

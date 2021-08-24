@@ -5,7 +5,7 @@ import java.util.Map;
 
 import com.re.paas.api.infra.database.document.xspec.GetItemsSpec;
 
-public class BatchGetItemRequest {
+public class BatchGetItemSpec {
 
 	private Map<String, GetItemsSpec> requestItems = new HashMap<>();
 
@@ -13,14 +13,13 @@ public class BatchGetItemRequest {
 		return requestItems;
 	}
 
-	public BatchGetItemRequest setRequestItems(Map<String, GetItemsSpec> requestItems) {
+	public BatchGetItemSpec setRequestItems(Map<String, GetItemsSpec> requestItems) {
 		this.requestItems = requestItems;
 		return this;
 	}
 	
-	public BatchGetItemRequest addRequestItem(String tableName, GetItemsSpec spec) {
+	public BatchGetItemSpec addRequestItem(String tableName, GetItemsSpec spec) {
 		this.requestItems.put(tableName, spec);
 		return this;
 	}
-
 }

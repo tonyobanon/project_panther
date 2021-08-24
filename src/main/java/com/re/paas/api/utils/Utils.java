@@ -18,6 +18,7 @@ import java.time.Duration;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -50,6 +51,12 @@ public class Utils {
 
 	public static final String newShortRandom() {
 		return newRandom().substring(0, 6);
+	}
+	
+	public static final String randomString(int n) {
+		char[] chars = new char[n];
+		Arrays.fill(chars, 'c');
+		return new String(chars);
 	}
 
 	public static String join(String arr[], int startIndex) {

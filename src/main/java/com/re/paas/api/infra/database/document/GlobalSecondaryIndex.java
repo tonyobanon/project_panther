@@ -1,14 +1,19 @@
 package com.re.paas.api.infra.database.document;
 
-import com.re.paas.api.infra.database.model.TableDescription;
+import com.re.paas.api.infra.database.model.GlobalSecondaryIndexDescription;
 
 public interface GlobalSecondaryIndex extends Index {
 	
-	default void delete() {
-		getTable().deleteGSI(getDescriptor());
-	}
+	GlobalSecondaryIndex delete();
 	
-	TableDescription waitForActive();
+	/**
+	 * This does not make a network call. To fetch the latest information, call {@link Table#describe()}
+	 */
+	@Override
+	GlobalSecondaryIndexDescription getDescriptor();
+	
+	GlobalSecondaryIndex waitForActive();
 
-	TableDescription waitForDelete();
+	GlobalSecondaryIndex waitForDelete();
+	
 }

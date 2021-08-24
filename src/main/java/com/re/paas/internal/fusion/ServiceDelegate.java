@@ -27,6 +27,7 @@ import com.re.paas.api.fusion.services.ServiceDescriptor;
 import com.re.paas.api.logging.Logger;
 import com.re.paas.api.runtime.ClassLoaders;
 import com.re.paas.api.runtime.ExecutorFactory;
+import com.re.paas.api.runtime.ExternalContext;
 import com.re.paas.api.runtime.ParameterizedExecutable;
 import com.re.paas.api.runtime.ParameterizedInvokable;
 import com.re.paas.api.runtime.spi.DelegateInitResult;
@@ -207,7 +208,7 @@ public class ServiceDelegate extends AbstractServiceDelegate {
 
 		ParameterizedInvokable<RoutingContext, HttpServerResponse> i = (context) -> {
 
-			Handlers.defaultHeadHandler().accept(context);
+			Handlers.defaultHeadHandler(appId).accept(context);
 
 			for (ServiceDescriptor sDescriptor : sDescriptors) {
 
@@ -231,12 +232,12 @@ public class ServiceDelegate extends AbstractServiceDelegate {
 				}
 			}
 
-			Handlers.defaultTailHandler().accept(context);
+			Handlers.defaultTailHandler(appId).accept(context);
 
 			return context.response();
 		};
 
-		return ExecutorFactory.get().buildFunction(new ObjectWrapper<ClassLoader>(cl), i, ctx);
+		return ExecutorFactory.get().buildFunction(new ObjectWrapper<ClassLoader>(cl), i, ctx, new ExternalContext(appId, true, sDescriptors.get(0).getEndpoint().affinity()));
 	}
 
 	/**

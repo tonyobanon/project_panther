@@ -1,5 +1,6 @@
 package com.re.paas.api.infra.database.model;
 
+import java.util.Collection;
 
 public class KeySchemaElement {
 
@@ -29,6 +30,23 @@ public class KeySchemaElement {
 	public KeySchemaElement setKeyType(KeyType keyType) {
 		this.keyType = keyType;
 		return this;
+	}
+	
+	private static String getSchemaKey(Collection<KeySchemaElement> keys, KeyType type) {
+		for (KeySchemaElement e : keys) {
+			if (e.getKeyType() == type) {
+				return e.getAttributeName();
+			}
+		}
+		return null;
+	}
+	
+	public static String getHashKey(Collection<KeySchemaElement> keys) {
+		return getSchemaKey(keys, KeyType.HASH);
+	}
+	
+	public static String getRangeKey(Collection<KeySchemaElement> keys) {
+		return getSchemaKey(keys, KeyType.RANGE);
 	}
 
 }

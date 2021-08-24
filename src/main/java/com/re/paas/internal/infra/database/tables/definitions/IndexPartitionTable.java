@@ -1,6 +1,6 @@
 package com.re.paas.internal.infra.database.tables.definitions;
 
-import com.re.paas.api.infra.database.modelling.BaseTable;
+import com.re.paas.api.infra.database.model.BaseTable;
 import com.re.paas.internal.infra.database.tables.attributes.IndexPartitionSpec;
 
 public class IndexPartitionTable implements BaseTable {

@@ -9,7 +9,7 @@ import com.re.paas.api.infra.database.model.ScanResult;
 public interface Index {
 
 	Table getTable();
-
+	
 	IndexDescriptor getDescriptor();
 
 	QueryResult query(QuerySpec spec);

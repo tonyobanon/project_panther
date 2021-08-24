@@ -2,20 +2,20 @@ package com.re.paas.api.infra.database.model;
 
 public class CapacityUnits {
 
-	private final Double readCapacityUnits;
+	private final Long readCapacityUnits;
 	
-	private final Double writeCapacityUnits;
+	private final Long writeCapacityUnits;
 
-	public CapacityUnits(Double readCapacityUnits, Double writeCapacityUnits) {
+	public CapacityUnits(Long readCapacityUnits, Long writeCapacityUnits) {
 		this.readCapacityUnits = readCapacityUnits;
 		this.writeCapacityUnits = writeCapacityUnits;
 	}
 
-	public Double getReadCapacityUnits() {
+	public Long getReadCapacityUnits() {
 		return readCapacityUnits;
 	}
 
-	public Double getWriteCapacityUnits() {
+	public Long getWriteCapacityUnits() {
 		return writeCapacityUnits;
 	}
 	
