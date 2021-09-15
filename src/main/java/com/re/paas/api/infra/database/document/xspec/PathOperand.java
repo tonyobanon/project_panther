@@ -1,8 +1,8 @@
 
  package com.re.paas.api.infra.database.document.xspec;
 
-import static com.re.paas.api.infra.database.document.xspec.ExpressionSpecBuilder.attribute_exists;
-import static com.re.paas.api.infra.database.document.xspec.ExpressionSpecBuilder.attribute_not_exists;
+import static com.re.paas.api.infra.database.document.xspec.QueryBuilder.attribute_exists;
+import static com.re.paas.api.infra.database.document.xspec.QueryBuilder.attribute_not_exists;
 
 /**
  * A path operand used in building DynamooDB expressions such as update
@@ -11,13 +11,13 @@ import static com.re.paas.api.infra.database.document.xspec.ExpressionSpecBuilde
  * "http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_AttributeValue.html"
  * >specific type</a> in DynamoDB.
  * <p>
- * Use {@link ExpressionSpecBuilder#S(String)},
- * {@link ExpressionSpecBuilder#N(String)}, etc. to instantiate path operands to
+ * Use {@link QueryBuilder#S(String)},
+ * {@link QueryBuilder#N(String)}, etc. to instantiate path operands to
  * refer to attributes of specific data types. You can also use
- * {@link ExpressionSpecBuilder#attribute(String)} to instantiate a path operand
+ * {@link QueryBuilder#attribute(String)} to instantiate a path operand
  * with an unspecified data type.
  * 
- * @see ExpressionSpecBuilder
+ * @see QueryBuilder
  */
 public class PathOperand extends Operand {
     private final Path path;

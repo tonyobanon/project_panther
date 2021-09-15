@@ -9,7 +9,7 @@ public final class GetItemSpec extends BaseGetItemSpec {
 
 	private PrimaryKey primaryKey;
 
-	GetItemSpec(ExpressionSpecBuilder builder) {
+	GetItemSpec(QueryBuilder builder) {
 		SubstitutionContext context = new SubstitutionContext();
 		this.projectionExpression = builder.buildProjectionExpression(context);
 		final Map<String, String> nameMap = context.getNameMap();
@@ -32,7 +32,7 @@ public final class GetItemSpec extends BaseGetItemSpec {
 	}
 
 	public static GetItemSpec forKey(PrimaryKey key, String... projections) {
-		ExpressionSpecBuilder expr = new ExpressionSpecBuilder();
+		QueryBuilder expr = new QueryBuilder();
 		for (String projection : projections) {
 			expr.addProjection(projection);
 		}

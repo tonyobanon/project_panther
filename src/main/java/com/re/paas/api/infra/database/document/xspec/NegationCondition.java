@@ -1,7 +1,7 @@
 
  package com.re.paas.api.infra.database.document.xspec;
 
-import static com.re.paas.api.infra.database.document.xspec.ExpressionSpecBuilder.__;
+import static com.re.paas.api.infra.database.document.xspec.QueryBuilder.__;
 
 /**
  * Represents a <a href=

@@ -1,8 +1,8 @@
 package com.re.paas.api.infra.database.document.utils;
 
 
-import com.re.paas.internal.infra.database.Schemas;
-import com.re.paas.internal.infra.database.tables.definitions.IndexEntryTable;
+import com.re.paas.internal.infra.database.dynamodb.classes.Schemas;
+import com.re.paas.internal.infra.database.dynamodb.tables.definitions.IndexEntryTable;
 
 public class Playground {
 	

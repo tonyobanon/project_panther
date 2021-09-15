@@ -14,7 +14,7 @@ public class Singleton {
 
 	public static <T> T get(Class<T> type) {
 
-		String name = ClassUtils.toString(type);
+		String name = ClassUtils.asString(type);
 
 		@SuppressWarnings("unchecked")
 		T o = (T) singletons.get(name);
@@ -40,7 +40,7 @@ public class Singleton {
 	 */
 	public static <T> void register(Class<? extends T> type, T typeSubType) {
 
-		String name = ClassUtils.toString(type);
+		String name = ClassUtils.asString(type);
 
 		if (RuntimeIdentity.isExternalContext()) {
 

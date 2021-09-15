@@ -16,8 +16,7 @@ public class DatabaseAdapterDelegate extends AbstractDatabaseAdapterDelegate {
 
 	@Override
 	public Boolean load(LoadPhase phase) {
-		DatabaseImpl db = (DatabaseImpl) getDatabase(true);
-		return db.load(phase);
+		return getDatabase(true).load(phase);
 	}
 
 	@Override

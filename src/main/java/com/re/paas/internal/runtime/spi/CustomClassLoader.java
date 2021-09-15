@@ -19,6 +19,7 @@ import com.re.paas.api.Platform;
 import com.re.paas.api.fusion.BaseComponent;
 import com.re.paas.api.runtime.RuntimeIdentity;
 import com.re.paas.api.runtime.SystemClassLoader;
+import com.re.paas.api.utils.ClassUtils;
 import com.re.paas.internal.infra.filesystem.FileSystemWrapper;
 
 public class CustomClassLoader extends ClassLoader {
@@ -179,8 +180,8 @@ public class CustomClassLoader extends ClassLoader {
 
 	void ingest(Class<?> clazz, byte[] bytecode) {
 		// System.out.println("Ingesting " + c.getName() + " into classloader pool");
-		this._classes.put(clazz.getName(), clazz);
-		this._classBytes.put(clazz.getName(), bytecode);
+		this._classes.put(ClassUtils.getName(clazz), clazz);
+		this._classBytes.put(ClassUtils.getName(clazz), bytecode);
 	}
 
 	void prune() {
@@ -248,12 +249,12 @@ public class CustomClassLoader extends ClassLoader {
 
 	static {
 
-		extrinsicClasses.add(Application.class.getName());
-		extrinsicClasses.add(CustomClassLoader.class.getName());
-		extrinsicClasses.add(SystemClassLoader.class.getName());
-		extrinsicClasses.add(SystemClassLoaderImpl.class.getName());
-		extrinsicClasses.add(FileSystemWrapper.class.getName());
-		extrinsicClasses.add(BaseComponent.class.getName());
+		extrinsicClasses.add(ClassUtils.getName(Application.class));
+		extrinsicClasses.add(ClassUtils.getName(CustomClassLoader.class));
+		extrinsicClasses.add(ClassUtils.getName(SystemClassLoader.class));
+		extrinsicClasses.add(ClassUtils.getName(SystemClassLoaderImpl.class));
+		extrinsicClasses.add(ClassUtils.getName(FileSystemWrapper.class));
+		extrinsicClasses.add(ClassUtils.getName(BaseComponent.class));
 
 		metaPackages.add(Platform.COMPONENT_BASE_PKG);
 	}

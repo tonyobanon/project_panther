@@ -1,14 +1,17 @@
 package com.re.paas.api.infra.database.model;
 
+import java.util.List;
+import java.util.Map;
+
 public class BatchWriteItemResult {
 
-	private final BatchWriteItemSpec unprocessedItems;
+	private final Map<String, List<WriteRequest>> unprocessedItems;
 
-	public BatchWriteItemResult(BatchWriteItemSpec unprocessedItems) {
+	public BatchWriteItemResult(Map<String, List<WriteRequest>> unprocessedItems) {
 		this.unprocessedItems = unprocessedItems;
 	}
 
-	public BatchWriteItemSpec getUnprocessedItems() {
+	public Map<String, List<WriteRequest>> getUnprocessedItems() {
 		return unprocessedItems;
 	}
 

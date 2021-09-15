@@ -272,6 +272,6 @@ public final class D extends PathOperand {
      *            if_not_exists function call.
      */
     public IfNotExistsFunction<D> ifNotExists(D defaultValue) {
-        return ExpressionSpecBuilder.if_not_exists(this, defaultValue);
+        return QueryBuilder.if_not_exists(this, defaultValue);
     }
 }

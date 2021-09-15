@@ -10,7 +10,7 @@ import java.util.Set;
  * "http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_AttributeValue.html"
  * >number set</a> attribute in DynamoDB; used for building expressions.
  * <p>
- * Use {@link ExpressionSpecBuilder#NS(String)} to instantiate this class.
+ * Use {@link QueryBuilder#NS(String)} to instantiate this class.
  */
 public final class NS extends PathOperand {
     NS(String path) {

@@ -27,7 +27,6 @@ import com.re.paas.api.classes.ObjectWrapper;
 import com.re.paas.api.classes.TaskExecutionOutcome;
 import com.re.paas.api.clustering.ClusteringServices;
 import com.re.paas.api.clustering.Function;
-import com.re.paas.api.clustering.SelectionMetric;
 import com.re.paas.api.clustering.classes.ClusterDestination;
 import com.re.paas.api.clustering.generic.GenericFunction;
 import com.re.paas.api.logging.Logger;
@@ -53,7 +52,7 @@ import com.re.paas.internal.clustering.MasterOnboardingTask;
 @BlockerTodo("Rename to ClusterTaskDelegate")
 @DelegateSpec(dependencies = { SpiType.NODE_ROLE })
 public class TaskDelegate extends AbstractTaskDelegate {
-	
+
 	private static Logger LOG = LoggerFactory.get().getLog(TaskDelegate.class);
 
 	static ScheduledExecutorService taskExecutor;
@@ -73,7 +72,7 @@ public class TaskDelegate extends AbstractTaskDelegate {
 	public DelegateInitResult init() {
 
 		MasterOnboardingTask task = new MasterOnboardingTask(() -> {
-			
+
 			TaskDelegate delegate = (TaskDelegate) TaskModel.getDelegate();
 
 			if (delegate.intervalInSecs() < defaultSchedulerLeewayInSecs * 2) {
@@ -88,15 +87,14 @@ public class TaskDelegate extends AbstractTaskDelegate {
 			ResourcesInitResult r = delegate.addResources(delegate::add0);
 
 			LOG.debug("Discovered " + r.getCount() + " tasks");
-			
+
 			r.getErrors().forEach(err -> {
 				LOG.error(err.getCulprit() + ": " + err.getErrorMessage());
 			});
-			
+
 			taskExecutor = Executors.newScheduledThreadPool(1);
 
-			taskExecutor.scheduleAtFixedRate(delegate::execute, 0L, delegate.intervalInSecs(),
-					TimeUnit.SECONDS);
+			taskExecutor.scheduleAtFixedRate(delegate::execute, 0L, delegate.intervalInSecs(), TimeUnit.SECONDS);
 		}, () -> true, 0l);
 
 		ClusteringServices.get().addMasterOnboardingTask("scheduleTaskExeecution", task);
@@ -153,7 +151,7 @@ public class TaskDelegate extends AbstractTaskDelegate {
 		setUpperTaskExecutorInvokation(now.plusSeconds(intervalInSecs() * 2));
 
 		ExecutorFactory execFactory = ExecutorFactory.get();
-		
+
 		getTaskDefinitions().values().join().forEach(definition -> {
 
 			Task task = definition.getTask();
@@ -161,17 +159,13 @@ public class TaskDelegate extends AbstractTaskDelegate {
 			setNextExecutionTime(definition);
 
 			Boolean execute = canExecuteRightNow(now, definition);
-			
+
 			if (execute) {
-				
-				ParameterizedExecutable<Task, TaskExecutionOutcome> executable = execFactory.buildFunction(
-					new ObjectWrapper<ClassLoader>(task.getClass().getClassLoader()),
-					(p) -> {
-						return p.call();
-					}, 
-					task, 
-					new ExternalContext(ClassLoaders.getId(task.getClass()), false, Affinity.ANY)
-				);
+
+				ParameterizedExecutable<Task, TaskExecutionOutcome> executable = execFactory
+						.buildFunction(new ObjectWrapper<ClassLoader>(task.getClass().getClassLoader()), (p) -> {
+							return p.call();
+						}, task, new ExternalContext(ClassLoaders.getId(task.getClass()), false, Affinity.ANY));
 
 				// Execute task
 				execute0(executable, false);
@@ -245,17 +239,16 @@ public class TaskDelegate extends AbstractTaskDelegate {
 		return execute0(executable, true);
 	}
 
-	@BlockerTodo("Based on affinity, route the future accordingly to the relevant node(s), i.e. executable.getAffinity()")
 	private <P, R> CompletableFuture<R> execute0(ParameterizedExecutable<P, R> executable, boolean wait) {
 
-		Short nodeId = ClusteringServices.get().getAvailableMember(SelectionMetric.COMPUTE_AND_MEMORY);
+		Short nodeId = Collections.nthValue(ClusteringServices.get().getAvailableMember(executable.getAffinity(), 1), 0);
 
 		Map<String, CompletableFuture<Object>> responses = (Map<String, CompletableFuture<Object>>) Function.execute(
 				ClusterDestination.SPECIFIC_NODE.setDestination(nodeId),
 				wait ? GenericFunction.EXECUTE_INVOKABLE : GenericFunction.ASYNC_EXECUTE_INVOKABLE, executable);
 
 		@SuppressWarnings("unchecked")
-		CompletableFuture<R> result = (CompletableFuture<R>) Collections.firstValue(responses);
+		CompletableFuture<R> result = (CompletableFuture<R>) Collections.nthValue(responses, 0);
 
 		return result;
 	}

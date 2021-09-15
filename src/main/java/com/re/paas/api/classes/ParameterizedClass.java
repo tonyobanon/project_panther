@@ -7,6 +7,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 
+import com.re.paas.api.utils.ClassUtils;
+
 public class ParameterizedClass {
 
 	private final Class<?> type;
@@ -74,7 +76,7 @@ public class ParameterizedClass {
 			}
 		}
 
-		sb.append(simpleTypeNamer.apply(getType().getName()));
+		sb.append(simpleTypeNamer.apply(ClassUtils.getName(getType())));
 
 		if (!this.genericTypes.isEmpty()) {
 			

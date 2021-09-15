@@ -9,7 +9,7 @@ import java.util.List;
  * "http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_AttributeValue.html"
  * >string</a> attribute in DynamoDB; used for building expressions.
  * <p>
- * Use {@link ExpressionSpecBuilder#S(String)} to instantiate this class.
+ * Use {@link QueryBuilder#S(String)} to instantiate this class.
  */
 public final class S extends PathOperand {
     S(String path) { super(path); }
@@ -178,7 +178,7 @@ public final class S extends PathOperand {
      *            if_not_exists function call.
      */
     public IfNotExistsFunction<S> ifNotExists(S defaultValue) {
-        return ExpressionSpecBuilder.if_not_exists(this, defaultValue);
+        return QueryBuilder.if_not_exists(this, defaultValue);
     }
 
     /**

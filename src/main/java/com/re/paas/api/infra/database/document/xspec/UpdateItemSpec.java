@@ -4,13 +4,10 @@ import java.util.Collections;
 import java.util.Map;
 
 import com.re.paas.api.infra.database.document.PrimaryKey;
-import com.re.paas.api.infra.database.model.ReturnValue;
 
 public class UpdateItemSpec extends BaseSpec {
 	
 	private PrimaryKey primaryKey;
-	
-    private ReturnValue returnValues;
     
     private final String updateExpression;
     private final String conditionExpression;
@@ -18,7 +15,7 @@ public class UpdateItemSpec extends BaseSpec {
     private final Map<String, String> nameMap;
     private final Map<String, Object> valueMap;
 
-    UpdateItemSpec(ExpressionSpecBuilder builder) {
+    UpdateItemSpec(QueryBuilder builder) {
         SubstitutionContext context = new SubstitutionContext();
         this.updateExpression = builder.buildUpdateExpression(context);
         this.conditionExpression = builder.buildConditionExpression(context);
@@ -36,15 +33,6 @@ public class UpdateItemSpec extends BaseSpec {
 		this.primaryKey = primaryKey;
 		return this;
 	}
-
-	public UpdateItemSpec setReturnValues(ReturnValue returnValues) {
-		this.returnValues = returnValues;
-		return this;
-	}
-
-	public ReturnValue getReturnValues() {
-        return this.returnValues;
-    }
     
     /**
      * Returns the update expression; or null if there is none.

@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.re.paas.api.infra.database.document.Item;
+import com.re.paas.api.infra.database.document.xspec.GetItemsSpec;
 
 public class BatchGetItemResult {
 
@@ -15,7 +16,7 @@ public class BatchGetItemResult {
 	 */
 	private Map<String, List<Item>> responses;
 	
-	private BatchGetItemSpec next;
+	private Map<String, GetItemsSpec> unprocessedKeys;
 
 	public Map<String, List<Item>> getResponses() {
 		return responses;
@@ -26,12 +27,12 @@ public class BatchGetItemResult {
 		return this;
 	}
 
-	public BatchGetItemSpec getNext() {
-		return next;
+	public Map<String, GetItemsSpec> getUnprocessedKeys() {
+		return unprocessedKeys;
 	}
 
-	public BatchGetItemResult setNext(BatchGetItemSpec next) {
-		this.next = next;
+	public BatchGetItemResult setUnprocessedKeys(Map<String, GetItemsSpec> unprocessedKeys) {
+		this.unprocessedKeys = unprocessedKeys;
 		return this;
 	}
 

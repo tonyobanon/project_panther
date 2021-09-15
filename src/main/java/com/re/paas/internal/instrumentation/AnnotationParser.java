@@ -15,6 +15,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import static com.re.paas.api.utils.ClassUtils.getName;
+
 
 /**
  * Java annotation parser/creator.
@@ -156,7 +158,7 @@ public final class AnnotationParser {
         if ( !missingMembers.isEmpty() ) {
             throw new IllegalArgumentException( String.format(
                     "Missing values for mandatory annotation members [%s]: %s",
-                    annotation.getAnnotationType().getName(), missingMembers ) );
+                    getName(annotation.getAnnotationType()), missingMembers ) );
         }
 
         Set<String> notMembers = diff( values.keySet(), annotation.getMembers() );
@@ -164,7 +166,7 @@ public final class AnnotationParser {
         if ( !notMembers.isEmpty() ) {
             throw new IllegalArgumentException( String.format(
                     "Values provided for non-existing members [%s]: %s",
-                    annotation.getAnnotationType().getName(), joinWith( ", ", notMembers ) ) );
+                    getName(annotation.getAnnotationType()), joinWith( ", ", notMembers ) ) );
         }
 
         Map<String, Class<?>> typeByMember = annotation.getTypeByMember();
@@ -267,7 +269,7 @@ public final class AnnotationParser {
                 return Either.success( newArray );
             } else {
                 return Either.failure( String.format( "member '%s' has invalid type. Expected: %s. Found: %s.",
-                        member, type.getName(), value.getClass().getName() ) );
+                        member, getName(type), getName(value.getClass()) ) );
             }
         } else {
             // simple values are boxed, so if the expected type is primitive, turn it into its boxed equivalent
@@ -286,7 +288,7 @@ public final class AnnotationParser {
                 return Either.success( createAnnotation( type.asSubclass( Annotation.class ), typedMap ) );
             } else {
                 return TypeConverter.coerce( value, type, String.format( "member '%s' has invalid type. Expected: %s. Found: %s.",
-                        member, type.getName(), value.getClass().getName() ) );
+                        member, getName(type), getName(value.getClass()) ) );
             }
         }
     }

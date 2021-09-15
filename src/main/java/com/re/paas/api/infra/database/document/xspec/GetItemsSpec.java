@@ -16,7 +16,7 @@ public final class GetItemsSpec extends BaseGetItemSpec {
 		this.nameMap = nameMap;
 	}
 	
-    GetItemsSpec(ExpressionSpecBuilder builder) {
+    GetItemsSpec(QueryBuilder builder) {
         SubstitutionContext context = new SubstitutionContext();
         this.projectionExpression = builder.buildProjectionExpression(context);
         final Map<String, String> nameMap = context.getNameMap();
@@ -44,7 +44,7 @@ public final class GetItemsSpec extends BaseGetItemSpec {
 	}
 	
 	public static GetItemsSpec forKeys(Collection<PrimaryKey> keys, String... projections) {
-		return new ExpressionSpecBuilder().addProjection(projections)
+		return new QueryBuilder().addProjection(projections)
 				.buildForGetItems().setPrimaryKeys(keys);
 	}
 }

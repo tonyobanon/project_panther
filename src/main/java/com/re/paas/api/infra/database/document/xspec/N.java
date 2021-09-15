@@ -9,7 +9,7 @@ import java.util.List;
  * "http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_AttributeValue.html"
  * >number</a> attribute in DynamoDB; used for building expressions.
  * <p>
- * Use {@link ExpressionSpecBuilder#N(String)} to instantiate this class.
+ * Use {@link QueryBuilder#N(String)} to instantiate this class.
  */
 public final class N extends PathOperand {
     N(String path) { super(path); }
@@ -365,6 +365,6 @@ public final class N extends PathOperand {
      *            if_not_exists function call.
      */
     public IfNotExistsFunction<N> ifNotExists(N defaultValue) {
-        return ExpressionSpecBuilder.if_not_exists(this, defaultValue);
+        return QueryBuilder.if_not_exists(this, defaultValue);
     }
 }

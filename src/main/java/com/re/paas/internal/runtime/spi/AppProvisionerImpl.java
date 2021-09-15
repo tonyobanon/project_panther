@@ -23,6 +23,7 @@ import com.re.paas.api.logging.Logger;
 import com.re.paas.api.runtime.RuntimeIdentity;
 import com.re.paas.api.runtime.spi.AppProvisioner;
 import com.re.paas.api.runtime.spi.SpiBase;
+import com.re.paas.api.utils.ClassUtils;
 import com.re.paas.api.utils.Utils;
 import com.re.paas.internal.errors.SpiError;
 import com.re.paas.internal.runtime.RuntimeIdentityImpl;
@@ -167,10 +168,10 @@ public class AppProvisionerImpl implements AppProvisioner {
 
 			@SuppressWarnings("unchecked")
 			Class<RuntimeIdentityImpl> tscImpl = (Class<RuntimeIdentityImpl>) cl
-					.loadClass(RuntimeIdentityImpl.class.getName());
+					.loadClass(ClassUtils.getName(RuntimeIdentityImpl.class));
 
 			@SuppressWarnings("unchecked")
-			Class<RuntimeIdentity> tsc = (Class<RuntimeIdentity>) cl.loadClass(RuntimeIdentity.class.getName());
+			Class<RuntimeIdentity> tsc = (Class<RuntimeIdentity>) cl.loadClass(ClassUtils.getName(RuntimeIdentity.class));
 
 			tsc.getDeclaredMethod("setInstance", tsc).invoke(null,
 					/**

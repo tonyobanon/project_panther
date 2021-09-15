@@ -7,6 +7,8 @@ import java.lang.reflect.Method;
 import java.util.Map;
 import java.util.Objects;
 
+import static com.re.paas.api.utils.ClassUtils.getName;
+
 final class ParserInvocationHandler implements InvocationHandler {
 
     private static final Method EQUALS_METHOD;
@@ -79,7 +81,7 @@ final class ParserInvocationHandler implements InvocationHandler {
 
     private String asString() {
         StringBuilder builder = new StringBuilder();
-        builder.append( annotation.getAnnotationType().getName() );
+        builder.append( getName(annotation.getAnnotationType()) );
         builder.append( "(" );
 
         final int lastIndex = values.size();

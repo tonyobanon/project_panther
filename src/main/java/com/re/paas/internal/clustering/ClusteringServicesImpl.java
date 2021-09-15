@@ -6,10 +6,12 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -40,6 +42,7 @@ import com.re.paas.api.clustering.protocol.Server;
 import com.re.paas.api.logging.Logger;
 import com.re.paas.api.logging.LoggerFactory;
 import com.re.paas.api.networking.InetAddressResolver;
+import com.re.paas.api.tasks.Affinity;
 import com.re.paas.api.utils.Utils;
 import com.re.paas.internal.AppDelegate;
 import com.re.paas.internal.compute.Scheduler;
@@ -292,10 +295,17 @@ public class ClusteringServicesImpl implements ClusteringServices {
 	}
 
 	@BlockerTodo
-	public Short getAvailableMember(SelectionMetric metric) {
-		return 0;
+	@Override
+	public Collection<Short> getAvailableMember(SelectionMetric metric, int maxCount) {
+		return Set.of(memberId);
 	}
-
+	
+	@BlockerTodo
+	@Override
+	public Collection<Short> getAvailableMember(Affinity affinity, int maxCount) {
+		return Set.of(memberId);
+	}
+	
 	/**
 	 * Note: MasterInitTasks are not stored in the cluster's data grid, but instead
 	 * stored locally on the master, and manually transferred to newly appointed

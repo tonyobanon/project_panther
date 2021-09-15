@@ -22,6 +22,8 @@ import net.bytebuddy.implementation.SuperMethodCall;
 import net.bytebuddy.implementation.attribute.AnnotationRetention;
 import net.bytebuddy.matcher.ElementMatcher;
 
+import static com.re.paas.api.utils.ClassUtils.getName;
+
 public class SecureMethodTransformer extends ClassTransformer {
 
 	private static CustomClassLoader SCL;
@@ -140,7 +142,7 @@ public class SecureMethodTransformer extends ClassTransformer {
 
 		// System.out.println("loading " + unloaded.getTypeDescription().getTypeName());
 
-		if (processedClasses.contains(clazz.getName())) {
+		if (processedClasses.contains(getName(clazz))) {
 			return;
 		}
 
@@ -168,12 +170,12 @@ public class SecureMethodTransformer extends ClassTransformer {
 		// Finally, inject into back our custom class loader
 		unloaded.load(cl, ClassLoadingStrategy.Default.INJECTION);
 
-		processedClasses.add(clazz.getName());
+		processedClasses.add(getName(clazz));
 	}
 
 	private static Unloaded<?> getUnloaded(Class<?> clazz) {
 		for (Unloaded<?> u : unloadeds.values()) {
-			if (u.getTypeDescription().getTypeName().equals(clazz.getName())) {
+			if (u.getTypeDescription().getTypeName().equals(getName(clazz))) {
 				return u;
 			}
 		}

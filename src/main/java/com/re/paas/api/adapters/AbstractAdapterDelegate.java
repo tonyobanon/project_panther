@@ -35,7 +35,7 @@ public abstract class AbstractAdapterDelegate<U extends Object, T extends Adapte
 			return DelegateInitResult.FAILURE.setErrorMessage("There was no adapter found");
 		}
 
-		AdapterType type = Collections.firstValue(getAdapters()).getType();
+		AdapterType type = Collections.nthValue(getAdapters(), 0).getType();
 
 		AdapterConfig config = new AdapterConfig(type);
 
@@ -115,7 +115,7 @@ public abstract class AbstractAdapterDelegate<U extends Object, T extends Adapte
 
 		if (ClassUtils.equals(c, getAdapter().getClass())) {
 			return ResourceStatus.ERROR
-					.setMessage("Adapter: " + getAdapter().getClass().getName() + " is still active");
+					.setMessage("Adapter: " + ClassUtils.asString(getAdapter().getClass()) + " is still active");
 		}
 
 		T o = com.re.paas.internal.classes.ClassUtil.createInstance(c);

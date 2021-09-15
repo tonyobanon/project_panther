@@ -9,7 +9,7 @@ import java.util.List;
  * "http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_AttributeValue.html"
  * >list</a> attribute in DynamoDB; used for building expressions.
  * <p>
- * Use {@link ExpressionSpecBuilder#L(String)} to instantiate this class.
+ * Use {@link QueryBuilder#L(String)} to instantiate this class.
  */
 public final class L extends PathOperand {
 

@@ -11,7 +11,7 @@ import java.util.Set;
  * "http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_AttributeValue.html"
  * >binary set</a> attribute in DynamoDB; used for building expressions.
  * <p>
- * Use {@link ExpressionSpecBuilder#BS(String)} to instantiate this class.
+ * Use {@link QueryBuilder#BS(String)} to instantiate this class.
  */
 public final class BS extends PathOperand {
     BS(String path) {

@@ -13,7 +13,7 @@ public class Factory {
 
 	public static <T> T get(Class<T> type, Object... parameters) {
 
-		String name = ClassUtils.toString(type);
+		String name = ClassUtils.asString(type);
 
 		@SuppressWarnings("unchecked")
 		T o = (T) constructors.get(name).apply(parameters);
@@ -27,7 +27,7 @@ public class Factory {
 
 	public static <T> void register(Class<T> type, Function<Object[], T> constructor) {
 
-		String name = ClassUtils.toString(type);
+		String name = ClassUtils.asString(type);
 
 		if (constructors.containsKey(name)) {
 			throw new SecurityException(name + " is already registered");

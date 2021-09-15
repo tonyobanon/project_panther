@@ -1,13 +1,13 @@
 package com.re.paas.internal.runtime;
 
 import java.lang.StackWalker.StackFrame;
-import java.security.AccessControlContext;
 import java.security.Permission;
 
 import com.re.paas.api.classes.JvmConstants;
 import com.re.paas.api.classes.ObjectWrapper;
 import com.re.paas.api.logging.Logger;
 import com.re.paas.api.logging.LoggerFactory;
+import com.re.paas.api.utils.ClassUtils;
 
 public class SecurityManagerImpl extends SecurityManager {
 
@@ -66,7 +66,7 @@ public class SecurityManagerImpl extends SecurityManager {
 
 			StackFrame frame = stackFrames.limit(4).skip(3).findFirst().get();
 
-			if (frame.getDeclaringClass().getName().equals(JvmConstants.LAMBDA_META_FACTORY_CLASS)) {
+			if (ClassUtils.asString(frame.getDeclaringClass()).equals(JvmConstants.LAMBDA_META_FACTORY_CLASS)) {
 				isSyntheticCall.set(true);
 			}
 

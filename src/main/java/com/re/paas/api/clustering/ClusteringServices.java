@@ -1,11 +1,13 @@
 package com.re.paas.api.clustering;
 
 import java.io.IOException;
+import java.util.Collection;
 import java.util.Map;
 
 import com.re.paas.api.Singleton;
 import com.re.paas.api.clustering.protocol.Server;
 import com.re.paas.api.runtime.SecureMethod;
+import com.re.paas.api.tasks.Affinity;
 import com.re.paas.internal.clustering.MasterOnboardingTask;
 import com.re.paas.internal.clustering.MetricsAggregator;
 
@@ -51,7 +53,9 @@ public interface ClusteringServices {
 	 * 
 	 * @return
 	 */
-	Short getAvailableMember(SelectionMetric metric);
+	Collection<Short> getAvailableMember(SelectionMetric metric, int maxCount);
+	
+	Collection<Short> getAvailableMember(Affinity affinity, int maxCount);
 
 	@SecureMethod
 	void addMasterOnboardingTask(String name, MasterOnboardingTask task);

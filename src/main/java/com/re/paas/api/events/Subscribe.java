@@ -6,12 +6,15 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
-import com.re.paas.api.annotations.develop.BlockerTodo;
+import com.re.paas.api.tasks.Affinity;
 
 @Retention(RUNTIME)
 @Target(METHOD)
 
-@BlockerTodo("Add localOnly, to indicate that the annotated method only wants to respond to local sourced events")
 public @interface Subscribe {
-	boolean allowAsyncEvent() default true;	
+	
+	boolean allowAsyncEvents() default true;	
+	
+	Affinity affinity() default Affinity.LOCAL;
+	
 }

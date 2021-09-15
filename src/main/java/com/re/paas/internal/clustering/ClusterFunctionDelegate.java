@@ -12,6 +12,7 @@ import com.re.paas.api.runtime.spi.DelegateInitResult;
 import com.re.paas.api.runtime.spi.DelegateSpec;
 import com.re.paas.api.runtime.spi.ResourceStatus;
 import com.re.paas.api.runtime.spi.SpiType;
+import com.re.paas.api.utils.ClassUtils;
 
 @DelegateSpec(dependencies = { SpiType.NODE_ROLE, SpiType.FUNCTION })
 public class ClusterFunctionDelegate extends AbstractClusterFunctionDelegate {
@@ -31,7 +32,7 @@ public class ClusterFunctionDelegate extends AbstractClusterFunctionDelegate {
 		AbstractClusterFunction<Object, Object> f = com.re.paas.internal.classes.ClassUtil.createInstance(c);
 		
 		if (!hasValidRole(f)) {
-			return ResourceStatus.ERROR.setMessage("Cluster function: " + c.getName().toString() + " does not have a valid role");
+			return ResourceStatus.ERROR.setMessage("Cluster function: " + ClassUtils.asString(c) + " does not have a valid role");
 		}
 		
 

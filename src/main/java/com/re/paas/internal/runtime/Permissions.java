@@ -15,6 +15,7 @@ import com.re.paas.api.classes.Exceptions;
 import com.re.paas.api.logging.Logger;
 import com.re.paas.api.logging.LoggerFactory;
 import com.re.paas.api.runtime.RuntimeIdentity;
+import com.re.paas.api.utils.ClassUtils;
 import com.re.paas.api.utils.Utils;
 import com.re.paas.internal.classes.ClasspathScanner;
 import com.re.paas.internal.runtime.permissions.BasePermission;
@@ -50,13 +51,12 @@ public class Permissions {
 			return true;
 		}
 
-		BasePermission perm = permissionsClasses.get(permission.getClass().getName());
+		BasePermission perm = permissionsClasses.get(ClassUtils.getName(permission.getClass()));
 
 		if (perm == null) {
 			// No permission set exists for this class
 			return true;
 		}
-		
 
 		String context = null;
 		List<String> parts = Splitter.on(Permissions.DOT_PATTERN).limit(2).splitToList(permission.getName());
@@ -75,10 +75,9 @@ public class Permissions {
 
 		// return if index is neither accept or deny
 		if (index == DENY) {
-			
 
 			System.out.println(perm.toString());
-			
+
 			return false;
 		} else if (index == ALLOW) {
 			return true;

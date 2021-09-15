@@ -6,7 +6,7 @@
  * "http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_AttributeValue.html"
  * >NULL</a> attribute in DynamoDB; used for building expressions.
  * <p>
- * Use {@link ExpressionSpecBuilder#NULL(String)} to instantiate this class.
+ * Use {@link QueryBuilder#NULL(String)} to instantiate this class.
  */
 public class NULL extends PathOperand {
 

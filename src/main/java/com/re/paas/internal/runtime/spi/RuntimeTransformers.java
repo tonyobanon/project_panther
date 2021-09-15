@@ -18,6 +18,8 @@ import com.re.paas.internal.utils.JsonParserImpl;
 import javassist.CannotCompileException;
 import javassist.NotFoundException;
 
+import static com.re.paas.api.utils.ClassUtils.getName;
+
 public class RuntimeTransformers {
 
 	private static final List<ClassTransformer> classTransformers = new ArrayList<>();
@@ -37,22 +39,21 @@ public class RuntimeTransformers {
 
 		// We need to eagerly register the singletons needed, because it is too
 		// early for AppDelegate to do so
-		
+
 		Singleton.register(LoggerFactory.class, new DefaultLoggerFactory());
 		Singleton.register(JsonParser.class, new JsonParserImpl());
-		
+
 		LOG = Logger.get(RuntimeTransformers.class);
 
 		CustomClassLoader cl = new CustomClassLoader(true);
 		Map<String, List<String>> classes = getClasses(cl);
 
 		for (ClassTransformer transformer : classTransformers) {
-			
+
 			LOG.debug("Invoking runtime transformer: " + transformer.getClass());
 			transformer.apply(cl, classes);
 		}
 	}
-	
 
 	private static Map<String, List<String>> getClasses(CustomClassLoader classloader) {
 
@@ -82,14 +83,14 @@ public class RuntimeTransformers {
 				// classloader, we have to compare with class names rather than direct object
 				// comparison
 
-						!c.getName().equals(impl.getName())) {
+						!getName(c).equals(getName(impl))) {
 
-					implClasses.add(impl.getName());
+					implClasses.add(getName(impl));
 				}
 			}
 
 			if (!implClasses.isEmpty()) {
-				result.put(c.getName(), implClasses);
+				result.put(getName(c), implClasses);
 			}
 		}
 
@@ -111,8 +112,9 @@ public class RuntimeTransformers {
 
 		classTransformers.add(new ConcreteIntrinsicTransformer());
 		classTransformers.add(new SecureMethodAnnotationTransformer());
-		
-		// Note: this should be last because here we call ClassLoaderUtil.setSystemClassLoder(...);
+
+		// Note: this should be last because here we call
+		// ClassLoaderUtil.setSystemClassLoder(...);
 		classTransformers.add(new SecureMethodTransformer());
 	}
 

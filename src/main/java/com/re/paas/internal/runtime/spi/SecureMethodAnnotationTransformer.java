@@ -20,6 +20,8 @@ import javassist.CtClass;
 import javassist.NotFoundException;
 import javassist.bytecode.BadBytecode;
 
+import static com.re.paas.api.utils.ClassUtils.getName;
+
 public class SecureMethodAnnotationTransformer extends ClassTransformer {
 
 	@Override
@@ -77,7 +79,7 @@ public class SecureMethodAnnotationTransformer extends ClassTransformer {
 
 			try {
 
-				CtClass source = cp.get(abstractClass.getName());
+				CtClass source = cp.get(getName(abstractClass));
 
 				ProtectionDomain pd = abstractClass.getProtectionDomain();
 
@@ -88,7 +90,7 @@ public class SecureMethodAnnotationTransformer extends ClassTransformer {
 
 					try {
 
-						CtClass target = cp.get(impl.getName());
+						CtClass target = cp.get(getName(impl));
 
 						// cp.makePackage(cp.getClassLoader(), c.getPackageName());
 						// cp.makePackage(cp.getClassLoader(), impl.getPackageName());

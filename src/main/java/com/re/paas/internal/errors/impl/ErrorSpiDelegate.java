@@ -7,6 +7,7 @@ import com.re.paas.api.errors.AbstractErrorSpiDelegate;
 import com.re.paas.api.errors.Error;
 import com.re.paas.api.runtime.spi.DelegateInitResult;
 import com.re.paas.api.runtime.spi.ResourceStatus;
+import com.re.paas.api.utils.ClassUtils;
 
 public class ErrorSpiDelegate extends AbstractErrorSpiDelegate {
 
@@ -45,7 +46,7 @@ public class ErrorSpiDelegate extends AbstractErrorSpiDelegate {
 			for(Map.Entry<Integer,String> e  : errorMap.entrySet()) {
 				
 				if (existingMap.containsKey(e.getKey())) {
-					return ResourceStatus.ERROR.setMessage("Namespace: " + namespace + " already contains code: " + e.getKey() + " => " + c.getName());
+					return ResourceStatus.ERROR.setMessage("Namespace: " + namespace + " already contains code: " + e.getKey() + " => " + ClassUtils.asString(c));
 				}
 				
 				existingMap.put(e.getKey(), e.getValue());

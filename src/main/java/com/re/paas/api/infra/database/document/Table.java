@@ -1,7 +1,7 @@
 package com.re.paas.api.infra.database.document;
 
 import com.re.paas.api.infra.database.document.xspec.DeleteItemSpec;
-import com.re.paas.api.infra.database.document.xspec.ExpressionSpecBuilder;
+import com.re.paas.api.infra.database.document.xspec.QueryBuilder;
 import com.re.paas.api.infra.database.document.xspec.GetItemSpec;
 import com.re.paas.api.infra.database.document.xspec.PutItemSpec;
 import com.re.paas.api.infra.database.document.xspec.QuerySpec;
@@ -32,19 +32,19 @@ public interface Table {
 
 	Index getIndex(String indexName);
 
-	PutItemResult putItem(PutItemSpec spec);
-
-	default PutItemResult putItem(Item item) {
-		return putItem(new ExpressionSpecBuilder().buildForPut().withItem(item));
-	}
-
 	Item getItem(GetItemSpec spec);
 
 	default Item getItem(PrimaryKey key) {
-		return getItem(new ExpressionSpecBuilder().buildForGetItem().setPrimaryKey(key));
+		return getItem(new QueryBuilder().buildForGetItem().setPrimaryKey(key));
+	}
+	
+	PutItemResult putItem(PutItemSpec spec);
+
+	default PutItemResult putItem(Item item) {
+		return putItem(new QueryBuilder().buildForPut().withItem(item));
 	}
 
-	UpdateItemResult updateItem(UpdateItemSpec updateItemSpec);
+	UpdateItemResult updateItem(UpdateItemSpec spec);
 
 	DeleteItemResult deleteItem(DeleteItemSpec spec);
 
@@ -54,6 +54,8 @@ public interface Table {
 
 	GlobalSecondaryIndex createGSI(GlobalSecondaryIndexDefinition definition);
 
+	void deleteGSI(String name);
+	
 	@RequiresAffinity(Affinity.EACH)
 	void refreshSchema(Class<? extends BaseTable> model);
 

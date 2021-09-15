@@ -11,7 +11,9 @@ import com.re.paas.api.classes.ThreadContext;
 import com.re.paas.api.logging.LogPipeline;
 import com.re.paas.api.logging.Logger;
 import com.re.paas.api.logging.LoggerInterceptor;
+import com.re.paas.api.utils.ClassUtils;
 import com.re.paas.api.utils.Dates;
+
 
 public class DefaultLogger extends Logger {
 
@@ -241,7 +243,7 @@ public class DefaultLogger extends Logger {
 	
 	@Override
 	public Logger setNamespace(Class<?> clazz, String context) {
-		return setNamespace(clazz.getName() + " (" + context + ")");
+		return setNamespace(ClassUtils.asString(clazz) + " (" + context + ")");
 	}
 	
 	@Override

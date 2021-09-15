@@ -4,19 +4,17 @@ import java.util.Collections;
 import java.util.Map;
 
 import com.re.paas.api.infra.database.document.PrimaryKey;
-import com.re.paas.api.infra.database.model.ReturnValue;
 
 public final class DeleteItemSpec extends BaseSpec {
 
 	private PrimaryKey primaryKey;
-	private String returnValues;
 
 	private final String conditionExpression;
 
 	private final Map<String, String> nameMap;
 	private final Map<String, Object> valueMap;
 
-	DeleteItemSpec(ExpressionSpecBuilder builder) {
+	DeleteItemSpec(QueryBuilder builder) {
 		SubstitutionContext context = new SubstitutionContext();
 		this.conditionExpression = builder.buildConditionExpression(context);
 		final Map<String, String> nameMap = context.getNameMap();
@@ -31,15 +29,6 @@ public final class DeleteItemSpec extends BaseSpec {
 
 	public DeleteItemSpec setPrimaryKey(PrimaryKey primaryKey) {
 		this.primaryKey = primaryKey;
-		return this;
-	}
-
-	public String getReturnValues() {
-		return this.returnValues;
-	}
-
-	public DeleteItemSpec withReturnValues(ReturnValue returnValues) {
-		this.returnValues = returnValues.toString();
 		return this;
 	}
 
@@ -70,7 +59,7 @@ public final class DeleteItemSpec extends BaseSpec {
 	}
 	
 	public static DeleteItemSpec forKey(PrimaryKey key) {
-		return new ExpressionSpecBuilder().buildForDeleteItem()
+		return new QueryBuilder().buildForDeleteItem()
 				.setPrimaryKey(key);
 	}
 }

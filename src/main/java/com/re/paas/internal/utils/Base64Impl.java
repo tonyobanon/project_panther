@@ -11,6 +11,7 @@ import javax.xml.bind.JAXBException;
 import com.re.paas.api.classes.Exceptions;
 import com.re.paas.api.logging.Logger;
 import com.re.paas.api.utils.Base64;
+import com.re.paas.api.utils.ClassUtils;
 
 /**
  * A Base 64 codec API.
@@ -28,7 +29,7 @@ public class Base64Impl implements Base64 {
         inconsistentJaxbImpls.put("org.apache.ws.jaxme.impl.JAXBContextImpl", "Apache JaxMe");
 
         try {
-            String className = JAXBContext.newInstance().getClass().getName();
+            String className = ClassUtils.getName(JAXBContext.newInstance().getClass());
             if (inconsistentJaxbImpls.values().contains(className)) {
                 LOG.warn("A JAXB implementation known to produce base64 encodings that are " +
                         "inconsistent with the reference implementation has been detected. The " +

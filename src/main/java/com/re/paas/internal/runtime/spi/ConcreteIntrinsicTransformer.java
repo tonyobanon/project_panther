@@ -65,7 +65,7 @@ public class ConcreteIntrinsicTransformer extends ClassTransformer {
 
 			try {
 
-				CtClass source = cp.get(abstractClass.getName());
+				CtClass source = cp.get(ClassUtils.getName(abstractClass));
 
 				ProtectionDomain pd = abstractClass.getProtectionDomain();
 
@@ -77,7 +77,7 @@ public class ConcreteIntrinsicTransformer extends ClassTransformer {
 
 					try {
 
-						CtClass target = cp.get(impl.getName());
+						CtClass target = cp.get(ClassUtils.getName(impl));
 
 						for (Method m : methods) {
 

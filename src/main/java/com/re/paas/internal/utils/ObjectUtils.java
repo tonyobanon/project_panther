@@ -10,11 +10,13 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicReferenceArray;
 import java.util.concurrent.locks.ReentrantLock;
 
+import com.re.paas.api.utils.ClassUtils;
+
 public class ObjectUtils {
 
 	public static boolean isEmpty(Object obj) {
 
-		switch (obj.getClass().getName()) {
+		switch (ClassUtils.asString(obj.getClass())) {
 		case "java.lang.String":
 			return isStringEmpty((String) obj);
 		default:

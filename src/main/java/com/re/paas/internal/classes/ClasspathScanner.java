@@ -103,8 +103,7 @@ public class ClasspathScanner<T> {
 		if (classIdentityType == null || classType == null) {
 			return new ArrayList<>();
 		}
-
-		assert classType.getClassLoader() == this.cl;
+		
 		
 		final ArrayList<Class<? extends T>> classes = new ArrayList<Class<? extends T>>();
 
@@ -152,14 +151,14 @@ public class ClasspathScanner<T> {
 						}
 
 						if (classType.equals(clazz)) {
-							LOG.trace("Skipping base type " + ClassUtils.toString(clazz));
+							LOG.trace("Skipping base type " + ClassUtils.asString(clazz));
 							return FileVisitResult.CONTINUE;
 						}
 
 						if (!loadAbstractClasses) {
 							if (Modifier.isAbstract(clazz.getModifiers())
 									|| Modifier.isInterface(clazz.getModifiers())) {
-								LOG.trace("Skipping abstract type " + ClassUtils.toString(clazz));
+								LOG.trace("Skipping abstract type " + ClassUtils.asString(clazz));
 								return FileVisitResult.CONTINUE;
 							}
 						}

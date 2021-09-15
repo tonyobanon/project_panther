@@ -13,19 +13,27 @@ import java.util.Set;
 
 public class Collections {
 
-	public static <K, V> V firstValue(Map<K, V> map) {
-		for (V v : map.values()) {
-			return v;
+	public static <V> V nthValue(Collection<V> col, int n) {
+		
+		if (n >= col.size()) {
+			return null;
 		}
+		
+		Iterator<V> it =  col.iterator();
+		
+		for (int i = 0; i <= n; i++) {
+			if (i == n) {
+				return it.next();
+			} else {
+				it.next();
+			}
+		}
+		
 		return null;
 	}
-
-	public static <V> V firstValue(Collection<V> col) {
-		Iterator<V> it = col.iterator();
-		while (it.hasNext()) {
-			return it.next();
-		}
-		return null;
+	
+	public static <K, V> V nthValue(Map<K, V> map, int n) {
+		return nthValue(map.values(), n);
 	}
 
 	public static <K, V> Entry<K, V> asEntry(K key, V value) {

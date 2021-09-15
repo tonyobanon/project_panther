@@ -566,7 +566,9 @@ public class PDFBuilder {
 	 */
 	public void flush(Path path) {
 
-		assert path.endsWith(".pdf");
+		if (path.endsWith(".pdf")) {
+			Exceptions.throwRuntime(new IllegalArgumentException("Unknnown file extension: " + path));
+		}
 
 		Path unsigned = Paths.get(path.toString().replaceFirst(Pattern.quote(".pdf"), "_unsigned.pdf"));
 

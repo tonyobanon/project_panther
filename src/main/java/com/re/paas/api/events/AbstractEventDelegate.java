@@ -13,8 +13,8 @@ public abstract class AbstractEventDelegate extends SpiDelegate<EventListener> {
 	
 	public abstract <T extends BaseEvent> void one(Class<T> eventType, Consumer<T> consumer);
 
-	public abstract void dispatch(BaseEvent evt);
+	public abstract <T extends BaseEvent> void dispatch(T evt);
 
-	public abstract void dispatch(BaseEvent evt, boolean isAsync);
+	public abstract <T extends BaseEvent> void dispatch(T evt, boolean isAsync);
 	
 }

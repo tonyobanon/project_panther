@@ -6,7 +6,7 @@ import com.re.paas.api.infra.database.document.Item;
 
 public interface TextSearch {
 
-	public QueryModel getQueryModel();
+	public QueryInterface getQueryInterface();
 	
 	boolean search(String checkpointId, Consumer<Item> consumer);
 

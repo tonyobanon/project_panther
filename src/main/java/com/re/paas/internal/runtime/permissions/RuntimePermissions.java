@@ -2,6 +2,7 @@ package com.re.paas.internal.runtime.permissions;
 
 import com.re.paas.api.Platform;
 import com.re.paas.api.annotations.develop.BlockerTodo;
+import com.re.paas.api.utils.ClassUtils;
 import com.re.paas.api.utils.Utils;
 import com.re.paas.internal.runtime.Permissions;
 import com.re.paas.internal.runtime.spi.AppClassLoaderImpl;
@@ -11,7 +12,7 @@ public class RuntimePermissions implements BasePermission {
 
 	@Override
 	public String permissionClass() {
-		return RuntimePermission.class.getName();
+		return ClassUtils.getName(RuntimePermission.class);
 	}
 
 	@Override

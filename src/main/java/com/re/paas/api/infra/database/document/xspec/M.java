@@ -8,7 +8,7 @@ import java.util.Map;
  * "http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_AttributeValue.html"
  * >map</a> attribute in DynamoDB; used for building expressions.
  * <p>
- * Use {@link ExpressionSpecBuilder#M(String)} to instantiate this class.
+ * Use {@link QueryBuilder#M(String)} to instantiate this class.
  */
 public final class M extends PathOperand {
 

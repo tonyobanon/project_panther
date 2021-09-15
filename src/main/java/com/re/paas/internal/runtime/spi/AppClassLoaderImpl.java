@@ -21,6 +21,7 @@ import com.re.paas.api.runtime.ClassLoaders;
 import com.re.paas.api.runtime.Invokable;
 import com.re.paas.api.runtime.ParameterizedInvokable;
 import com.re.paas.api.runtime.RuntimeIdentity;
+import com.re.paas.api.utils.ClassUtils;
 import com.re.paas.internal.classes.ClassUtil;
 import com.re.paas.internal.fusion.RoutingContextHandler;
 
@@ -262,9 +263,9 @@ public class AppClassLoaderImpl extends AppClassLoader {
 
 		registerAsParallelCapable();
 
-		intrinsicClasses.add(RuntimeIdentity.class.getName());
-		intrinsicClasses.add(ParameterizedInvokable.class.getName());
-		intrinsicClasses.add(Invokable.class.getName());
-		intrinsicClasses.add(RoutingContextHandler.class.getName());
+		intrinsicClasses.add(ClassUtils.getName(RuntimeIdentity.class));
+		intrinsicClasses.add(ClassUtils.getName(ParameterizedInvokable.class));
+		intrinsicClasses.add(ClassUtils.getName(Invokable.class));
+		intrinsicClasses.add(ClassUtils.getName(RoutingContextHandler.class));
 	}
 }

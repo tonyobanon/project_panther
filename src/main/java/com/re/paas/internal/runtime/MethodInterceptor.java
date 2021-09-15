@@ -15,6 +15,7 @@ import com.re.paas.api.runtime.SecureMethod;
 import com.re.paas.api.runtime.SecureMethod.CustomValidatorContext;
 import com.re.paas.api.runtime.SecureMethod.Validator;
 import com.re.paas.api.runtime.RuntimeIdentity;
+import com.re.paas.api.utils.ClassUtils;
 import com.re.paas.api.utils.Utils;
 import com.re.paas.internal.instrumentation.BytecodeTools;
 
@@ -22,6 +23,7 @@ import net.bytebuddy.implementation.bind.annotation.AllArguments;
 import net.bytebuddy.implementation.bind.annotation.Origin;
 import net.bytebuddy.implementation.bind.annotation.RuntimeType;
 
+import static com.re.paas.api.utils.ClassUtils.asString;
 /**
  * This class intercepts all invocations of methods annotated with
  * {@link SecureMethod}, inorder to validate security constraints
@@ -66,7 +68,7 @@ public class MethodInterceptor {
 			Class<?> callerClass = frame.getDeclaringClass();
 
 			if (debugMode) {
-				System.out.println("-- context: " + "caller-class=" + callerClass.getName() + ", caller-method="
+				System.out.println("-- context: " + "caller-class=" + ClassUtils.asString(callerClass) + ", caller-method="
 						+ frame.getMethodName());
 			}
 
@@ -85,7 +87,7 @@ public class MethodInterceptor {
 			// If a jvmOnly restriction exists, enforce that here
 			if (ctx.jvmOnly()) {
 
-				allow = Utils.startsWith(callerClass.getName(), Platform.getJvmPackages());
+				allow = Utils.startsWith(ClassUtils.asString(callerClass), Platform.getJvmPackages());
 			}
 
 			if (allow == null && !ctx.validator().equals(Validator.class)) {
@@ -181,9 +183,9 @@ public class MethodInterceptor {
 				
 			} else {
 
-				String source = callerClass.getName() + "#" + frame.getMethodName();
+				String source = asString(callerClass) + "#" + frame.getMethodName();
 
-				String target = method.getDeclaringClass().getName() + "#" + method.getName() + "("
+				String target = asString(method.getDeclaringClass()) + "#" + method.getName() + "("
 						+ Arrays.toString(args) + ")";
 
 				throw new SecurityException("Unable to invoke " + target + " from " + source);

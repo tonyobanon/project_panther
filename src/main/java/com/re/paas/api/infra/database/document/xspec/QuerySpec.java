@@ -1,17 +1,17 @@
 package com.re.paas.api.infra.database.document.xspec;
 
-import static com.re.paas.api.infra.database.document.xspec.ExpressionSpecBuilder.B;
-import static com.re.paas.api.infra.database.document.xspec.ExpressionSpecBuilder.BOOL;
-import static com.re.paas.api.infra.database.document.xspec.ExpressionSpecBuilder.BS;
-import static com.re.paas.api.infra.database.document.xspec.ExpressionSpecBuilder.D;
-import static com.re.paas.api.infra.database.document.xspec.ExpressionSpecBuilder.L;
-import static com.re.paas.api.infra.database.document.xspec.ExpressionSpecBuilder.M;
-import static com.re.paas.api.infra.database.document.xspec.ExpressionSpecBuilder.N;
-import static com.re.paas.api.infra.database.document.xspec.ExpressionSpecBuilder.NS;
-import static com.re.paas.api.infra.database.document.xspec.ExpressionSpecBuilder.NULL;
-import static com.re.paas.api.infra.database.document.xspec.ExpressionSpecBuilder.S;
-import static com.re.paas.api.infra.database.document.xspec.ExpressionSpecBuilder.SS;
-import static com.re.paas.api.infra.database.document.xspec.ExpressionSpecBuilder.parenthesize;
+import static com.re.paas.api.infra.database.document.xspec.QueryBuilder.B;
+import static com.re.paas.api.infra.database.document.xspec.QueryBuilder.BOOL;
+import static com.re.paas.api.infra.database.document.xspec.QueryBuilder.BS;
+import static com.re.paas.api.infra.database.document.xspec.QueryBuilder.D;
+import static com.re.paas.api.infra.database.document.xspec.QueryBuilder.L;
+import static com.re.paas.api.infra.database.document.xspec.QueryBuilder.M;
+import static com.re.paas.api.infra.database.document.xspec.QueryBuilder.N;
+import static com.re.paas.api.infra.database.document.xspec.QueryBuilder.NS;
+import static com.re.paas.api.infra.database.document.xspec.QueryBuilder.NULL;
+import static com.re.paas.api.infra.database.document.xspec.QueryBuilder.S;
+import static com.re.paas.api.infra.database.document.xspec.QueryBuilder.SS;
+import static com.re.paas.api.infra.database.document.xspec.QueryBuilder.parenthesize;
 
 import java.nio.ByteBuffer;
 import java.util.Collections;
@@ -45,7 +45,7 @@ public final class QuerySpec extends BaseSpec {
 	private Integer pageLimit;
 	private Integer resultLimit;
 
-	QuerySpec(ExpressionSpecBuilder builder) {
+	QuerySpec(QueryBuilder builder) {
 
 		SubstitutionContext context = new SubstitutionContext();
 		
@@ -173,7 +173,7 @@ public final class QuerySpec extends BaseSpec {
 			}
 		}
 
-		ExpressionSpecBuilder expr = new ExpressionSpecBuilder().withKeyCondition(hashCondition);
+		QueryBuilder expr = new QueryBuilder().withKeyCondition(hashCondition);
 
 		for (String projection : projections) {
 			expr.addProjection(projection);
@@ -240,7 +240,7 @@ public final class QuerySpec extends BaseSpec {
 			condition = condition.and(parenthesize(rangeCondtion));
 		}
 
-		ExpressionSpecBuilder expr = new ExpressionSpecBuilder().withKeyCondition(condition).addProjection(projections);
+		QueryBuilder expr = new QueryBuilder().withKeyCondition(condition).addProjection(projections);
 
 		return expr.buildForQuery();
 	}

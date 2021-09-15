@@ -67,7 +67,7 @@ public class ClassUtil {
 	 * @return
 	 */
 	public static void call(Class<?> target, ClassLoader cl) {
-		Class<? extends Callable<?>> clazz = forName(target.getName(), cl);
+		Class<? extends Callable<?>> clazz = forName(ClassUtils.getName(target), cl);
 		try {
 			createInstance(clazz).call();
 		} catch (Exception e) {

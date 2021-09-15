@@ -83,7 +83,7 @@ public interface Function extends Resource {
 
 		Map<String, CompletableFuture<R>> r = execute(ClusterDestination.SPECIFIC_NODE.setDestination(memberId),
 				function, parameter, responseType);
-		return Collections.firstValue(r);
+		return Collections.nthValue(r, 0);
 	}
 
 }

@@ -28,6 +28,8 @@ import com.re.paas.api.runtime.spi.SpiType;
 import com.re.paas.api.utils.Utils;
 import com.re.paas.internal.infra.filesystem.FileSystemProviders;
 
+import static com.re.paas.api.utils.ClassUtils.asString;
+
 public class SpiBaseImpl implements SpiBase {
 
 	private static final Logger LOG = Logger.get(SpiBaseImpl.class);
@@ -178,8 +180,8 @@ public class SpiBaseImpl implements SpiBase {
 
 				if (l.size() > 0) {
 					Exceptions
-							.throwRuntime("Delegate: " + delegate.getClass().getName() + " could not remove resources: \n"
-									+ l.stream().map(c -> ((Class<?>) c).getName()).collect(Collectors.toList()));
+							.throwRuntime("Delegate: " + asString(delegate.getClass()) + " could not remove resources: \n"
+									+ l.stream().map(c -> asString((Class<?>) c)).collect(Collectors.toList()));
 				}
 			}
 

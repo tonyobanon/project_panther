@@ -3,13 +3,14 @@ package com.re.paas.internal.runtime.permissions;
 import java.util.PropertyPermission;
 
 import com.re.paas.api.runtime.RuntimeIdentity;
+import com.re.paas.api.utils.ClassUtils;
 import com.re.paas.internal.runtime.Permissions;
 
 public class PropertyPermissions implements BasePermission {
 
 	@Override
 	public String permissionClass() {
-		return PropertyPermission.class.getName();
+		return ClassUtils.getName(PropertyPermission.class);
 	}
 
 	@Override

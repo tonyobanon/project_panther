@@ -6,7 +6,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 import com.google.common.collect.Maps;
@@ -17,116 +16,157 @@ import com.re.paas.api.events.BaseEvent;
 import com.re.paas.api.events.EventError;
 import com.re.paas.api.events.EventListener;
 import com.re.paas.api.events.Subscribe;
+import com.re.paas.api.runtime.ExecutorFactory;
+import com.re.paas.api.runtime.ParameterizedExecutable;
 import com.re.paas.api.runtime.spi.DelegateInitResult;
 import com.re.paas.api.runtime.spi.ResourceStatus;
+import com.re.paas.api.tasks.TaskModel;
+import com.re.paas.api.utils.ClassUtils;
+import com.re.paas.internal.classes.ClassUtil;
 import com.re.paas.internal.compute.Scheduler;
 
 public class EventDelegate extends AbstractEventDelegate {
 
-	private static Map<String, Map<Method, BiConsumer<Boolean, BaseEvent>>> listeners = Maps.newHashMap();
-	private static Map<String, List<Consumer<BaseEvent>>> volatileListeners = Maps.newHashMap();
+	private static Map<String, Map<String, Subscription>> subscribers = Maps.newHashMap();
+	private static Map<String, List<Consumer<BaseEvent>>> volatileSubscribers = Maps.newHashMap();
 
 	@Override
 	public DelegateInitResult init() {
 
 		addResources(this::add);
-		
+
 		return DelegateInitResult.SUCCESS;
 	}
 
 	@SuppressWarnings("unchecked")
 	public <T extends BaseEvent> void one(Class<T> eventType, Consumer<T> consumer) {
 
-		String eventClass = eventType.getName();
+		String typeString = ClassUtils.asString(eventType);
 
-		if (!volatileListeners.containsKey(eventClass)) {
-			volatileListeners.put(eventClass, new ArrayList<>());
+		if (!volatileSubscribers.containsKey(typeString)) {
+			volatileSubscribers.put(typeString, new ArrayList<>());
 		}
 
-		volatileListeners.get(eventClass).add((Consumer<BaseEvent>) consumer);
+		volatileSubscribers.get(typeString).add((Consumer<BaseEvent>) consumer);
 	}
 
+	private static boolean isEventClass(Class<?> eventType) {
+		String typeString = ClassUtils.asString(eventType);
+
+		return BaseEvent.class.isAssignableFrom(eventType) && !typeString.equals(ClassUtils.asString(BaseEvent.class));
+	}
 
 	protected ResourceStatus remove(Class<EventListener> c) {
+
+		boolean changed = false;
 
 		for (Method m : c.getMethods()) {
 
 			Subscribe s = m.getAnnotation(Subscribe.class);
 
-			if (s == null) {
+			if (s == null || m.getParameterTypes().length != 1) {
 				continue;
 			}
 
-			if (BaseEvent.class.isAssignableFrom(m.getParameterTypes()[0])
-					&& !(m.getParameterTypes()[0]).getName().equals(BaseEvent.class.getName())) {
+			Class<?> eventType = m.getParameterTypes()[0];
 
-				String eventClass = (m.getParameterTypes()[0]).getName();
-				listeners.get(eventClass).remove(m);
+			if (isEventClass(eventType)) {
+				changed = true;
+
+				String typeString = ClassUtils.asString(eventType);
+
+				subscribers.get(typeString).remove(ClassUtils.asString(m));
 			}
 		}
-		
-		return ResourceStatus.UPDATED;
+
+		return changed ? ResourceStatus.UPDATED : ResourceStatus.NOT_UPDATED;
 	}
 
 	protected ResourceStatus add(Class<EventListener> c) {
 
-		Object o = com.re.paas.internal.classes.ClassUtil.createInstance(c);
+		Object o = null;
+		boolean changed = false;
 
 		for (Method m : c.getMethods()) {
 
 			Subscribe s = m.getAnnotation(Subscribe.class);
 
-			if (s == null) {
+			if (s == null || m.getParameterTypes().length != 1) {
 				continue;
 			}
 
-			if (BaseEvent.class.isAssignableFrom(m.getParameterTypes()[0])
-					&& !(m.getParameterTypes()[0]).getName().equals(BaseEvent.class.getName())) {
+			Class<?> eventType = m.getParameterTypes()[0];
 
-				String eventClass = (m.getParameterTypes()[0]).getName();
+			if (isEventClass(eventType)) {
 
-				if (!listeners.containsKey(eventClass)) {
-					listeners.put(eventClass, new HashMap<>());
+				if (!changed) {
+					o = ClassUtil.createInstance(c);
+					changed = true;
 				}
 
-				listeners.get(eventClass).put(m, (isAsync, evt) -> {
+				String typeString = ClassUtils.asString(eventType);
 
-					if (isAsync && !s.allowAsyncEvent()) {
-						Exceptions.throwRuntime(
-								PlatformException.get(EventError.ASYNC_EVENTS_ARE_DISABLED, m.getName(), c.getName()));
-					}
+				if (!subscribers.containsKey(typeString)) {
+					subscribers.put(typeString, new HashMap<>());
+				}
 
-					try {
-						m.invoke(o, evt);
-					} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
-						Exceptions.throwRuntime(e);
-					}
-				});
+				subscribers.get(typeString).put(ClassUtils.asString(m),
+						new Subscription(o, m, s.allowAsyncEvents(), s.affinity()));
 			}
 		}
-		
-		return ResourceStatus.UPDATED;
+
+		return changed ? ResourceStatus.UPDATED : ResourceStatus.NOT_UPDATED;
 	}
 
+	@Override
 	public void dispatch(BaseEvent evt) {
 		dispatch(evt, true);
 	}
 
+	@Override
 	public void dispatch(BaseEvent evt, boolean isAsync) {
+
+		String typeString = ClassUtils.asString(evt.getClass());
+
+		List<Consumer<BaseEvent>> a = volatileSubscribers.remove(typeString);
+		Map<String, Subscription> b = subscribers.get(typeString);
+
+		boolean hasVolatileSubscribers = a != null && !a.isEmpty();
+		boolean hasSubscribers = b != null && !b.isEmpty();
+
+		if ((!hasVolatileSubscribers) && !hasSubscribers) {
+			return;
+		}
 
 		Runnable r = () -> {
 
-			if (listeners.get(evt.getClass().getName()) != null) {
-				listeners.get(evt.getClass().getName()).values().forEach(o -> {
-					o.accept(isAsync, evt);
+			if (hasVolatileSubscribers) {
+				a.forEach(c -> {
+					c.accept(evt);
 				});
 			}
 
-			List<Consumer<BaseEvent>> vL = volatileListeners.remove(evt.getClass().getName());
+			if (hasSubscribers) {
+				b.values().forEach(subscription -> {
 
-			if (vL != null) {
-				vL.forEach(c -> {
-					c.accept(evt);
+					ParameterizedExecutable<BaseEvent, Void> fn =  ExecutorFactory.get().buildFunction((event) -> {
+
+						if (isAsync && !subscription.isAllowAsyncEvents()) {
+							Exceptions.throwRuntime(PlatformException.get(EventError.ASYNC_EVENTS_ARE_DISABLED,
+									ClassUtils.asString(subscription.getMethod())));
+						}
+
+						try {
+							subscription.getMethod().invoke(subscription.getInstance(), event);
+						} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException ex) {
+							Exceptions.throwRuntime(ex);
+						}
+
+						return null;
+					}, evt, subscription.getAffinity());
+					
+					TaskModel.getDelegate().execute(fn);
+
 				});
 			}
 		};

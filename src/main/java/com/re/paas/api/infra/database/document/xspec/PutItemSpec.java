@@ -4,20 +4,18 @@ import java.util.Collections;
 import java.util.Map;
 
 import com.re.paas.api.infra.database.document.Item;
-import com.re.paas.api.infra.database.model.ReturnValue;
 
 public class PutItemSpec extends BaseSpec {
 	
     private Item item;
-	
-    private ReturnValue returnValues;
+
 	
     private final String conditionExpression;
 
     private final Map<String, String> nameMap;
     private final Map<String, Object> valueMap;
 
-    PutItemSpec(ExpressionSpecBuilder builder) {
+    PutItemSpec(QueryBuilder builder) {
         SubstitutionContext context = new SubstitutionContext();
         this.conditionExpression = builder.buildConditionExpression(context);
         final Map<String, String> nameMap = context.getNameMap();
@@ -32,15 +30,6 @@ public class PutItemSpec extends BaseSpec {
     
     public PutItemSpec withItem(Item item) {
         this.item = item;
-        return this;
-    }
-    
-    public ReturnValue getReturnValues() {
-        return this.returnValues;
-    }
-
-    public PutItemSpec withReturnValues(ReturnValue returnValues) {
-    	this.returnValues = returnValues;
         return this;
     }
 
@@ -67,6 +56,6 @@ public class PutItemSpec extends BaseSpec {
     }
     
     public static PutItemSpec forItem(Item i) {
-    	return new ExpressionSpecBuilder().buildForPut().withItem(i);
+    	return new QueryBuilder().buildForPut().withItem(i);
     }
 }

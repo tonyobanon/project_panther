@@ -51,6 +51,8 @@ import com.re.paas.internal.clustering.ClusteringServicesImpl;
 import com.re.paas.internal.fusion.UIContext;
 import com.re.paas.internal.runtime.spi.SpiDelegateConfigHandler.Tier;
 
+import static com.re.paas.api.utils.ClassUtils.asString;
+
 public class SpiDelegateHandlerImpl implements SpiDelegateHandler {
 
 	private static final Logger LOG = Logger.get(SpiDelegateHandlerImpl.class);
@@ -188,20 +190,20 @@ public class SpiDelegateHandlerImpl implements SpiDelegateHandler {
 				}
 
 				if (delegate.getType() == null) {
-					Exceptions.throwRuntime("The specified generic type do not conform to any SpiType: " + delegateLocatorClassType.getName());
+					Exceptions.throwRuntime("The specified generic type do not conform to any SpiType: " + asString(delegateLocatorClassType));
 				}
 
 				if (!delegate.getSpiType().equals(type)) {
-					Exceptions.throwRuntime("Class: " + ClassUtils.toString(delegateClass)
+					Exceptions.throwRuntime("Class: " + ClassUtils.asString(delegateClass)
 							+ " is not a delegate for SpiType: " + type.name());
 				}
 
 				BaseSPILocator locator = SPILocatorHandlerImpl.getDefaultLocators().get(type);
 
 				if (!locator.delegateType().isAssignableFrom(delegateClass)) {
-					Exceptions.throwRuntime("Class: " + ClassUtils.toString(delegateClass)
-							+ " is not a concrete subclass of " + locator.delegateType().getName() + " as defined by "
-							+ locator.getClass().getName());
+					Exceptions.throwRuntime("Class: " + ClassUtils.asString(delegateClass)
+							+ " is not a concrete subclass of " + asString(locator.delegateType()) + " as defined by "
+							+ asString(locator.getClass()));
 				}
 
 				SpiType[] deps = getDependencies(delegateClass);
@@ -252,7 +254,7 @@ public class SpiDelegateHandlerImpl implements SpiDelegateHandler {
 
 				if (delegate.requiresDistributedStore() && !Arrays.asList(deps).contains(SpiType.NODE_ROLE)) {
 					Exceptions.throwRuntime(
-							ClassUtils.toString(delegateClass) + " must have a dependency on " + SpiType.NODE_ROLE);
+							ClassUtils.asString(delegateClass) + " must have a dependency on " + SpiType.NODE_ROLE);
 				}
 
 				Map<Object, Object> inMemoryStore = new HashMap<>();
@@ -264,7 +266,7 @@ public class SpiDelegateHandlerImpl implements SpiDelegateHandler {
 
 					if (stores.isEmpty()) {
 						Exceptions.throwRuntime(
-								"No distributed store names specified in: " + ClassUtils.toString(delegateClass));
+								"No distributed store names specified in: " + ClassUtils.asString(delegateClass));
 					}
 
 					distributedStores = new HashMap<>(stores.size());
@@ -341,8 +343,8 @@ public class SpiDelegateHandlerImpl implements SpiDelegateHandler {
 					Collection<?> l = delegate.add0(classes);
 
 					if (l.size() > 0) {
-						Logger.get().warn("Delegate: " + delegate.getClass().getName() + " could not add resources: \n"
-								+ l.stream().map(c -> ((Class<?>) c).getName()).collect(Collectors.toList()));
+						Logger.get().warn("Delegate: " + asString(delegate.getClass()) + " could not add resources: \n"
+								+ l.stream().map(c -> asString((Class<?>) c)).collect(Collectors.toList()));
 					}
 
 				}

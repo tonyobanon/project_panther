@@ -9,7 +9,7 @@ import java.util.List;
  * "http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_AttributeValue.html"
  * >boolean</a> attribute in DynamoDB; used for building expressions.
  * <p>
- * Use {@link ExpressionSpecBuilder#BOOL(String)} to instantiate this class.
+ * Use {@link QueryBuilder#BOOL(String)} to instantiate this class.
  */
 public final class BOOL extends PathOperand {
     BOOL(String path) {
@@ -135,7 +135,7 @@ public final class BOOL extends PathOperand {
      *            used as the operand to the if_not_exists function call.
      */
     public IfNotExistsFunction<BOOL> ifNotExists(BOOL defaultValue) {
-        return ExpressionSpecBuilder.if_not_exists(this, defaultValue);
+        return QueryBuilder.if_not_exists(this, defaultValue);
     }
 
     /**

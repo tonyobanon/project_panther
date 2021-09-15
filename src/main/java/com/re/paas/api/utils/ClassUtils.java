@@ -184,6 +184,10 @@ public class ClassUtils<T> {
 
 		return clazz;
 	}
+	
+	public static String asString(Method method) {
+		return asString(method.getDeclaringClass()) + "#" + method.getName();
+	}
 
 	/**
 	 * This function generates a name that can be used to identify this class
@@ -192,18 +196,22 @@ public class ClassUtils<T> {
 	 * @param clazz
 	 * @return
 	 */
-	public static String toString(Class<?> clazz) {
+	public static String asString(Class<?> clazz) {
 
 		ClassLoader cl = clazz.getClassLoader();
 		String appId = null;
 
 		if (cl instanceof AppClassLoader) {
 			appId = ((AppClassLoader) cl).getAppId();
-		} else {
+		} else if (cl != null) {
 			appId = AppProvisioner.DEFAULT_APP_ID;
 		}
-
-		return appId + "#" + clazz.getName();
+		
+		return (appId != null ? appId + "#" : "") + getName(clazz);
+	}
+	
+	public static String getName(Class<?> clazz) {
+		return clazz.getName();
 	}
 
 	public static Class<?> getSuperclass(Class<?> clazz, Class<?> superclass) {
@@ -325,7 +333,7 @@ public class ClassUtils<T> {
 		} else {
 
 			if (clazz.getSuperclass() != null && clazz.getSuperclass().equals(classType)
-					&& !clazz.getName().equals(classType.getName())) {
+					&& !clazz.equals(classType)) {
 				return true;
 			}
 		}
@@ -344,7 +352,7 @@ public class ClassUtils<T> {
 			Consumer<Class<? extends T>> consumer) {
 
 		if (!superClass.isAssignableFrom(clazz)) {
-			Exceptions.throwRuntime(superClass.getName() + " is not assignable from " + clazz.getName());
+			Exceptions.throwRuntime(asString(superClass) + " is not assignable from " + getName(clazz));
 		}
 
 		Class<?> c = clazz;

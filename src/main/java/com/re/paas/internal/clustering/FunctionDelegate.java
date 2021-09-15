@@ -83,7 +83,7 @@ public class FunctionDelegate extends AbstractFunctionDelegate {
 
 				if (existingMap.containsKey(e.getKey())) {
 					return ResourceStatus.ERROR.setMessage("Namespace: " + namespace + " already contains context-id: "
-							+ e.getKey() + " => " + ClassUtils.toString(c));
+							+ e.getKey() + " => " + ClassUtils.asString(c));
 				}
 
 				existingMap.put(e.getKey(), e.getValue());

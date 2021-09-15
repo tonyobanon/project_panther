@@ -61,7 +61,7 @@ public class SpiDelegateConfigHandler {
 				String key = getDelegateConfigKey(type);
 				
 				Class<?> clazz = com.re.paas.internal.classes.ClassUtil.forName(ClassLoaders.getConfiguration().getString(key));
-				platformDelegatesConfig.put(type.toString(), ClassUtils.toString(clazz));
+				platformDelegatesConfig.put(type.toString(), ClassUtils.asString(clazz));
 			}
 
 			Files.createFile(platformPath);
@@ -126,7 +126,7 @@ public class SpiDelegateConfigHandler {
 			Exceptions.throwRuntime(new SecurityException("Type: " + type.toString() + " requires a trusted delegate"));
 		}
 
-		String className = ClassUtils.toString(delegateClass);
+		String className = ClassUtils.asString(delegateClass);
 
 		for (Tier tier : tiers) {
 
@@ -170,7 +170,7 @@ public class SpiDelegateConfigHandler {
 			Exceptions.throwRuntime(new SecurityException("Type: " + type.toString() + " requires a trusted delegate"));
 		}
 
-		String className = ClassUtils.toString(delegateClass);
+		String className = ClassUtils.asString(delegateClass);
 
 		for (Tier tier : tiers) {
 

@@ -35,6 +35,7 @@ import com.re.paas.api.runtime.spi.DelegateSpec;
 import com.re.paas.api.runtime.spi.ResourceStatus;
 import com.re.paas.api.runtime.spi.ResourcesInitResult;
 import com.re.paas.api.tasks.TaskModel;
+import com.re.paas.api.utils.ClassUtils;
 import com.re.paas.internal.classes.ClassUtil;
 
 @DelegateSpec
@@ -121,7 +122,7 @@ public class ServiceDelegate extends AbstractServiceDelegate {
 				Exceptions.throwRuntime("Route: " + route.toString() + " already exists");
 			}
 
-			ServiceDescriptor sDescriptor = new ServiceDescriptor(serviceClass.getName(), methodName,
+			ServiceDescriptor sDescriptor = new ServiceDescriptor(ClassUtils.getName(serviceClass), methodName,
 					context.getEndpoint());
 
 			LOG.trace("Setting service descriptor for route: " + route.toString());
@@ -155,8 +156,7 @@ public class ServiceDelegate extends AbstractServiceDelegate {
 
 			// No matching service descriptor was found for this route, return 404
 
-			ctx.response()
-			.setStatusCode(HttpStatusCodes.SC_NOT_FOUND);
+			ctx.response().setStatusCode(HttpStatusCodes.SC_NOT_FOUND);
 
 			return;
 		}
@@ -189,16 +189,11 @@ public class ServiceDelegate extends AbstractServiceDelegate {
 
 		ParameterizedExecutable<RoutingContext, HttpServerResponse> executable = buildExecutable(cl, sDescriptors, ctx);
 
-		if (distributeTrafficOnMaster) {
+		HttpServerResponse response = TaskModel.getDelegate().execute(executable).join();
 
-			HttpServerResponse response = TaskModel.getDelegate().execute(executable).join();
+		// Re-ingest the response of this http request
+		((RoutingContextImpl) ctx).setResponse(response);
 
-			// Re-ingest the response of this http request
-			((RoutingContextImpl) ctx).setResponse(response);
-
-		} else {
-			executable.getFunction().apply(executable.getParameter());
-		}
 	}
 
 	private static ParameterizedExecutable<RoutingContext, HttpServerResponse> buildExecutable(ClassLoader cl,
@@ -215,7 +210,7 @@ public class ServiceDelegate extends AbstractServiceDelegate {
 				try {
 
 					Class<?> clazz = ClassLoaders.getClassLoader(appId)
-							.loadClass(RoutingContextHandler.class.getName());
+							.loadClass(ClassUtils.getName(RoutingContextHandler.class));
 
 					Class<?>[] argumentTypes = new Class<?>[] { ServiceDescriptor.class, RoutingContext.class };
 					Method m = clazz.getDeclaredMethod("handle", argumentTypes);
@@ -237,7 +232,8 @@ public class ServiceDelegate extends AbstractServiceDelegate {
 			return context.response();
 		};
 
-		return ExecutorFactory.get().buildFunction(new ObjectWrapper<ClassLoader>(cl), i, ctx, new ExternalContext(appId, true, sDescriptors.get(0).getEndpoint().affinity()));
+		return ExecutorFactory.get().buildFunction(new ObjectWrapper<ClassLoader>(cl), i, ctx,
+				new ExternalContext(appId, true, sDescriptors.get(0).getEndpoint().affinity()));
 	}
 
 	/**
@@ -250,10 +246,10 @@ public class ServiceDelegate extends AbstractServiceDelegate {
 		ResourcesInitResult result = this.addResources(c -> {
 
 			final BaseService service = com.re.paas.internal.classes.ClassUtil.createInstance(c);
-			
+
 			if (!service.uri().isEmpty() && !service.uri().equals("/")
 					&& !uriPattern.matcher(service.uri()).matches()) {
-				return ResourceStatus.ERROR.setMessage("Improper URI format for " + c.getName());
+				return ResourceStatus.ERROR.setMessage("Improper URI format for " + ClassUtils.asString(c));
 			}
 
 			List<Method> methodsList = new ArrayList<Method>();
@@ -279,14 +275,14 @@ public class ServiceDelegate extends AbstractServiceDelegate {
 				if (m.getReturnType() != void.class) {
 					continue;
 				}
-				
+
 				if (m.getParameterTypes().length != 1 || m.getParameterTypes()[0] != RoutingContext.class) {
 					continue;
 				}
 
 				methodsList.add(m);
 			}
-			
+
 			Boolean allUniqueNames = methodsList.stream().map(m -> m.getName()).allMatch(new HashSet<>()::add);
 
 			if (!allUniqueNames) {
@@ -305,7 +301,7 @@ public class ServiceDelegate extends AbstractServiceDelegate {
 						&& !uriPattern.matcher(endpoint.uri()).matches()) {
 
 					return ResourceStatus.ERROR
-							.setMessage("Improper URI format for " + c.getName() + "#" + method.getName());
+							.setMessage("Improper URI format for " + ClassUtils.asString(c) + "#" + method.getName());
 				}
 
 				consumer.accept(new FusionServiceContext(service, endpoint, method, i == methods.length - 1));
@@ -314,11 +310,10 @@ public class ServiceDelegate extends AbstractServiceDelegate {
 			return ResourceStatus.UPDATED;
 
 		});
-		
-		
+
 		result.getErrors().forEach(error -> {
 			LOG.error(error.getCulprit() + ": " + error.getErrorMessage());
 		});
-		
+
 	}
 }

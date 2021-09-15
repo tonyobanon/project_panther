@@ -10,7 +10,7 @@ import java.util.List;
  * "http://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_AttributeValue.html"
  * >binary</a> attribute in DynamoDB; used for building expressions.
  * <p>
- * Use {@link ExpressionSpecBuilder#B(String)} to instantiate this class.
+ * Use {@link QueryBuilder#B(String)} to instantiate this class.
  */
 public final class B extends PathOperand {
 
@@ -173,7 +173,7 @@ public final class B extends PathOperand {
      *            used as the operand to the if_not_exists function call.
      */
     public IfNotExistsFunction<B> ifNotExists(B defaultValue) {
-        return ExpressionSpecBuilder.if_not_exists(this, defaultValue);
+        return QueryBuilder.if_not_exists(this, defaultValue);
     }
 
     // SET operation

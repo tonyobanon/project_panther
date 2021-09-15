@@ -25,7 +25,7 @@ public final class ScanSpec extends BaseSpec {
 	private Integer totalSegments;
 	private Integer segment;
 
-	ScanSpec(ExpressionSpecBuilder builder) {
+	ScanSpec(QueryBuilder builder) {
 		SubstitutionContext context = new SubstitutionContext();
 		this.filterExpression = builder.buildConditionExpression(context);
 		this.projectionExpression = builder.buildProjectionExpression(context);

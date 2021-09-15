@@ -176,11 +176,11 @@ public abstract class SpiDelegate<T> {
 	}
 
 	protected ResourceStatus add(Class<T> clazz) {
-		return ResourceStatus.UPDATED;
+		return ResourceStatus.NOT_UPDATED;
 	}
 
 	protected ResourceStatus remove(Class<T> clazz) {
-		return ResourceStatus.UPDATED;
+		return ResourceStatus.NOT_UPDATED;
 	}
 
 	@ConcreteIntrinsic
@@ -229,7 +229,7 @@ public abstract class SpiDelegate<T> {
 					ResourceValidator.classFrames.put(appId, classFrames);
 				}
 
-				String frame = source.getName() + "$" + ClassUtils.toString(target);
+				String frame = ClassUtils.asString(source) + "%" + ClassUtils.asString(target);
 
 				if (classFrames.contains(frame)) {
 					return true;
@@ -263,7 +263,7 @@ public abstract class SpiDelegate<T> {
 
 			private static void remove(SpiDelegate<?> delegate) {
 
-				String delegateClass = ClassUtils.toString(delegate.getClass());
+				String delegateClass = ClassUtils.asString(delegate.getClass());
 
 				synchronized (classFrames) {
 					for (List<String> classFrames : classFrames.values()) {

@@ -65,14 +65,14 @@ public class SPILocatorHandlerImpl implements SpiLocatorHandler {
 				if (!(locator.spiType() == type)) {
 					Exceptions.throwRuntime(
 							PlatformException.get(ApplicationError.SERVICE_PROVIDER_CLASS_NOT_CONCRETE_IMPL,
-									ClassUtils.toString(locator.getClass())));
+									ClassUtils.asString(locator.getClass())));
 				}
 
 				// Verify that no other spi locator uses classType
 				for (Entry<SpiType, BaseSPILocator> e : SPILocatorHandlerImpl.defaultSpiLocator.entrySet()) {
 					if (locator.classType().isAssignableFrom(e.getValue().classType())) {
 						Exceptions.throwRuntime(
-								"Type: " + locator.classType().getName() + " is already defined for SpiType: "
+								"Type: " + ClassUtils.getName(locator.classType()) + " is already defined for SpiType: "
 										+ e.getKey() + " --> " + e.getValue().classType());
 					}
 				}

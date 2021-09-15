@@ -32,21 +32,21 @@ public class KeySchemaElement {
 		return this;
 	}
 	
-	private static String getSchemaKey(Collection<KeySchemaElement> keys, KeyType type) {
+	private static KeySchemaElement getSchemaElement(Collection<KeySchemaElement> keys, KeyType type) {
 		for (KeySchemaElement e : keys) {
 			if (e.getKeyType() == type) {
-				return e.getAttributeName();
+				return e;
 			}
 		}
 		return null;
 	}
 	
 	public static String getHashKey(Collection<KeySchemaElement> keys) {
-		return getSchemaKey(keys, KeyType.HASH);
+		return getSchemaElement(keys, KeyType.HASH).getAttributeName();
 	}
 	
 	public static String getRangeKey(Collection<KeySchemaElement> keys) {
-		return getSchemaKey(keys, KeyType.RANGE);
+		return getSchemaElement(keys, KeyType.RANGE).getAttributeName();
 	}
-
+	
 }

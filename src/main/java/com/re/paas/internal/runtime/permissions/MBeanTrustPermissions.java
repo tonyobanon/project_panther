@@ -3,13 +3,14 @@ package com.re.paas.internal.runtime.permissions;
 
 import javax.management.MBeanTrustPermission;
 
+import com.re.paas.api.utils.ClassUtils;
 import com.re.paas.internal.runtime.Permissions;
 
 public class MBeanTrustPermissions implements BasePermission {
 
 	@Override
 	public String permissionClass() {
-		return MBeanTrustPermission.class.getName();
+		return ClassUtils.getName(MBeanTrustPermission.class);
 	}
 
 	@Override

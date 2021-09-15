@@ -57,6 +57,21 @@ public abstract class ExecutorFactory {
 	 */
 	public abstract <P, R> ParameterizedExecutable<P, R> buildFunction(ParameterizedInvokable<P, R> task, P parameter, Affinity affinity);
 
+	private ParameterizedExecutable<?, ?> fromRunnable(Runnable r) {
+		ParameterizedInvokable<String, String> i = (s) -> {
+			r.run();
+			return null;
+		};
+		ParameterizedExecutable<String, String> e = buildFunction(i, null, Affinity.ANY);
+		return e;
+	}
+	
+	@PlatformInternal
+	@SecureMethod
+	public void execute(Runnable r) {
+		get().executeLocal(fromRunnable(r));
+	}
+	
 	@PlatformInternal
 	@SecureMethod
 	public abstract <P, R> ParameterizedExecutable<P, R> buildFunction(ObjectWrapper<ClassLoader> cl, ParameterizedInvokable<P, R> task, P parameter, ExternalContext ctx);

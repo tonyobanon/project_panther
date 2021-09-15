@@ -19,6 +19,7 @@ import javassist.bytecode.annotation.AnnotationMemberValue;
 import javassist.bytecode.annotation.AnnotationsWriter;
 import javassist.bytecode.annotation.ArrayMemberValue;
 import javassist.bytecode.annotation.MemberValue;
+import static com.re.paas.api.utils.ClassUtils.getName;
 
 public class BytecodeTools {
 
@@ -49,10 +50,10 @@ public class BytecodeTools {
 
 				}
 
-				if (a.annotationType().getName().equals(type.getName())) {
+				if (getName(a.annotationType()).equals(getName(type))) {
 					result.add(a);
 				} else if (repeateableClass != null
-						&& a.annotationType().getName().equals(repeateableClass.getName())) {
+						&& getName(a.annotationType()).equals(getName(repeateableClass))) {
 					@SuppressWarnings("unchecked")
 					T[] value = (T[]) AnnotationParser.getAnnotationValues(a).get("value");
 					for (T t : value) {
@@ -79,8 +80,8 @@ public class BytecodeTools {
 				? type.getDeclaredAnnotation(Repeatable.class).value()
 				: null;
 
-		if (typeName.equals(type.getName())
-				|| (repeateableClass != null && typeName.equals(repeateableClass.getName()))) {
+		if (typeName.equals(getName(type))
+				|| (repeateableClass != null && typeName.equals(getName(repeateableClass)))) {
 			return true;
 		}
 		return false;
@@ -93,7 +94,7 @@ public class BytecodeTools {
 		List<CtClass> paramsTypesCT = new ArrayList<>();
 
 		for (Class<?> cl : paramsTypes) {
-			paramsTypesCT.add(source.getClassPool().get(cl.getName()));
+			paramsTypesCT.add(source.getClassPool().get(getName(cl)));
 		}
 
 		CtMethod concreteMethod = source.getDeclaredMethod(method.getName(),
@@ -113,7 +114,7 @@ public class BytecodeTools {
 		List<CtClass> paramsTypesCT = new ArrayList<>();
 
 		for (Class<?> cl : paramsTypes) {
-			paramsTypesCT.add(source.getClassPool().get(cl.getName()));
+			paramsTypesCT.add(source.getClassPool().get(getName(cl)));
 		}
 
 		CtMethod ctMethod = source.getDeclaredMethod(method.getName(),
@@ -130,7 +131,7 @@ public class BytecodeTools {
 		List<CtClass> paramsTypesCT = new ArrayList<>();
 
 		for (Class<?> cl : paramsTypes) {
-			paramsTypesCT.add(source.getClassPool().get(cl.getName()));
+			paramsTypesCT.add(source.getClassPool().get(getName(cl)));
 		}
 
 		CtMethod sourceMethod = source.getDeclaredMethod(method.getName(),
@@ -227,7 +228,7 @@ public class BytecodeTools {
 
 		// If this method is already annotated with annotationType, remove
 		for (Annotation a : method.getDeclaredAnnotations()) {
-			if (doesAnnotationApply(a.annotationType().getName(), annotationTypes)) {
+			if (doesAnnotationApply(getName(a.annotationType()), annotationTypes)) {
 				BytecodeTools.removeAnnotation(target, method, a.annotationType());
 			}
 		}
@@ -236,7 +237,7 @@ public class BytecodeTools {
 		List<CtClass> paramsTypesCT = new ArrayList<>();
 
 		for (Class<?> cl : paramsTypes) {
-			paramsTypesCT.add(source.getClassPool().get(cl.getName()));
+			paramsTypesCT.add(source.getClassPool().get(getName(cl)));
 		}
 
 		CtMethod sourceMethod = source.getDeclaredMethod(method.getName(),
@@ -310,8 +311,8 @@ public class BytecodeTools {
 			annotationListType = repeatable.value();
 		}
 
-		return typeName.equals(annotationType.getName())
-				|| (annotationListType != null && typeName.equals(annotationListType.getName()));
+		return typeName.equals(getName(annotationType))
+				|| (annotationListType != null && typeName.equals(getName(annotationListType)));
 	}
 
 	/**
@@ -340,7 +341,7 @@ public class BytecodeTools {
 		List<CtClass> paramsTypesCT = new ArrayList<>();
 
 		for (Class<?> cl : paramsTypes) {
-			paramsTypesCT.add(clazz.getClassPool().get(cl.getName()));
+			paramsTypesCT.add(clazz.getClassPool().get(getName(cl)));
 		}
 
 		// Get annotation bytes from the source method
@@ -353,8 +354,8 @@ public class BytecodeTools {
 				AnnotationsAttribute.visibleTag, sourceMethod.getAttribute(AnnotationsAttribute.visibleTag));
 
 		if (sourceAnnotationsAttr.get() != null) {
-			while (sourceAnnotationsAttr.getAnnotation(annotationType.getName()) != null) {
-				sourceAnnotationsAttr.removeAnnotation(annotationType.getName());
+			while (sourceAnnotationsAttr.getAnnotation(getName(annotationType)) != null) {
+				sourceAnnotationsAttr.removeAnnotation(getName(annotationType));
 			}
 		}
 

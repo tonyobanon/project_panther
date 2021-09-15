@@ -11,7 +11,8 @@ import java.nio.file.spi.FileSystemProvider;
 import com.re.paas.api.Platform;
 import com.re.paas.api.classes.Exceptions;
 import com.re.paas.api.runtime.SecureMethod;
-import com.re.paas.api.utils.ClassUtils;
+import static com.re.paas.api.utils.ClassUtils.getFieldValue;
+import static com.re.paas.api.utils.ClassUtils.getName;
 import com.re.paas.internal.runtime.MethodInterceptor;
 
 public class FileSystemProviders {
@@ -31,15 +32,16 @@ public class FileSystemProviders {
 
 		// At this point, we are sure that provider.getClass() ==
 		// com.re.paas.internal.infra.filesystem.FileSystemProviderImpl
-
-		assert provider.getClass() == FileSystemProviderImpl.class;
+		// The classloaders are different, so we must compare names, not classes
+		
+		assert getName(provider.getClass()).equals(getName(FileSystemProviderImpl.class));
 
 
 		// Note: Above (i.e. in the call to FileSystems.getDefault()), when the jvm initialized 
 		// FileSystemProviderImpl, it passed in the built in file system into the constructor, 
 		// which is then saved in the private static field <provider>
 	
-		FileSystemProvider iProvider = (FileSystemProvider) ClassUtils.getFieldValue(provider.getClass(), "provider");
+		FileSystemProvider iProvider = (FileSystemProvider) getFieldValue(provider.getClass(), "provider");
 
 		// Save reference to OS-internal file system
 		internalFs = iProvider.getFileSystem(URI.create("file:///"));
@@ -65,7 +67,7 @@ public class FileSystemProviders {
 		
 		FileSystem impl = wrapper.getFileSystem();
 
-		FileSystem fs = (FileSystem) ClassUtils.getFieldValue(impl.getClass(), impl, "fs");
+		FileSystem fs = (FileSystem) getFieldValue(impl.getClass(), impl, "fs");
 
 		wrapper.setFileSystem(new FileSystemProviderImpl(fs).getFileSystem(URI.create("file:///")));
 	}

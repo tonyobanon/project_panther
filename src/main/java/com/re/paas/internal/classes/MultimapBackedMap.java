@@ -67,7 +67,7 @@ public class MultimapBackedMap implements AsyncDistributedMap<String, Object> {
 				return null;
 			}
 
-			return Collections.firstValue(col);
+			return Collections.nthValue(col, 0);
 		});
 	}
 
@@ -135,7 +135,7 @@ public class MultimapBackedMap implements AsyncDistributedMap<String, Object> {
 		CompletableFuture<Boolean> exists = (alwaysReturnValue || predicate != null)
 				? multimap.get(key).thenApply(col -> {
 
-					Object v = Collections.firstValue(col);
+					Object v = Collections.nthValue(col, 0);
 					oldValue.set(v);
 
 					if (predicate != null && !predicate.test(v)) {
