@@ -138,7 +138,7 @@ public class ClientImpl implements Client {
 	@Override
 	public <P, R> CompletableFuture<R> execute(Function function, P parameter, Class<R> R) {
 
-		if (getMemberId() != null && ClusteringServices.get().getMember().getMemberId().equals(getMemberId())) {
+		if (getMemberId() != null && ClusteringServices.get().getMemberId().equals(getMemberId())) {
 			return Functions.execute(function, parameter);
 		}
 
@@ -147,7 +147,7 @@ public class ClientImpl implements Client {
 					+ " remotely with an unserialized parameter");	
 		}
 
-		Logger.get().debug("Making request to: " + host().getHostAddress());
+		LOG.debug("Making request to: " + host() + ":" + port());
 
 		final CompletableFuture<R> completableFuture = new CompletableFuture<R>();
 
@@ -172,9 +172,11 @@ public class ClientImpl implements Client {
 
 		// Add handler to channel pipeline
 		channel.get().pipeline().addLast(handlerName, handler);
-
+		
 		return completableFuture.whenCompleteAsync((r, t) -> {
 
+			LOG.debug("Request succedded");
+			
 			// remove handler from channel pipeline
 			channel.get().pipeline().remove(handlerName);
 

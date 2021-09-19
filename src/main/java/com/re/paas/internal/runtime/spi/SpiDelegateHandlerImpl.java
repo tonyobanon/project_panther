@@ -260,7 +260,7 @@ public class SpiDelegateHandlerImpl implements SpiDelegateHandler {
 				Map<Object, Object> inMemoryStore = new HashMap<>();
 				Map<String, AsyncDistributedMap<String, Object>> distributedStores = null;
 
-				if (delegate.requiresDistributedStore() && ClusteringServices.get().isStarted()) {
+				if (delegate.requiresDistributedStore()) {
 
 					List<Object> stores = delegate.distributedStoreNames();
 
@@ -283,14 +283,16 @@ public class SpiDelegateHandlerImpl implements SpiDelegateHandler {
 
 						ConfigurationChildBuilder cacheConfig = ClusteringServicesImpl.getDefaultCacheConfiguration();
 
-						cm.defineConfiguration(cacheName,
+						String fqCacheName = "delegate-store" + "/" + delegate + "/" + cacheName;
+						
+						cm.defineConfiguration(fqCacheName,
 								config.getAlwaysReturnValue()
 										? cacheConfig.unsafe().unreliableReturnValues(true).build()
 										: cacheConfig.build());
 
 						// Create or get multimap cache
 
-						AsyncDistributedMap<String, Object> cache = new CacheBackedMap(cm.getCache(cacheName, true));
+						AsyncDistributedMap<String, Object> cache = new CacheBackedMap(cm.getCache(fqCacheName, true));
 
 						// Note: No need to cm.defineConfiguration(...), since the default
 						// configuration configures cache mode to DIST_SYNC

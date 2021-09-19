@@ -47,7 +47,7 @@ import com.re.paas.api.tasks.TaskModel;
 import com.re.paas.api.utils.Collections;
 import com.re.paas.api.utils.Dates;
 import com.re.paas.internal.classes.ClassUtil;
-import com.re.paas.internal.clustering.MasterOnboardingTask;
+import com.re.paas.internal.clustering.ClusterWideTask;
 
 @BlockerTodo("Rename to ClusterTaskDelegate")
 @DelegateSpec(dependencies = { SpiType.NODE_ROLE })
@@ -71,7 +71,7 @@ public class TaskDelegate extends AbstractTaskDelegate {
 	@Override
 	public DelegateInitResult init() {
 
-		MasterOnboardingTask task = new MasterOnboardingTask(() -> {
+		ClusterWideTask task = new ClusterWideTask(() -> {
 
 			TaskDelegate delegate = (TaskDelegate) TaskModel.getDelegate();
 
@@ -97,7 +97,7 @@ public class TaskDelegate extends AbstractTaskDelegate {
 			taskExecutor.scheduleAtFixedRate(delegate::execute, 0L, delegate.intervalInSecs(), TimeUnit.SECONDS);
 		}, () -> true, 0l);
 
-		ClusteringServices.get().addMasterOnboardingTask("scheduleTaskExeecution", task);
+		ClusteringServices.get().addClusterWideTask("scheduleTaskExeecution", task);
 
 		return DelegateInitResult.SUCCESS;
 	}

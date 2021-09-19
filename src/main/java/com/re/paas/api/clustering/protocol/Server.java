@@ -9,7 +9,7 @@ import com.re.paas.api.runtime.SecureMethod;
 
 public interface Server {
 
-	public static Server get(InetSocketAddress host) {
+	static Server get(InetSocketAddress host) {
 		return Factory.get(Server.class, new Object[] {host.getAddress(), host.getPort()});
 	}
 	

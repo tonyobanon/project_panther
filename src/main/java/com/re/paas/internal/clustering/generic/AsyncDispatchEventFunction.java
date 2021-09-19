@@ -9,5 +9,10 @@ public class AsyncDispatchEventFunction extends DispatchEventFunction {
 	public Function id() {
 		return GenericFunction.ASYNC_DISPATCH_EVENT;
 	}
+	
+	@Override
+	protected final boolean isAsync() {
+		return true;
+	}
 
 }

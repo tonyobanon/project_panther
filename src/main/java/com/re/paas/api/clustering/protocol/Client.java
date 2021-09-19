@@ -4,18 +4,9 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.concurrent.CompletableFuture;
 
-import com.re.paas.api.clustering.ClusteringServices;
 import com.re.paas.api.clustering.Function;
 
 public interface Client {
-
-	/**
-	 * This returns a client that can be used to communicate with the master
-	 * @return
-	 */
-	public static Client get() {
-		return ClientFactory.get().getClient(ClusteringServices.get().getMaster().getHost());
-	}
 
 	public static Client get(InetSocketAddress address) {
 		return ClientFactory.get().getClient(address);

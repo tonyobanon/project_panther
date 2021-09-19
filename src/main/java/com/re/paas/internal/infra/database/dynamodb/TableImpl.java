@@ -24,7 +24,6 @@ import com.re.paas.api.annotations.develop.BlockerTodo;
 import com.re.paas.api.annotations.develop.Todo;
 import com.re.paas.api.events.BaseEvent;
 import com.re.paas.api.fusion.JsonObject;
-import com.re.paas.api.infra.database.Namespace;
 import com.re.paas.api.infra.database.document.Database;
 import com.re.paas.api.infra.database.document.GlobalSecondaryIndex;
 import com.re.paas.api.infra.database.document.Index;
@@ -63,6 +62,7 @@ import com.re.paas.api.infra.database.model.exceptions.UnknownAttributeTypeExcep
 import com.re.paas.api.utils.JsonParser;
 import com.re.paas.internal.infra.database.dynamodb.classes.DeleteItemEvent;
 import com.re.paas.internal.infra.database.dynamodb.classes.GetItemEvent;
+import com.re.paas.internal.infra.database.dynamodb.classes.Namespace;
 import com.re.paas.internal.infra.database.dynamodb.classes.PutItemEvent;
 import com.re.paas.internal.infra.database.dynamodb.classes.ReturnValue;
 import com.re.paas.internal.infra.database.dynamodb.classes.Schemas;

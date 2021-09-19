@@ -15,7 +15,7 @@ import com.re.paas.api.forms.Section;
 import com.re.paas.api.forms.SimpleField;
 import com.re.paas.api.infra.cache.CacheAdapter;
 import com.re.paas.api.infra.cache.CacheFactory;
-import com.re.paas.internal.clustering.MasterOnboardingTask;
+import com.re.paas.internal.clustering.ClusterWideTask;
 
 public class S3Adapter implements CacheAdapter {
 
@@ -88,7 +88,7 @@ public class S3Adapter implements CacheAdapter {
 		
 		// Register cache eviction task
 		
-		MasterOnboardingTask task = new MasterOnboardingTask(() -> {
+		ClusterWideTask task = new ClusterWideTask(() -> {
 			
 			S3CacheFactory factory = (S3CacheFactory) CacheAdapter.getDelegate().getCacheFactory();
 
@@ -99,7 +99,7 @@ public class S3Adapter implements CacheAdapter {
 			
 		}, () -> CacheAdapter.getDelegate().getCacheFactory() instanceof S3CacheFactory, 5l);
 
-		ClusteringServices.get().addMasterOnboardingTask("evictS3Factory", task);
+		ClusteringServices.get().addClusterWideTask("evictS3Factory", task);
 
 		return new S3CacheFactory(this, "default", awsCreds, region, endpoint());
 	}

@@ -18,14 +18,18 @@ public class DispatchEventFunction extends AbstractClusterFunction<BaseEvent, Ob
 	public Function id() {
 		return GenericFunction.DISPATCH_EVENT;
 	}
+	
+	protected boolean isAsync() {
+		return false;
+	}
 
 	@Override
 	public Object delegate(BaseEvent t) {
 		try {
-			AbstractEventDelegate.getInstance().dispatch(t, false);
-			return Boolean.TRUE;
+			AbstractEventDelegate.getInstance().dispatch(t, isAsync());
+			return true;
 		} catch (Exception e) {
-			return Boolean.FALSE;
+			return false;
 		}
 	}
 

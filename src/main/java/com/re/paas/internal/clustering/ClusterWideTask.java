@@ -5,7 +5,7 @@ import java.util.function.BooleanSupplier;
 
 import com.re.paas.api.runtime.Invokable;
 
-public class MasterOnboardingTask implements Serializable {
+public class ClusterWideTask implements Serializable {
 
 	private static final long serialVersionUID = 1L;
 	
@@ -13,7 +13,7 @@ public class MasterOnboardingTask implements Serializable {
 	private final BooleanSupplier predicate;
 	private final Long initialExecutionDelay;
 	
-	public MasterOnboardingTask(Invokable task, BooleanSupplier predicate, Long initialExecutionDelay) {
+	public ClusterWideTask(Invokable task, BooleanSupplier predicate, Long initialExecutionDelay) {
 		this.task = task;
 		this.predicate = predicate;
 		this.initialExecutionDelay = initialExecutionDelay;

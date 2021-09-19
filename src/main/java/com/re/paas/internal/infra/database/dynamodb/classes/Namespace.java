@@ -1,4 +1,4 @@
-package com.re.paas.api.infra.database;
+package com.re.paas.internal.infra.database.dynamodb.classes;
 
 public class Namespace {
 

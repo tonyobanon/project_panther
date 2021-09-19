@@ -3,7 +3,6 @@ package com.re.paas.internal.infra.database.dynamodb;
 import com.amazonaws.services.dynamodbv2.document.ItemCollection;
 import com.amazonaws.services.dynamodbv2.document.QueryOutcome;
 import com.amazonaws.services.dynamodbv2.document.ScanOutcome;
-import com.re.paas.api.infra.database.Namespace;
 import com.re.paas.api.infra.database.document.Index;
 import com.re.paas.api.infra.database.document.Table;
 import com.re.paas.api.infra.database.document.xspec.QuerySpec;
@@ -14,6 +13,7 @@ import com.re.paas.api.infra.database.model.IndexStatus;
 import com.re.paas.api.infra.database.model.QueryResult;
 import com.re.paas.api.infra.database.model.ScanResult;
 import com.re.paas.api.infra.database.model.exceptions.IndexNotReadyException;
+import com.re.paas.internal.infra.database.dynamodb.classes.Namespace;
 
 public class IndexImpl implements Index {
 

@@ -14,7 +14,6 @@ import com.re.paas.api.logging.LoggerInterceptor;
 import com.re.paas.api.utils.ClassUtils;
 import com.re.paas.api.utils.Dates;
 
-
 public class DefaultLogger extends Logger {
 
 	private static final String requestNamespace = "HttpRequest.log";
@@ -40,7 +39,7 @@ public class DefaultLogger extends Logger {
 	private boolean isTraceEnabled;
 
 	public DefaultLogger() {
-		verboseMode(VerboseLevel.DEBUG.toString());
+		verboseMode(VerboseLevel.DEBUG);
 		this.namespace = defaultNamespace;
 	}
 	
@@ -59,21 +58,7 @@ public class DefaultLogger extends Logger {
 	}
 
 	@Override
-	public Logger verboseMode(VerboseLevel verboseLevel) {
-		verboseMode(verboseLevel.toString());
-		return this;
-	}
-
-	@Override
-	public Logger verboseMode(String verboseLevel) {
-
-		VerboseLevel level = null;
-
-		try {
-			level = VerboseLevel.valueOf(verboseLevel);
-		} catch (IllegalArgumentException e) {
-			throw new RuntimeException(e);
-		}
+	public Logger verboseMode(VerboseLevel level) {
 
 		resetModes();
 
@@ -83,40 +68,18 @@ public class DefaultLogger extends Logger {
 
 		case TRACE:
 			isInfoEnabled = true;
-			isWarnEnabled = true;
-			isErrorEnabled = true;
-			isFatalEnabled = true;
-			isDebugEnabled = true;
-			isTraceEnabled = true;
-			break;
 
 		case DEBUG:
-			isInfoEnabled = true;
-			isWarnEnabled = true;
-			isErrorEnabled = true;
-			isFatalEnabled = true;
 			isDebugEnabled = true;
 
-			break;
-
 		case FATAL:
-
-			isInfoEnabled = true;
-			isWarnEnabled = true;
-			isErrorEnabled = true;
 			isFatalEnabled = true;
-			break;
 
 		case ERROR:
-			isInfoEnabled = true;
-			isWarnEnabled = true;
 			isErrorEnabled = true;
-			break;
 
 		case WARN:
-			isInfoEnabled = true;
 			isWarnEnabled = true;
-			break;
 
 		case INFO:
 			isInfoEnabled = true;
@@ -199,10 +162,10 @@ public class DefaultLogger extends Logger {
 		return isWarnEnabled;
 	}
 
-	private static void logDelegate(VerboseLevel level, String namespace, String message) {
-		
+	private static void logDelegate(VerboseLevel level, String namespace, String format, Object...args) {
+		   
 		Runnable logToPipeline = () -> {
-			String[] lines = format(namespace, message, level);
+			String[] lines = format(namespace, level, format, args);
 
 			if (getPipeline() != null) {
 				for (String line : lines) {
@@ -247,80 +210,50 @@ public class DefaultLogger extends Logger {
 	}
 	
 	@Override
-	public void debug(String msg) {
-		debug(getNamespace(), msg);
-	}
-
-	@Override
-	protected void debug(String namespace, String msg) {
+	public void debug(String format, Object...args) {
 		if (isDebugEnabled()) {
-			logDelegate(VerboseLevel.DEBUG, namespace, msg);
+			logDelegate(VerboseLevel.DEBUG, getNamespace(), format, args);
 		}
 	}
 
 	@Override
-	public void error(String msg) {
-		error(getNamespace(), msg);
-	}
-
-	@Override
-	protected void error(String namespace, String msg) {
+	public void error(String format, Object...args) {
 		if (isErrorEnabled()) {
-			logDelegate(VerboseLevel.ERROR, namespace, msg);
+			logDelegate(VerboseLevel.ERROR, getNamespace(), format, args);
 		}
 	}
 
 	@Override
-	public void fatal(String msg) {
-		fatal(getNamespace(), msg);
-	}
-
-	@Override
-	protected void fatal(String namespace, String msg) {
+	public void fatal(String format, Object...args) {
 		if (isFatalEnabled()) {
-			logDelegate(VerboseLevel.FATAL, namespace, msg);
+			logDelegate(VerboseLevel.FATAL, getNamespace(), format, args);
 		}
 	}
 
 	@Override
-	public void info(String msg) {
-		info(getNamespace(), msg);
-	}
-
-	@Override
-	protected void info(String namespace, String msg) {
+	public void info(String format, Object...args) {
 		if (isInfoEnabled()) {
-			logDelegate(VerboseLevel.INFO, namespace, msg);
+			logDelegate(VerboseLevel.INFO, getNamespace(), format, args);
 		}
 	}
 
 	@Override
-	public void trace(String msg) {
-		trace(getNamespace(), msg);
-	}
-
-	@Override
-	protected void trace(String namespace, String msg) {
+	public void trace(String format, Object...args) {
 		if (isTraceEnabled()) {
-			logDelegate(VerboseLevel.TRACE, namespace, msg);
+			logDelegate(VerboseLevel.TRACE, getNamespace(), format, args);
 		}
 	}
 
 	@Override
-	public void warn(String msg) {
-		warn(getNamespace(), msg);
-	}
-
-	@Override
-	protected void warn(String namespace, String msg) {
+	public void warn(String format, Object...args) {
 		if (isWarnEnabled()) {
-			logDelegate(VerboseLevel.WARN, namespace, msg);
+			logDelegate(VerboseLevel.WARN, getNamespace(), format, args);
 		}
 	}
 
-	private static String[] format(String namespace, String msg, VerboseLevel level) {
-
-		String[] lines = msg.split("\\n");
+	private static String[] format(String namespace, VerboseLevel level, String format, Object... args) {
+            
+		String[] lines = String.format(format, args).split("\\n");
 
 		String[] result = new String[lines.length];
 		result[0] = "[" + Dates.now().toString() + "]" + " " + "[" + level.name() + "]" + (namespace != null ? " " + "[" + namespace + "]" : "")

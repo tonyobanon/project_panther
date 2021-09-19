@@ -5,22 +5,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.stream.Collectors;
 
-import com.re.paas.api.annotations.develop.BlockerTodo;
 import com.re.paas.api.clustering.ClusteringServices;
-import com.re.paas.api.clustering.Member;
 
 public class ClusteringUtils {
-
-	@BlockerTodo("Don't do this. Inside maintain a separate Map for host to memberId mapping")
-	public static Short getMemberId(String hostAddress) {
-
-		for (Member member : ClusteringServices.get().getMembers().values()) {
-			if (member.getHost().getHostString().equals(hostAddress)) {
-				return member.getMemberId();
-			}
-		}
-		return null;
-	}
 
 	public static Collection<InetSocketAddress> generateAddressList(ClusterDestination destination) {
 
@@ -36,7 +23,7 @@ public class ClusteringUtils {
 		case OTHER_NODES:
 
 			result = ClusteringServices.get().getMembers().entrySet().stream()
-					.filter(e -> !e.getKey().equals(ClusteringServices.get().getMember().getMemberId()))
+					.filter(e -> !e.getKey().equals(ClusteringServices.get().getMemberId()))
 					.map(e -> e.getValue().getHost()).collect(Collectors.toUnmodifiableList());
 
 			break;

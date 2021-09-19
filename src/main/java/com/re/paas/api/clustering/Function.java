@@ -39,16 +39,6 @@ public interface Function extends Resource {
 		return SpiType.FUNCTION;
 	}
 
-	public static <P> Map<String, CompletableFuture<Object>> execute(Function function, P parameter) {
-		return execute(function, parameter, Object.class);
-	}
-
-	public static <R, P> Map<String, CompletableFuture<R>> execute(Function function, P parameter,
-			Class<R> responseType) {
-		return execute(ClusterDestination.SPECIFIC_NODE.setDestination(ClusteringServices.get().getMaster().getHost()),
-				function, parameter, responseType);
-	}
-
 	public static <P> Map<String, CompletableFuture<Object>> execute(ClusterDestination destination, Function function,
 			P parameter) {
 		return execute(destination, function, parameter, Object.class);

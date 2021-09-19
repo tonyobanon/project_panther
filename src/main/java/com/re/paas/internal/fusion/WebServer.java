@@ -49,7 +49,7 @@ public class WebServer {
 
 	// The port on the node through which the service available through
 	// https://matthewpalmer.net/kubernetes-app-developer/articles/kubernetes-ports-targetport-nodeport-service.html
-	private static final Integer serviceHttpPort = 8080;
+	private static final Integer serviceHttpPort = 8081;
 	private static final Integer serviceHttpsPort = 8433;
 
 	@SecureMethod
@@ -117,7 +117,7 @@ public class WebServer {
 		server.addConnector(connector);
 
 		server.setHandler(new WebServer.RequestHandler());
-
+        
 		try {
 
 			server.start();
@@ -126,13 +126,13 @@ public class WebServer {
 			Exceptions.throwRuntime(e);
 		}
 
-		Logger.get().info("Server started successfully..");
+		Logger.get().info("Web server started successfully..");
 	}
 
 	@SecureMethod
 	public static void stop() {
 
-		Logger.get().info("Stopping embedded web server ..");
+		Logger.get().info("Stopping web server ..");
 
 		try {
 			server.stop();

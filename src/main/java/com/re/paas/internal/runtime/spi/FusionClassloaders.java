@@ -27,7 +27,7 @@ import com.re.paas.internal.infra.filesystem.FileSystemProviders;
 import com.re.paas.internal.utils.FileUtils;
 
 public class FusionClassloaders {
-	
+
 	public static String APP_ID_COOKIE = "appId";
 
 	private static final Map<String, ClassLoader> fusionClassloaders = new HashMap<>();
@@ -125,6 +125,11 @@ public class FusionClassloaders {
 			return;
 		}
 
+		// All packages in app: <appId> must be in the below format, as the packages
+		// accross all apps are namespaced in this way, so that FusionClassloaders.loadComponentClass(...)
+		// will work properly
+		String allowedPkgName = Platform.getComponentBasePkg() + "." + appId;
+
 		try (var fileIn = Files.newInputStream(jarFile)) {
 
 			ZipInputStream zip = new ZipInputStream(fileIn);
@@ -141,10 +146,7 @@ public class FusionClassloaders {
 					p = staticDir.resolve(entry.getName().replaceFirst("resources/", ""));
 				} else {
 
-					String pkgName = Platform.getComponentBasePkg() + "." + appId;
-
-					if (!entry.getName().startsWith(pkgName.replace('.', File.separatorChar))) {
-
+					if (!entry.getName().startsWith(allowedPkgName.replace('.', File.separatorChar))) {
 						Exceptions.throwRuntime(
 								"Unknown class file: " + entry.getName() + " in " + Platform.getFusionClientJarname());
 					}
@@ -255,7 +257,7 @@ public class FusionClassloaders {
 	public static Path getStaticPath(String appId, String path) {
 		return getFusionStaticPath().resolve(appId).resolve(path);
 	}
-	
+
 	public static String getStaticAsset(String appId, String path) {
 
 		acquireLock(appId);

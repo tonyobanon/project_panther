@@ -23,7 +23,6 @@ import com.re.paas.api.clustering.protocol.Server;
 import com.re.paas.api.infra.filesystem.NativeFileSystem;
 import com.re.paas.api.logging.LogPipeline;
 import com.re.paas.api.logging.LoggerFactory;
-import com.re.paas.api.networking.InetAddressResolver;
 import com.re.paas.api.runtime.ExecutorFactory;
 import com.re.paas.api.runtime.ExecutorFactoryConfig;
 import com.re.paas.api.runtime.SecureMethod;
@@ -42,7 +41,6 @@ import com.re.paas.internal.infra.filesystem.FileSystemProviders;
 import com.re.paas.internal.infra.filesystem.NativeFileSystemImpl;
 import com.re.paas.internal.logging.DefaultLogger;
 import com.re.paas.internal.logging.DefaultLoggerFactory;
-import com.re.paas.internal.networking.InetAddressResolverImpl;
 import com.re.paas.internal.runtime.ExecutorFactoryImpl;
 import com.re.paas.internal.runtime.Permissions;
 import com.re.paas.internal.runtime.SecurityManagerImpl;
@@ -62,7 +60,6 @@ public class AppDelegate implements Callable<Void> {
 	public static void addFinalizer(Runnable task) {
 		finalizers.add(task);
 	}
-	
 
 	private static void addPlatformObjects() {
 
@@ -73,10 +70,9 @@ public class AppDelegate implements Callable<Void> {
 		} else {
 			// Todo: Create proper mechanism for logging on production
 		}
-		
-		
+
 		// Register Singletons
-		
+
 		Singleton.register(JsonParser.class, new JsonParserImpl());
 
 		Singleton.register(NativeFileSystem.class, new NativeFileSystemImpl());
@@ -87,13 +83,11 @@ public class AppDelegate implements Callable<Void> {
 		Singleton.register(SpiLocatorHandler.class, new SPILocatorHandlerImpl());
 		Singleton.register(SpiDelegateHandler.class, new SpiDelegateHandlerImpl());
 
-		Singleton.register(InetAddressResolver.class, new InetAddressResolverImpl());
 		Singleton.register(ClusteringServices.class, new ClusteringServicesImpl());
 		Singleton.register(ClientFactory.class, new ClientFactoryImpl());
 		Singleton.register(Base64.class, new Base64Impl());
 
 		Singleton.register(ObjectSerializer.class, new DefaultObjectSerializer());
-		
 
 		// Register factories
 
@@ -101,7 +95,7 @@ public class AppDelegate implements Callable<Void> {
 
 		Factory.register(ExecutorFactory.class,
 				p -> new ExecutorFactoryImpl((String) p[0], (ExecutorFactoryConfig) p[1]));
-		
+
 		ExecutorFactory.create(new ExecutorFactoryConfig(ExecutorFactory.MAX_THREAD_COUNT));
 	}
 
@@ -117,10 +111,9 @@ public class AppDelegate implements Callable<Void> {
 
 		addPlatformObjects();
 
-
-		// We need to re-assign the defaultFileSystem to hold an instance of the 
+		// We need to re-assign the defaultFileSystem to hold an instance of the
 		// FileSystemImpl loaded by this classloader
-		
+
 		FileSystemProviders.reload();
 
 		// Scan permission sets
@@ -128,17 +121,19 @@ public class AppDelegate implements Callable<Void> {
 
 		// TODO Allow users to specify custom security provider
 		Security.addProvider(new BouncyCastleProvider());
-		
+
 		List<Runnable> allFinalizers = new ArrayList<>();
-		
+
 		allFinalizers.addAll(finalizers);
 		allFinalizers.addAll(getDefaultFinalizers());
 
 		// Add Jvm shutdown hook
 		Runtime.getRuntime().addShutdownHook(new Thread(() -> {
 			
-			Platform.setState(State.STOPPING);
+			System.out.println("Running jvm shutdown hook");
 			
+			Platform.setState(State.STOPPING);
+
 			for (Runnable r : allFinalizers) {
 				r.run();
 			}
@@ -146,7 +141,6 @@ public class AppDelegate implements Callable<Void> {
 
 		// Set security manager
 		System.setSecurityManager(new SecurityManagerImpl());
-
 
 		Platform.setState(State.STARTING);
 
@@ -157,29 +151,21 @@ public class AppDelegate implements Callable<Void> {
 			// Discover
 			AppProvisioner.get().start();
 		}
-		
 
-		// Start clustering services
-		// ClusteringServices.get().start();
+		// Start clustering services, asynchronously
+		ClusteringServices.get().start().thenRun(() -> {
+
+			if (Activator.get().isInstalled() || Platform.isDevMode()) {
+				// Boot up
+				SpiBase.get().start(AppProvisioner.get().listApps());
+			}
+		});
 
 
-		if (Activator.get().isInstalled() || Platform.isDevMode()) {
-
-			// Boot up
-			SpiBase.get().start(AppProvisioner.get().listApps());
-		}
-
-		// System.out.println(AppProvisioner.get().listApps());
-
+		System.setProperty("org.slf4j.spi.SLF4JServiceProvider", "org.slf4j.helpers.NOP_FallbackServiceProvider");
+				
 		// Start web server
 		WebServer.start();
-
-		// Set member status to online
-//		Member member = ClusteringServices.get().getMember().setStatus(MemberStatus.ONLINE);
-//
-//		Function.execute(ClusterDestination.ALL_NODES, ASYNC_DISPATCH_EVENT,
-//				new MemberStateChangeEvent().setMemberId(member.getMemberId()).setNewState(member.getStatus()));
-
 
 		Platform.setState(State.RUNNING);
 	}

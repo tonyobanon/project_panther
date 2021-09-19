@@ -32,15 +32,14 @@ dependencies {
 
 	implementation "com.amazonaws:aws-java-sdk-dynamodb:1.12.9"
 
-	implementation "org.slf4j:slf4j-api:1.8.0-beta2"
-	implementation "org.slf4j:slf4j-nop:1.8.0-beta2"
+
+	
+	implementation "org.slf4j:slf4j-nop:2.0.0-alpha5"
 
 
-
-	implementation "org.eclipse.jetty.http2:http2-server:11.0.2"
-	implementation "org.eclipse.jetty:jetty-alpn-java-server:11.0.2"
-
-	implementation "org.mortbay.jetty.alpn:alpn-boot:8.1.12.v20180117"
+	implementation "org.eclipse.jetty.http2:http2-server:11.0.6"
+	implementation "org.eclipse.jetty:jetty-alpn-java-server:11.0.6"
+	implementation "org.mortbay.jetty.alpn:alpn-boot:8.1.13.v20181017"
 
 	implementation "javax.xml.bind:jaxb-api:2.4.0-b180830.0359"
 
@@ -58,9 +57,9 @@ dependencies {
 
 	implementation "org.apache.lucene:lucene-core:8.1.1"
 
-	implementation "org.infinispan:infinispan-core:12.1.1.Final"
+	implementation "org.infinispan:infinispan-core:13.0.0.Dev04"
 	implementation "org.infinispan:infinispan-cloud:10.0.0.Beta5"
-	implementation "org.infinispan:infinispan-multimap:12.1.1.Final"
+	implementation "org.infinispan:infinispan-multimap:13.0.0.Dev04"
 
 	implementation "com.cronutils:cron-utils:9.0.1"
 

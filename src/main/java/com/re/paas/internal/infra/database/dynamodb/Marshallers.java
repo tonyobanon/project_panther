@@ -21,7 +21,6 @@ import com.amazonaws.services.dynamodbv2.model.KeysAndAttributes;
 import com.amazonaws.services.dynamodbv2.model.ProvisionedThroughput;
 import com.amazonaws.services.dynamodbv2.model.ReturnConsumedCapacity;
 import com.amazonaws.services.dynamodbv2.model.Select;
-import com.re.paas.api.infra.database.HandlesThrouphput;
 import com.re.paas.api.infra.database.document.Database;
 import com.re.paas.api.infra.database.document.Item;
 import com.re.paas.api.infra.database.document.PrimaryKey;
@@ -342,7 +341,6 @@ class Marshallers {
 						tableKeyAndAttributes.toArray(new TableKeysAndAttributes[tableKeyAndAttributes.size()]));
 	}
 
-	@HandlesThrouphput
 	public static BatchGetItemResult fromBatchGetItemResult(
 			com.amazonaws.services.dynamodbv2.model.BatchGetItemResult a) {
 
@@ -388,7 +386,6 @@ class Marshallers {
 				.withTableWriteItems(tableWriteItems.toArray(new TableWriteItems[tableWriteItems.size()]));
 	}
 
-	@HandlesThrouphput
 	public static BatchWriteItemResult fromBatchWriteItemResult(
 			com.amazonaws.services.dynamodbv2.model.BatchWriteItemResult a) {
 

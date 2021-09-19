@@ -1,72 +1,52 @@
 package com.re.paas.internal.clustering;
 
-import static com.re.paas.api.clustering.generic.GenericFunction.DISPATCH_EVENT;
+import static java.util.regex.Pattern.quote;
 
 import java.io.IOException;
 import java.io.Serializable;
 import java.net.InetSocketAddress;
-import java.net.Socket;
+import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.ConfigurationChildBuilder;
 import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.DefaultCacheManager;
-import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.multimap.api.embedded.EmbeddedMultimapCacheManagerFactory;
-import org.infinispan.multimap.api.embedded.MultimapCache;
 import org.infinispan.multimap.api.embedded.MultimapCacheManager;
 
+import com.google.common.base.Splitter;
 import com.re.paas.api.annotations.develop.BlockerTodo;
 import com.re.paas.api.annotations.develop.Prototype;
+import com.re.paas.api.classes.Exceptions;
 import com.re.paas.api.clustering.ClusteringServices;
-import com.re.paas.api.clustering.Function;
 import com.re.paas.api.clustering.Member;
 import com.re.paas.api.clustering.SelectionMetric;
-import com.re.paas.api.clustering.classes.ClusterDestination;
-import com.re.paas.api.clustering.events.MemberJoinEvent;
-import com.re.paas.api.clustering.events.MemberLeaveEvent;
-import com.re.paas.api.clustering.protocol.ClientFactory;
 import com.re.paas.api.clustering.protocol.Server;
 import com.re.paas.api.logging.Logger;
 import com.re.paas.api.logging.LoggerFactory;
-import com.re.paas.api.networking.InetAddressResolver;
 import com.re.paas.api.tasks.Affinity;
 import com.re.paas.api.utils.Utils;
-import com.re.paas.internal.AppDelegate;
-import com.re.paas.internal.compute.Scheduler;
 import com.re.paas.internal.infra.cache.infinispan.InfinispanMashaller;
 
 @Prototype
-@BlockerTodo("Always return a cloned version of Member objects from datagrid")
 public class ClusteringServicesImpl implements ClusteringServices {
 
 	private static Logger LOG = LoggerFactory.get().getLog(ClusteringServicesImpl.class);
 
-	private static final String genericMultiCache = "generic-multi-cache";
-	// private static final String defaultCacheName = "default-cache";
-
-	private static final String clusterMembersCache = "clusterMembers";
-	private static final String unassignedMemberIds = "unassignedMemberIds";
-
-	private static boolean isStarted = false;
-
 	private static DefaultCacheManager cacheManager;
 	private static Server server;
 
-	private static Short memberId;
-	private static final Map<String, MasterOnboardingTask> masterOnboardingTasks = new HashMap<>();
+	private static List<String> roles = new ArrayList<>();
 
 	public static ConfigurationChildBuilder getDefaultCacheConfiguration() {
 
@@ -77,15 +57,24 @@ public class ClusteringServicesImpl implements ClusteringServices {
 				.statistics().enable();
 	}
 
-	private static boolean isReachable(InetSocketAddress addr, int timeOutMillis) throws IOException {
-		try (Socket soc = new Socket()) {
-			soc.connect(addr, timeOutMillis);
-		}
-		return true;
+	@Override
+	public void addRole(String role) {
+		roles.add(role);
+	}
+
+	@Override
+	public CompletableFuture<Void> start() throws IOException {
+		return CompletableFuture.runAsync(() -> {
+			try {
+				start0();
+			} catch (IOException e) {
+				Exceptions.throwRuntime(e);
+			}
+		});
 	}
 
 	@BlockerTodo("Make the ConfigurationBuilder setings configurable individually in DistributedStoreConfig")
-	public void start() throws IOException {
+	private void start0() throws IOException {
 
 		// Setup up a clustered cache manager
 		GlobalConfigurationBuilder global = GlobalConfigurationBuilder.defaultClusteredBuilder();
@@ -95,147 +84,32 @@ public class ClusteringServicesImpl implements ClusteringServices {
 
 		// global.defaultCacheName(defaultCacheName).cacheContainer();
 
-		// Stop depending on the memberId of master to be 0
-
-		// Listen for when there is a node exits, if this node is the master elect
-		// another one
-
-		// Bind to the same address that infinispan binds to
-
 		// Initialize the cache manager
 		cacheManager = new DefaultCacheManager(global.build(), true);
-
-		// cacheManager.start();
-
-		LOG.info("Joined datagrid cluster, memberCount = " + cacheManager.getMembers().size());
-
-		// Create member instance
-		memberId = getNextMemberId();
-
-		InetSocketAddress host = new InetSocketAddress(InetAddressResolver.get().getInetAddress(),
-				Utils.randomInt(1024, 65535));
-
-		Boolean isMaster = isMaster();
-
-		Member member = new Member(memberId, host);
-
-		Map<Short, Member> members = getClusterMembersCache();
-
-		LOG.info("Add current member to cache");
-
-		// Add current member to list
-		members.put(member.getMemberId(), member);
-
-		LOG.info("Starting odyssey server on " + member.getHost().getAddress().getHostAddress() + ":"
-				+ member.getHost().getPort());
-
+	
+		
+		
+		cacheManager.executor().execute((Runnable & Serializable) () -> {
+			
+		});
+		
 		// Start cluster server
-		server = Server.get(member.getHost());
+		server = Server.get(
+				new InetSocketAddress(getJGroupsMemberAddresses().get(0).getAddress(), Utils.randomInt(1024, 65535)));
 
 		server.start().join();
-
+		
 		assert server.isOpen();
+		
+		LOG.info(
+				"Joined cluster, isMaster=%s, memberId=%s, address=%s:%s",
+				isMaster(), getMemberId(), server.host(), server.port());
 
-		LOG.info("Server started, isMaster=" + isMaster + ", reachable=" + isReachable(member.getHost(), 10));
+		
+//		// Register existing members in ClientFactory
+//		ClientFactory cFactory = ClientFactory.get();
+//		getMembers().keySet().stream().forEach(cFactory::addMember);
 
-		if (!isMaster) {
-
-			// Register existing members in ClientFactory
-			ClientFactory cFactory = ClientFactory.get();
-			members.keySet().stream().forEach(cFactory::addMember);
-
-			// Dispatch MemberJoinEvent to all members
-			Function.executeWait(ClusterDestination.ALL_NODES, DISPATCH_EVENT,
-					new MemberJoinEvent(member.getMemberId()));
-
-		} else {
-
-			// Start metrics aggregator
-			MetricsAggregator.start();
-		}
-
-		// Start metrics collector
-		MetricsCollector.start();
-
-		// add shutdown hook
-		AppDelegate.addFinalizer(() -> {
-
-			// Register current member Id as unused
-			addUnassignedMemberId(member.getMemberId());
-
-			// Remove member from members cache
-			getClusterMembersCache().remove(member.getMemberId());
-
-			// Dispatch MemberLeaveEvent to all members
-			Function.execute(ClusterDestination.ALL_NODES, DISPATCH_EVENT, new MemberLeaveEvent(member.getMemberId()));
-
-			// Stop cluster server
-			if (server.isOpen()) {
-				server.stop().join();
-			}
-
-			// Stop the cache manager and release all resources
-			cacheManager.stop();
-		});
-
-		isStarted = true;
-	}
-
-	@Override
-	public Boolean isStarted() {
-		return isStarted;
-	}
-
-	private Map<Short, Member> getClusterMembersCache() {
-
-		EmbeddedCacheManager manager = getCacheManager();
-
-		return manager.cacheExists(clusterMembersCache) ? manager.getCache(clusterMembersCache)
-				: manager.createCache(clusterMembersCache, getDefaultCacheConfiguration().build());
-	}
-
-	/**
-	 * This is a generic multimap cache, used internally by
-	 * {@link ClusteringServicesImpl}
-	 * 
-	 * @return
-	 */
-	private MultimapCache<String, Object> getGenericMultimapCache() {
-
-		MultimapCacheManager<String, Object> manager = getMultimapCacheManager();
-
-		try {
-
-			return manager.get(genericMultiCache);
-
-		} catch (CacheConfigurationException e) {
-
-			if (e.getMessage().startsWith("ISPN000436")) {
-
-				// cache configuration does not exist, create
-				manager.defineConfiguration(genericMultiCache, getDefaultCacheConfiguration().build());
-
-				return manager.get(genericMultiCache);
-			}
-
-			throw e;
-		}
-	}
-
-	private List<Short> getUnassignedMemberIds() {
-
-		CompletableFuture<List<Short>> c = getGenericMultimapCache().get(unassignedMemberIds)
-				.thenApply(ids -> ids.stream().map(id -> (Short) id).collect(Collectors.toUnmodifiableList()));
-
-		return c.join();
-	}
-
-	private Boolean removeUnassignedMemberId(Short memberId) {
-		return getGenericMultimapCache().remove(unassignedMemberIds, memberId).join();
-	}
-
-	private void addUnassignedMemberId(Short memberId) {
-		getGenericMultimapCache().put(unassignedMemberIds, memberId);
 	}
 
 	public MultimapCacheManager<String, Object> getMultimapCacheManager() {
@@ -250,12 +124,15 @@ public class ClusteringServicesImpl implements ClusteringServices {
 	}
 
 	public DefaultCacheManager getCacheManager() {
+		return getCacheManager0();
+	}
+
+	static DefaultCacheManager getCacheManager0() {
 		return cacheManager;
 	}
 
 	public Boolean isMaster() {
-
-		return getClusterMembersCache().isEmpty();
+		return getCacheManager0().getClusterSize() == 1;
 	}
 
 	@Override
@@ -263,84 +140,78 @@ public class ClusteringServicesImpl implements ClusteringServices {
 		return server;
 	}
 
-	public Member getMember() {
-		return getMember(memberId);
-	}
-
-	public Member getMaster() {
-		return getMember((short) 0);
+	public Short getMemberId() {
+		return getJGroupsId(cacheManager.getNodeAddress());
 	}
 
 	public Member getMember(Short memberId) {
-		return getClusterMembersCache().get(memberId);
+		return getMembers().get(memberId);
 	}
 
 	public Map<Short, Member> getMembers() {
-		return Collections.unmodifiableMap(getClusterMembersCache());
-	}
 
-	private Short getNextMemberId() {
+		List<String> memberNames = getJGroupsMemberNames();
+		List<InetSocketAddress> memberAddresses = getJGroupsMemberAddresses();
 
-		List<Short> ids = getUnassignedMemberIds();
+		Map<Short, Member> result = new HashMap<>(memberNames.size());
 
-		if (!ids.isEmpty()) {
+		for (int i = 0; i < memberNames.size(); i++) {
 
-			Short id = ids.get(0);
-			removeUnassignedMemberId(id);
+			String name = memberNames.get(i);
+			Short id = getJGroupsId(name);
 
-			return id;
+			InetSocketAddress addr = new InetSocketAddress(memberAddresses.get(i).getAddress(), id);
+
+			result.put(id, new Member(id, name, addr));
 		}
 
-		return (short) getClusterMembersCache().size();
+		return result;
+	}
+
+	private static Short getJGroupsId(String name) {
+		String arr[] = name.split("-");
+		return Short.parseShort(arr[arr.length - 1]);
+	}
+
+	static List<String> getJGroupsMemberNames() {
+		return toList(getCacheManager0().getClusterMembers());
+	}
+
+	static List<InetSocketAddress> getJGroupsMemberAddresses() {
+		return toList(getCacheManager0().getClusterMembersPhysicalAddresses()).stream().map(s -> {
+			String[] arr = s.split(":");
+			return new InetSocketAddress(arr[0], Integer.parseInt(arr[1]));
+		}).collect(Collectors.toList());
+	}
+
+	private static List<String> toList(String trait) {
+		return Splitter.on(Pattern.quote(", ")).splitToList(trait.replaceAll(quote("[") + "|" + quote("]"), ""));
 	}
 
 	@BlockerTodo
 	@Override
 	public Collection<Short> getAvailableMember(SelectionMetric metric, int maxCount) {
-		return Set.of(memberId);
+		return Set.of(getMemberId());
 	}
-	
+
 	@BlockerTodo
 	@Override
 	public Collection<Short> getAvailableMember(Affinity affinity, int maxCount) {
-		return Set.of(memberId);
+		return Set.of(getMemberId());
 	}
-	
-	/**
-	 * Note: MasterInitTasks are not stored in the cluster's data grid, but instead
-	 * stored locally on the master, and manually transferred to newly appointed
-	 * master(s)
-	 * 
-	 * @param name
-	 * @param task
-	 * @param predicate
-	 * @param initialExecutionDelay In Seconds
-	 * 
-	 */
+
 	@Override
-	public void addMasterOnboardingTask(String name, MasterOnboardingTask task) {
-
-		if (isStarted() && isMaster() && !masterOnboardingTasks.containsKey(name)) {
-			
-			masterOnboardingTasks.put(name, task);
-			
-			Runnable r = getRunnable(task);
-
-			if (task.getInitialExecutionDelay() == null) {
-				r.run();
-			} else {
-				Scheduler.schedule(r, task.getInitialExecutionDelay(), TimeUnit.SECONDS);
-			}
-		}
+	public void addClusterWideTask(String name, ClusterWideTask task) {
+		// Todo
 	}
 
-	private static Runnable getRunnable(MasterOnboardingTask task) {
-		return (Runnable & Serializable) (() -> {
-			
-			if (task.getPredicate().getAsBoolean()) {
-				task.getTask().run();
-			}
-		});
-	}
+//	private static Runnable getRunnable(ClusterWideTask task) {
+//		return (Runnable & Serializable) (() -> {
+//
+//			if (task.getPredicate().getAsBoolean()) {
+//				task.getTask().run();
+//			}
+//		});
+//	}
 
 }

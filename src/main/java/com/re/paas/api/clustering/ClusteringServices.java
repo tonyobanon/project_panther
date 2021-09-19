@@ -3,13 +3,13 @@ package com.re.paas.api.clustering;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
 import com.re.paas.api.Singleton;
 import com.re.paas.api.clustering.protocol.Server;
 import com.re.paas.api.runtime.SecureMethod;
 import com.re.paas.api.tasks.Affinity;
-import com.re.paas.internal.clustering.MasterOnboardingTask;
-import com.re.paas.internal.clustering.MetricsAggregator;
+import com.re.paas.internal.clustering.ClusterWideTask;
 
 public interface ClusteringServices {
 
@@ -18,23 +18,21 @@ public interface ClusteringServices {
 	}
 
 	@SecureMethod
-	void start() throws IOException;
-	
-	Boolean isStarted();
+	CompletableFuture<Void> start() throws IOException;
 
 	@SecureMethod
 	Object getMultimapCacheManager();
 
 	@SecureMethod
 	Object getCacheManager();
+	
+	void addRole(String role);
 
 	Boolean isMaster();
 
-	Member getMember();
+	Short getMemberId();
 	
 	Server getServer();
-
-	Member getMaster();
 
 	Member getMember(Short memberId);
 
@@ -58,6 +56,8 @@ public interface ClusteringServices {
 	Collection<Short> getAvailableMember(Affinity affinity, int maxCount);
 
 	@SecureMethod
-	void addMasterOnboardingTask(String name, MasterOnboardingTask task);
+	void addClusterWideTask(String name, ClusterWideTask task);
+	
+	
 
 }

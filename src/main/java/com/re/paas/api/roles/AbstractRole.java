@@ -5,10 +5,6 @@ import java.util.Map;
 
 import com.re.paas.api.Singleton;
 import com.re.paas.api.classes.FluentArrayList;
-import com.re.paas.api.clustering.classes.MemberStatus;
-import com.re.paas.api.clustering.events.MemberJoinEvent;
-import com.re.paas.api.clustering.events.MemberLeaveEvent;
-import com.re.paas.api.clustering.events.MemberStateChangeEvent;
 import com.re.paas.api.events.AbstractEventDelegate;
 import com.re.paas.api.runtime.spi.AbstractResource;
 import com.re.paas.api.runtime.spi.SpiType;
@@ -51,34 +47,6 @@ public abstract class AbstractRole extends AbstractResource {
 
 	public boolean applies() {
 		return true;
-	}
-
-	/**
-	 * This callback method, invoked when a new member joins the cluster. Note: that
-	 * the member in question may not have been fully initialized when this called,
-	 * and will have a status of {@link MemberStatus#STARTING}. Use
-	 * {@link AbstractRole#onMemberStateChange(MemberStateChangeEvent)} to know when
-	 * the member is fully online
-	 * 
-	 * @param evt
-	 */
-	public void onMemberJoin(MemberJoinEvent evt) {
-	}
-
-	/**
-	 * This callback method, invoked a member leaves the cluster.
-	 * 
-	 * @param evt
-	 */
-	public void onMemberLeave(MemberLeaveEvent evt) {
-	}
-
-	/**
-	 * This callback method, invoked a member state changes.
-	 * 
-	 * @param evt
-	 */
-	public void onMemberStateChange(MemberStateChangeEvent evt) {
 	}
 
 }

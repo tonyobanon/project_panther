@@ -479,7 +479,7 @@ public class ClientFactoryImpl implements ClientFactory {
 	@Override
 	public Client getClient(Short memberId) {
 
-		if (ClusteringServices.get().getMember().getMemberId().equals(memberId)) {
+		if (ClusteringServices.get().getMemberId().equals(memberId)) {
 			return new ClientImpl(memberId);
 		}
 

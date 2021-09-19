@@ -18,10 +18,10 @@ import com.re.paas.api.utils.Utils;
  * This class may be used to perform certain routine tasks.
  **/
 
-@BlockerTodo("Make thread count fully configurable, to allow for scalability")
+@BlockerTodo("Stop using Executors.newSingleThreadScheduledExecutor()")
 public class Scheduler {
 
-	private static ScheduledExecutorService defaultExecutor = Executors.newScheduledThreadPool(10);
+	private static ScheduledExecutorService defaultExecutor = Executors.newSingleThreadScheduledExecutor();
 
 	private static Map<String, Runnable> dailyTasks = Collections.synchronizedMap(new HashMap<String, Runnable>());
 

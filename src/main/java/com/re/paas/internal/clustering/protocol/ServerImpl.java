@@ -47,7 +47,9 @@ public class ServerImpl implements Server {
 		
 		try {
 			// Bind and start to accept incoming connections.
-			f = this.bootstrap.bind(host, port);
+			f = this.bootstrap
+					.option(ChannelOption.SO_REUSEADDR, true)
+					.bind(host, port);
 			
 			f.sync().addListener(new ChannelFutureListener() {
 				public void operationComplete(ChannelFuture f) {
@@ -83,7 +85,6 @@ public class ServerImpl implements Server {
 	}
 	
 	
-
 	@Override
 	public InetAddress host() {
 		return host;

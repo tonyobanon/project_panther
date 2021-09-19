@@ -236,7 +236,7 @@ public class ClientOutboundRequestHandler<R> extends ChannelInboundHandlerAdapte
 		// Create header bytes
 		ByteBuf header = ByteBufAllocator.DEFAULT.directBuffer(Constants.CLIENT_PACKET_FRAME_SIZE);
 
-		Short memberId = ClusteringServices.get().getMember().getMemberId();
+		Short memberId = ClusteringServices.get().getMemberId();
 
 		header.writeBytes(Unpooled.copyShort(Constants.HS1));
 		header.writeBytes(Unpooled.copyShort(Constants.HS2));

@@ -2,9 +2,9 @@ package com.re.paas.internal.infra.database.dynamodb;
 
 import com.amazonaws.services.dynamodbv2.model.ConsumedCapacity;
 import com.re.paas.api.annotations.develop.BlockerTodo;
-import com.re.paas.api.infra.database.Namespace;
 import com.re.paas.api.infra.database.model.CapacityUnits;
 import com.re.paas.api.infra.database.model.GlobalSecondaryIndexDefinition;
+import com.re.paas.internal.infra.database.dynamodb.classes.Namespace;
 
 public class CapacityProvisioner {
 

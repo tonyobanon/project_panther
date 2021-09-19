@@ -14,7 +14,7 @@ public class DefaultObjectSerializer implements ObjectSerializer {
 
 	@Override
 	public ByteBuffer serialize(Object o) {
-
+		
 		// If this is primitive, then convert to String
 
 		if (o != null && Primitives.isWrapperType(o.getClass())) {
@@ -70,7 +70,7 @@ public class DefaultObjectSerializer implements ObjectSerializer {
 				r = primitive;
 			}
 		}
-
+		
 		return r;
 	}
 
