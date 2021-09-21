@@ -1,39 +1,34 @@
 package com.re.paas.internal.clustering;
 
-import static java.util.regex.Pattern.quote;
-
 import java.io.IOException;
-import java.io.Serializable;
-import java.net.InetSocketAddress;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.CompletableFuture;
-import java.util.regex.Pattern;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.ConfigurationChildBuilder;
 import org.infinispan.configuration.cache.StorageType;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+import org.infinispan.manager.ClusterExecutor;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.multimap.api.embedded.EmbeddedMultimapCacheManagerFactory;
+import org.infinispan.multimap.api.embedded.MultimapCache;
 import org.infinispan.multimap.api.embedded.MultimapCacheManager;
 
-import com.google.common.base.Splitter;
 import com.re.paas.api.annotations.develop.BlockerTodo;
 import com.re.paas.api.annotations.develop.Prototype;
 import com.re.paas.api.classes.Exceptions;
 import com.re.paas.api.clustering.ClusteringServices;
-import com.re.paas.api.clustering.Member;
-import com.re.paas.api.clustering.SelectionMetric;
-import com.re.paas.api.clustering.protocol.Server;
 import com.re.paas.api.logging.Logger;
 import com.re.paas.api.logging.LoggerFactory;
+import com.re.paas.api.runtime.ParameterizedExecutable;
 import com.re.paas.api.tasks.Affinity;
 import com.re.paas.api.utils.Utils;
 import com.re.paas.internal.infra.cache.infinispan.InfinispanMashaller;
@@ -41,12 +36,18 @@ import com.re.paas.internal.infra.cache.infinispan.InfinispanMashaller;
 @Prototype
 public class ClusteringServicesImpl implements ClusteringServices {
 
-	private static Logger LOG = LoggerFactory.get().getLog(ClusteringServicesImpl.class);
+	private static final Logger LOG = LoggerFactory.get().getLog(ClusteringServicesImpl.class);
 
+	private static ScheduledExecutorService scheduledExecutor = Executors.newSingleThreadScheduledExecutor();
 	private static DefaultCacheManager cacheManager;
-	private static Server server;
 
-	private static List<String> roles = new ArrayList<>();
+	private static final String genericMultiCacheKey = "generic-multi-cache";
+	private static final String clusterWideTasksKey = "cluster-wide-tasks";
+
+	private static boolean isExecutioner;
+
+	// Set a reasonable initial capacity
+	private static Map<String, CompletableFuture<?>> openTasks = new HashMap<String, CompletableFuture<?>>();
 
 	public static ConfigurationChildBuilder getDefaultCacheConfiguration() {
 
@@ -55,11 +56,6 @@ public class ClusteringServicesImpl implements ClusteringServices {
 
 		return builder.clustering().cacheMode(CacheMode.SCATTERED_SYNC).memory().storage(StorageType.OFF_HEAP)
 				.statistics().enable();
-	}
-
-	@Override
-	public void addRole(String role) {
-		roles.add(role);
 	}
 
 	@Override
@@ -76,40 +72,23 @@ public class ClusteringServicesImpl implements ClusteringServices {
 	@BlockerTodo("Make the ConfigurationBuilder setings configurable individually in DistributedStoreConfig")
 	private void start0() throws IOException {
 
+		// throw new IOException("XYZ");
+
 		// Setup up a clustered cache manager
 		GlobalConfigurationBuilder global = GlobalConfigurationBuilder.defaultClusteredBuilder();
 
 		// Add marshaller
 		global.serialization().marshaller(new InfinispanMashaller());
 
-		// global.defaultCacheName(defaultCacheName).cacheContainer();
-
+		
 		// Initialize the cache manager
 		cacheManager = new DefaultCacheManager(global.build(), true);
-	
-		
-		
-		cacheManager.executor().execute((Runnable & Serializable) () -> {
-			
-		});
-		
-		// Start cluster server
-		server = Server.get(
-				new InetSocketAddress(getJGroupsMemberAddresses().get(0).getAddress(), Utils.randomInt(1024, 65535)));
 
-		server.start().join();
-		
-		assert server.isOpen();
-		
-		LOG.info(
-				"Joined cluster, isMaster=%s, memberId=%s, address=%s:%s",
-				isMaster(), getMemberId(), server.host(), server.port());
+		LOG.info("Joined infinispan cluster: %s", cacheManager.getClusterName());
 
-		
-//		// Register existing members in ClientFactory
-//		ClientFactory cFactory = ClientFactory.get();
-//		getMembers().keySet().stream().forEach(cFactory::addMember);
-
+		if (cacheManager.getClusterSize() == 1) {
+			assumeExecutioner();
+		}
 	}
 
 	public MultimapCacheManager<String, Object> getMultimapCacheManager() {
@@ -127,91 +106,135 @@ public class ClusteringServicesImpl implements ClusteringServices {
 		return getCacheManager0();
 	}
 
-	static DefaultCacheManager getCacheManager0() {
+	private static DefaultCacheManager getCacheManager0() {
 		return cacheManager;
 	}
 
-	public Boolean isMaster() {
-		return getCacheManager0().getClusterSize() == 1;
+	private MultimapCache<String, Object> getGenericMultimapCache() {
+
+		MultimapCacheManager<String, Object> manager = getMultimapCacheManager();
+
+		try {
+
+			return manager.get(genericMultiCacheKey);
+
+		} catch (CacheConfigurationException e) {
+
+			if (e.getMessage().startsWith("ISPN000436")) {
+
+				// cache configuration does not exist, create
+				manager.defineConfiguration(genericMultiCacheKey, getDefaultCacheConfiguration().build());
+
+				return manager.get(genericMultiCacheKey);
+			}
+
+			throw e;
+		}
 	}
 
 	@Override
-	public Server getServer() {
-		return server;
+	public CompletableFuture<Collection<ClusterWideTask>> getClusterWideTasks() {
+		return getGenericMultimapCache().get(clusterWideTasksKey)
+				.thenApply(r -> r.stream().map(t -> (ClusterWideTask) t).collect(Collectors.toUnmodifiableList()));
 	}
 
-	public Short getMemberId() {
-		return getJGroupsId(cacheManager.getNodeAddress());
-	}
+	@Override
+	public void addClusterWideTask(ClusterWideTask task) {
 
-	public Member getMember(Short memberId) {
-		return getMembers().get(memberId);
-	}
-
-	public Map<Short, Member> getMembers() {
-
-		List<String> memberNames = getJGroupsMemberNames();
-		List<InetSocketAddress> memberAddresses = getJGroupsMemberAddresses();
-
-		Map<Short, Member> result = new HashMap<>(memberNames.size());
-
-		for (int i = 0; i < memberNames.size(); i++) {
-
-			String name = memberNames.get(i);
-			Short id = getJGroupsId(name);
-
-			InetSocketAddress addr = new InetSocketAddress(memberAddresses.get(i).getAddress(), id);
-
-			result.put(id, new Member(id, name, addr));
+		if (!isExecutioner()) {
+			return;
 		}
 
-		return result;
+		getGenericMultimapCache().put(clusterWideTasksKey, task);
+
+		registerTask(task);
 	}
 
-	private static Short getJGroupsId(String name) {
-		String arr[] = name.split("-");
-		return Short.parseShort(arr[arr.length - 1]);
-	}
+	private void registerTask(ClusterWideTask task) {
 
-	static List<String> getJGroupsMemberNames() {
-		return toList(getCacheManager0().getClusterMembers());
-	}
+		if (task.getPredicate().getAsBoolean()) {
 
-	static List<InetSocketAddress> getJGroupsMemberAddresses() {
-		return toList(getCacheManager0().getClusterMembersPhysicalAddresses()).stream().map(s -> {
-			String[] arr = s.split(":");
-			return new InetSocketAddress(arr[0], Integer.parseInt(arr[1]));
-		}).collect(Collectors.toList());
-	}
+			Runnable r = task.getTask();
 
-	private static List<String> toList(String trait) {
-		return Splitter.on(Pattern.quote(", ")).splitToList(trait.replaceAll(quote("[") + "|" + quote("]"), ""));
-	}
-
-	@BlockerTodo
-	@Override
-	public Collection<Short> getAvailableMember(SelectionMetric metric, int maxCount) {
-		return Set.of(getMemberId());
-	}
-
-	@BlockerTodo
-	@Override
-	public Collection<Short> getAvailableMember(Affinity affinity, int maxCount) {
-		return Set.of(getMemberId());
+			if (task.getIntervalInSecs() == null) {
+				r.run();
+			} else {
+				scheduledExecutor.scheduleAtFixedRate(r, task.getInitialDelay(), task.getIntervalInSecs(),
+						TimeUnit.SECONDS);
+			}
+		}
 	}
 
 	@Override
-	public void addClusterWideTask(String name, ClusterWideTask task) {
-		// Todo
+	public void assumeExecutioner() {
+
+		getClusterWideTasks().thenAccept(tasks -> {
+			tasks.forEach(task -> {
+				registerTask(task);
+			});
+		});
+
+		DefaultCacheManager cm = getCacheManager0();
+
+		LOG.debug("%s is now the executioner for cluster: %s", cm.getAddress(), cm.getClusterName());
+		isExecutioner = true;
 	}
 
-//	private static Runnable getRunnable(ClusterWideTask task) {
-//		return (Runnable & Serializable) (() -> {
-//
-//			if (task.getPredicate().getAsBoolean()) {
-//				task.getTask().run();
-//			}
-//		});
-//	}
+	@Override
+	public boolean isExecutioner() {
+		return isExecutioner;
+	}
 
+	@Override
+	public ScheduledExecutorService getScheduledExecutorService() {
+		return scheduledExecutor;
+	}
+
+	@Override
+	public <T, R> CompletableFuture<R> execute(ParameterizedExecutable<T, R> task, boolean wait) {
+
+		if (task.getAffinity() == Affinity.LOCAL) {
+			return CompletableFuture.completedFuture(task.getFunction().apply(task.getParameter()));
+		}
+		
+		boolean wait0 = wait || task.getAffinity() == Affinity.ALL;
+
+		String taskId = Utils.newRandom();
+		CompletableFuture<R> future = new CompletableFuture<R>();
+
+		if (wait0) {
+			openTasks.put(taskId, future);
+		}
+
+		ClusterExecutor executor = cacheManager.executor();
+		String address = getCacheManager0().getAddress().toString();
+
+		(task.getAffinity() == Affinity.ALL ? executor.allNodeSubmission() : executor.singleNodeSubmission())
+				.execute(() -> {
+
+					DefaultCacheManager cm = getCacheManager0();
+
+					LOG.debug("Running task %s in %s from %s", taskId, cm.getAddress(), address);
+
+					R r = task.getFunction().apply(task.getParameter());
+
+					if (wait0) {
+						cm.executor().filterTargets(a -> a.toString().equals(address)).execute(() -> {
+
+							@SuppressWarnings("unchecked")
+							CompletableFuture<R> f = (CompletableFuture<R>) ClusteringServicesImpl.openTasks
+									.remove(taskId);
+
+							f.complete(r);
+						});
+					}
+
+				});
+
+		if (!wait0) {
+			future.complete(null);
+		}
+
+		return future;
+	}
 }

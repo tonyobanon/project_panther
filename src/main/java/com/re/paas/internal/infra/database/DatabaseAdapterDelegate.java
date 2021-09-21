@@ -6,10 +6,7 @@ import com.re.paas.api.adapters.LoadPhase;
 import com.re.paas.api.annotations.develop.BlockerTodo;
 import com.re.paas.api.infra.database.AbstractDatabaseAdapterDelegate;
 import com.re.paas.api.infra.database.document.Database;
-import com.re.paas.api.runtime.spi.DelegateSpec;
-import com.re.paas.api.runtime.spi.SpiType;
 
-@DelegateSpec(dependencies = SpiType.NODE_ROLE)
 public class DatabaseAdapterDelegate extends AbstractDatabaseAdapterDelegate {
 
 	private static Database database;

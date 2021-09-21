@@ -1,12 +1,13 @@
 package com.re.paas.api.fusion;
 
+import java.io.Serializable;
 import java.net.InetSocketAddress;
 import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
-public interface HttpServerRequest extends Cloneable {
+public interface HttpServerRequest extends Cloneable, Serializable {
 
 	Map<String, Cookie> cookies();
 

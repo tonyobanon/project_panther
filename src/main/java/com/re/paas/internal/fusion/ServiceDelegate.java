@@ -14,6 +14,7 @@ import com.google.common.collect.LinkedHashMultimap;
 import com.google.common.collect.Multimap;
 import com.re.paas.api.classes.Exceptions;
 import com.re.paas.api.classes.ObjectWrapper;
+import com.re.paas.api.clustering.ClusteringServices;
 import com.re.paas.api.fusion.Endpoint;
 import com.re.paas.api.fusion.HttpServerResponse;
 import com.re.paas.api.fusion.HttpStatusCodes;
@@ -34,7 +35,7 @@ import com.re.paas.api.runtime.spi.DelegateInitResult;
 import com.re.paas.api.runtime.spi.DelegateSpec;
 import com.re.paas.api.runtime.spi.ResourceStatus;
 import com.re.paas.api.runtime.spi.ResourcesInitResult;
-import com.re.paas.api.tasks.TaskModel;
+import com.re.paas.api.tasks.Affinity;
 import com.re.paas.api.utils.ClassUtils;
 import com.re.paas.internal.classes.ClassUtil;
 
@@ -189,7 +190,7 @@ public class ServiceDelegate extends AbstractServiceDelegate {
 
 		ParameterizedExecutable<RoutingContext, HttpServerResponse> executable = buildExecutable(cl, sDescriptors, ctx);
 
-		HttpServerResponse response = TaskModel.getDelegate().execute(executable).join();
+		HttpServerResponse response = ClusteringServices.get().execute(executable).join();
 
 		// Re-ingest the response of this http request
 		((RoutingContextImpl) ctx).setResponse(response);
@@ -300,8 +301,11 @@ public class ServiceDelegate extends AbstractServiceDelegate {
 				if (!endpoint.uri().isEmpty() && !endpoint.uri().equals("/")
 						&& !uriPattern.matcher(endpoint.uri()).matches()) {
 
-					return ResourceStatus.ERROR
-							.setMessage("Improper URI format for " + ClassUtils.asString(c) + "#" + method.getName());
+					return ResourceStatus.ERROR.setMessage("%s: Improper URI format", ClassUtils.asString(method));
+				}
+
+				if (endpoint.affinity() == Affinity.ALL) {
+					return ResourceStatus.ERROR.setMessage("%s: Please provide an affinity that is single-node intrinsic", ClassUtils.asString(method));
 				}
 
 				consumer.accept(new FusionServiceContext(service, endpoint, method, i == methods.length - 1));

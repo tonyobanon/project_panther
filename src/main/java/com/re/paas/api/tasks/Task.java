@@ -3,7 +3,6 @@ package com.re.paas.api.tasks;
 import java.io.Serializable;
 import java.util.Date;
 
-import com.re.paas.api.classes.TaskExecutionOutcome;
 import com.re.paas.api.runtime.spi.AbstractResource;
 import com.re.paas.api.runtime.spi.SpiType;
 
@@ -34,7 +33,7 @@ public abstract class Task extends AbstractResource implements Cloneable, Serial
 	 */
 	public abstract String interval();
 	
-	public abstract TaskExecutionOutcome call();
+	public abstract void call();
 	
 	public Integer maxExecutions() {
 		return -1;

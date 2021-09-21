@@ -2,7 +2,6 @@ package com.re.paas.internal;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
-import java.net.InetAddress;
 import java.security.Security;
 import java.util.ArrayList;
 import java.util.List;
@@ -18,8 +17,6 @@ import com.re.paas.api.Singleton;
 import com.re.paas.api.annotations.develop.PlatformInternal;
 import com.re.paas.api.classes.ObjectSerializer;
 import com.re.paas.api.clustering.ClusteringServices;
-import com.re.paas.api.clustering.protocol.ClientFactory;
-import com.re.paas.api.clustering.protocol.Server;
 import com.re.paas.api.infra.filesystem.NativeFileSystem;
 import com.re.paas.api.logging.LogPipeline;
 import com.re.paas.api.logging.LoggerFactory;
@@ -33,9 +30,6 @@ import com.re.paas.api.runtime.spi.SpiLocatorHandler;
 import com.re.paas.api.utils.Base64;
 import com.re.paas.api.utils.JsonParser;
 import com.re.paas.internal.clustering.ClusteringServicesImpl;
-import com.re.paas.internal.clustering.protocol.ClientFactoryImpl;
-import com.re.paas.internal.clustering.protocol.ServerImpl;
-import com.re.paas.internal.compute.Scheduler;
 import com.re.paas.internal.fusion.WebServer;
 import com.re.paas.internal.infra.filesystem.FileSystemProviders;
 import com.re.paas.internal.infra.filesystem.NativeFileSystemImpl;
@@ -84,15 +78,11 @@ public class AppDelegate implements Callable<Void> {
 		Singleton.register(SpiDelegateHandler.class, new SpiDelegateHandlerImpl());
 
 		Singleton.register(ClusteringServices.class, new ClusteringServicesImpl());
-		Singleton.register(ClientFactory.class, new ClientFactoryImpl());
 		Singleton.register(Base64.class, new Base64Impl());
 
 		Singleton.register(ObjectSerializer.class, new DefaultObjectSerializer());
 
 		// Register factories
-
-		Factory.register(Server.class, p -> new ServerImpl((InetAddress) p[0], (Integer) p[1]));
-
 		Factory.register(ExecutorFactory.class,
 				p -> new ExecutorFactoryImpl((String) p[0], (ExecutorFactoryConfig) p[1]));
 
@@ -103,6 +93,21 @@ public class AppDelegate implements Callable<Void> {
 	public Void call() throws Exception {
 		main();
 		return null;
+	}
+
+	@PlatformInternal
+	public static void shutdown() {
+
+		List<Runnable> allFinalizers = new ArrayList<>();
+
+		allFinalizers.addAll(finalizers);
+		allFinalizers.addAll(getDefaultFinalizers());
+
+		Platform.setState(State.STOPPING);
+
+		for (Runnable r : allFinalizers) {
+			r.run();
+		}
 	}
 
 	@PlatformInternal
@@ -122,23 +127,6 @@ public class AppDelegate implements Callable<Void> {
 		// TODO Allow users to specify custom security provider
 		Security.addProvider(new BouncyCastleProvider());
 
-		List<Runnable> allFinalizers = new ArrayList<>();
-
-		allFinalizers.addAll(finalizers);
-		allFinalizers.addAll(getDefaultFinalizers());
-
-		// Add Jvm shutdown hook
-		Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-			
-			System.out.println("Running jvm shutdown hook");
-			
-			Platform.setState(State.STOPPING);
-
-			for (Runnable r : allFinalizers) {
-				r.run();
-			}
-		}));
-
 		// Set security manager
 		System.setSecurityManager(new SecurityManagerImpl());
 
@@ -153,17 +141,17 @@ public class AppDelegate implements Callable<Void> {
 		}
 
 		// Start clustering services, asynchronously
-		ClusteringServices.get().start().thenRun(() -> {
+		ClusteringServices.get().start().join();
+		// .thenRun(() -> {
 
-			if (Activator.get().isInstalled() || Platform.isDevMode()) {
-				// Boot up
-				SpiBase.get().start(AppProvisioner.get().listApps());
-			}
-		});
+		if (Activator.get().isInstalled() || Platform.isDevMode()) {
 
+			SpiBase.get().start(AppProvisioner.get().listApps());
+		}
+		// });
 
 		System.setProperty("org.slf4j.spi.SLF4JServiceProvider", "org.slf4j.helpers.NOP_FallbackServiceProvider");
-				
+
 		// Start web server
 		WebServer.start();
 
@@ -175,8 +163,6 @@ public class AppDelegate implements Callable<Void> {
 				// Stop Embedded Web Server
 				WebServer::stop,
 				// Stop application(s)
-				SpiBase.get()::stop,
-				// Shutdown default executor
-				Scheduler.getDefaultExecutor()::shutdownNow);
+				SpiBase.get()::stop);
 	}
 }

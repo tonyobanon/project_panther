@@ -11,8 +11,8 @@ public enum ResourceStatus {
 		return message;
 	}
 
-	public ResourceStatus setMessage(String message) {
-		this.message = message;
+	public ResourceStatus setMessage(String format, Object...args) {
+		this.message = String.format(format, args);
 		return this;
 	}
 

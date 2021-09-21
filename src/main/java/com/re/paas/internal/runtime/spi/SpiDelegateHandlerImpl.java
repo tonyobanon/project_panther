@@ -153,6 +153,8 @@ public class SpiDelegateHandlerImpl implements SpiDelegateHandler {
 		}
 	}
 
+	
+	
 	@SuppressWarnings("unchecked")
 	@BlockerTodo("use DelegateInitResult as returned by the delegate's init function")
 	@BlockerTodo("Implement persistence as defined in DistributedStoreConfig")
@@ -250,12 +252,7 @@ public class SpiDelegateHandlerImpl implements SpiDelegateHandler {
 
 				delegates.put(type, delegate);
 
-				// TODO Here, Check if delegate is respecting the setting in Cloud Environment
 
-				if (delegate.requiresDistributedStore() && !Arrays.asList(deps).contains(SpiType.NODE_ROLE)) {
-					Exceptions.throwRuntime(
-							ClassUtils.asString(delegateClass) + " must have a dependency on " + SpiType.NODE_ROLE);
-				}
 
 				Map<Object, Object> inMemoryStore = new HashMap<>();
 				Map<String, AsyncDistributedMap<String, Object>> distributedStores = null;

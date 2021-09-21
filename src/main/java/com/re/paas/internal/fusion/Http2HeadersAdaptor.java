@@ -18,6 +18,8 @@ import io.netty.handler.codec.http2.Http2Headers;
 
 public class Http2HeadersAdaptor implements MultiMap {
 
+	private static final long serialVersionUID = 1L;
+
 	static CharSequence toLowerCase(CharSequence s) {
 		StringBuilder buffer = null;
 		int len = s.length();

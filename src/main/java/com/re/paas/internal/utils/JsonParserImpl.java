@@ -22,7 +22,7 @@ public class JsonParserImpl implements JsonParser {
 	@Override
 	public <T> Buffer toBuffer(T o) {
 	
-		Buffer buf = Buffer.buffer();
+		StringBuilder sb = new StringBuilder();
 		
 		Json.getGson().toJson(o, new Appendable() {
 			
@@ -33,18 +33,18 @@ public class JsonParserImpl implements JsonParser {
 			
 			@Override
 			public Appendable append(char c) throws IOException {
-				buf.appendString(Character.toString(c));
+				sb.append(Character.toString(c));
 				return this;
 			}
 			
 			@Override
 			public Appendable append(CharSequence csq) throws IOException {
-				buf.appendString(csq.toString());
+				sb.append(csq.toString());
 				return this;
 			}
 		});
 		
-		return buf;
+		return Buffer.buffer(sb.toString());
 	}
 
 	@Override

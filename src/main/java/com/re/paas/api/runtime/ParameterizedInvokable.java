@@ -1,5 +1,6 @@
 package com.re.paas.api.runtime;
 
+import java.io.Serializable;
 import java.util.Objects;
 import java.util.function.Function;
 
@@ -7,7 +8,7 @@ import com.re.paas.api.annotations.AppClassLoaderInstrinsic;
 
 @FunctionalInterface
 @AppClassLoaderInstrinsic
-public interface ParameterizedInvokable<T, R> {
+public interface ParameterizedInvokable<T, R> extends Serializable {
 	
     /**
      * Applies this function to the given argument.

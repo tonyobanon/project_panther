@@ -28,6 +28,8 @@ import jakarta.servlet.http.Part;
 
 public class HttpServerRequestImpl implements HttpServerRequest {
 
+	private static final long serialVersionUID = 1L;
+
 	private HttpServletRequest req;
 
 	protected MultiMap headersMap = new Http2HeadersAdaptor(new DefaultHttp2Headers());

@@ -10,15 +10,12 @@ import com.re.paas.api.runtime.SecureMethod;
 import com.re.paas.api.runtime.SecureMethod.Factor;
 import com.re.paas.api.runtime.SecureMethod.IdentityStrategy;
 import com.re.paas.api.runtime.spi.DelegateInitResult;
-import com.re.paas.api.runtime.spi.DelegateSpec;
 import com.re.paas.api.runtime.spi.ResourceStatus;
 import com.re.paas.api.runtime.spi.SpiDelegate;
-import com.re.paas.api.runtime.spi.SpiType;
 import com.re.paas.api.utils.ClassUtils;
 import com.re.paas.api.utils.Collections;
 import com.re.paas.internal.fusion.services.SystemAdapterService;
 
-@DelegateSpec(dependencies = { SpiType.NODE_ROLE })
 public abstract class AbstractAdapterDelegate<U extends Object, T extends Adapter<U>> extends SpiDelegate<T> {
 
 	private AdapterConfig config;

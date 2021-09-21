@@ -8,9 +8,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.manager.DefaultCacheManager;
@@ -24,11 +21,7 @@ import com.re.paas.api.annotations.develop.BlockerTodo;
 import com.re.paas.api.classes.AsyncDistributedMap;
 import com.re.paas.api.classes.Exceptions;
 import com.re.paas.api.classes.ObjectWrapper;
-import com.re.paas.api.classes.TaskExecutionOutcome;
 import com.re.paas.api.clustering.ClusteringServices;
-import com.re.paas.api.clustering.Function;
-import com.re.paas.api.clustering.classes.ClusterDestination;
-import com.re.paas.api.clustering.generic.GenericFunction;
 import com.re.paas.api.logging.Logger;
 import com.re.paas.api.logging.LoggerFactory;
 import com.re.paas.api.runtime.ClassLoaders;
@@ -36,33 +29,26 @@ import com.re.paas.api.runtime.ExecutorFactory;
 import com.re.paas.api.runtime.ExternalContext;
 import com.re.paas.api.runtime.ParameterizedExecutable;
 import com.re.paas.api.runtime.spi.DelegateInitResult;
-import com.re.paas.api.runtime.spi.DelegateSpec;
 import com.re.paas.api.runtime.spi.ResourceStatus;
 import com.re.paas.api.runtime.spi.ResourcesInitResult;
-import com.re.paas.api.runtime.spi.SpiType;
 import com.re.paas.api.tasks.AbstractTaskDelegate;
 import com.re.paas.api.tasks.Affinity;
 import com.re.paas.api.tasks.Task;
 import com.re.paas.api.tasks.TaskModel;
-import com.re.paas.api.utils.Collections;
 import com.re.paas.api.utils.Dates;
 import com.re.paas.internal.classes.ClassUtil;
 import com.re.paas.internal.clustering.ClusterWideTask;
 
-@BlockerTodo("Rename to ClusterTaskDelegate")
-@DelegateSpec(dependencies = { SpiType.NODE_ROLE })
 public class TaskDelegate extends AbstractTaskDelegate {
 
 	private static Logger LOG = LoggerFactory.get().getLog(TaskDelegate.class);
-
-	static ScheduledExecutorService taskExecutor;
 
 	private static final String nextExecutorInvokation = "nextExecutorInvokation";
 	private static final String upperExecutorInvokation = "upperExecutorInvokation";
 
 	private static final Integer defaultSchedulerLeewayInSecs = 5;
 
-	private static final Integer INTERVAL_IN_SECS = 75;
+	private static final long INTERVAL_IN_SECS = 75;
 
 	private static final String TASK_DEFINITION_STORE_NAME = "_td";
 
@@ -92,18 +78,17 @@ public class TaskDelegate extends AbstractTaskDelegate {
 				LOG.error(err.getCulprit() + ": " + err.getErrorMessage());
 			});
 
-			taskExecutor = Executors.newScheduledThreadPool(1);
+			ClusteringServices.get().getScheduledExecutorService().scheduleAtFixedRate(delegate::execute, 0L, delegate.intervalInSecs(), TimeUnit.SECONDS);
+		
+		}, () -> true, null, null);
 
-			taskExecutor.scheduleAtFixedRate(delegate::execute, 0L, delegate.intervalInSecs(), TimeUnit.SECONDS);
-		}, () -> true, 0l);
-
-		ClusteringServices.get().addClusterWideTask("scheduleTaskExeecution", task);
+		ClusteringServices.get().addClusterWideTask(task);
 
 		return DelegateInitResult.SUCCESS;
 	}
 
 	@Override
-	public Integer intervalInSecs() {
+	public long intervalInSecs() {
 		return INTERVAL_IN_SECS;
 	}
 
@@ -162,13 +147,14 @@ public class TaskDelegate extends AbstractTaskDelegate {
 
 			if (execute) {
 
-				ParameterizedExecutable<Task, TaskExecutionOutcome> executable = execFactory
+				ParameterizedExecutable<Task, Void> executable = execFactory
 						.buildFunction(new ObjectWrapper<ClassLoader>(task.getClass().getClassLoader()), (p) -> {
-							return p.call();
+							p.call();
+							return null;
 						}, task, new ExternalContext(ClassLoaders.getId(task.getClass()), false, Affinity.ANY));
 
 				// Execute task
-				execute0(executable, false);
+				ClusteringServices.get().execute(executable, false);
 
 				// Set Last execution time
 				definition.setLastExecutionTime(Dates.getInstant());
@@ -232,25 +218,6 @@ public class TaskDelegate extends AbstractTaskDelegate {
 	@Override
 	protected ResourceStatus add(Class<TaskModel> clazz) {
 		return add0(clazz);
-	}
-
-	@Override
-	public <P, R> CompletableFuture<R> execute(ParameterizedExecutable<P, R> executable) {
-		return execute0(executable, true);
-	}
-
-	private <P, R> CompletableFuture<R> execute0(ParameterizedExecutable<P, R> executable, boolean wait) {
-
-		Short nodeId = Collections.nthValue(ClusteringServices.get().getAvailableMember(executable.getAffinity(), 1), 0);
-
-		Map<String, CompletableFuture<Object>> responses = (Map<String, CompletableFuture<Object>>) Function.execute(
-				ClusterDestination.SPECIFIC_NODE.setDestination(nodeId),
-				wait ? GenericFunction.EXECUTE_INVOKABLE : GenericFunction.ASYNC_EXECUTE_INVOKABLE, executable);
-
-		@SuppressWarnings("unchecked")
-		CompletableFuture<R> result = (CompletableFuture<R>) Collections.nthValue(responses, 0);
-
-		return result;
 	}
 
 	private ResourceStatus add0(Class<TaskModel> clazz) {

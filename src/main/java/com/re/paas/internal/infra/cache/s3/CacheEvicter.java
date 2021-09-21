@@ -21,6 +21,7 @@ import com.amazonaws.services.s3.model.S3ObjectSummary;
 import com.google.common.collect.Lists;
 import com.re.paas.api.classes.Exceptions;
 import com.re.paas.api.classes.ObjectWrapper;
+import com.re.paas.api.clustering.ClusteringServices;
 import com.re.paas.api.infra.cache.CacheAdapter;
 import com.re.paas.api.logging.Logger;
 import com.re.paas.api.runtime.ClassLoaders;
@@ -30,7 +31,6 @@ import com.re.paas.api.runtime.ParameterizedExecutable;
 import com.re.paas.api.runtime.ParameterizedInvokable;
 import com.re.paas.api.runtime.spi.AppProvisioner;
 import com.re.paas.api.tasks.Affinity;
-import com.re.paas.api.tasks.TaskModel;
 import com.re.paas.api.utils.Dates;
 
 public class CacheEvicter {
@@ -153,7 +153,7 @@ public class CacheEvicter {
 					new ExternalContext(AppProvisioner.DEFAULT_APP_ID, false, Affinity.ANY)
 			);
 
-			CompletableFuture<?> f = TaskModel.getDelegate().execute(i)
+			CompletableFuture<?> f = ClusteringServices.get().execute(i)
 					.thenAccept(delta -> {
 				deletedCount.get().addAndGet(delta);
 			});

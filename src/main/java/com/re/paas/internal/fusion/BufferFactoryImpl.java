@@ -15,11 +15,6 @@ public class BufferFactoryImpl implements BufferFactory {
 	}
 
 	@Override
-	public Buffer buffer() {
-		return new BufferImpl();
-	}
-
-	@Override
 	public Buffer buffer(String str) {
 		return new BufferImpl(str);
 	}

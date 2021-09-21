@@ -1,5 +1,6 @@
 package com.re.paas.internal.fusion;
 
+import java.io.Serializable;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -15,13 +16,12 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.util.CharsetUtil;
 
-public class BufferImpl extends Buffer {
+public class BufferImpl extends Buffer implements Serializable {
 
+	private static final long serialVersionUID = 1L;
+	
 	private ByteBuf buffer;
 
-	 BufferImpl() {
-		this(0);
-	}
 	
 	static void setFactory(BufferFactory factory) {
 		BufferImpl.factory = factory;

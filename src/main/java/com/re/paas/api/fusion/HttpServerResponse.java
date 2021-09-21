@@ -1,8 +1,9 @@
 package com.re.paas.api.fusion;
 
+import java.io.Serializable;
 import java.util.Map;
 
-public interface HttpServerResponse extends Cloneable {
+public interface HttpServerResponse extends Cloneable, Serializable {
 
 	Map<String, Cookie> cookies();
 	

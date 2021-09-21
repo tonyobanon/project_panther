@@ -1,9 +1,9 @@
 package com.re.paas.internal.clustering;
 
 import java.io.Serializable;
-import java.util.function.BooleanSupplier;
 
 import com.re.paas.api.runtime.Invokable;
+import com.re.paas.internal.classes.BooleanSupplier;
 
 public class ClusterWideTask implements Serializable {
 
@@ -11,12 +11,14 @@ public class ClusterWideTask implements Serializable {
 	
 	private final Invokable task;
 	private final BooleanSupplier predicate;
-	private final Long initialExecutionDelay;
+	private final Long intervalInSecs;
+	private final Long initialDelay;
 	
-	public ClusterWideTask(Invokable task, BooleanSupplier predicate, Long initialExecutionDelay) {
+	public ClusterWideTask(Invokable task, BooleanSupplier predicate, Long intervalInSecs, Long initialDelay) {
 		this.task = task;
 		this.predicate = predicate;
-		this.initialExecutionDelay = initialExecutionDelay;
+		this.intervalInSecs = intervalInSecs;
+		this.initialDelay = initialDelay;
 	}
 
 	public Invokable getTask() {
@@ -27,8 +29,11 @@ public class ClusterWideTask implements Serializable {
 		return predicate;
 	}
 
-	public Long getInitialExecutionDelay() {
-		return initialExecutionDelay;
+	public Long getIntervalInSecs() {
+		return intervalInSecs;
 	}
 	
+	public Long getInitialDelay() {
+		return initialDelay;
+	}
 }

@@ -1,5 +1,6 @@
 package com.re.paas.api.fusion;
 
+import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -12,7 +13,7 @@ import java.util.Set;
  * multiple values for keys.
  *
  */
-public interface MultiMap extends Iterable<Map.Entry<String, String>> {
+public interface MultiMap extends Iterable<Map.Entry<String, String>>, Serializable {
 
   /**
    * Create a multi-map implementation with case insensitive keys, for instance it can be used to hold some HTTP headers.

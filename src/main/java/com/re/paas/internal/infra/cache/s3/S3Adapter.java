@@ -97,9 +97,9 @@ public class S3Adapter implements CacheAdapter {
 
 			this.setCacheEvicter(evicter);
 			
-		}, () -> CacheAdapter.getDelegate().getCacheFactory() instanceof S3CacheFactory, 5l);
+		}, () -> CacheAdapter.getDelegate().getCacheFactory() instanceof S3CacheFactory, 5l, 0l);
 
-		ClusteringServices.get().addClusterWideTask("evictS3Factory", task);
+		ClusteringServices.get().addClusterWideTask(task);
 
 		return new S3CacheFactory(this, "default", awsCreds, region, endpoint());
 	}

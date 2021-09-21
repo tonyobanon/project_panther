@@ -49,7 +49,7 @@ public class WebServer {
 
 	// The port on the node through which the service available through
 	// https://matthewpalmer.net/kubernetes-app-developer/articles/kubernetes-ports-targetport-nodeport-service.html
-	private static final Integer serviceHttpPort = 8081;
+	private static final Integer serviceHttpPort = 8082;
 	private static final Integer serviceHttpsPort = 8433;
 
 	@SecureMethod
@@ -144,7 +144,7 @@ public class WebServer {
 	private static class RequestHandler extends AbstractHandler {
 
 		public RequestHandler() {
-			BufferImpl.setFactory(new BufferFactoryImpl());
+			
 		}
 
 		@Override

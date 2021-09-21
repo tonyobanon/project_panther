@@ -27,7 +27,6 @@ public class Primitives {
 	
 	public static Boolean isWrapperType(Class<?> clazz) {
 		return WRAPPER_TYPES.contains(clazz);
-				// || clazz.equals(String.class);
 	}
 
 	private static Set<Class<?>> getWrapperTypes() {

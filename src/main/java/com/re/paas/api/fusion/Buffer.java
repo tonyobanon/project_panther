@@ -7,14 +7,6 @@ public abstract class Buffer {
 
 	protected static BufferFactory factory;
 	
-	/**
-	 * Create a new, empty buffer.
-	 *
-	 * @return the buffer
-	 */
-	public static Buffer buffer() {
-		return factory.buffer();
-	}
 
 	/**
 	 * Create a new buffer given the initial size hint.
