@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 
 import com.re.paas.api.Platform;
-import com.re.paas.internal.AppDelegate;
 
 public abstract class Application {
 

@@ -1,7 +1,7 @@
 package com.re.paas.api.adapters;
 
 import com.re.paas.api.Adapter;
-import com.re.paas.api.cryto.AbstractCryptoAdapterDelegate;
+import com.re.paas.api.crytography.AbstractCryptoAdapterDelegate;
 import com.re.paas.api.infra.cache.AbstractCacheAdapterDelegate;
 import com.re.paas.api.infra.database.AbstractDatabaseAdapterDelegate;
 import com.re.paas.api.infra.filesystem.AbstractFileSystemAdapterDelegate;

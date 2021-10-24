@@ -2,12 +2,9 @@ package com.re.paas.internal.fusion;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.PrintWriter;
-import java.nio.file.Path;
 import java.util.Deque;
 import java.util.LinkedList;
 
-import org.apache.tika.Tika;
 import org.eclipse.jetty.alpn.ALPN;
 import org.eclipse.jetty.alpn.server.ALPNServerConnectionFactory;
 import org.eclipse.jetty.http2.server.HTTP2ServerConnectionFactory;
@@ -28,13 +25,14 @@ import com.re.paas.api.Platform;
 import com.re.paas.api.Platform.State;
 import com.re.paas.api.annotations.develop.BlockerTodo;
 import com.re.paas.api.classes.Exceptions;
-import com.re.paas.api.cryto.CryptoAdapter;
-import com.re.paas.api.cryto.KeyStoreProperties;
-import com.re.paas.api.cryto.SSLContext;
+import com.re.paas.api.crytography.CryptoAdapter;
+import com.re.paas.api.crytography.KeyStoreProperties;
+import com.re.paas.api.crytography.SSLContext;
 import com.re.paas.api.fusion.HttpMethod;
 import com.re.paas.api.fusion.HttpStatusCodes;
 import com.re.paas.api.fusion.Route;
 import com.re.paas.api.fusion.RoutingContext;
+import com.re.paas.api.fusion.StaticFileContext;
 import com.re.paas.api.fusion.services.BaseService;
 import com.re.paas.api.logging.Logger;
 import com.re.paas.api.runtime.ClassLoaders;
@@ -44,14 +42,15 @@ import com.re.paas.internal.runtime.spi.FusionClassloaders;
 @BlockerTodo("Optimize the way requests are handled, as the current impl is thread expensive.")
 public class WebServer {
 
-	private static Tika TIKA_INSTANCE = new Tika();
 	private static Server server;
 
 	// The port on the node through which the service available through
 	// https://matthewpalmer.net/kubernetes-app-developer/articles/kubernetes-ports-targetport-nodeport-service.html
-	private static final Integer serviceHttpPort = 8082;
+	
+	private static final Integer serviceHttpPort = 8081;
 	private static final Integer serviceHttpsPort = 8433;
 
+	
 	@SecureMethod
 	public static void start() {
 
@@ -186,7 +185,13 @@ public class WebServer {
 
 				Route route = new Route(appId, path, HttpMethod.valueOf(request.getMethod()));
 
-				RoutingContext ctx = new RoutingContextImpl(route, request, response, true);
+				RoutingContext ctx = new RoutingContextImpl(
+						route, request, response, 
+						/**
+						 * Session support depends a fully configured CacheAdapter
+						 */
+						Activator.get().isInstalled()
+				);
 
 				BaseService.getDelegate().handler(ctx);
 
@@ -194,33 +199,18 @@ public class WebServer {
 
 			} else {
 
-				String appId = CookieUtil.getCookie(request.getCookies(), FusionClassloaders.APP_ID_COOKIE);
+				String appId = CookieHelper.getCookie(request.getCookies(), FusionClassloaders.APP_ID_COOKIE);
 
 				if (appId == null) {
 					response.setStatus(HttpStatusCodes.SC_NOT_FOUND);
 					return;
 				}
 
-				String path = Joiner.on(File.separatorChar).join(parts);
-				Path p = FusionClassloaders.getStaticPath(appId, path);
-
-				String content = FusionClassloaders.getStaticAsset(appId, path);
-
-				if (content == null) {
-					response.setStatus(HttpStatusCodes.SC_NOT_FOUND);
-					return;
-				}
+				String staticPath = Joiner.on(File.separatorChar).join(parts);
 				
-
-				String contentType = TIKA_INSTANCE.detect(p.getFileName().toString());
+				StaticFileContext ctx = new StaticFileContextImpl(appId, staticPath, request, response);
 				
-				response.setContentType(contentType);
-
-				PrintWriter writer = response.getWriter();
-
-				writer.write(content);
-
-				writer.flush();
+				BaseService.getDelegate().handler(ctx);
 			}
 		}
 

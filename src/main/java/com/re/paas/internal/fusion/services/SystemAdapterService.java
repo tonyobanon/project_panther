@@ -24,9 +24,9 @@ import com.re.paas.api.fusion.JsonObject;
 import com.re.paas.api.fusion.RoutingContext;
 import com.re.paas.api.fusion.services.BaseService;
 import com.re.paas.api.tasks.Affinity;
-import com.re.paas.internal.AppDelegate;
 import com.re.paas.internal.classes.Json;
 import com.re.paas.internal.fusion.UIContext;
+import com.re.paas.internal.runtime.spi.AppDelegate;
 import com.re.paas.internal.utils.ObjectUtils;
 
 public class SystemAdapterService extends BaseService {
@@ -37,14 +37,12 @@ public class SystemAdapterService extends BaseService {
 	}
 	
 	@Endpoint(uri = "/hooks/shutdown")
-	public static void shutdownH(RoutingContext ctx) {
+	public static void shutdown(RoutingContext ctx) {
+
+		AppDelegate.shutdown();
 		
 		ClusteringServices cService = ClusteringServices.get();
 
-		cService.getScheduledExecutorService().shutdown();
-		
-		AppDelegate.shutdown();
-		
 		if (cService.isExecutioner()) {
 			
 			DefaultCacheManager cm = (DefaultCacheManager) cService.getCacheManager();
@@ -66,13 +64,13 @@ public class SystemAdapterService extends BaseService {
 			}
 		}
 
-		ctx.response().write(res.encode());
+		ctx.response().writeHtml(res.encode());
 	}
 
 	@Endpoint(uri = "/adapters/descriptions")
 	public static void getDescriptions(RoutingContext ctx) {
 
-		AdapterType type = AdapterType.from(ctx.request().getParam("type"));
+		AdapterType type = AdapterType.from(ctx.request().getParameter("type"));
 
 		AbstractAdapterDelegate<?, ? extends Adapter<?>> delegate = Singleton.get(type.getDelegateType());
 
@@ -89,14 +87,14 @@ public class SystemAdapterService extends BaseService {
 			res.put(adapterName, spec);
 		});
 
-		ctx.response().write(res.encode());
+		ctx.response().writeHtml(res.encode());
 	}
 
 	@Endpoint(uri = "/adapters/parameters", affinity = Affinity.ANY)
 	public static void getParameters(RoutingContext ctx) {
 
-		AdapterType type = AdapterType.from(ctx.request().getParam("type"));
-		String adapterName = ctx.request().getParam("name");
+		AdapterType type = AdapterType.from(ctx.request().getParameter("type"));
+		String adapterName = ctx.request().getParameter("name");
 
 		@SuppressWarnings("rawtypes")
 		AbstractAdapterDelegate delegate = Singleton.get(type.getDelegateType());
@@ -104,16 +102,16 @@ public class SystemAdapterService extends BaseService {
 
 		String parameters = Json.getGson().toJson(adapter.initForm());
 
-		ctx.response().write(parameters);
+		ctx.response().writeHtml(parameters);
 	}
 
 	@Todo("Remember to save .installed file, when user clicks on finish")
 	@Endpoint(uri = "/adapters/configure", method = HttpMethod.POST, affinity = Affinity.ANY)
 	public static void configure(RoutingContext ctx) {
 
-		JsonObject body = ctx.getBodyAsJson();
+		JsonObject body = ctx.request().getBodyAsJson();
 
-		AdapterType type = AdapterType.from(ctx.request().getParam("type"));
+		AdapterType type = AdapterType.from(ctx.request().getParameter("type"));
 		String adapterName = body.getString("name");
 		Map<String, String> fields = ObjectUtils.toStringMap(body.getJsonObject("fields").getMap());
 
@@ -162,7 +160,7 @@ public class SystemAdapterService extends BaseService {
 							: response.toString()))
 					.toString();
 			
-			ctx.response().setStatusCode(HttpStatusCodes.SC_INTERNAL_SERVER_ERROR).write(err);
+			ctx.response().setStatus(HttpStatusCodes.SC_INTERNAL_SERVER_ERROR).writeHtml(err);
 		}
 
 	}

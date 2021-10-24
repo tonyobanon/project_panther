@@ -3,7 +3,6 @@ package com.re.paas.internal.runtime.spi;
 import java.net.URL;
 
 import com.re.paas.api.Platform;
-import com.re.paas.api.runtime.RuntimeIdentity;
 import com.re.paas.api.runtime.SystemClassLoader;
 
 public class SystemClassLoaderImpl extends ClassLoader implements SystemClassLoader {
@@ -31,6 +30,8 @@ public class SystemClassLoaderImpl extends ClassLoader implements SystemClassLoa
 		}
 
 		this.cl = cl;
+		
+		
 	}
 
 	@Override
@@ -67,11 +68,6 @@ public class SystemClassLoaderImpl extends ClassLoader implements SystemClassLoa
 
 	@Override
 	public URL getResource(String name) {
-
-		if (!RuntimeIdentity.getInstance().isTrusted(1)) {
-			throw new SecurityException("Unable to get resource: " + name);
-		}
-
 		return CustomClassLoader.getJvmAppClassLoader().getResource(name);
 	}
 

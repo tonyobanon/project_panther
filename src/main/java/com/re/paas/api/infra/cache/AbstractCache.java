@@ -6,11 +6,11 @@ public abstract class AbstractCache implements Cache<String, Object> {
 
 	@Override
 	public CompletableFuture<Object> set(String key, Object value, Long maxIdle) {
-		return this.set(key, value).thenCompose(r -> this.invalidate(key, maxIdle).thenApply(b -> r));
+		return this.set(key, value).thenCompose(r -> this.invalidateInSecs(key, maxIdle).thenApply(b -> r));
 	}
 	
 	@Override
 	public CompletableFuture<Object> setex(String key, Object value, Long lifespan) {
-		return this.set(key, value).thenCompose(r -> this.expire(key, lifespan).thenApply(b -> r));
+		return this.set(key, value).thenCompose(r -> this.expireInSecs(key, lifespan).thenApply(b -> r));
 	}
 }

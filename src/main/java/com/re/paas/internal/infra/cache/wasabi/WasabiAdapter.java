@@ -3,12 +3,9 @@ package com.re.paas.internal.infra.cache.wasabi;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.re.paas.internal.infra.cache.s3.CacheEvicter;
 import com.re.paas.internal.infra.cache.s3.S3Adapter;
 
 public class WasabiAdapter extends S3Adapter {
-	
-	private static CacheEvicter cacheEvicter;
 	
 	@Override
 	public String name() {
@@ -46,16 +43,6 @@ public class WasabiAdapter extends S3Adapter {
 		}
 		
 		return regionsMap;
-	}
-	
-	@Override
-	protected CacheEvicter getCacheEvicter() {
-		return cacheEvicter;
-	}
-
-	@Override
-	protected void setCacheEvicter(CacheEvicter cacheEvicter) {
-		WasabiAdapter.cacheEvicter = cacheEvicter;
 	}
 	
 }

@@ -17,7 +17,7 @@ public class HelloService extends BaseService {
 	}
 
 	@Endpoint(uri = "/greet", affinity = Affinity.ANY)
-	public static void getTypes(RoutingContext ctx) {
+	public static void greet(RoutingContext ctx) {
 		ctx.response()
 		.render(
 			new GlobalNavigation().addTab(new Tab()),

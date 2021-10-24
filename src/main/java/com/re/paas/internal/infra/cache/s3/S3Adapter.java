@@ -8,18 +8,14 @@ import java.util.Map;
 
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.services.s3.model.Region;
-import com.re.paas.api.clustering.ClusteringServices;
 import com.re.paas.api.forms.CompositeField;
 import com.re.paas.api.forms.Form;
 import com.re.paas.api.forms.Section;
 import com.re.paas.api.forms.SimpleField;
 import com.re.paas.api.infra.cache.CacheAdapter;
 import com.re.paas.api.infra.cache.CacheFactory;
-import com.re.paas.internal.clustering.ClusterWideTask;
 
 public class S3Adapter implements CacheAdapter {
-
-	private static CacheEvicter cacheEvicter;
 
 	@Override
 	public String name() {
@@ -85,30 +81,7 @@ public class S3Adapter implements CacheAdapter {
 
 		BasicAWSCredentials awsCreds = new BasicAWSCredentials(access_key_id, secret_key_id);
 
-		
-		// Register cache eviction task
-		
-		ClusterWideTask task = new ClusterWideTask(() -> {
-			
-			S3CacheFactory factory = (S3CacheFactory) CacheAdapter.getDelegate().getCacheFactory();
-
-			CacheEvicter evicter = new CacheEvicter(factory);
-			evicter.start();
-
-			this.setCacheEvicter(evicter);
-			
-		}, () -> CacheAdapter.getDelegate().getCacheFactory() instanceof S3CacheFactory, 5l, 0l);
-
-		ClusteringServices.get().addClusterWideTask(task);
-
 		return new S3CacheFactory(this, "default", awsCreds, region, endpoint());
 	}
 
-	protected CacheEvicter getCacheEvicter() {
-		return cacheEvicter;
-	}
-
-	protected void setCacheEvicter(CacheEvicter cacheEvicter) {
-		S3Adapter.cacheEvicter = cacheEvicter;
-	}
 }

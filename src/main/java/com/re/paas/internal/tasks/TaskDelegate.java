@@ -8,6 +8,8 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.manager.DefaultCacheManager;
@@ -31,6 +33,7 @@ import com.re.paas.api.runtime.ParameterizedExecutable;
 import com.re.paas.api.runtime.spi.DelegateInitResult;
 import com.re.paas.api.runtime.spi.ResourceStatus;
 import com.re.paas.api.runtime.spi.ResourcesInitResult;
+import com.re.paas.api.runtime.spi.ShutdownPhase;
 import com.re.paas.api.tasks.AbstractTaskDelegate;
 import com.re.paas.api.tasks.Affinity;
 import com.re.paas.api.tasks.Task;
@@ -42,6 +45,9 @@ import com.re.paas.internal.clustering.ClusterWideTask;
 public class TaskDelegate extends AbstractTaskDelegate {
 
 	private static Logger LOG = LoggerFactory.get().getLog(TaskDelegate.class);
+
+	private static final String jobRunnerTaskName = "cache_evicter";
+	private static ScheduledExecutorService jobRunnerExecutor;
 
 	private static final String nextExecutorInvokation = "nextExecutorInvokation";
 	private static final String upperExecutorInvokation = "upperExecutorInvokation";
@@ -57,34 +63,55 @@ public class TaskDelegate extends AbstractTaskDelegate {
 	@Override
 	public DelegateInitResult init() {
 
-		ClusterWideTask task = new ClusterWideTask(() -> {
+		ClusteringServices cs = ClusteringServices.get();
 
-			TaskDelegate delegate = (TaskDelegate) TaskModel.getDelegate();
+		if (cs.isExecutioner()) {
 
-			if (delegate.intervalInSecs() < defaultSchedulerLeewayInSecs * 2) {
+			ClusterWideTask task = new ClusterWideTask(jobRunnerTaskName, () -> {
 
-				Exceptions.throwRuntime("Task executor must have an interval that is apart by at least "
-						+ defaultSchedulerLeewayInSecs * 2 + " seconds");
-			}
+				TaskDelegate delegate = (TaskDelegate) TaskModel.getDelegate();
 
-			delegate.createResourceMaps();
+				if (delegate.intervalInSecs() < defaultSchedulerLeewayInSecs * 2) {
 
-			// Register task models
-			ResourcesInitResult r = delegate.addResources(delegate::add0);
+					Exceptions.throwRuntime("Task executor must have an interval that is apart by at least "
+							+ defaultSchedulerLeewayInSecs * 2 + " seconds");
+				}
 
-			LOG.debug("Discovered " + r.getCount() + " tasks");
+				delegate.createResourceMaps();
 
-			r.getErrors().forEach(err -> {
-				LOG.error(err.getCulprit() + ": " + err.getErrorMessage());
+				// Register task models
+				ResourcesInitResult r = delegate.addResources(delegate::add0);
+
+				LOG.debug("Discovered " + r.getCount() + " tasks");
+
+				r.getErrors().forEach(err -> {
+					LOG.error(err.getCulprit() + ": " + err.getErrorMessage());
+				});
+
+				jobRunnerExecutor = Executors.newSingleThreadScheduledExecutor();
+
+				jobRunnerExecutor.scheduleAtFixedRate(delegate::execute, 0L, delegate.intervalInSecs(),
+						TimeUnit.SECONDS);
+
 			});
 
-			ClusteringServices.get().getScheduledExecutorService().scheduleAtFixedRate(delegate::execute, 0L, delegate.intervalInSecs(), TimeUnit.SECONDS);
-		
-		}, () -> true, null, null);
-
-		ClusteringServices.get().addClusterWideTask(task);
+			cs.addClusterWideTask(task);
+		}
 
 		return DelegateInitResult.SUCCESS;
+	}
+
+	@Override
+	public void shutdown(ShutdownPhase phase) {
+
+		ClusteringServices cs = ClusteringServices.get();
+
+		if (cs.isExecutioner()) {
+			assert jobRunnerExecutor != null;
+
+			jobRunnerExecutor.shutdown();
+		}
+
 	}
 
 	@Override

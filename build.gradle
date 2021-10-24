@@ -25,9 +25,6 @@ dependencies {
 	implementation "com.ibm.icu:icu4j-localespi:60.2"
 	implementation "com.ibm.icu:icu4j-charset:60.2"
 
-	implementation "io.netty:netty-all:5.0.0.Alpha2"
-
-
 	implementation "commons-net:commons-net:3.6"
 
 	implementation "com.amazonaws:aws-java-sdk-dynamodb:1.12.9"

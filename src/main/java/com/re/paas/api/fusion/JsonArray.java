@@ -3,6 +3,8 @@ package com.re.paas.api.fusion;
 import static java.time.format.DateTimeFormatter.ISO_INSTANT;
 
 import java.math.BigDecimal;
+import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Base64;
@@ -61,7 +63,7 @@ public class JsonArray implements Iterable<Object> {
 	 *
 	 * @param buf the buffer of JSON.
 	 */
-	public JsonArray(Buffer buf) {
+	public JsonArray(ByteBuffer buf) {
 		fromBuffer(buf);
 	}
 
@@ -566,7 +568,7 @@ public class JsonArray implements Iterable<Object> {
 	 *
 	 * @return the buffer encoding.
 	 */
-	public Buffer toBuffer() {
+	public ByteBuffer toBuffer() {
 		return JsonParser.get().toBuffer(list);
 	}
 
@@ -647,21 +649,6 @@ public class JsonArray implements Iterable<Object> {
 		return list.hashCode();
 	}
 
-	public void writeToBuffer(Buffer buffer) {
-		String encoded = encode();
-		byte[] bytes = encoded.getBytes();
-		buffer.appendInt(bytes.length);
-		buffer.appendBytes(bytes);
-	}
-
-	public int readFromBuffer(int pos, Buffer buffer) {
-		int length = buffer.getInt(pos);
-		int start = pos + 4;
-		String encoded = buffer.getString(start, start + length);
-		fromJson(encoded);
-		return pos + length + 4;
-	}
-
 	@SuppressWarnings("unchecked")
 	private void fromJson(String json) {
 		list = JsonParser.get().fromString(json, List.class);
@@ -669,8 +656,29 @@ public class JsonArray implements Iterable<Object> {
 
 	@SuppressWarnings("unchecked")
 	@Todo("Pass buf directly to JsonParser to avoid unnecessary buffering in memory")
-	private void fromBuffer(Buffer buf) {
-		list = JsonParser.get().fromString(buf.toString(), List.class);
+	private void fromBuffer(ByteBuffer buf) {
+		list = JsonParser.get().fromString(new String(buf.array(), StandardCharsets.UTF_8), List.class);
+	}
+	
+	public void writeToBuffer(ByteBuffer buffer) {
+		String encoded = encode();
+		byte[] bytes = encoded.getBytes(StandardCharsets.UTF_8);
+		
+		buffer.putInt(bytes.length);
+		buffer.put(bytes);
+	}
+
+	public int readFromBuffer(int pos, ByteBuffer buffer) {
+		int length = buffer.getInt(pos);
+		int start = pos + 
+				// skip the number of bytes where the length is stored
+				4;
+		byte[] arr = new byte[length];
+		buffer.get(start, arr, 0, length);
+			
+		fromJson(new String(arr, StandardCharsets.UTF_8));
+		
+		return start + length;
 	}
 
 	private class Iter implements Iterator<Object> {

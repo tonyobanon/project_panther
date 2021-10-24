@@ -3,7 +3,6 @@ package com.re.paas.api.clustering;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ScheduledExecutorService;
 
 import com.re.paas.api.Singleton;
 import com.re.paas.api.runtime.ParameterizedExecutable;
@@ -24,23 +23,27 @@ public interface ClusteringServices {
 
 	@SecureMethod
 	Object getCacheManager();
-	
+
 	@SecureMethod
 	CompletableFuture<Collection<ClusterWideTask>> getClusterWideTasks();
-	
-	@SecureMethod
+
 	void addClusterWideTask(ClusterWideTask task);
 
+	void removeClusterWideTask(String name);
+
+	/**
+	 * Note: It is guaranteed that any given node in the cluster can only be elected
+	 * as the executioner once in it's lifetime
+	 */
+	@SecureMethod
 	void assumeExecutioner();
-	
+
 	boolean isExecutioner();
-	
-	ScheduledExecutorService getScheduledExecutorService();
-	
-	default <T, R> CompletableFuture<R> execute(ParameterizedExecutable<T, R> task){
+
+	default <T, R> CompletableFuture<R> execute(ParameterizedExecutable<T, R> task) {
 		return execute(task, true);
 	}
-	
+
 	<T, R> CompletableFuture<R> execute(ParameterizedExecutable<T, R> task, boolean wait);
-	
+
 }

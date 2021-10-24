@@ -23,6 +23,6 @@
 	"platform.spi.scheduled_task.delegate": "com.re.paas.internal.tasks.TaskDelegate",
 	"platform.spi.cache_adapter.delegate": "com.re.paas.internal.infra.cache.CacheAdapterDelegate",
 	"platform.spi.database_adapter.delegate": "com.re.paas.internal.infra.database.DatabaseAdapterDelegate",
-	"platform.spi.crypto_adapter.delegate": "com.re.paas.internal.crypto.CryptoAdapterDelegate",
+	"platform.spi.crypto_adapter.delegate": "com.re.paas.internal.crytography.CryptoAdapterDelegate",
 	"platform.spi.filesystem_adapter.delegate": "com.re.paas.internal.infra.filesystem.FileSystemAdapterDelegate"
 }

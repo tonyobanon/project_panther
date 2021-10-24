@@ -934,7 +934,7 @@ public abstract class ObjectStorageCache extends AbstractCache {
 	 * rather than on the cache server.
 	 */
 	@Override
-	public final CompletableFuture<Boolean> expire(String key, Long seconds) {
+	public final CompletableFuture<Boolean> expireInSecs(String key, Long seconds) {
 		validateEntry(key);
 		return expire0(key, seconds, exists0(key));
 	}
@@ -955,7 +955,7 @@ public abstract class ObjectStorageCache extends AbstractCache {
 	}
 
 	@Override
-	public CompletableFuture<Boolean> invalidate(String key, Long seconds) {
+	public CompletableFuture<Boolean> invalidateInSecs(String key, Long seconds) {
 		return this.invalidate0(key, seconds, this.exists0(key));
 	}
 

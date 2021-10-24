@@ -6,6 +6,7 @@ import java.util.List;
 import com.re.paas.api.annotations.develop.BlockerTodo;
 import com.re.paas.api.infra.cache.Cache;
 import com.re.paas.api.infra.cache.CacheAdapter;
+import com.re.paas.api.runtime.spi.ShutdownPhase;
 
 public class RedisCacheFactory extends RemoteCacheFactory {
 
@@ -46,18 +47,13 @@ public class RedisCacheFactory extends RemoteCacheFactory {
 	}
 
 	@Override
-	public Boolean supportsAutoExpiry() {
-		return true;
-	}
-
-	@Override
 	public List<String> bucketList() {
 		return bucketList;
 	}
 
 	@BlockerTodo
 	@Override
-	public void shutdown() {
+	public void shutdown(ShutdownPhase phase) {
 
 		RedisCache cache = (RedisCache) get();
 		

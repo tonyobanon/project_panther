@@ -180,7 +180,7 @@ public class InfinispanCache extends AbstractCache {
 	}
 
 	@Override
-	public CompletableFuture<Boolean> expire(String key, Long lifespan) {
+	public CompletableFuture<Boolean> expireInSecs(String key, Long lifespan) {
 		return expireOrInvalidate(key, lifespan, null);
 	}
 
@@ -216,7 +216,7 @@ public class InfinispanCache extends AbstractCache {
 	}
 
 	@Override
-	public CompletableFuture<Boolean> invalidate(String key, Long maxIdle) {
+	public CompletableFuture<Boolean> invalidateInSecs(String key, Long maxIdle) {
 		return expireOrInvalidate(key, null, maxIdle);
 	}
 

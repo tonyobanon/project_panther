@@ -22,7 +22,7 @@ public class RedisCache extends RemoteCache {
 	 * Unlike {@link #keyInvalidationStatHash}, this variable which is private to
 	 * {@link RedisCache} is used to keep track of entries for which an inactivity
 	 * timeout has been set, each time an activity is done on such key(s),
-	 * {@link #expire(String, Long)} is called
+	 * {@link #expireInSecs(String, Long)} is called
 	 */
 	// k: "abc", v: "15000"
 	private static final String keyInvalidationStatHash = "__$kis";
@@ -227,7 +227,7 @@ public class RedisCache extends RemoteCache {
 	}
 
 	@Override
-	public CompletableFuture<Boolean> expire(String key, Long seconds) {
+	public CompletableFuture<Boolean> expireInSecs(String key, Long seconds) {
 		this.startOperation();
 		RedisFuture<Boolean> o = this.expire0(key(key), seconds);
 
@@ -252,7 +252,7 @@ public class RedisCache extends RemoteCache {
 	}
 
 	@Override
-	public CompletableFuture<Boolean> invalidate(String key, Long seconds) {
+	public CompletableFuture<Boolean> invalidateInSecs(String key, Long seconds) {
 
 		this.startOperation();
 		RedisFuture<Boolean> o = this.expire0(key(key), seconds);

@@ -30,9 +30,9 @@ public interface Cache<K, V> {
 	CompletableFuture<Integer> incrby(K key, Integer amount);
 
 	
-	CompletableFuture<Boolean> expire(K key, Long seconds);
+	CompletableFuture<Boolean> expireInSecs(K key, Long seconds);
 	
-	CompletableFuture<Boolean> invalidate(K key, Long seconds);
+	CompletableFuture<Boolean> invalidateInSecs(K key, Long seconds);
 	
 	CompletableFuture<CacheEntryType> type(K key);
 

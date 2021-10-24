@@ -1,9 +1,10 @@
 package com.re.paas.internal.utils;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
-import com.re.paas.api.fusion.Buffer;
 import com.re.paas.api.utils.JsonParser;
 import com.re.paas.internal.classes.Json;
 
@@ -20,7 +21,7 @@ public class JsonParserImpl implements JsonParser {
 	}
 	
 	@Override
-	public <T> Buffer toBuffer(T o) {
+	public <T> ByteBuffer toBuffer(T o) {
 	
 		StringBuilder sb = new StringBuilder();
 		
@@ -44,7 +45,7 @@ public class JsonParserImpl implements JsonParser {
 			}
 		});
 		
-		return Buffer.buffer(sb.toString());
+		return ByteBuffer.wrap(sb.toString().getBytes(StandardCharsets.UTF_8));
 	}
 
 	@Override

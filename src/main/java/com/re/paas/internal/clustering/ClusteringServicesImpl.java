@@ -3,11 +3,9 @@ package com.re.paas.internal.clustering;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import org.infinispan.commons.CacheConfigurationException;
@@ -38,7 +36,6 @@ public class ClusteringServicesImpl implements ClusteringServices {
 
 	private static final Logger LOG = LoggerFactory.get().getLog(ClusteringServicesImpl.class);
 
-	private static ScheduledExecutorService scheduledExecutor = Executors.newSingleThreadScheduledExecutor();
 	private static DefaultCacheManager cacheManager;
 
 	private static final String genericMultiCacheKey = "generic-multi-cache";
@@ -141,28 +138,25 @@ public class ClusteringServicesImpl implements ClusteringServices {
 	@Override
 	public void addClusterWideTask(ClusterWideTask task) {
 
-		if (!isExecutioner()) {
-			return;
-		}
-
 		getGenericMultimapCache().put(clusterWideTasksKey, task);
-
-		registerTask(task);
+		task.getTask().run();
 	}
-
-	private void registerTask(ClusterWideTask task) {
-
-		if (task.getPredicate().getAsBoolean()) {
-
-			Runnable r = task.getTask();
-
-			if (task.getIntervalInSecs() == null) {
-				r.run();
-			} else {
-				scheduledExecutor.scheduleAtFixedRate(r, task.getInitialDelay(), task.getIntervalInSecs(),
-						TimeUnit.SECONDS);
+	
+	@Override
+	public void removeClusterWideTask(String name) {
+		getGenericMultimapCache().get(clusterWideTasksKey).thenAccept(tasks -> {
+			Iterator<Object> it = tasks.iterator();
+			
+			while (it.hasNext()) {
+	
+				ClusterWideTask task = (ClusterWideTask) it.next();
+				
+				if (task.getName().equals(name)) {
+					it.remove();
+					break;
+				}
 			}
-		}
+		});
 	}
 
 	@Override
@@ -170,7 +164,7 @@ public class ClusteringServicesImpl implements ClusteringServices {
 
 		getClusterWideTasks().thenAccept(tasks -> {
 			tasks.forEach(task -> {
-				registerTask(task);
+				task.getTask().run();
 			});
 		});
 
@@ -183,11 +177,6 @@ public class ClusteringServicesImpl implements ClusteringServices {
 	@Override
 	public boolean isExecutioner() {
 		return isExecutioner;
-	}
-
-	@Override
-	public ScheduledExecutorService getScheduledExecutorService() {
-		return scheduledExecutor;
 	}
 
 	@Override

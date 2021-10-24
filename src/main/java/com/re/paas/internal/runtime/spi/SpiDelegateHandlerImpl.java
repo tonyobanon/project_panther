@@ -37,6 +37,7 @@ import com.re.paas.api.runtime.spi.BaseSPILocator;
 import com.re.paas.api.runtime.spi.ClassIdentityType;
 import com.re.paas.api.runtime.spi.DelegateInitResult;
 import com.re.paas.api.runtime.spi.ResourcesInitResult;
+import com.re.paas.api.runtime.spi.ShutdownPhase;
 import com.re.paas.api.runtime.spi.DelegateResorceSet;
 import com.re.paas.api.runtime.spi.DelegateSpec;
 import com.re.paas.api.runtime.spi.DistributedStoreConfig;
@@ -116,7 +117,7 @@ public class SpiDelegateHandlerImpl implements SpiDelegateHandler {
 	 * 
 	 * @param cl
 	 */
-	static void install(ClassLoader cl) {
+	static void registerDelegates(ClassLoader cl) {
 
 		String appId = ClassLoaders.getId(cl);
 
@@ -135,7 +136,7 @@ public class SpiDelegateHandlerImpl implements SpiDelegateHandler {
 		}
 	}
 
-	static void uninstall(ClassLoader cl) {
+	static void unregisterDelegates(ClassLoader cl) {
 
 		// Scan available delegates
 		Map<SpiType, Class<? extends SpiDelegate<?>>> available = scanAvailableDelegates(cl);
@@ -247,7 +248,7 @@ public class SpiDelegateHandlerImpl implements SpiDelegateHandler {
 				Singleton.register(delegateType, delegate);
 
 				if (delegates.containsKey(type)) {
-					delegates.remove(type).shutdown();
+					delegates.remove(type).release(ShutdownPhase.OUT_OF_SERVICE);
 				}
 
 				delegates.put(type, delegate);

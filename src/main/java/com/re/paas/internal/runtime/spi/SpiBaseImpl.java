@@ -21,6 +21,7 @@ import com.re.paas.api.logging.Logger;
 import com.re.paas.api.runtime.ClassLoaders;
 import com.re.paas.api.runtime.spi.AppProvisioner;
 import com.re.paas.api.runtime.spi.BaseSPILocator;
+import com.re.paas.api.runtime.spi.ShutdownPhase;
 import com.re.paas.api.runtime.spi.SpiBase;
 import com.re.paas.api.runtime.spi.SpiDelegate;
 import com.re.paas.api.runtime.spi.SpiDelegateHandler;
@@ -86,8 +87,10 @@ public class SpiBaseImpl implements SpiBase {
 		return isAppTrusted(appId);
 	}
 
-	public void start(Collection<String> apps) {
+	static void start() {
 
+		Collection<String> apps = AppProvisioner.get().listApps();
+		
 		LOG.debug("Discovering classes ..");
 
 		ClassLoader cl = ClassLoaders.getClassLoader();
@@ -125,7 +128,7 @@ public class SpiBaseImpl implements SpiBase {
 		}
 	}
 
-	public void stop() {
+	static void stop() {
 
 		Map<SpiType, SpiDelegate<?>> delegatesMap = SpiDelegateHandler.get().getDelegates();
 
@@ -141,27 +144,17 @@ public class SpiBaseImpl implements SpiBase {
 
 		delegates.forEach(delegate -> {
 
-			// Indicate that delegate needs to be taken out of service
-			delegate.shutdown();
-
 			// Release resources used by this delegate
-			delegate.release();
+			delegate.release(ShutdownPhase.STOP);
 		});
 	}
 
-	public Boolean stop(String appId) {
+	@BlockerTodo("We always return true, but we can also return false to show app is still in use")
+	@BlockerTodo("Process result of delegate.init()")
+	static Boolean stop(String appId, boolean forUninstall) {
 
 		AppClassLoader cl = AppProvisioner.get().getClassloader(appId);
 		cl.setStopping(true);
-
-		stop(cl);
-		return true;
-	}
-
-	@BlockerTodo("Process result of delegate.init()")
-	static void stop(ClassLoader cl) {
-
-		String appId = ClassLoaders.getId(cl);
 
 		// Remove locator type suffixes
 		BaseSPILocator.removeTypeSuffixes(SpiType.values(), appId);
@@ -187,11 +180,9 @@ public class SpiBaseImpl implements SpiBase {
 
 			if (ClassLoaders.getId(delegate.getClass()).equals(appId)) {
 
-				// Indicate that delegate needs to be taken out of service
-				delegate.shutdown();
-
 				// Release resources used by this delegate
-				delegate.release();
+				delegate.release(ShutdownPhase.STOP);
+				
 
 				// If current delegate originates from app, use platform's version for now
 				delegate = com.re.paas.internal.classes.ClassUtil
@@ -205,14 +196,8 @@ public class SpiBaseImpl implements SpiBase {
 
 		// Remove entries for <appId> in the resource validator cache
 		SpiDelegate.emptyResourceValidatorCache(appId);
-	}
-
-	static void install(ClassLoader cl) {
-		SpiDelegateHandlerImpl.install(cl);
-	}
-
-	static void uninstall(ClassLoader cl) {
-		SpiDelegateHandlerImpl.uninstall(cl);
+		
+		return true;
 	}
 
 }

@@ -97,7 +97,7 @@ public abstract class SpiDelegate<T> {
 	 * Indicate that delegate needs to be taken out of service
 	 */
 	@BlockerTodo("Make abstract, and implement across all delegates")
-	public void shutdown() {
+	public void shutdown(ShutdownPhase phase) {
 	}
 
 	/**
@@ -105,7 +105,9 @@ public abstract class SpiDelegate<T> {
 	 */
 	@SecureMethod(factor = Factor.CALLER, allowed = {
 			SpiBase.class }, identityStrategy = IdentityStrategy.SINGLETON, restrictHierarchyAccess = true)
-	public final void release() {
+	public final void release(ShutdownPhase phase) {
+		
+		shutdown(phase);
 
 		MetaFactoryValidators.ResourceValidator.remove(this);
 		SpiDelegateHandler.get().releaseResources(getSpiType());

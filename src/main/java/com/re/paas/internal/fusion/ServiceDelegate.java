@@ -1,8 +1,11 @@
 package com.re.paas.internal.fusion;
 
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -10,16 +13,16 @@ import java.util.function.Consumer;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import org.apache.tika.Tika;
+
 import com.google.common.collect.LinkedHashMultimap;
 import com.google.common.collect.Multimap;
 import com.re.paas.api.classes.Exceptions;
-import com.re.paas.api.classes.ObjectWrapper;
-import com.re.paas.api.clustering.ClusteringServices;
 import com.re.paas.api.fusion.Endpoint;
-import com.re.paas.api.fusion.HttpServerResponse;
 import com.re.paas.api.fusion.HttpStatusCodes;
 import com.re.paas.api.fusion.Route;
 import com.re.paas.api.fusion.RoutingContext;
+import com.re.paas.api.fusion.StaticFileContext;
 import com.re.paas.api.fusion.services.AbstractServiceDelegate;
 import com.re.paas.api.fusion.services.BaseService;
 import com.re.paas.api.fusion.services.DefaultServiceAuthenticator;
@@ -27,10 +30,6 @@ import com.re.paas.api.fusion.services.ServiceAuthenticator;
 import com.re.paas.api.fusion.services.ServiceDescriptor;
 import com.re.paas.api.logging.Logger;
 import com.re.paas.api.runtime.ClassLoaders;
-import com.re.paas.api.runtime.ExecutorFactory;
-import com.re.paas.api.runtime.ExternalContext;
-import com.re.paas.api.runtime.ParameterizedExecutable;
-import com.re.paas.api.runtime.ParameterizedInvokable;
 import com.re.paas.api.runtime.spi.DelegateInitResult;
 import com.re.paas.api.runtime.spi.DelegateSpec;
 import com.re.paas.api.runtime.spi.ResourceStatus;
@@ -38,6 +37,7 @@ import com.re.paas.api.runtime.spi.ResourcesInitResult;
 import com.re.paas.api.tasks.Affinity;
 import com.re.paas.api.utils.ClassUtils;
 import com.re.paas.internal.classes.ClassUtil;
+import com.re.paas.internal.runtime.spi.FusionClassloaders;
 
 @DelegateSpec
 public class ServiceDelegate extends AbstractServiceDelegate {
@@ -46,7 +46,11 @@ public class ServiceDelegate extends AbstractServiceDelegate {
 
 	static final Integer DEFAULT_CACHE_MAX_AGE = 259200;
 
+	private static Tika TIKA_INSTANCE = new Tika();
+
 	public static Pattern uriPattern = Pattern.compile("\\A(\\Q/\\E[\\w]+([-]{1}[\\w]+)*)+\\z");
+
+	private static final boolean enableNativeLoadBalancing = true;
 
 	private static final String SERVICE_DESCRIPTOR_RESOURCE_PREFIX = "svdsc-rp_";
 	private static final String SERVICE_DESCRIPTOR_KEYS = "svdsck";
@@ -135,7 +139,31 @@ public class ServiceDelegate extends AbstractServiceDelegate {
 	}
 
 	@Override
+	public void handler(StaticFileContext ctx) {
+		handler0(ctx);
+	}
+
+	@Override
 	public void handler(RoutingContext ctx) {
+		handler0(ctx);
+	}
+
+	private void handler0(StaticFileContext ctx) {
+		Path p = FusionClassloaders.getStaticPath(ctx.appId(), ctx.staticPath());
+
+		String content = FusionClassloaders.getStaticAsset(ctx.appId(), ctx.staticPath());
+
+		if (content == null) {
+			ctx.response().setStatus(HttpStatusCodes.SC_NOT_FOUND);
+			return;
+		}
+
+		String contentType = TIKA_INSTANCE.detect(p.getFileName().toString());
+
+		ctx.response().writeString(contentType, content);
+	}
+
+	private void handler0(RoutingContext ctx) {
 
 		Route route = ctx.route();
 
@@ -157,7 +185,7 @@ public class ServiceDelegate extends AbstractServiceDelegate {
 
 			// No matching service descriptor was found for this route, return 404
 
-			ctx.response().setStatusCode(HttpStatusCodes.SC_NOT_FOUND);
+			ctx.response().setStatus(HttpStatusCodes.SC_NOT_FOUND);
 
 			return;
 		}
@@ -179,62 +207,63 @@ public class ServiceDelegate extends AbstractServiceDelegate {
 			ServiceAuthenticator authenticator = ClassUtil.createInstance(clazz);
 
 			if (!authenticator.authenticate(ctx)) {
-				ctx.response().setStatusCode(HttpStatusCodes.SC_UNAUTHORIZED);
+				ctx.response().setStatus(HttpStatusCodes.SC_UNAUTHORIZED);
 			}
 		}
 
-		// Construct ParameterizedExecutable instance that we can pass on to any
-		// available node in the cluster to service
+		// Process Request
 
-		ClassLoader cl = ClassLoaders.getClassLoader(route.getAppId());
+		String appId = route.getAppId();
 
-		ParameterizedExecutable<RoutingContext, HttpServerResponse> executable = buildExecutable(cl, sDescriptors, ctx);
+		Handlers.defaultHeadHandler(appId).accept(ctx);
 
-		HttpServerResponse response = ClusteringServices.get().execute(executable).join();
+		for (ServiceDescriptor sDescriptor : sDescriptors) {
 
-		// Re-ingest the response of this http request
-		((RoutingContextImpl) ctx).setResponse(response);
+			try {
 
-	}
+				Class<?> clazz = ClassLoaders.getClassLoader(appId)
+						.loadClass(ClassUtils.getName(RoutingContextHandler.class));
 
-	private static ParameterizedExecutable<RoutingContext, HttpServerResponse> buildExecutable(ClassLoader cl,
-			List<ServiceDescriptor> sDescriptors, RoutingContext ctx) {
+				Class<?>[] argumentTypes = new Class<?>[] { ServiceDescriptor.class, RoutingContext.class };
+				Method m = clazz.getDeclaredMethod("handle", argumentTypes);
 
-		String appId = ClassLoaders.getId(cl);
+				m.invoke(null, sDescriptor, ctx);
 
-		ParameterizedInvokable<RoutingContext, HttpServerResponse> i = (context) -> {
-
-			Handlers.defaultHeadHandler(appId).accept(context);
-
-			for (ServiceDescriptor sDescriptor : sDescriptors) {
-
-				try {
-
-					Class<?> clazz = ClassLoaders.getClassLoader(appId)
-							.loadClass(ClassUtils.getName(RoutingContextHandler.class));
-
-					Class<?>[] argumentTypes = new Class<?>[] { ServiceDescriptor.class, RoutingContext.class };
-					Method m = clazz.getDeclaredMethod("handle", argumentTypes);
-
-					m.invoke(null, sDescriptor, context);
-
-				} catch (ClassNotFoundException | NoSuchMethodException | SecurityException | IllegalAccessException
-						| IllegalArgumentException | InvocationTargetException e) {
-					Exceptions.throwRuntime(e);
-				}
-
-				if (context.response().ended()) {
-					break;
-				}
+			} catch (ClassNotFoundException | NoSuchMethodException | SecurityException | IllegalAccessException
+					| IllegalArgumentException | InvocationTargetException e) {
+				Exceptions.throwRuntime(e);
 			}
 
-			Handlers.defaultTailHandler(appId).accept(context);
+			if (ctx.response().isCommited()) {
+				break;
+			}
+		}
 
-			return context.response();
-		};
+		Handlers.defaultTailHandler(appId).accept(ctx);
 
-		return ExecutorFactory.get().buildFunction(new ObjectWrapper<ClassLoader>(cl), i, ctx,
-				new ExternalContext(appId, true, sDescriptors.get(0).getEndpoint().affinity()));
+		finalize(ctx);
+	}
+
+	private static void finalize(RoutingContext context) {
+
+		String contentType = context.request().getHeader("Content-Type");
+
+		if (contentType != null && contentType.equals("multipart/form-data")) {
+
+			// Delete any part files on the file system, if any
+			context.request().getParts().forEach(part -> {
+				try {
+					part.delete();
+				} catch (IOException e) {
+					Exceptions.throwRuntime(e);
+				}
+			});
+		}
+
+		// Flush request, if necessary
+		if (!context.response().isCommited()) {
+			context.response().flushBuffer();
+		}
 	}
 
 	/**
@@ -305,7 +334,9 @@ public class ServiceDelegate extends AbstractServiceDelegate {
 				}
 
 				if (endpoint.affinity() == Affinity.ALL) {
-					return ResourceStatus.ERROR.setMessage("%s: Please provide an affinity that is single-node intrinsic", ClassUtils.asString(method));
+					return ResourceStatus.ERROR.setMessage(
+							"%s: Please provide an affinity that is single-node intrinsic",
+							ClassUtils.asString(method));
 				}
 
 				consumer.accept(new FusionServiceContext(service, endpoint, method, i == methods.length - 1));

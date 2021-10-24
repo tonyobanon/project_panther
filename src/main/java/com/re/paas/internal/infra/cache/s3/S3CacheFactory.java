@@ -2,6 +2,8 @@ package com.re.paas.internal.infra.cache.s3;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.BasicAWSCredentials;
@@ -14,11 +16,17 @@ import com.amazonaws.services.s3.model.CreateBucketRequest;
 import com.re.paas.api.Platform;
 import com.re.paas.api.annotations.develop.BlockerTodo;
 import com.re.paas.api.classes.Exceptions;
+import com.re.paas.api.clustering.ClusteringServices;
 import com.re.paas.api.infra.cache.Cache;
 import com.re.paas.api.infra.cache.CacheAdapter;
 import com.re.paas.api.infra.cache.CacheFactory;
+import com.re.paas.api.runtime.spi.ShutdownPhase;
+import com.re.paas.internal.clustering.ClusterWideTask;
 
 public class S3CacheFactory implements CacheFactory<String, Object> {
+
+	private static final String cacheEvicterTaskName = "cache_evicter";
+	private static ScheduledExecutorService cacheEvicterExecutor;
 
 	private static final String bucketPrefix = Platform.getPlatformPrefix();
 	static final String expBucketSuffix = "_$exp";
@@ -117,23 +125,43 @@ public class S3CacheFactory implements CacheFactory<String, Object> {
 	}
 
 	@Override
-	public Boolean supportsAutoExpiry() {
-		return false;
-	}
-
-	@Override
 	public List<String> bucketList() {
 		return bucketList;
 	}
 
-	@BlockerTodo
 	@Override
-	public void shutdown() {
-		
-		CacheEvicter evicter = ((S3Adapter)getAdapter()).getCacheEvicter();
-		
-		if (evicter != null) {
-			evicter.stop();
+	public void initialize() {
+
+		ClusteringServices cs = ClusteringServices.get();
+
+		if (cs.isExecutioner()) {
+
+			// Register cache eviction task
+
+			ClusterWideTask task = new ClusterWideTask(cacheEvicterTaskName, () -> {
+				
+				cacheEvicterExecutor = Executors.newSingleThreadScheduledExecutor();
+				
+				CacheEvicter.start((S3CacheFactory) CacheAdapter.getDelegate().getCacheFactory(), cacheEvicterExecutor);
+			});
+
+			ClusteringServices.get().addClusterWideTask(task);
+		}
+	}
+
+	@Override
+	public void shutdown(ShutdownPhase phase) {
+
+		ClusteringServices cs = ClusteringServices.get();
+
+		if (cs.isExecutioner()) {
+			
+			assert cacheEvicterExecutor != null;
+			
+			cacheEvicterExecutor.shutdown();
+
+			// Remove cache eviction task
+			ClusteringServices.get().removeClusterWideTask(cacheEvicterTaskName);
 		}
 
 		AmazonS3 s3Client = createClient();
@@ -143,7 +171,7 @@ public class S3CacheFactory implements CacheFactory<String, Object> {
 			s3Client.deleteBucket(bucketName);
 			s3Client.deleteBucket(bucketName + expBucketSuffix);
 		}
-		
+
 		S3CacheFactory.bucketList.clear();
 	}
 

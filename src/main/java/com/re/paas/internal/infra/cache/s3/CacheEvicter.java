@@ -1,12 +1,12 @@
 package com.re.paas.internal.infra.cache.s3;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -35,27 +35,19 @@ import com.re.paas.api.utils.Dates;
 
 public class CacheEvicter {
 
-	private S3CacheFactory factory;
-	private ScheduledExecutorService executor;
+	private static S3CacheFactory factory;
 
 	private static Integer queryLimitSize = 1000000;
 	private static Integer perNodeBatchSize = 100000;
 	private static Integer perThreadBatchSize = 1000;
 
-	CacheEvicter(S3CacheFactory factory) {
-		this.factory = factory;
+	static void start(S3CacheFactory factory, ScheduledExecutorService executor) {
+		CacheEvicter.factory = factory;
+
+		executor.scheduleAtFixedRate(CacheEvicter::reap, 60, 60, TimeUnit.SECONDS);
 	}
 
-	void start() {
-		executor = Executors.newSingleThreadScheduledExecutor();
-		executor.scheduleAtFixedRate(this::reap, 60, 60, TimeUnit.SECONDS);
-	}
-
-	void stop() {
-		executor.shutdown();
-	}
-
-	private void reap() {
+	private static void reap() {
 
 		List<String> bucketList = S3CacheFactory.bucketList;
 
@@ -126,8 +118,7 @@ public class CacheEvicter {
 					String dateStr = null;
 
 					try {
-						dateStr = new String(
-								client.getObject(spec.getBucket(), key).getObjectContent().readAllBytes());
+						dateStr = new String(client.getObject(spec.getBucket(), key).getObjectContent().readAllBytes());
 					} catch (SdkClientException | IOException e) {
 						Exceptions.throwRuntime(e);
 					}
@@ -145,28 +136,25 @@ public class CacheEvicter {
 		List<CompletableFuture<?>> futures = new ArrayList<>();
 		ObjectWrapper<AtomicInteger> deletedCount = new ObjectWrapper<>();
 
-		
 		EvictionContext ctx = new EvictionContext(perNodeBatchSize, spec -> {
 
 			ParameterizedExecutable<EvictionSpec, Integer> i = ExecutorFactory.get().buildFunction(
 					new ObjectWrapper<ClassLoader>(ClassLoaders.getClassLoader()), invokable, spec,
-					new ExternalContext(AppProvisioner.DEFAULT_APP_ID, false, Affinity.ANY)
-			);
+					new ExternalContext(AppProvisioner.DEFAULT_APP_ID, false, Affinity.ANY));
 
-			CompletableFuture<?> f = ClusteringServices.get().execute(i)
-					.thenAccept(delta -> {
+			CompletableFuture<?> f = ClusteringServices.get().execute(i).thenAccept(delta -> {
 				deletedCount.get().addAndGet(delta);
 			});
 
 			futures.add(f);
-			
+
 		}).onStart(() -> {
 
 			futures.clear();
 			deletedCount.set(new AtomicInteger());
 
 		}).onEnd(() -> {
-			
+
 			CompletableFuture.allOf(futures.toArray(new CompletableFuture[futures.size()])).join();
 			return deletedCount.get().get();
 		});
@@ -174,7 +162,9 @@ public class CacheEvicter {
 		return ctx;
 	}
 
-	private static class EvictionContext {
+	private static class EvictionContext implements Serializable {
+
+		private static final long serialVersionUID = 1L;
 
 		private final int maxKeySize;
 		private final Consumer<EvictionSpec> keysConsumer;
@@ -233,7 +223,9 @@ public class CacheEvicter {
 		}
 	}
 
-	public static class EvictionSpec {
+	public static class EvictionSpec implements Serializable {
+
+		private static final long serialVersionUID = 1L;
 
 		private final String bucket;
 		private final List<String> keys;

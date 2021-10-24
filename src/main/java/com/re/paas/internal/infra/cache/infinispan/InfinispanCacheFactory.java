@@ -12,6 +12,7 @@ import com.re.paas.api.clustering.ClusteringServices;
 import com.re.paas.api.infra.cache.Cache;
 import com.re.paas.api.infra.cache.CacheAdapter;
 import com.re.paas.api.infra.cache.CacheFactory;
+import com.re.paas.api.runtime.spi.ShutdownPhase;
 
 public class InfinispanCacheFactory implements CacheFactory<String, Object> {
 
@@ -56,18 +57,13 @@ public class InfinispanCacheFactory implements CacheFactory<String, Object> {
 	}
 
 	@Override
-	public Boolean supportsAutoExpiry() {
-		return false;
-	}
-
-	@Override
 	public List<String> bucketList() {
 		return bucketList;
 	}
 
 	@Override
 	@BlockerTodo
-	public void shutdown() {
+	public void shutdown(ShutdownPhase phase) {
 
 		for (String bucket : bucketList) {
 			InfinispanCache cache = (InfinispanCache) get(bucket);

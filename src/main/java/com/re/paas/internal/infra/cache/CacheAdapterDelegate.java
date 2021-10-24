@@ -6,6 +6,7 @@ import com.re.paas.api.adapters.LoadPhase;
 import com.re.paas.api.annotations.develop.BlockerTodo;
 import com.re.paas.api.infra.cache.AbstractCacheAdapterDelegate;
 import com.re.paas.api.infra.cache.CacheFactory;
+import com.re.paas.api.runtime.spi.ShutdownPhase;
 
 public class CacheAdapterDelegate extends AbstractCacheAdapterDelegate {
 
@@ -27,17 +28,20 @@ public class CacheAdapterDelegate extends AbstractCacheAdapterDelegate {
 			return factory;
 		}
 
-		CacheFactory<String, Object> factory = getAdapter().cacheFactory(getConfig().getFields());
-
-		CacheAdapterDelegate.factory = factory;
+		factory = getAdapter().cacheFactory(getConfig().getFields());
+		factory.initialize();
+		
 		return factory;
 	}
 
+
+	@BlockerTodo("Deleting the entries (just like that) will adversely affect tasks that depend on on cached entries")
 	@Override
-	public void shutdown() {
-		if (factory != null) {
-			factory.shutdown();
-		}
+	public void shutdown(ShutdownPhase phase) {
+		
+		assert factory != null;
+		
+		factory.shutdown(phase);
 	}
 
 	@BlockerTodo

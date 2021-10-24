@@ -1,7 +1,7 @@
 package com.re.paas.internal.runtime.spi.locators;
 
-import com.re.paas.api.cryto.AbstractCryptoAdapterDelegate;
-import com.re.paas.api.cryto.CryptoAdapter;
+import com.re.paas.api.crytography.AbstractCryptoAdapterDelegate;
+import com.re.paas.api.crytography.CryptoAdapter;
 import com.re.paas.api.runtime.spi.BaseSPILocator;
 import com.re.paas.api.runtime.spi.Resource;
 import com.re.paas.api.runtime.spi.SpiDelegate;
