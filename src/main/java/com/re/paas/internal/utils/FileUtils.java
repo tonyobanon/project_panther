@@ -7,9 +7,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Comparator;
 import java.util.Enumeration;
-import java.util.stream.Stream;
 import java.util.zip.DataFormatException;
 import java.util.zip.Deflater;
 import java.util.zip.Inflater;
@@ -103,17 +101,19 @@ public class FileUtils {
 		}
 	}
 
-	public static void deleteDirectory(Path path) throws IOException {
+	public static void delete(Path path) throws IOException {
 
-		try (Stream<Path> walk = Files.walk(path)) {
-			walk.sorted(Comparator.reverseOrder()).forEach((p) -> {
+		if (Files.isDirectory(path)) {
+			Files.list(path).forEach(p -> {
 				try {
-					Files.delete(p);
+					delete(p);
 				} catch (IOException e) {
 					Exceptions.throwRuntime(e);
 				}
-			});
+			});	
 		}
+
+		Files.delete(path);
 	}
 
 }

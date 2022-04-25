@@ -33,11 +33,14 @@ public class FusionClassloaders {
 	private static final Map<String, ClassLoader> fusionClassloaders = new HashMap<>();
 	private static String appIdLock;
 
+	private static final Map<String, byte[]> fileCache = new HashMap<>();
+
 	static void init() {
 
 		Path fusionClient = getPlatformFusionClient();
 
 		if (fusionClient != null) {
+			// If a component library exists, load it
 			addFusionClient(AppProvisioner.DEFAULT_APP_ID, fusionClient);
 		}
 	}
@@ -80,7 +83,7 @@ public class FusionClassloaders {
 		try {
 
 			if (Files.exists(p)) {
-				FileUtils.deleteDirectory(p);
+				FileUtils.delete(p);
 			}
 
 			Files.createDirectories(p);
@@ -126,7 +129,8 @@ public class FusionClassloaders {
 		}
 
 		// All packages in app: <appId> must be in the below format, as the packages
-		// accross all apps are namespaced in this way, so that FusionClassloaders.loadComponentClass(...)
+		// accross all apps are namespaced in this way, so that
+		// FusionClassloaders.loadComponentClass(...)
 		// will work properly
 		String allowedPkgName = Platform.getComponentBasePkg() + "." + appId;
 
@@ -164,6 +168,10 @@ public class FusionClassloaders {
 		}
 
 		CustomClassLoader cl = new CustomClassLoader(false, appId).disableForwarding().setPath(classesDir.toUri());
+
+		// Allow deep reflection
+		// SystemClassLoaderImpl scl = (SystemClassLoaderImpl) ClassLoader.getSystemClassLoader();
+		// cl.getUnnamedModule().addOpens(allowedPkgName, scl.getClassLoader().getUnnamedModule());
 
 		fusionClassloaders.put(appId, cl);
 
@@ -244,13 +252,13 @@ public class FusionClassloaders {
 	}
 
 	public static String getComponentHtmlClient(String appId, String assetId) {
-		String s = getStaticAsset(appId, "components" + File.separator + assetId + File.separator + "client.html");
+		byte[] b = getStaticAsset(appId, "components" + File.separator + assetId + File.separator + "client.html");
 
-		if (s == null) {
+		if (b == null) {
 			Exceptions.throwRuntime("Cannot find html client; appId=" + appId + ", assetId=" + assetId);
 		}
 
-		return s;
+		return new String(b, Charset.defaultCharset());
 	}
 
 	@SecureMethod
@@ -258,11 +266,16 @@ public class FusionClassloaders {
 		return getFusionStaticPath().resolve(appId).resolve(path);
 	}
 
-	public static String getStaticAsset(String appId, String path) {
+	public static byte[] getStaticAsset(String appId, String path) {
 
 		acquireLock(appId);
 
 		Path p = getStaticPath(appId, path);
+		byte[] b = fileCache.get(p.toString());
+
+		if (b != null) {
+			return b;
+		}
 
 		if (!Files.exists(p)) {
 			return null;
@@ -270,9 +283,11 @@ public class FusionClassloaders {
 
 		try {
 			InputStream in = Files.newInputStream(p);
+			b = IOUtils.toByteArray(in);
 
-			byte[] bytes = IOUtils.toByteArray(in);
-			return new String(bytes, Charset.defaultCharset());
+			fileCache.put(p.toString(), b);
+
+			return b;
 
 		} catch (IOException ex) {
 			Exceptions.throwRuntime(ex);

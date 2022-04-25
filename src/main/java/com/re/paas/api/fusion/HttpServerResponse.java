@@ -24,7 +24,7 @@ public interface HttpServerResponse extends Cloneable, Serializable {
 
 	HttpServerResponse writeHtml(String contents);
 	
-	HttpServerResponse writeString(String contentType, String contents);
+	HttpServerResponse write(String contentType, byte[] contents);
 	
 	HttpServerResponse render(BaseComponent component, Boolean testMode);
 	

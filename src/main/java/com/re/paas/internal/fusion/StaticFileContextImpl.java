@@ -1,5 +1,8 @@
 package com.re.paas.internal.fusion;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import com.re.paas.api.fusion.HttpServerRequest;
 import com.re.paas.api.fusion.HttpServerResponse;
 import com.re.paas.api.fusion.StaticFileContext;
@@ -14,6 +17,8 @@ class StaticFileContextImpl implements StaticFileContext {
 	
 	private HttpServerRequest request;
 	private HttpServerResponse response;
+	
+	public static final Map<String, byte[]> fileCache = new HashMap<>();
 	
 	public StaticFileContextImpl(String appId, String staticPath, HttpServletRequest req, HttpServletResponse resp) {
 		this.appId = appId;

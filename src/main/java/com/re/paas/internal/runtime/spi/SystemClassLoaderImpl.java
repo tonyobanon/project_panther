@@ -30,8 +30,10 @@ public class SystemClassLoaderImpl extends ClassLoader implements SystemClassLoa
 		}
 
 		this.cl = cl;
-		
-		
+	}
+	
+	void appendToClassPathForInstrumentation(String p) {
+		cl.appendToClassPathForInstrumentation(p);
 	}
 
 	@Override
@@ -42,6 +44,7 @@ public class SystemClassLoaderImpl extends ClassLoader implements SystemClassLoa
 		}
 		
 		if (name.startsWith(Platform.getComponentBasePkg() + ".")) {
+			// If this is a component class, load it specially
 			return FusionClassloaders.loadComponentClass(name);
 		}
 
@@ -58,7 +61,7 @@ public class SystemClassLoaderImpl extends ClassLoader implements SystemClassLoa
 		return cl.findClass(name);
 	}
 
-	ClassLoader getClassloader() {
+	ClassLoader getClassLoader() {
 		return this.cl;
 	}
 

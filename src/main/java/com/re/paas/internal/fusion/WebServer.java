@@ -47,7 +47,7 @@ public class WebServer {
 	// The port on the node through which the service available through
 	// https://matthewpalmer.net/kubernetes-app-developer/articles/kubernetes-ports-targetport-nodeport-service.html
 	
-	private static final Integer serviceHttpPort = 8081;
+	private static final Integer serviceHttpPort = 8082;
 	private static final Integer serviceHttpsPort = 8433;
 
 	
@@ -145,9 +145,21 @@ public class WebServer {
 		public RequestHandler() {
 			
 		}
-
+		
 		@Override
 		public void handle(String target, Request baseRequest, jakarta.servlet.http.HttpServletRequest request,
+				jakarta.servlet.http.HttpServletResponse response)
+				throws IOException, jakarta.servlet.ServletException {
+			
+			try {
+			handle0(target, baseRequest, request, response);
+			} catch (Exception e) {
+				e.printStackTrace();
+				Exceptions.throwRuntime(e);
+			}
+		}
+		
+		private void handle0(String target, Request baseRequest, jakarta.servlet.http.HttpServletRequest request,
 				jakarta.servlet.http.HttpServletResponse response)
 				throws IOException, jakarta.servlet.ServletException {
 

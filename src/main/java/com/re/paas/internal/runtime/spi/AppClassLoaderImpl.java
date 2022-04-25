@@ -152,7 +152,7 @@ public class AppClassLoaderImpl extends AppClassLoader {
 				SystemClassLoaderImpl scl = (SystemClassLoaderImpl) ClassLoaders.getClassLoader();
 
 				// If the classes was loaded from the system class loader
-				if (c.getClassLoader() == scl.getClassloader()) {
+				if (c.getClassLoader() == scl.getClassLoader()) {
 
 					SecurityManager sm = System.getSecurityManager();
 

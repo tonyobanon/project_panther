@@ -5,6 +5,7 @@ import java.io.InputStream;
 import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -256,7 +257,6 @@ public class ClassUtils<T> {
 		try {
 
 			Field f = clazz.getDeclaredField(name);
-
 			f.setAccessible(true);
 
 			return f.get(instance);
@@ -265,6 +265,22 @@ public class ClassUtils<T> {
 			Exceptions.throwRuntime(e);
 			return null;
 		}
+	}
+	
+	public static Map<String, Object> toObjectMap(Object o) {
+		Map<String, Object> m = new HashMap<>();
+		
+		for (Field f : o.getClass().getDeclaredFields()) {
+			if (!Modifier.isStatic(f.getModifiers())) {
+				try {
+					m.put(f.getName(), f.get(o));
+				} catch (IllegalArgumentException | IllegalAccessException e) {
+					Exceptions.throwRuntime(e);
+				}
+			}
+		}
+		
+		return m;
 	}
 
 	/**

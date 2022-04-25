@@ -20,7 +20,7 @@ dependencies {
 
 
 	implementation "commons-io:commons-io:2.6"
-	implementation "org.apache.tika:tika-core:1.16"
+	implementation "org.apache.tika:tika-core:2.3.0"
 
 	implementation "com.ibm.icu:icu4j-localespi:60.2"
 	implementation "com.ibm.icu:icu4j-charset:60.2"
@@ -65,6 +65,7 @@ dependencies {
 	implementation "org.apache.calcite:calcite-core:1.27.0"
 	implementation "org.apache.calcite:calcite-linq4j:1.27.0"
 	implementation "org.apache.calcite:calcite-server:1.27.0"
+	
 }
 
 

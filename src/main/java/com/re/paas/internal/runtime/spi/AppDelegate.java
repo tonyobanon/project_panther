@@ -17,6 +17,7 @@ import com.re.paas.api.Singleton;
 import com.re.paas.api.annotations.develop.PlatformInternal;
 import com.re.paas.api.classes.ObjectSerializer;
 import com.re.paas.api.clustering.ClusteringServices;
+import com.re.paas.api.fusion.MimeTypeDetector;
 import com.re.paas.api.infra.filesystem.NativeFileSystem;
 import com.re.paas.api.logging.LogPipeline;
 import com.re.paas.api.logging.LoggerFactory;
@@ -30,6 +31,7 @@ import com.re.paas.api.runtime.spi.SpiLocatorHandler;
 import com.re.paas.api.utils.Base64;
 import com.re.paas.api.utils.JsonParser;
 import com.re.paas.internal.clustering.ClusteringServicesImpl;
+import com.re.paas.internal.fusion.MimeTypeDetectorImpl;
 import com.re.paas.internal.fusion.WebServer;
 import com.re.paas.internal.infra.filesystem.FileSystemProviders;
 import com.re.paas.internal.infra.filesystem.NativeFileSystemImpl;
@@ -80,6 +82,7 @@ public class AppDelegate implements Callable<Void> {
 		Singleton.register(Base64.class, new Base64Impl());
 
 		Singleton.register(ObjectSerializer.class, new DefaultObjectSerializer());
+		Singleton.register(MimeTypeDetector.class, new MimeTypeDetectorImpl());
 
 		// Register factories
 		Factory.register(ExecutorFactory.class,

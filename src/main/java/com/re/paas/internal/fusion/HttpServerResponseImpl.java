@@ -3,7 +3,7 @@ package com.re.paas.internal.fusion;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintWriter;
-import java.io.Writer;
+import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.Locale;
 
@@ -11,7 +11,7 @@ import com.re.paas.api.classes.Exceptions;
 import com.re.paas.api.fusion.BaseComponent;
 import com.re.paas.api.fusion.Cookie;
 import com.re.paas.api.fusion.HttpServerResponse;
-import com.re.paas.api.utils.JsonParser;
+import com.re.paas.internal.components.Marshaller;
 import com.re.paas.internal.runtime.spi.CustomClassLoader;
 import com.re.paas.internal.runtime.spi.FusionClassloaders;
 
@@ -21,7 +21,7 @@ import jakarta.servlet.http.HttpServletResponse;
 public class HttpServerResponseImpl implements HttpServerResponse {
 
 	private static final long serialVersionUID = 1L;
-	
+
 	HttpServletRequest req;
 	HttpServletResponse resp;
 
@@ -32,7 +32,7 @@ public class HttpServerResponseImpl implements HttpServerResponse {
 
 	@Override
 	public void addCookie(Cookie cookie) {
-		ensureNotCommitted(); 
+		ensureNotCommitted();
 		this.resp.addCookie(CookieHelper.toServletCookie(cookie));
 	}
 
@@ -44,11 +44,11 @@ public class HttpServerResponseImpl implements HttpServerResponse {
 	@Override
 	public HttpServerResponse setStatus(int statusCode) {
 		ensureNotCommitted();
-		
+
 		this.resp.setStatus(statusCode);
 		return this;
 	}
-	
+
 	@Override
 	public Collection<String> getHeaderNames() {
 		return this.resp.getHeaderNames();
@@ -62,42 +62,40 @@ public class HttpServerResponseImpl implements HttpServerResponse {
 	@Override
 	public HttpServerResponse setHeader(String name, String value) {
 		ensureNotCommitted();
-		
+
 		this.resp.setHeader(name, value);
 		return this;
 	}
 
-	
 	@Override
 	public HttpServerResponse addHeader(String name, String value) {
 		ensureNotCommitted();
-		
+
 		this.resp.addHeader(name, value);
 		return this;
 	}
-	
+
 	@Override
 	public HttpServerResponse writeHtml(String contents) {
-		return writeString("text/html", contents);
+		return write("text/html", contents.getBytes(StandardCharsets.UTF_8));
 	}
 
 	@Override
-	public HttpServerResponse writeString(String contentType, String contents) {
+	public HttpServerResponse write(String contentType, byte[] bytes) {
 		ensureNotCommitted();
 
-		setContentType(contentType);
-		
-		Writer writer = getWriter();
-		
 		try {
-			
-			writer.write(contents);
-			writer.flush();
-			
+
+			setContentType(contentType);
+			setContentLength(bytes.length);
+
+			getOutputStream().write(bytes);
+			getOutputStream().flush();
+
 		} catch (IOException e) {
 			Exceptions.throwRuntime(e);
 		}
-		
+
 		return this;
 	}
 
@@ -105,49 +103,49 @@ public class HttpServerResponseImpl implements HttpServerResponse {
 	public boolean isCommited() {
 		return this.resp.isCommitted();
 	}
-	
+
 	@Override
 	public Locale getLocale() {
 		return this.resp.getLocale();
 	}
-	
+
 	@Override
 	public HttpServerResponse setLocale(Locale locale) {
 		this.resp.setLocale(locale);
 		return this;
 	}
-	
+
 	@Override
 	public void reset() {
 		this.resp.reset();
 	}
-	
+
 	@Override
 	public void flushBuffer() {
 		ensureNotCommitted();
-		
+
 		try {
 			this.resp.flushBuffer();
 		} catch (IOException e) {
 			Exceptions.throwRuntime(e);
 		}
 	}
-	
+
 	@Override
 	public void resetBuffer() {
 		this.resp.resetBuffer();
 	}
-	
+
 	@Override
 	public void setBufferSize(int size) {
 		this.resp.setBufferSize(size);
 	}
-	
+
 	@Override
 	public int getBufferSize() {
 		return this.resp.getBufferSize();
 	}
-	
+
 	@Override
 	public OutputStream getOutputStream() {
 		try {
@@ -157,30 +155,30 @@ public class HttpServerResponseImpl implements HttpServerResponse {
 			return null;
 		}
 	}
-	
+
 	@Override
 	public String getContentType() {
 		return this.resp.getContentType();
 	}
-	
+
 	@Override
 	public HttpServerResponse setContentType(String type) {
 		this.resp.setContentType(type);
 		return this;
 	}
-	
+
 	@Override
 	public HttpServerResponse setContentLength(int len) {
 		this.resp.setContentLength(len);
 		return this;
 	}
-	
+
 	@Override
 	public HttpServerResponse setContentLengthLong(long len) {
 		this.resp.setContentLengthLong(len);
 		return this;
 	}
-	
+
 	@Override
 	public PrintWriter getWriter() {
 		try {
@@ -195,6 +193,7 @@ public class HttpServerResponseImpl implements HttpServerResponse {
 		// Todo
 		return false;
 	}
+	
 
 	@Override
 	public HttpServerResponse render(BaseComponent component, Boolean testMode) {
@@ -217,15 +216,16 @@ public class HttpServerResponseImpl implements HttpServerResponse {
 
 		if (!testMode) {
 
-			String data = JsonParser.get().toString(component);
+			String data = Marshaller.serialize(component);
 
-			contents.replace("\"{{data}}\"", data);
+			contents = contents.replace("\"{{data}}\"", "() => (" + data + ")");
 		}
 
+		// This is required to load assets URL since they are not contextualized with appId
 		addCookie(new CookieImpl(FusionClassloaders.APP_ID_COOKIE, appId).setPath("/").setMaxAge(84900));
 
 		writeHtml(contents);
-		
+
 		return this;
 	}
 
@@ -233,7 +233,7 @@ public class HttpServerResponseImpl implements HttpServerResponse {
 	public HttpServerResponse render(BaseComponent component) {
 		return render(component, false);
 	}
-	
+
 	private void ensureNotCommitted() {
 		if (this.resp.isCommitted()) {
 			throw new IllegalStateException("The response has already been committed, and cannot be written to");

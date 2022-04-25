@@ -6,23 +6,45 @@ import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Map;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class Playground {
 
 	public static void main(String[] args) throws SocketException, UnknownHostException {
 		
+		System.out.println("\"\t%%l".replaceAll("\"\\s*%%", ""));;
+ 
+
+		
+		
+//		ModuleLayer.boot().modules().stream()
+//        .map(Module::getName)
+//        .forEach(System.out::println);
+		
+//		System.out.println(ClassLoader.getSystemClassLoader().getUnnamedModule().a);
+		
+		
+		
+//		System.out.println(
+//				"""
+//					%%new components['$type']({
+//				input: $data,
+//			})
+//		C""".replaceAll("\\s*%%", ""));
 	
 //		System.out.println(ClassLoader.getSystemClassLoader());
 //		
 //		System.out.println(System.getProperty("java.ext.dirs"));
 //		System.out.println(System.getProperty("sun.boot.class.path"));
 //		
-		ByteBuffer aBuf = ByteBuffer.allocate(2);
-		aBuf.put(new byte[] {56, 67});
+//		ByteBuffer aBuf = ByteBuffer.allocate(2);
+//		aBuf.put(new byte[] {56, 67});
 //		
 		
-		ByteBuffer bBuf = ByteBuffer.allocate(2);
-		bBuf.put(new byte[] {56, 67});
+//		ByteBuffer bBuf = ByteBuffer.allocate(2);
+//		bBuf.put(new byte[] {56, 67});
 		
 //		
 //		Object o = 5l;
@@ -34,18 +56,18 @@ public class Playground {
 //		Object o6 = (short) 56;
 //		
 		
-		System.out.println(aBuf.limit());
-		System.out.println(aBuf.capacity());
-		
-		
-		aBuf.position(0);
-		bBuf.position(0);
-
-		
-		System.out.println(aBuf.compareTo(bBuf));
-		
-		System.out.println(aBuf.position());
-		
+//		System.out.println(aBuf.limit());
+//		System.out.println(aBuf.capacity());
+//		
+//		
+//		aBuf.position(0);
+//		bBuf.position(0);
+//
+//		
+//		System.out.println(aBuf.compareTo(bBuf));
+//		
+//		System.out.println(aBuf.position());
+//		
 	}
 
 }

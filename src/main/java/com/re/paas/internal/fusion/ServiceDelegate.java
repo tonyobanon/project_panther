@@ -1,25 +1,25 @@
 package com.re.paas.internal.fusion;
 
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-
-import org.apache.tika.Tika;
 
 import com.google.common.collect.LinkedHashMultimap;
 import com.google.common.collect.Multimap;
 import com.re.paas.api.classes.Exceptions;
 import com.re.paas.api.fusion.Endpoint;
 import com.re.paas.api.fusion.HttpStatusCodes;
+import com.re.paas.api.fusion.MimeTypeDetector;
 import com.re.paas.api.fusion.Route;
 import com.re.paas.api.fusion.RoutingContext;
 import com.re.paas.api.fusion.StaticFileContext;
@@ -46,14 +46,13 @@ public class ServiceDelegate extends AbstractServiceDelegate {
 
 	static final Integer DEFAULT_CACHE_MAX_AGE = 259200;
 
-	private static Tika TIKA_INSTANCE = new Tika();
-
 	public static Pattern uriPattern = Pattern.compile("\\A(\\Q/\\E[\\w]+([-]{1}[\\w]+)*)+\\z");
 
 	private static final boolean enableNativeLoadBalancing = true;
 
 	private static final String SERVICE_DESCRIPTOR_RESOURCE_PREFIX = "svdsc-rp_";
 	private static final String SERVICE_DESCRIPTOR_KEYS = "svdsck";
+
 
 	private <S> List<S> getList(Class<S> T, String namespace) {
 		@SuppressWarnings("unchecked")
@@ -151,16 +150,16 @@ public class ServiceDelegate extends AbstractServiceDelegate {
 	private void handler0(StaticFileContext ctx) {
 		Path p = FusionClassloaders.getStaticPath(ctx.appId(), ctx.staticPath());
 
-		String content = FusionClassloaders.getStaticAsset(ctx.appId(), ctx.staticPath());
+		byte[] b = FusionClassloaders.getStaticAsset(ctx.appId(), ctx.staticPath());
 
-		if (content == null) {
+		if (b == null) {
 			ctx.response().setStatus(HttpStatusCodes.SC_NOT_FOUND);
 			return;
 		}
 
-		String contentType = TIKA_INSTANCE.detect(p.getFileName().toString());
+		String contentType = MimeTypeDetector.get().detect(p.getFileName().toString());
 
-		ctx.response().writeString(contentType, content);
+		ctx.response().addHeader("Cache-Control", "public, max-age=3600").write(contentType, b);
 	}
 
 	private void handler0(RoutingContext ctx) {

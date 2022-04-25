@@ -134,6 +134,8 @@ public class SecureMethodTransformer extends ClassTransformer {
 
 		// Dynamically set the underlying classloader used by the
 		// Jvm system class loader
+		
+		System.out.println(SCL);
 
 		((SystemClassLoaderImpl) ClassLoader.getSystemClassLoader()).setClassLoader(SCL);
 	}

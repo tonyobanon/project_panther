@@ -40,9 +40,11 @@ class CookieHelper {
 	}
 
 	public static String getCookie(jakarta.servlet.http.Cookie[] cookies, String name) {
-		for (jakarta.servlet.http.Cookie c : cookies) {
-			if (c.getName().equals(name)) {
-				return c.getValue();
+		if (cookies != null) {
+			for (jakarta.servlet.http.Cookie c : cookies) {
+				if (c.getName().equals(name)) {
+					return c.getValue();
+				}
 			}
 		}
 		return null;
