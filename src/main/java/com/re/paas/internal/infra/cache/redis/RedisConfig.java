@@ -8,7 +8,6 @@ public class RedisConfig {
 
 	private String username;
 	private String password;
-	private Long maxConnections;
 
 	public String getHost() {
 		return host;
@@ -52,15 +51,6 @@ public class RedisConfig {
 
 	public RedisConfig setPassword(String password) {
 		this.password = password;
-		return this;
-	}
-
-	public Long getMaxConnections() {
-		return maxConnections;
-	}
-
-	public RedisConfig setMaxConnections(Long maxConnections) {
-		this.maxConnections = maxConnections;
 		return this;
 	}
 

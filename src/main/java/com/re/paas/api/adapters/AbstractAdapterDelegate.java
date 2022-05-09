@@ -6,21 +6,22 @@ import java.util.Map;
 import java.util.function.BiConsumer;
 
 import com.re.paas.api.Adapter;
+import com.re.paas.api.logging.Logger;
+import com.re.paas.api.logging.LoggerFactory;
 import com.re.paas.api.runtime.SecureMethod;
 import com.re.paas.api.runtime.SecureMethod.Factor;
 import com.re.paas.api.runtime.SecureMethod.IdentityStrategy;
 import com.re.paas.api.runtime.spi.DelegateInitResult;
-import com.re.paas.api.runtime.spi.DelegateSpec;
 import com.re.paas.api.runtime.spi.ResourceStatus;
 import com.re.paas.api.runtime.spi.SpiDelegate;
-import com.re.paas.api.runtime.spi.SpiType;
 import com.re.paas.api.utils.ClassUtils;
 import com.re.paas.api.utils.Collections;
 import com.re.paas.internal.fusion.services.SystemAdapterService;
 
-@DelegateSpec(dependencies = { SpiType.NODE_ROLE })
 public abstract class AbstractAdapterDelegate<U extends Object, T extends Adapter<U>> extends SpiDelegate<T> {
 
+	// private static final Logger LOG = LoggerFactory.get().getLog(AbstractAdapterDelegate.class);
+	
 	private AdapterConfig config;
 	private static final String ADAPTERS_RESOURCE_NAMESPACE = "ADAPTERS_RESOURCE_NAMESPACE";
 
@@ -41,7 +42,7 @@ public abstract class AbstractAdapterDelegate<U extends Object, T extends Adapte
 
 		// Load config file
 		if (config.load() != null) {
-
+			
 			// Set configuration
 			setConfig(config);
 

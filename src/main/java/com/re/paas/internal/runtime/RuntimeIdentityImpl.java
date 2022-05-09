@@ -12,10 +12,7 @@ import com.re.paas.api.runtime.spi.SpiBase;
 @AppClassLoaderInstrinsic
 public class RuntimeIdentityImpl extends RuntimeIdentity {
 
-	private ClassLoader mainClassloader;
-
-	public RuntimeIdentityImpl() {
-	}
+	private final ClassLoader mainClassloader;
 
 	public RuntimeIdentityImpl(ClassLoader cl) {
 		mainClassloader = cl;
@@ -23,7 +20,7 @@ public class RuntimeIdentityImpl extends RuntimeIdentity {
 
 	@Override
 	public Boolean isPlatformExternal() {
-		return mainClassloader != null;
+		return mainClassloader instanceof AppClassLoader;
 	}
 
 	@Override
@@ -67,5 +64,18 @@ public class RuntimeIdentityImpl extends RuntimeIdentity {
 		}
 
 		return appId;
+	}
+
+	/**
+	 * This is called immediately a new classloader is initialized, inorder for the
+	 * jvm to load the static block
+	 */
+	public static void noOp() {
+	}
+
+	static {
+
+		assert RuntimeIdentity.class.getClassLoader() == RuntimeIdentityImpl.class.getClassLoader();
+		RuntimeIdentity.setInstance(new RuntimeIdentityImpl(RuntimeIdentity.class.getClassLoader()));
 	}
 }

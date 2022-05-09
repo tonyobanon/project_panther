@@ -6,38 +6,31 @@ import com.re.paas.api.adapters.LoadPhase;
 import com.re.paas.api.annotations.develop.BlockerTodo;
 import com.re.paas.api.infra.cache.AbstractCacheAdapterDelegate;
 import com.re.paas.api.infra.cache.CacheFactory;
+import com.re.paas.api.runtime.spi.ShutdownPhase;
 
 public class CacheAdapterDelegate extends AbstractCacheAdapterDelegate {
 
-	private static CacheFactory<String, Object> factory;
+	private CacheFactory<String, Object> factory;
 
 	@Override
 	public Boolean load(LoadPhase phase) {
 		
-		assert phase == LoadPhase.START;
+		this.factory = getAdapter().getResource(getConfig().getFields());
+
+		this.factory.initialize();
 		
-		getCacheFactory(true);
 		return true;
 	}
 
 	@Override
-	public CacheFactory<String, Object> getCacheFactory(boolean loadConfigFile) {
-
-		if (factory != null && !loadConfigFile) {
-			return factory;
-		}
-
-		CacheFactory<String, Object> factory = getAdapter().cacheFactory(getConfig().getFields());
-
-		CacheAdapterDelegate.factory = factory;
-		return factory;
+	public CacheFactory<String, Object> getCacheFactory() {
+		return this.factory;
 	}
 
+
 	@Override
-	public void shutdown() {
-		if (factory != null) {
-			factory.shutdown();
-		}
+	public void shutdown(ShutdownPhase phase) {
+		this.factory.shutdown();
 	}
 
 	@BlockerTodo

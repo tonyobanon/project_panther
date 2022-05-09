@@ -8,6 +8,4 @@ public interface Activator {
 
 	public Boolean isInstalled();
 	
-	public void restartNeeded();
-	
 }

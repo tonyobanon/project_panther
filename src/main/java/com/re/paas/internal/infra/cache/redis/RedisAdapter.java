@@ -41,8 +41,7 @@ public class RedisAdapter implements CacheAdapter {
 						.setDefaultValue(defaultDb.toString()))
 
 				.withField(new SimpleField("username", TEXT, "username"))
-				.withField(new SimpleField("password", TEXT, "password"))
-				.withField(new SimpleField("maxConnections", NUMBER, "maxConnections").setDefaultValue("65000"));
+				.withField(new SimpleField("password", TEXT, "password"));
 
 		return new Form().addSection(section);
 	}
@@ -55,11 +54,10 @@ public class RedisAdapter implements CacheAdapter {
 		Integer database = fields.containsKey("database") ? Integer.parseInt(fields.get("database")) : defaultDb;
 		String username = fields.get("username");
 		String password = fields.get("password");
-		Long maxConnections = Long.parseLong(fields.get("maxConnections"));
 
 		RedisConfig config = new RedisConfig().setHost(host).setPort(port).setDatabase(database).setUsername(username)
-				.setPassword(password).setMaxConnections(maxConnections);
+				.setPassword(password);
 
-		return new RedisCacheFactory(this, "default", config);
+		return new RedisCacheFactory(this, config);
 	}
 }

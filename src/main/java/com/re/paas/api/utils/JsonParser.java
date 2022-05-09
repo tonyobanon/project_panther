@@ -1,9 +1,9 @@
 package com.re.paas.api.utils;
 
+import java.nio.ByteBuffer;
 import java.util.Map;
 
 import com.re.paas.api.Singleton;
-import com.re.paas.api.fusion.Buffer;
 
 public interface JsonParser {
 
@@ -15,7 +15,7 @@ public interface JsonParser {
 	
 	<T> String toString(T o);
 	
-	<T> Buffer toBuffer(T o);
+	<T> ByteBuffer toBuffer(T o);
 
 	<T> T fromString(String json, Class<T> type);
 	

@@ -1,104 +1,95 @@
 package com.re.paas.internal.fusion;
 
-import io.netty.handler.codec.http.DefaultCookie;
-import io.netty.handler.codec.http.ServerCookieEncoder;
-
 import com.re.paas.api.fusion.Cookie;
 
 public class CookieImpl implements Cookie {
 
-	private final io.netty.handler.codec.http.Cookie nettyCookie;
-	private boolean changed;
-	private boolean fromUserAgent;
+	private final String name;
+	private String value;
+	
+	private String domain;
+	private String path;
+	private long maxAge;
+	private boolean secure;
+	private boolean httpOnly;
 
 	public CookieImpl(String name, String value) {
-		this.nettyCookie = new DefaultCookie(name, value);
-		this.changed = true;
+		this.name = name;
+		this.value = value;
 	}
 
-	public CookieImpl(io.netty.handler.codec.http.Cookie nettyCookie) {
-		this.nettyCookie = nettyCookie;
-		fromUserAgent = true;
-	}
-
+	@Override
 	public String getValue() {
-		return nettyCookie.value();
+		return value;
 	}
 
-	public Cookie setValue(final String value) {
-		nettyCookie.setValue(value);
-		this.changed = true;
+	@Override
+	public Cookie setValue(String value) {
+		this.value = value;
 		return this;
 	}
 
+	@Override
 	public String getName() {
-		return nettyCookie.name();
+		return name;
 	}
 
-	public Cookie setDomain(final String domain) {
-		nettyCookie.setDomain(domain);
-		this.changed = true;
+	@Override
+	public Cookie setDomain(String domain) {
+		this.domain = domain;
 		return this;
 	}
 
+	@Override
 	public String getDomain() {
-		return nettyCookie.domain();
+		return domain;
 	}
 
-	public Cookie setPath(final String path) {
-		nettyCookie.setPath(path);
-		this.changed = true;
+	@Override
+	public Cookie setPath(String path) {
+		this.path = path;
 		return this;
 	}
 
+	@Override
 	public String getPath() {
-		return nettyCookie.path();
+		return path;
 	}
 
-	public Cookie setMaxAge(final long maxAge) {
-		nettyCookie.setMaxAge(maxAge);
-		this.changed = true;
+	@Override
+	public Cookie setMaxAge(long maxAge) {
+		this.maxAge = maxAge;
 		return this;
 	}
 
+	@Override
 	public long getMaxAge() {
-		return nettyCookie.maxAge();
+		return maxAge;
 	}
 
-	public Cookie setSecure(final boolean secure) {
-		nettyCookie.setSecure(secure);
-		this.changed = true;
+	@Override
+	public Cookie setSecure(boolean secure) {
+		this.secure = secure;
 		return this;
 	}
 
+	@Override
 	public boolean isSecure() {
-		return nettyCookie.isSecure();
+		return secure;
 	}
 
-	public Cookie setHttpOnly(final boolean httpOnly) {
-		nettyCookie.setHttpOnly(httpOnly);
-		this.changed = true;
+	@Override
+	public Cookie setHttpOnly(boolean httpOnly) {
+		this.httpOnly = httpOnly;
 		return this;
 	}
 
+	@Override
 	public boolean isHttpOnyOnly() {
-		return nettyCookie.isHttpOnly();
+		return httpOnly;
 	}
 
-	public String encode() {
-		return ServerCookieEncoder.encode(nettyCookie);
-	}
-
-	public boolean isChanged() {
-		return changed;
-	}
-
-	public void setChanged(boolean changed) {
-		this.changed = changed;
-	}
-
-	public boolean isFromUserAgent() {
-		return fromUserAgent;
-	}
+	
+	
 
 }

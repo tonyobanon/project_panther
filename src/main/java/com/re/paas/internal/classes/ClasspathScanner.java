@@ -110,7 +110,7 @@ public class ClasspathScanner<T> {
 		// Scan classpath
 
 		try {
-
+		
 			ClassLoader cl = this.cl;
 			Path basePath = Classpaths.get(cl);
 

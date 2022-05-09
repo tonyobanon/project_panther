@@ -3,7 +3,6 @@ package com.re.paas.internal.runtime.spi;
 import java.net.URL;
 
 import com.re.paas.api.Platform;
-import com.re.paas.api.runtime.RuntimeIdentity;
 import com.re.paas.api.runtime.SystemClassLoader;
 
 public class SystemClassLoaderImpl extends ClassLoader implements SystemClassLoader {
@@ -32,6 +31,10 @@ public class SystemClassLoaderImpl extends ClassLoader implements SystemClassLoa
 
 		this.cl = cl;
 	}
+	
+	void appendToClassPathForInstrumentation(String p) {
+		cl.appendToClassPathForInstrumentation(p);
+	}
 
 	@Override
 	protected final Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
@@ -41,6 +44,7 @@ public class SystemClassLoaderImpl extends ClassLoader implements SystemClassLoa
 		}
 		
 		if (name.startsWith(Platform.getComponentBasePkg() + ".")) {
+			// If this is a component class, load it specially
 			return FusionClassloaders.loadComponentClass(name);
 		}
 
@@ -57,7 +61,7 @@ public class SystemClassLoaderImpl extends ClassLoader implements SystemClassLoa
 		return cl.findClass(name);
 	}
 
-	ClassLoader getClassloader() {
+	ClassLoader getClassLoader() {
 		return this.cl;
 	}
 
@@ -67,11 +71,6 @@ public class SystemClassLoaderImpl extends ClassLoader implements SystemClassLoa
 
 	@Override
 	public URL getResource(String name) {
-
-		if (!RuntimeIdentity.getInstance().isTrusted(1)) {
-			throw new SecurityException("Unable to get resource: " + name);
-		}
-
 		return CustomClassLoader.getJvmAppClassLoader().getResource(name);
 	}
 

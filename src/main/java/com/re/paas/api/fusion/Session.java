@@ -1,7 +1,7 @@
 package com.re.paas.api.fusion;
 
-import java.util.Date;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
 public interface Session<K, V> {
 
@@ -9,16 +9,12 @@ public interface Session<K, V> {
 	
 	RoutingContext context();
 	
-	V get(K k);
+	CompletableFuture<V> get(K k);
 	
-	void put(K k, V v);
+	CompletableFuture<V> put(K k, V v);
 	
-	void delete(K k);
+	CompletableFuture<Integer> delete(K k);
 	
-	Map<K, V> data();
-	
-	Date dateCreated();
-	
-	Date dateUpdated();
+	CompletableFuture<Map<K, V>> data();
 	
 }

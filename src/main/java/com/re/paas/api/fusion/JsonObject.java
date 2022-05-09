@@ -3,6 +3,7 @@ package com.re.paas.api.fusion;
 import static java.time.format.DateTimeFormatter.ISO_INSTANT;
 
 import java.math.BigDecimal;
+import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.Base64;
@@ -64,7 +65,7 @@ public class JsonObject implements Iterable<Map.Entry<String, Object>> {
 	 *
 	 * @param buf the buffer to create the instance from.
 	 */
-	public JsonObject(Buffer buf) {
+	public JsonObject(ByteBuffer buf) {
 		fromBuffer(buf);
 	}
 
@@ -769,7 +770,7 @@ public class JsonObject implements Iterable<Map.Entry<String, Object>> {
 	 *
 	 * @return the buffer encoding.
 	 */
-	public Buffer toBuffer() {
+	public ByteBuffer toBuffer() {
 		return JsonParser.get().toBuffer(map);
 	}
 
@@ -923,19 +924,25 @@ public class JsonObject implements Iterable<Map.Entry<String, Object>> {
 		return map.hashCode();
 	}
 
-	public void writeToBuffer(Buffer buffer) {
+	public void writeToBuffer(ByteBuffer buffer) {
 		String encoded = encode();
 		byte[] bytes = encoded.getBytes(StandardCharsets.UTF_8);
-		buffer.appendInt(bytes.length);
-		buffer.appendBytes(bytes);
+		
+		buffer.putInt(bytes.length);
+		buffer.put(bytes);
 	}
 
-	public int readFromBuffer(int pos, Buffer buffer) {
+	public int readFromBuffer(int pos, ByteBuffer buffer) {
 		int length = buffer.getInt(pos);
-		int start = pos + 4;
-		String encoded = buffer.getString(start, start + length);
-		fromJson(encoded);
-		return pos + length + 4;
+		int start = pos + 
+				// skip the number of bytes where the length is stored
+				4;
+		byte[] arr = new byte[length];
+		buffer.get(start, arr, 0, length);
+			
+		fromJson(new String(arr, StandardCharsets.UTF_8));
+		
+		return start + length;
 	}
 
 	@SuppressWarnings("unchecked")
@@ -945,7 +952,7 @@ public class JsonObject implements Iterable<Map.Entry<String, Object>> {
 
 	@SuppressWarnings("unchecked")
 	@Todo("Pass buf directly to JsonParser to avoid unnecessary buffering in memory")
-	private void fromBuffer(Buffer buf) {
+	private void fromBuffer(ByteBuffer buf) {
 		map = JsonParser.get().fromString(buf.toString(), Map.class);
 	}
 

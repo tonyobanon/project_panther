@@ -6,6 +6,8 @@ import static com.re.paas.api.adapters.LoadPhase.PLATFORM_SETUP;
 import java.util.Map;
 import java.util.function.BiConsumer;
 
+import org.infinispan.manager.DefaultCacheManager;
+
 import com.re.paas.api.Adapter;
 import com.re.paas.api.Singleton;
 import com.re.paas.api.adapters.AbstractAdapterDelegate;
@@ -13,6 +15,7 @@ import com.re.paas.api.adapters.AdapterConfig;
 import com.re.paas.api.adapters.AdapterType;
 import com.re.paas.api.adapters.LoadPhase;
 import com.re.paas.api.annotations.develop.Todo;
+import com.re.paas.api.clustering.ClusteringServices;
 import com.re.paas.api.fusion.Endpoint;
 import com.re.paas.api.fusion.HttpMethod;
 import com.re.paas.api.fusion.HttpStatusCodes;
@@ -23,6 +26,7 @@ import com.re.paas.api.fusion.services.BaseService;
 import com.re.paas.api.tasks.Affinity;
 import com.re.paas.internal.classes.Json;
 import com.re.paas.internal.fusion.UIContext;
+import com.re.paas.internal.runtime.spi.AppDelegate;
 import com.re.paas.internal.utils.ObjectUtils;
 
 public class SystemAdapterService extends BaseService {
@@ -31,8 +35,25 @@ public class SystemAdapterService extends BaseService {
 	public String uri() {
 		return "/system-adapter";
 	}
+	
+	@Endpoint(uri = "/hooks/shutdown")
+	public static void shutdown(RoutingContext ctx) {
 
-	@Endpoint(uri = "/types")
+		AppDelegate.shutdown();
+		
+		ClusteringServices cService = ClusteringServices.get();
+
+		if (cService.isExecutioner()) {
+			
+			DefaultCacheManager cm = (DefaultCacheManager) cService.getCacheManager();
+			
+			cm.executor().singleNodeSubmission().execute(() -> {
+				ClusteringServices.get().assumeExecutioner();
+			});
+		}
+	}
+
+	@Endpoint(uri = "/adapters/types")
 	public static void getTypes(RoutingContext ctx) {
 
 		JsonArray res = new JsonArray();
@@ -43,13 +64,13 @@ public class SystemAdapterService extends BaseService {
 			}
 		}
 
-		ctx.response().write(res.encode());
+		ctx.response().writeHtml(res.encode());
 	}
 
-	@Endpoint(uri = "/descriptions")
+	@Endpoint(uri = "/adapters/descriptions")
 	public static void getDescriptions(RoutingContext ctx) {
 
-		AdapterType type = AdapterType.from(ctx.request().getParam("type"));
+		AdapterType type = AdapterType.from(ctx.request().getParameter("type"));
 
 		AbstractAdapterDelegate<?, ? extends Adapter<?>> delegate = Singleton.get(type.getDelegateType());
 
@@ -66,14 +87,14 @@ public class SystemAdapterService extends BaseService {
 			res.put(adapterName, spec);
 		});
 
-		ctx.response().write(res.encode());
+		ctx.response().writeHtml(res.encode());
 	}
 
-	@Endpoint(uri = "/parameters", affinity = Affinity.MASTER)
+	@Endpoint(uri = "/adapters/parameters", affinity = Affinity.ANY)
 	public static void getParameters(RoutingContext ctx) {
 
-		AdapterType type = AdapterType.from(ctx.request().getParam("type"));
-		String adapterName = ctx.request().getParam("name");
+		AdapterType type = AdapterType.from(ctx.request().getParameter("type"));
+		String adapterName = ctx.request().getParameter("name");
 
 		@SuppressWarnings("rawtypes")
 		AbstractAdapterDelegate delegate = Singleton.get(type.getDelegateType());
@@ -81,16 +102,16 @@ public class SystemAdapterService extends BaseService {
 
 		String parameters = Json.getGson().toJson(adapter.initForm());
 
-		ctx.response().write(parameters);
+		ctx.response().writeHtml(parameters);
 	}
 
 	@Todo("Remember to save .installed file, when user clicks on finish")
-	@Endpoint(uri = "/configure", method = HttpMethod.POST, affinity = Affinity.MASTER)
+	@Endpoint(uri = "/adapters/configure", method = HttpMethod.POST, affinity = Affinity.ANY)
 	public static void configure(RoutingContext ctx) {
 
-		JsonObject body = ctx.getBodyAsJson();
+		JsonObject body = ctx.request().getBodyAsJson();
 
-		AdapterType type = AdapterType.from(ctx.request().getParam("type"));
+		AdapterType type = AdapterType.from(ctx.request().getParameter("type"));
 		String adapterName = body.getString("name");
 		Map<String, String> fields = ObjectUtils.toStringMap(body.getJsonObject("fields").getMap());
 
@@ -139,7 +160,7 @@ public class SystemAdapterService extends BaseService {
 							: response.toString()))
 					.toString();
 			
-			ctx.response().setStatusCode(HttpStatusCodes.SC_INTERNAL_SERVER_ERROR).write(err);
+			ctx.response().setStatus(HttpStatusCodes.SC_INTERNAL_SERVER_ERROR).writeHtml(err);
 		}
 
 	}

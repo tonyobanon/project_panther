@@ -3,12 +3,8 @@ package com.re.paas.api.infra.cache;
 import java.util.List;
 
 public interface CacheFactory<K, V> {
-
-	String getName();
 	
 	CacheAdapter getAdapter();
-
-	Boolean supportsAutoExpiry();
 
 	Cache<K, V> get(String bucket);
 
@@ -19,6 +15,9 @@ public interface CacheFactory<K, V> {
 	 * @return
 	 */
 	List<String> bucketList();
+	
+	default void initialize() {
+	}
 	
 	/**
 	 * The factory is responsible for releasing resources being used by it's adapter

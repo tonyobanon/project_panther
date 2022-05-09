@@ -7,11 +7,7 @@ repositories {
 }
 
 dependencies {
-    testImplementation 'org.junit.jupiter:junit-jupiter:5.7.2' 
 
-    implementation 'com.google.guava:guava:30.1.1-jre' 
-    
-    
     implementation "org.apache.httpcomponents.client5:httpclient5:5.0-alpha3"
 
     implementation "com.google.code.gson:gson:2.8.2"
@@ -20,22 +16,9 @@ dependencies {
 
 
 	implementation "commons-io:commons-io:2.6"
-	implementation "org.apache.tika:tika-core:1.16"
-
-	implementation "com.ibm.icu:icu4j-localespi:60.2"
-	implementation "com.ibm.icu:icu4j-charset:60.2"
-
-	implementation "io.netty:netty-all:5.0.0.Alpha2"
-
-
-	implementation "commons-net:commons-net:3.6"
+	implementation "org.apache.tika:tika-core:2.3.0"
 
 	implementation "com.amazonaws:aws-java-sdk-dynamodb:1.12.9"
-
-
-	
-	implementation "org.slf4j:slf4j-nop:2.0.0-alpha5"
-
 
 	implementation "org.eclipse.jetty.http2:http2-server:11.0.6"
 	implementation "org.eclipse.jetty:jetty-alpn-java-server:11.0.6"
@@ -43,19 +26,12 @@ dependencies {
 
 	implementation "javax.xml.bind:jaxb-api:2.4.0-b180830.0359"
 
-	implementation "io.lettuce:lettuce-core:5.1.0.M1"
 
-
-	implementation "com.upplication:s3fs:2.2.2"
-
+	implementation 'io.lettuce:lettuce-core:6.1.6.RELEASE'
+	
 
    	implementation "net.bytebuddy:byte-buddy:1.11.0"
-
-
 	implementation "org.javassist:javassist:3.26.0-GA"
-
-
-	implementation "org.apache.lucene:lucene-core:8.1.1"
 
 	implementation "org.infinispan:infinispan-core:13.0.0.Dev04"
 	implementation "org.infinispan:infinispan-cloud:10.0.0.Beta5"
@@ -68,9 +44,11 @@ dependencies {
 	implementation "org.apache.calcite:calcite-core:1.27.0"
 	implementation "org.apache.calcite:calcite-linq4j:1.27.0"
 	implementation "org.apache.calcite:calcite-server:1.27.0"
-}
+	
+	
+	implementation 'org.eclipse.jetty.websocket:websocket-jetty-server:11.0.9'
+	implementation 'org.eclipse.jetty.websocket:websocket-jetty-api:11.0.9'
 
+	implementation 'javax.transaction:javax.transaction-api:1.3'
 
-tasks.named('test') {
-    useJUnitPlatform() 
 }

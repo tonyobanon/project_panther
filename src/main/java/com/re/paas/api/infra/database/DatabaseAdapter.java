@@ -1,7 +1,5 @@
 package com.re.paas.api.infra.database;
 
-import java.util.Map;
-
 import com.re.paas.api.Adapter;
 import com.re.paas.api.Singleton;
 import com.re.paas.api.adapters.AdapterType;
@@ -12,10 +10,6 @@ public interface DatabaseAdapter extends Adapter<Database> {
 
 	public static AbstractDatabaseAdapterDelegate getDelegate() {
 		return Singleton.get(AbstractDatabaseAdapterDelegate.class);
-	}
-	
-	default Database getDatabase(Map<String, String> fields) {
-		return getResource(fields);
 	}
 	
 	@Override

@@ -1,48 +1,73 @@
 package com.re.paas.api.fusion;
 
-import java.net.InetSocketAddress;
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.Serializable;
 import java.util.Collection;
-import java.util.List;
+import java.util.Enumeration;
 import java.util.Locale;
 import java.util.Map;
 
-public interface HttpServerRequest extends Cloneable {
+public interface HttpServerRequest extends Cloneable, Serializable {
 
-	Map<String, Cookie> cookies();
-
-	Buffer body();
+	Cookie[] getCookies();
 	
-	Collection<FileUpload> fileUploads();
-
-	HttpMethod method();
-
-	String rawMethod();
-
-	boolean isSSL();
-
-	String scheme();
-
-	String path();
-
-	String query();
-
-	String host();
+	Enumeration<String> getHeaders(String name);
 	
-	List<Locale> locales();
+	String getHeader(String name);
+	
+	Enumeration<String> getHeaderNames();
+	
+	HttpMethod getMethod();
+	
+	String getPathInfo();
+	
+	String getPathTranslated();
+	
+	String getContextPath();
+	
+	String getQueryString();
+	
+	String getRequestURI();
 
-	MultiMap headers();
+	String getBodyAsString();
 
-	String getHeader(String headerName);
+	JsonObject getBodyAsJson();
 
-	MultiMap params();
+	JsonArray getBodyAsJsonArray();
 
-	String getParam(String paramName);
+	InputStream getInputStream();
+	
+	String getParameter(String name);
+	
+	Enumeration<String> getParameterNames();
+	
+	String[] getParameterValues(String name);
+	
+	Map<String, String[]> getParameterMap();
+	
+	String getProtocol();
+	
+	String getScheme();
+	
+	BufferedReader getReader();
+	
+	String getRemoteAddr();
+	
+	String getRemoteHost();
 
-	InetSocketAddress remoteAddress();
+	Locale getLocale();
+	
+	Enumeration<Locale> getLocales();
+	
+	boolean isSecure();
+	
+	int getRemotePort();
 
-	InetSocketAddress localAddress();
+	Collection<Part> getParts();
+	
+	Part getPart(String name);
 
-	MultiMap formAttributes();
-
-	CharSequence getFormAttribute(String attributeName);
+	String getSocketSessionId();
+	
 }

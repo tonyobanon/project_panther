@@ -16,13 +16,10 @@ import com.re.paas.api.apps.AppClassLoader;
 import com.re.paas.api.classes.Exceptions;
 import com.re.paas.api.classes.PlatformException;
 import com.re.paas.api.fusion.JsonObject;
-import com.re.paas.api.infra.database.document.Database;
-import com.re.paas.api.infra.database.document.Table;
 import com.re.paas.api.infra.filesystem.NativeFileSystem;
 import com.re.paas.api.logging.Logger;
 import com.re.paas.api.runtime.RuntimeIdentity;
 import com.re.paas.api.runtime.spi.AppProvisioner;
-import com.re.paas.api.runtime.spi.SpiBase;
 import com.re.paas.api.utils.ClassUtils;
 import com.re.paas.api.utils.Utils;
 import com.re.paas.internal.errors.SpiError;
@@ -33,8 +30,6 @@ public class AppProvisionerImpl implements AppProvisioner {
 
 	private static Logger LOG = Logger.get(AppProvisionerImpl.class);
 
-	public static final String APP_BUNDLES_COLLECTION = "app_bundles";
-
 	static Map<String, AppClassLoader> appClassloaders = Collections
 			.synchronizedMap(new HashMap<String, AppClassLoader>());
 
@@ -43,7 +38,7 @@ public class AppProvisionerImpl implements AppProvisioner {
 	private static final Path basePath = NativeFileSystem.get().getResourcePath().resolve("apps");
 
 	public AppProvisionerImpl() {
-		
+
 		if (!Files.exists(basePath)) {
 			try {
 				Files.createDirectories(basePath);
@@ -59,11 +54,7 @@ public class AppProvisionerImpl implements AppProvisioner {
 
 	@BlockerTodo("On installation, we want to scan through the classes, and ensure that it is not found in an existing classloader")
 	@Note("Don't we want to eargerly load all classes to make the above even possible")
-	public Boolean install(Path archive) {
-
-		// Save to DB, along with version
-
-		Table col = Database.get().getTable(APP_BUNDLES_COLLECTION);
+	public void install(Path archive) {
 
 		// Extract to app directory
 
@@ -73,18 +64,23 @@ public class AppProvisionerImpl implements AppProvisioner {
 		// Remove to use internal filesystem
 
 		String appId = path.getFileName().toString();
+		AppClassLoader cl = getClassloader(appId);
 
 		readConfiguration(path);
 
-		SpiBaseImpl.install(getClassloader(appId));
-		
-		SpiBaseImpl.start(appId);
+		SpiDelegateHandlerImpl.registerDelegates(cl);
 
-		return true;
+		SpiBaseImpl.start(appId);
 	}
 
-	public void list() {
+	@Override
+	public void uninstall(String appId) {
 
+		AppClassLoader cl = getClassloader(appId);
+
+		SpiDelegateHandlerImpl.unregisterDelegates(cl);
+
+		stop0(appId, true);
 	}
 
 	public static String getAppId() {
@@ -96,10 +92,34 @@ public class AppProvisionerImpl implements AppProvisioner {
 		return AppProvisioner.get().getAppName(getAppId());
 	}
 
-	public void start() {
+	@Override
+	public void scanApps() {
 		try {
-			start0();
+			scan0();
 		} catch (IOException e) {
+			Exceptions.throwRuntime(e);
+		}
+	}
+
+	/**
+	 * This loads the RuntimeIdentity into the specified classloader
+	 * 
+	 * @param cl
+	 */
+	private static void load(AppClassLoader cl) {
+
+		try {
+
+			cl.loadClass(ClassUtils.getName(RuntimeIdentity.class));
+
+			@SuppressWarnings("unchecked")
+			Class<RuntimeIdentityImpl> tscImpl = (Class<RuntimeIdentityImpl>) cl
+					.loadClass(ClassUtils.getName(RuntimeIdentityImpl.class));
+
+			tscImpl.getDeclaredMethod("noOp").invoke(null);
+
+		} catch (ClassNotFoundException | IllegalAccessException | IllegalArgumentException
+				| java.lang.reflect.InvocationTargetException | NoSuchMethodException | SecurityException e) {
 			Exceptions.throwRuntime(e);
 		}
 	}
@@ -129,11 +149,7 @@ public class AppProvisionerImpl implements AppProvisioner {
 	}
 
 	@BlockerBlockerTodo("Sort that date. Therefore least recent date comes in first, Attend to comments")
-	private static void start0() throws IOException {
-
-		// Get bundles from DB,
-
-		// And extract them to appBase
+	private static void scan0() throws IOException {
 
 		Path appBase = getAppBasePath();
 
@@ -149,7 +165,7 @@ public class AppProvisionerImpl implements AppProvisioner {
 				return;
 			}
 
-			LOG.debug("Loading app: " + path.getFileName());
+			LOG.debug("Scanning app: " + path.getFileName());
 			readConfiguration(path);
 		});
 
@@ -157,37 +173,8 @@ public class AppProvisionerImpl implements AppProvisioner {
 		paths.close();
 	}
 
-	/**
-	 * This loads the RuntimeIdentity into the specified classloader
-	 * 
-	 * @param cl
-	 */
-	public static void load(AppClassLoader cl) {
-
-		try {
-
-			@SuppressWarnings("unchecked")
-			Class<RuntimeIdentityImpl> tscImpl = (Class<RuntimeIdentityImpl>) cl
-					.loadClass(ClassUtils.getName(RuntimeIdentityImpl.class));
-
-			@SuppressWarnings("unchecked")
-			Class<RuntimeIdentity> tsc = (Class<RuntimeIdentity>) cl.loadClass(ClassUtils.getName(RuntimeIdentity.class));
-
-			tsc.getDeclaredMethod("setInstance", tsc).invoke(null,
-					/**
-					 * Instantiate a custom instance
-					 */
-					tscImpl.getDeclaredConstructor(ClassLoader.class).newInstance(ClassLoader.getSystemClassLoader()));
-
-		} catch (ClassNotFoundException | IllegalAccessException | IllegalArgumentException
-				| java.lang.reflect.InvocationTargetException | NoSuchMethodException | SecurityException
-				| InstantiationException e) {
-			Exceptions.throwRuntime(e);
-		}
-	}
-
 	@BlockerTodo("Schedule Platform Restart ?")
-	public void stop(String app) {
+	private void stop0(String app, boolean forUninstall) {
 
 		assert !app.equals(DEFAULT_APP_ID);
 
@@ -196,12 +183,9 @@ public class AppProvisionerImpl implements AppProvisioner {
 		@SuppressWarnings("unused")
 		JsonObject obj = appConfig.get(app);
 
-		if (!SpiBase.get().stop(app)) {
+		if (!SpiBaseImpl.stop(app, forUninstall)) {
 			Exceptions.throwRuntime(PlatformException.get(SpiError.APPLICATION_IS_CURRENTLY_IN_USE, app));
 		}
-
-		cl = null;
-		obj = null;
 
 		appClassloaders.remove(app);
 		appConfig.remove(app);
@@ -210,7 +194,7 @@ public class AppProvisionerImpl implements AppProvisioner {
 	public Set<String> listApps() {
 		return listApps0();
 	}
-	
+
 	static Set<String> listApps0() {
 		return appClassloaders.keySet();
 	}

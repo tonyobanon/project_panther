@@ -5,11 +5,7 @@ import com.re.paas.api.infra.database.document.Database;
 
 public abstract class AbstractDatabaseAdapterDelegate extends AbstractAdapterDelegate<Database, DatabaseAdapter> {
 
-	public abstract Database getDatabase(boolean loadConfigFile);
-
-	public Database getDatabase() {
-		return getDatabase(false);
-	}
+	public abstract Database getDatabase();
 
 	@Override
 	public final boolean requiresMigration() {

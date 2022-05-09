@@ -5,11 +5,7 @@ import com.re.paas.api.adapters.AbstractAdapterDelegate;
 public abstract class AbstractCacheAdapterDelegate
 		extends AbstractAdapterDelegate<CacheFactory<String, Object>, CacheAdapter> {
 
-	public abstract CacheFactory<String, Object> getCacheFactory(boolean loadConfigFile);
-
-	public CacheFactory<String, Object> getCacheFactory() {
-		return getCacheFactory(false);
-	}
+	public abstract CacheFactory<String, Object> getCacheFactory();
 	
 	@Override
 	public boolean requiresMigration() {

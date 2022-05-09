@@ -56,7 +56,7 @@ public interface Table {
 
 	void deleteGSI(String name);
 	
-	@RequiresAffinity(Affinity.EACH)
+	@RequiresAffinity(Affinity.ALL)
 	void refreshSchema(Class<? extends BaseTable> model);
 
 	Table delete();

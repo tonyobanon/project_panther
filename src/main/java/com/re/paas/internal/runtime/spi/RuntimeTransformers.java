@@ -114,7 +114,7 @@ public class RuntimeTransformers {
 		classTransformers.add(new SecureMethodAnnotationTransformer());
 
 		// Note: this should be last because here we call
-		// ClassLoaderUtil.setSystemClassLoder(...);
+		// SystemClassLoaderImpl.setClassLoder(...);
 		classTransformers.add(new SecureMethodTransformer());
 	}
 

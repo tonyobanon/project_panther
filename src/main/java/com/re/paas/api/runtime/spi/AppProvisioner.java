@@ -17,16 +17,13 @@ public interface AppProvisioner {
 	}
 	
 	@SecureMethod
-	Boolean install(Path archive);
+	void install(Path archive);
+	
+	@SecureMethod
+	void uninstall(String appId);
 
 	@SecureMethod
-	void list();
-
-	@SecureMethod
-	void start();
-
-	@SecureMethod
-	void stop(String app);
+	void scanApps();
 
 	@SecureMethod
 	Set<String> listApps();

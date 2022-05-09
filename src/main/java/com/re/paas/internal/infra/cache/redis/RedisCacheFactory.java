@@ -4,20 +4,31 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.re.paas.api.annotations.develop.BlockerTodo;
-import com.re.paas.api.infra.cache.Cache;
 import com.re.paas.api.infra.cache.CacheAdapter;
+import com.re.paas.api.infra.cache.CacheFactory;
+import com.re.paas.api.infra.cache.DefaultCodec;
 
-public class RedisCacheFactory extends RemoteCacheFactory {
+import io.lettuce.core.RedisClient;
+import io.lettuce.core.api.StatefulRedisConnection;
+import io.lettuce.core.resource.ClientResources;
+import io.lettuce.core.resource.DefaultClientResources;
+
+public class RedisCacheFactory implements CacheFactory<String, Object> {
 
 	private static final List<String> bucketList = new ArrayList<>();
 
 	private final RedisAdapter adapter;
-	private final RedisConfig config;
+	StatefulRedisConnection<String, Object> connection;
 
-	RedisCacheFactory(RedisAdapter adapter, String name, RedisConfig config) {
-		super(name);
+	RedisCacheFactory(RedisAdapter adapter, RedisConfig config) {
 		this.adapter = adapter;
-		this.config = config;
+		this.connection = createRedisClient(config).connect(new RedisObjectCodec(new DefaultCodec()));
+	}
+	
+	
+	@Override
+	public void initialize() {
+		
 	}
 
 	@Override
@@ -26,28 +37,33 @@ public class RedisCacheFactory extends RemoteCacheFactory {
 	}
 
 	@Override
-	protected RemoteCache newInstance() {
-		return new RedisCache(this, this.config);
-	}
-
-	@Override
-	public Cache<String, Object> get(String bucket) {
+	public RedisCache get(String bucket) {
 
 		if (!bucketList.contains(bucket)) {
 			bucketList.add(bucket);
 		}
 
-		RedisCache cache = (RedisCache) get();
+		RedisCache cache = new RedisCache(this.connection);
 		return cache.setBucket(bucket);
 	}
 
-	protected Long getMaxConnections() {
-		return config.getMaxConnections() - (int) (0.01 * config.getMaxConnections());
-	}
+	private RedisClient createRedisClient(RedisConfig config) {
 
-	@Override
-	public Boolean supportsAutoExpiry() {
-		return true;
+		StringBuilder credentials = new StringBuilder();
+
+		if (config.getUsername() != null && config.getPassword() != null) {
+			credentials.append(config.getUsername()).append(":").append(config.getPassword()).append("@");
+		}
+
+		StringBuilder uri = new StringBuilder().append("redis://").append(credentials).append(config.getHost())
+				.append(":").append(config.getPort()).append("/").append(config.getDatabase()).append("?timeout=5s");
+
+		
+		ClientResources res = DefaultClientResources.builder()
+                .build();
+                
+		RedisClient client = RedisClient.create(res, uri.toString());
+		return client;
 	}
 
 	@Override
@@ -58,14 +74,7 @@ public class RedisCacheFactory extends RemoteCacheFactory {
 	@BlockerTodo
 	@Override
 	public void shutdown() {
-
-		RedisCache cache = (RedisCache) get();
-		
-		cache.commands.flushdb();
-
-		// Close all client connections
-		this.close();
-		
-		bucketList.clear();
+		this.connection.flushCommands();
+		this.connection.close();
 	}
 }

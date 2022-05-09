@@ -15,16 +15,16 @@ public class RoutingContextHandler {
 
 		// Verify Scheme
 		if (sDescriptor.getEndpoint().requireSSL()) {
-			if (!ctx.request().isSSL()) {
-				ctx.response().setStatusCode(HttpStatusCodes.SC_NOT_ACCEPTABLE).end();
+			if (!ctx.request().isSecure()) {
+				ctx.response().setStatus(HttpStatusCodes.SC_NOT_ACCEPTABLE).flushBuffer();
 			}
 		}
 
 		if (sDescriptor.getEndpoint().cache()) {
 			// allow proxies to cache the data
-			ctx.response().putHeader("Cache-Control", "public, max-age=" + ServiceDelegate.DEFAULT_CACHE_MAX_AGE);
+			ctx.response().setHeader("Cache-Control", "public, max-age=" + ServiceDelegate.DEFAULT_CACHE_MAX_AGE);
 		} else {
-			ctx.response().putHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+			ctx.response().setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
 		}
 
 		ClassLoader cl = RoutingContextHandler.class.getClassLoader();

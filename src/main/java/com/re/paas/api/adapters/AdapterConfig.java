@@ -17,7 +17,7 @@ public class AdapterConfig {
 	
 	private static final Logger LOG = LoggerFactory.get().getLog(AdapterConfig.class);
 
-	private static transient final Map<AdapterType, AdapterConfig> instances = Collections
+	private static final Map<AdapterType, AdapterConfig> instances = Collections
 			.synchronizedMap(new HashMap<AdapterType, AdapterConfig>());
 
 	private transient final AdapterType type;

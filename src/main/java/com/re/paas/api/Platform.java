@@ -28,8 +28,6 @@ public class Platform {
 	
 	public static final String COMPONENT_BASE_PKG = API_PACKAGE + ".fusion.components";
 
-	private static boolean IS_SAFE_MODE;
-	private static boolean IS_ADVANCED_MODE;
 
 	private static boolean IS_DEV_MODE = true;
 
@@ -74,14 +72,6 @@ public class Platform {
 
 		Map<String, Boolean> jvmFlags = Utils.getFlags(args);
 
-		if (jvmFlags.get("safe") != null && jvmFlags.get("safe").booleanValue() == true) {
-			IS_SAFE_MODE = true;
-		}
-
-		if (jvmFlags.get("advanced") != null && jvmFlags.get("advanced").booleanValue() == true) {
-			IS_ADVANCED_MODE = true;
-		}
-
 		if (jvmFlags.get("production") != null && jvmFlags.get("production").booleanValue() == true) {
 			IS_DEV_MODE = false;
 		}
@@ -89,14 +79,6 @@ public class Platform {
 
 	public static boolean isDevMode() {
 		return IS_DEV_MODE;
-	}
-
-	public static boolean isSafeMode() {
-		return IS_SAFE_MODE;
-	}
-
-	public static boolean isAdvancedMode() {
-		return IS_ADVANCED_MODE;
 	}
 
 	public static boolean isProduction() {

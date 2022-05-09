@@ -43,7 +43,7 @@ public class ExecutorFactoryImpl extends ExecutorFactory {
 
 	private int exponent = defaultExponent;
 
-	private final Logger LOG;
+	private static final Logger LOG = LoggerFactory.get().getLog(ExecutorFactory.class);
 
 	private final String name;
 
@@ -61,8 +61,6 @@ public class ExecutorFactoryImpl extends ExecutorFactory {
 	private boolean isShutdown = false;
 
 	public ExecutorFactoryImpl(String name, ExecutorFactoryConfig config) {
-
-		this.LOG = LoggerFactory.get().getLog().setNamespace(ExecutorFactoryImpl.class, name);
 
 		this.name = name;
 		this.config = config;
@@ -304,9 +302,15 @@ public class ExecutorFactoryImpl extends ExecutorFactory {
 		
 		return buildFunction(new ObjectWrapper<ClassLoader>(task.getClass().getClassLoader()), task, parameter, new ExternalContext(appId, false, affinity));
 	}
-
+	
 	@Override
 	public <P, R> ParameterizedExecutable<P, R> buildFunction(ObjectWrapper<ClassLoader> cl,
+			ParameterizedInvokable<P, R> task, P parameter, ExternalContext ctx) {
+		return buildFunction0(cl, task, parameter, ctx);
+	}
+	
+
+	private static <P, R> ParameterizedExecutable<P, R> buildFunction0(ObjectWrapper<ClassLoader> cl,
 			ParameterizedInvokable<P, R> task, P parameter, ExternalContext ctx) {
 		
 		if (cl.get() == null) {
@@ -321,7 +325,6 @@ public class ExecutorFactoryImpl extends ExecutorFactory {
 			LOG.debug("Executing function: " + task + " by " + classloader);
 
 			ThreadContext.newRequestContext(ctx.getAppId(), ctx.getIsWebRequest());
-			
 			
 			Thread thread = Thread.currentThread();
 

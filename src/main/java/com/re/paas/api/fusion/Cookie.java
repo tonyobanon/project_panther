@@ -28,12 +28,4 @@ public interface Cookie {
 
 	boolean isHttpOnyOnly();
 
-	String encode();
-
-	boolean isChanged();
-
-	void setChanged(boolean changed);
-
-	boolean isFromUserAgent();
-
 }

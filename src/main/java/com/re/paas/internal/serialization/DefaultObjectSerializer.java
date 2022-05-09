@@ -5,7 +5,11 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.ObjectStreamConstants;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
+
+import org.jgroups.util.Bits;
 
 import com.re.paas.api.classes.Exceptions;
 import com.re.paas.api.classes.ObjectSerializer;
@@ -14,7 +18,7 @@ public class DefaultObjectSerializer implements ObjectSerializer {
 
 	@Override
 	public ByteBuffer serialize(Object o) {
-		
+
 		// If this is primitive, then convert to String
 
 		if (o != null && Primitives.isWrapperType(o.getClass())) {
@@ -42,9 +46,21 @@ public class DefaultObjectSerializer implements ObjectSerializer {
 	}
 
 	@Override
-	public Object deserialize(ByteBuffer data) {
+	public Object deserialize(ByteBuffer buf) {
 
-		ByteArrayInputStream in = new ByteArrayInputStream(data.array());
+		int len = buf.remaining();
+		byte[] arr = new byte[len];
+		buf.get(arr);
+		
+		if (arr.length < 4 || Bits.readShort(arr, 0) != ObjectStreamConstants.STREAM_MAGIC || Bits.readShort(arr, 2) != ObjectStreamConstants.STREAM_VERSION) {
+			// This byte sequence was not serialized by java's ObjectOutputStream, so
+			// decode it as a string
+			
+			return new String(arr, StandardCharsets.UTF_8);
+		}
+        
+
+		ByteArrayInputStream in = new ByteArrayInputStream(arr);
 		Object r = null;
 
 		try {
@@ -70,7 +86,7 @@ public class DefaultObjectSerializer implements ObjectSerializer {
 				r = primitive;
 			}
 		}
-		
+
 		return r;
 	}
 

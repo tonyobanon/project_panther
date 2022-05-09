@@ -9,9 +9,9 @@ import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
-import com.re.paas.api.cryto.RSAKeyPair;
-import com.re.paas.internal.crypto.impl.CryptoConstants;
-import com.re.paas.internal.crypto.impl.CryptoUtils;
+import com.re.paas.api.crytography.RSAKeyPair;
+import com.re.paas.internal.crytography.impl.CryptoConstants;
+import com.re.paas.internal.crytography.impl.CryptoUtils;
 
 public class RSAKeyPairDeserializer implements JsonDeserializer<RSAKeyPair> {
 

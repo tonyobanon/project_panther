@@ -6,11 +6,14 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.function.Consumer;
 
 import com.google.common.collect.Maps;
 import com.re.paas.api.classes.Exceptions;
 import com.re.paas.api.classes.PlatformException;
+import com.re.paas.api.clustering.ClusteringServices;
 import com.re.paas.api.events.AbstractEventDelegate;
 import com.re.paas.api.events.BaseEvent;
 import com.re.paas.api.events.EventError;
@@ -20,13 +23,13 @@ import com.re.paas.api.runtime.ExecutorFactory;
 import com.re.paas.api.runtime.ParameterizedExecutable;
 import com.re.paas.api.runtime.spi.DelegateInitResult;
 import com.re.paas.api.runtime.spi.ResourceStatus;
-import com.re.paas.api.tasks.TaskModel;
 import com.re.paas.api.utils.ClassUtils;
 import com.re.paas.internal.classes.ClassUtil;
-import com.re.paas.internal.compute.Scheduler;
 
 public class EventDelegate extends AbstractEventDelegate {
 
+	private final static ExecutorService executorService = Executors.newWorkStealingPool();
+	
 	private static Map<String, Map<String, Subscription>> subscribers = Maps.newHashMap();
 	private static Map<String, List<Consumer<BaseEvent>>> volatileSubscribers = Maps.newHashMap();
 
@@ -165,16 +168,13 @@ public class EventDelegate extends AbstractEventDelegate {
 						return null;
 					}, evt, subscription.getAffinity());
 					
-					TaskModel.getDelegate().execute(fn);
-
+					ClusteringServices.get().execute(fn);
 				});
 			}
 		};
 
 		if (isAsync) {
-			Scheduler.now(() -> {
-				r.run();
-			});
+			executorService.execute(r);
 		} else {
 			r.run();
 		}

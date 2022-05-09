@@ -27,4 +27,5 @@ public interface Adapter<T> extends Resource {
 	AdapterType getType();
 	
 	T getResource(Map<String, String> fields);
+	
 }

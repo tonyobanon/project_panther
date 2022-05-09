@@ -5,9 +5,11 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.net.URLClassLoader;
 import java.security.ProtectionDomain;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -16,6 +18,7 @@ import java.util.Map;
 import java.util.function.BiConsumer;
 
 import com.re.paas.api.Platform;
+import com.re.paas.api.classes.Exceptions;
 import com.re.paas.api.fusion.BaseComponent;
 import com.re.paas.api.runtime.RuntimeIdentity;
 import com.re.paas.api.runtime.SystemClassLoader;
@@ -29,7 +32,7 @@ public class CustomClassLoader extends ClassLoader {
 
 	// These are packages that should be treated specially. If enableForwarding is
 	// true, loading of classes in these packages will delegated back to the system
-	// classloader
+	// classloader. This is needed for components to be able to load other components
 	private static List<String> metaPackages = new ArrayList<>();
 
 	private boolean enableForwarding = true;
@@ -43,10 +46,12 @@ public class CustomClassLoader extends ClassLoader {
 	private final Map<String, Class<?>> _classes = new HashMap<>();
 	private final Map<String, byte[]> _classBytes = new HashMap<>();
 
+	private final List<ClassLoader> classLoaders = new ArrayList<>();
+
 	private BiConsumer<Class<?>, byte[]> listener;
-	
+
 	private final String name;
-	
+
 	CustomClassLoader(Boolean pool, String name) {
 		super(CustomClassLoader.acl);
 
@@ -61,7 +66,7 @@ public class CustomClassLoader extends ClassLoader {
 			throw new RuntimeException(e);
 		}
 	}
-	
+
 	CustomClassLoader(Boolean pool) {
 		this(pool, null);
 	}
@@ -79,6 +84,17 @@ public class CustomClassLoader extends ClassLoader {
 	CustomClassLoader disableForwarding() {
 		this.enableForwarding = false;
 		return this;
+	}
+
+	void appendToClassPathForInstrumentation(String p) {
+		URL url = null;
+		try {
+			url = new URL("file://" + p);
+		} catch (MalformedURLException e) {
+			Exceptions.throwRuntime(e);
+		}
+
+		classLoaders.add(new URLClassLoader(new URL[] { url }, null));
 	}
 
 	@Override
@@ -117,18 +133,41 @@ public class CustomClassLoader extends ClassLoader {
 
 			// First, check if the class has already been loaded
 			Class<?> c = findLoadedClass(name);
-			if (c == null) {
 
+			if (c == null) {
 				// The attempt to find it in classpath
 				c = findClass(name);
+			}
 
-				if (c == null && this.getParent() != null) {
-					// If still not found, then invoke the parent's loadClass(..) in order
-					// to find the class.
-					c = this.getParent().loadClass(name);
+			if (c == null && this.getParent() != null) {
+				// If still not found, then invoke the parent's loadClass(..) in order
+				// to find the class.
+				c = load0(getParent(), name);
+			}
+
+			if (c == null) {
+				for (ClassLoader cl : classLoaders) {
+					c = load0(cl, name);
+					if (c != null) {
+						break;
+					}
 				}
 			}
+
+			if (c == null) {
+				throw new ClassNotFoundException(name);
+			}
+
 			return c;
+
+		}
+	}
+
+	private static Class<?> load0(ClassLoader cl, String name) {
+		try {
+			return cl.loadClass(name);
+		} catch (ClassNotFoundException ex) {
+			return null;
 		}
 	}
 
@@ -256,6 +295,6 @@ public class CustomClassLoader extends ClassLoader {
 		extrinsicClasses.add(ClassUtils.getName(FileSystemWrapper.class));
 		extrinsicClasses.add(ClassUtils.getName(BaseComponent.class));
 
-		metaPackages.add(Platform.COMPONENT_BASE_PKG);
+		metaPackages.add(Platform.getComponentBasePkg());
 	}
 }
