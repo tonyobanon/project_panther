@@ -1,7 +1,5 @@
 package com.re.paas.api.crytography;
 
-import java.util.Map;
-
 import com.re.paas.api.Adapter;
 import com.re.paas.api.Singleton;
 import com.re.paas.api.adapters.AdapterType;
@@ -11,10 +9,6 @@ public interface CryptoAdapter extends Adapter<CryptoProvider> {
 
 	public static AbstractCryptoAdapterDelegate getDelegate() {
 		return Singleton.get(AbstractCryptoAdapterDelegate.class);
-	}
-	
-	default CryptoProvider getProvider(Map<String, String> fields) {
-		return getResource(fields);
 	}
 	
 	@Override

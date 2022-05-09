@@ -189,6 +189,7 @@ public class HttpServerResponseImpl implements HttpServerResponse {
 		}
 	}
 
+
 	private static Boolean isRtlLocale(Locale l) {
 		// Todo
 		return false;

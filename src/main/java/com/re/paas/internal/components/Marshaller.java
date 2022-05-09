@@ -17,6 +17,7 @@ import com.google.gson.JsonSerializer;
 import com.re.paas.api.classes.Exceptions;
 import com.re.paas.api.classes.ObjectWrapper;
 import com.re.paas.api.fusion.BaseComponent;
+import com.re.paas.api.fusion.DataNode;
 
 public class Marshaller {
 
@@ -56,8 +57,9 @@ public class Marshaller {
 
 		GsonBuilder gsonBuilder = new GsonBuilder();
 		ObjectWrapper<Gson> gson = new ObjectWrapper<>();
+	
 
-		JsonSerializer<BaseComponent> serializer = new JsonSerializer<BaseComponent>() {
+		gsonBuilder.registerTypeHierarchyAdapter(BaseComponent.class, new JsonSerializer<BaseComponent>() {
 			@Override
 			public JsonElement serialize(BaseComponent src, Type typeOfSrc, JsonSerializationContext context) {
 				
@@ -71,9 +73,15 @@ public class Marshaller {
 							.replace("$id", src.getId())
 						);
 			}
-		};
-
-		gsonBuilder.registerTypeHierarchyAdapter(BaseComponent.class, serializer);
+		});
+		
+		gsonBuilder.registerTypeHierarchyAdapter(DataNode.class, new JsonSerializer<DataNode>() {
+			@Override
+			public JsonElement serialize(DataNode src, Type typeOfSrc, JsonSerializationContext context) {
+				throw new RuntimeException(src + " cannot be serialized, please use \"" + src.getClass().getSuperclass() + "\" instead");
+			}
+		});
+		
 		gsonBuilder.registerTypeAdapterFactory(new EnumAdapterFactory());
 
 		gson.set(gsonBuilder.create());

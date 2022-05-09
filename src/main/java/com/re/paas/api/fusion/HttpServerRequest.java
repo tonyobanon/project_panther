@@ -67,5 +67,7 @@ public interface HttpServerRequest extends Cloneable, Serializable {
 	Collection<Part> getParts();
 	
 	Part getPart(String name);
+
+	String getSocketSessionId();
 	
 }

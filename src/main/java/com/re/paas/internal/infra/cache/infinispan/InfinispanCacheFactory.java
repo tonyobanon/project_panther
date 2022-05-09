@@ -7,12 +7,10 @@ import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.multimap.api.embedded.MultimapCache;
 import org.infinispan.multimap.api.embedded.MultimapCacheManager;
 
-import com.re.paas.api.annotations.develop.BlockerTodo;
 import com.re.paas.api.clustering.ClusteringServices;
 import com.re.paas.api.infra.cache.Cache;
 import com.re.paas.api.infra.cache.CacheAdapter;
 import com.re.paas.api.infra.cache.CacheFactory;
-import com.re.paas.api.runtime.spi.ShutdownPhase;
 
 public class InfinispanCacheFactory implements CacheFactory<String, Object> {
 
@@ -21,22 +19,15 @@ public class InfinispanCacheFactory implements CacheFactory<String, Object> {
 
 	private static final List<String> bucketList = new ArrayList<>();
 
-	private final String name;
 	private final InfinispanAdapter adapter;
 
-	InfinispanCacheFactory(InfinispanAdapter adapter, String name) {
+	InfinispanCacheFactory(InfinispanAdapter adapter) {
 		this.adapter = adapter;
-		this.name = name;
 	}
 
 	@Override
 	public CacheAdapter getAdapter() {
 		return this.adapter;
-	}
-
-	@Override
-	public String getName() {
-		return name;
 	}
 
 	@Override
@@ -59,19 +50,5 @@ public class InfinispanCacheFactory implements CacheFactory<String, Object> {
 	@Override
 	public List<String> bucketList() {
 		return bucketList;
-	}
-
-	@Override
-	@BlockerTodo
-	public void shutdown(ShutdownPhase phase) {
-
-		for (String bucket : bucketList) {
-			InfinispanCache cache = (InfinispanCache) get(bucket);
-			cache.cache.keySet().forEach(k -> {
-				cache.del(k);
-			});
-		}
-
-		bucketList.clear();
 	}
 }

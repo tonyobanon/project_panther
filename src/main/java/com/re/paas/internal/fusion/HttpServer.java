@@ -17,7 +17,6 @@ import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.server.SslConnectionFactory;
 import org.eclipse.jetty.server.handler.AbstractHandler;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
-import org.eclipse.jetty.util.thread.QueuedThreadPool;
 
 import com.google.common.base.Joiner;
 import com.re.paas.api.Activator;
@@ -40,27 +39,23 @@ import com.re.paas.api.runtime.SecureMethod;
 import com.re.paas.internal.runtime.spi.FusionClassloaders;
 
 @BlockerTodo("Optimize the way requests are handled, as the current impl is thread expensive.")
-public class WebServer {
+public class HttpServer {
 
 	private static Server server;
 
 	// The port on the node through which the service available through
 	// https://matthewpalmer.net/kubernetes-app-developer/articles/kubernetes-ports-targetport-nodeport-service.html
 	
-	private static final Integer serviceHttpPort = 8082;
-	private static final Integer serviceHttpsPort = 8433;
+	private static final Integer httpPort = 8084;
+	private static final Integer httpsPort = 8433;
 
 	
 	@SecureMethod
 	public static void start() {
 
-		Logger.get().info("Launching embedded web server ..");
+		Logger.get().info("Launching embedded http server ..");
 
-		// Create and configure a ThreadPool.
-		QueuedThreadPool threadPool = new QueuedThreadPool();
-		threadPool.setName("server");
-
-		server = new Server(threadPool);
+		server = new Server();
 
 		ServerConnector connector = null;
 
@@ -104,18 +99,18 @@ public class WebServer {
 
 			// The ServerConnector instance.
 			connector = new ServerConnector(server, tls, alpn, h2, http11);
-			connector.setPort(serviceHttpsPort);
+			connector.setPort(httpsPort);
 
 		} else {
 
 			// Create the ServerConnector.
 			connector = new ServerConnector(server);
-			connector.setPort(serviceHttpPort);
+			connector.setPort(httpPort);
 		}
 
 		server.addConnector(connector);
 
-		server.setHandler(new WebServer.RequestHandler());
+		server.setHandler(new HttpServer.RequestHandler());
         
 		try {
 
@@ -125,7 +120,7 @@ public class WebServer {
 			Exceptions.throwRuntime(e);
 		}
 
-		Logger.get().info("Web server started successfully..");
+		Logger.get().info("Http server started successfully..");
 	}
 
 	@SecureMethod

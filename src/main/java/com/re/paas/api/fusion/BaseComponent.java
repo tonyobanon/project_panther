@@ -27,8 +27,4 @@ public abstract class BaseComponent {
 
 	protected void addEventListener(String name, Consumer<Map<String, Object>> consumer) {
 	}
-	
-	protected Object getProperty(String path) { return null; }
-	
-	protected void setProperty(String path, Object value) {}
 }

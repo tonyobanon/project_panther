@@ -220,5 +220,10 @@ public class HttpServerRequestImpl implements HttpServerRequest {
 		
 		return new PartImpl(jakartaPart);
 	}
+	
+	@Override
+	public String getSocketSessionId() {
+		return CookieHelper.getCookie(this.req.getCookies(), "socketSessionId");
+	}
 
 }

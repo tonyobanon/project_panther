@@ -6,6 +6,8 @@ import java.security.Security;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.TimeUnit;
 
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
@@ -17,6 +19,7 @@ import com.re.paas.api.Singleton;
 import com.re.paas.api.annotations.develop.PlatformInternal;
 import com.re.paas.api.classes.ObjectSerializer;
 import com.re.paas.api.clustering.ClusteringServices;
+import com.re.paas.api.fusion.DataNodeDelegate;
 import com.re.paas.api.fusion.MimeTypeDetector;
 import com.re.paas.api.infra.filesystem.NativeFileSystem;
 import com.re.paas.api.logging.LogPipeline;
@@ -32,7 +35,9 @@ import com.re.paas.api.utils.Base64;
 import com.re.paas.api.utils.JsonParser;
 import com.re.paas.internal.clustering.ClusteringServicesImpl;
 import com.re.paas.internal.fusion.MimeTypeDetectorImpl;
-import com.re.paas.internal.fusion.WebServer;
+import com.re.paas.internal.fusion.WebSocketServer;
+import com.re.paas.internal.fusion.DataNodeDelegateImpl;
+import com.re.paas.internal.fusion.HttpServer;
 import com.re.paas.internal.infra.filesystem.FileSystemProviders;
 import com.re.paas.internal.infra.filesystem.NativeFileSystemImpl;
 import com.re.paas.internal.logging.DefaultLogger;
@@ -83,6 +88,7 @@ public class AppDelegate implements Callable<Void> {
 
 		Singleton.register(ObjectSerializer.class, new DefaultObjectSerializer());
 		Singleton.register(MimeTypeDetector.class, new MimeTypeDetectorImpl());
+		Singleton.register(DataNodeDelegate.class, new DataNodeDelegateImpl());
 
 		// Register factories
 		Factory.register(ExecutorFactory.class,
@@ -110,6 +116,8 @@ public class AppDelegate implements Callable<Void> {
 		for (Runnable r : allFinalizers) {
 			r.run();
 		}
+		
+		ForkJoinPool.commonPool().awaitQuiescence(30, TimeUnit.SECONDS);
 	}
 
 	@PlatformInternal
@@ -148,16 +156,20 @@ public class AppDelegate implements Callable<Void> {
 
 		System.setProperty("org.slf4j.spi.SLF4JServiceProvider", "org.slf4j.helpers.NOP_FallbackServiceProvider");
 
-		// Start web server
-		WebServer.start();
+		// Start http server
+		HttpServer.start();
+		
+		// Start web socket server
+		WebSocketServer.start();
 
 		Platform.setState(State.RUNNING);
 	}
 
 	private static List<Runnable> getDefaultFinalizers() {
 		return List.of(
-				// Stop Embedded Web Server
-				WebServer::stop,
+				// Stop Embedded Servers
+				HttpServer::stop,
+				WebSocketServer::stop,
 				// Stop application services
 				SpiBaseImpl::stop);
 	}

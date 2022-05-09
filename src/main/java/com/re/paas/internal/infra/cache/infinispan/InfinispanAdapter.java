@@ -7,8 +7,6 @@ import com.re.paas.api.infra.cache.CacheFactory;
 
 public class InfinispanAdapter implements CacheAdapter {
 
-	private static final String DEFAULT_FACTORY_NAME = "default";
-
 	@Override
 	public String name() {
 		return "infispan";
@@ -26,6 +24,6 @@ public class InfinispanAdapter implements CacheAdapter {
 
 	@Override
 	public CacheFactory<String, Object> getResource(Map<String, String> fields) {
-		return new InfinispanCacheFactory(this, DEFAULT_FACTORY_NAME);
+		return new InfinispanCacheFactory(this);
 	}
 }

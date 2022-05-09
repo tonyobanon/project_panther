@@ -9,24 +9,17 @@ import com.re.paas.api.infra.database.document.Database;
 
 public class DatabaseAdapterDelegate extends AbstractDatabaseAdapterDelegate {
 
-	private static Database database;
+	private Database database;
 
 	@Override
 	public Boolean load(LoadPhase phase) {
-		return getDatabase(true).load(phase);
+		this.database = getAdapter().getResource(getConfig().getFields());
+		return true;
 	}
 
 	@Override
-	public Database getDatabase(boolean loadConfigFile) {
-
-		if (database != null && !loadConfigFile) {
-			return database;
-		}
-
-		Database db = getAdapter().getDatabase(getConfig().getFields());
-
-		database = db;
-		return database;
+	public Database getDatabase() {
+		return this.database;
 	}
 
 	@Override

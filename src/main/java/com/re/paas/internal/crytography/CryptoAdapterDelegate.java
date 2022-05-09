@@ -6,24 +6,16 @@ import com.re.paas.api.crytography.CryptoProvider;
 
 public class CryptoAdapterDelegate extends AbstractCryptoAdapterDelegate {
 
-	private static CryptoProvider provider;
+	private CryptoProvider provider;
 
 	@Override
 	public Boolean load(LoadPhase pahse) {
-		getProvider(true);
+		this.provider = getAdapter().getResource(getConfig().getFields());
 		return true;
 	}
 
 	@Override
-	public CryptoProvider getProvider(boolean loadConfigFile) {
-
-		if (provider != null && !loadConfigFile) {
-			return provider;
-		}
-
-		CryptoProvider provider = getAdapter().getProvider(getConfig().getFields());
-
-		CryptoAdapterDelegate.provider = provider;
-		return provider;
+	public CryptoProvider getProvider() {
+		return this.provider;
 	}
 }

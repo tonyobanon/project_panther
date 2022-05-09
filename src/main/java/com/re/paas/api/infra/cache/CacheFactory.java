@@ -2,11 +2,7 @@ package com.re.paas.api.infra.cache;
 
 import java.util.List;
 
-import com.re.paas.api.runtime.spi.ShutdownPhase;
-
 public interface CacheFactory<K, V> {
-
-	String getName();
 	
 	CacheAdapter getAdapter();
 
@@ -26,6 +22,6 @@ public interface CacheFactory<K, V> {
 	/**
 	 * The factory is responsible for releasing resources being used by it's adapter
 	 */
-	default void shutdown(ShutdownPhase phase) {
+	default void shutdown() {
 	}
 }

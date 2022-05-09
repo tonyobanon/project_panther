@@ -6,6 +6,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.management.ManagementFactory;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -13,6 +14,7 @@ import java.nio.file.StandardWatchEventKinds;
 import java.nio.file.WatchEvent;
 import java.nio.file.WatchKey;
 import java.nio.file.WatchService;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.zip.ZipEntry;
@@ -47,7 +49,7 @@ public class FusionClassloaders {
 
 	static void addFusionClient(String appId, Path jarFile) {
 
-		updateFusionClient(appId, jarFile);
+		processFusionClientJar(appId, jarFile);
 
 		if (Platform.isDevMode()) {
 
@@ -65,7 +67,8 @@ public class FusionClassloaders {
 
 							if (event.context().toString().equals(jarFile.getFileName().toString())) {
 
-								updateFusionClient(appId, jarFile);
+								processFusionClientJar(appId, jarFile);
+								
 							}
 						}
 						key.reset();
@@ -114,8 +117,15 @@ public class FusionClassloaders {
 		}
 	}
 
-	private static void updateFusionClient(String appId, Path jarFile) {
+	private static void processFusionClientJar(String appId, Path jarFile) {
 
+		// Read "Application-Name" property from META-INF file to get appId
+		
+		
+		if (!Files.exists(jarFile)) {
+			return;
+		}
+		
 		// Indicate that this appId is being updated
 		appIdLock = appId;
 
@@ -124,9 +134,7 @@ public class FusionClassloaders {
 		Path staticDir = refreshPath(getFusionStaticPath().resolve(appId));
 		Path classesDir = refreshPath(getFusionClassesPath().resolve(appId));
 
-		if (!Files.exists(jarFile)) {
-			return;
-		}
+		var componentClassNames = new ArrayList<String>();
 
 		// All packages in app: <appId> must be in the below format, as the packages
 		// accross all apps are namespaced in this way, so that
@@ -147,6 +155,12 @@ public class FusionClassloaders {
 				Path p = null;
 
 				if (entry.getName().startsWith("resources/")) {
+					
+					if (entry.getName().endsWith(".mainClass")) {
+						componentClassNames.add(new String(zip.readAllBytes(), StandardCharsets.UTF_8));
+						continue;
+					}
+					
 					p = staticDir.resolve(entry.getName().replaceFirst("resources/", ""));
 				} else {
 
@@ -166,7 +180,7 @@ public class FusionClassloaders {
 		} catch (IOException e) {
 			Exceptions.throwRuntime(e);
 		}
-
+		
 		CustomClassLoader cl = new CustomClassLoader(false, appId).disableForwarding().setPath(classesDir.toUri());
 
 		// Allow deep reflection
@@ -176,6 +190,11 @@ public class FusionClassloaders {
 		fusionClassloaders.put(appId, cl);
 
 		appIdLock = null;
+		
+
+		fileCache.clear();
+		
+		System.out.println("Processed fusion client jar: " + jarFile);
 	}
 
 	private static Path getPlatformFusionClient() {

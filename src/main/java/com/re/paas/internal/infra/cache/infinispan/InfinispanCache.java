@@ -20,16 +20,14 @@ import org.infinispan.multimap.api.embedded.MultimapCache;
 import com.re.paas.api.annotations.develop.BlockerTodo;
 import com.re.paas.api.classes.Exceptions;
 import com.re.paas.api.classes.KeyValuePair;
+import com.re.paas.api.infra.cache.EvictableCache;
 import com.re.paas.api.infra.cache.AbstractCache;
 import com.re.paas.api.infra.cache.CacheEntryType;
 
-public class InfinispanCache extends AbstractCache {
+public class InfinispanCache extends AbstractCache<String, Object> implements EvictableCache<String, Object> {
 
 	final Cache<String, Object> cache;
 	final MultimapCache<String, Object> multimapCache;
-
-	// private static final Metadata emptyMetadata = new
-	// EmbeddedMetadata.Builder().build();
 
 	public InfinispanCache(Cache<String, Object> cache, MultimapCache<String, Object> multimapCache) {
 		this.cache = cache;
@@ -52,16 +50,15 @@ public class InfinispanCache extends AbstractCache {
 
 		return get0(key).thenCompose(v -> {
 
-			if (v == null) {
-				return null;
+			if (v != null) {
+				if (v instanceof CollectionRef && ((CollectionRef) v).equals(type)) {
+					return this.multimapCache.get(key);
+				} else {
+					throw new RuntimeException("The entry with the key: " + key + " is not a " + type.toString());
+				}
+			} else {
+				return CompletableFuture.completedFuture(null);
 			}
-
-			if (v instanceof CollectionRef && ((CollectionRef) v).equals(type)) {
-				return this.multimapCache.get(key);
-			}
-
-			Exceptions.throwRuntime("The entry with the key: " + key + " is not a " + type.toString());
-			return null;
 		});
 	}
 
@@ -288,11 +285,11 @@ public class InfinispanCache extends AbstractCache {
 	}
 
 	@Override
-	public CompletableFuture<?> sget(String key, Function<Object, CompletableFuture<?>> consumer) {
-		return getCollection(CollectionRef.SET, key).thenApply(c -> {
+	public CompletableFuture<Void> sget(String key, Function<Object, CompletableFuture<Void>> consumer) {
+		return getCollection(CollectionRef.SET, key).thenCompose(c -> {
 
 			if (c == null) {
-				return null;
+				return CompletableFuture.completedFuture(null);
 			}
 
 			List<CompletableFuture<?>> futures = new ArrayList<>(c.size());
@@ -383,12 +380,12 @@ public class InfinispanCache extends AbstractCache {
 	}
 
 	@Override
-	public CompletableFuture<?> hkeys(String key, Function<String, CompletableFuture<?>> consumer) {
+	public CompletableFuture<Void> hkeys(String key, Function<String, CompletableFuture<Void>> consumer) {
 
-		return getCollection(CollectionRef.MAP, key).thenApply(c -> {
+		return getCollection(CollectionRef.MAP, key).thenCompose(c -> {
 
 			if (c == null) {
-				return null;
+				return CompletableFuture.completedFuture(null);
 			}
 
 			List<CompletableFuture<?>> futures = new ArrayList<>(c.size());
@@ -400,27 +397,6 @@ public class InfinispanCache extends AbstractCache {
 			});
 
 			return CompletableFuture.allOf(futures.toArray(new CompletableFuture[futures.size()]));
-		});
-	}
-
-	@Override
-	public CompletableFuture<List<String>> hkeys(String key) {
-
-		return getCollection(CollectionRef.MAP, key).thenApply(c -> {
-
-			if (c == null) {
-				return null;
-			}
-
-			List<String> keys = new ArrayList<>(c.size());
-
-			c.forEach(o -> {
-				@SuppressWarnings("unchecked")
-				KeyValuePair<String, Object> kv = (KeyValuePair<String, Object>) o;
-				keys.add(kv.getKey());
-			});
-
-			return keys;
 		});
 	}
 

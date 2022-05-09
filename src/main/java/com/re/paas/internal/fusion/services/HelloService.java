@@ -38,9 +38,6 @@ public class HelloService extends BaseService {
 						.setTitle("Tab 2").setContent(
 								new Illustration().setName(Name.LAKE_MOUNTAIN).setVerticallyAlign(true)
 						)));
-		
-		
-		
 	}
 
 }

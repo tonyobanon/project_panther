@@ -21,8 +21,6 @@ public interface Cache<K, V> {
 	
 	CompletableFuture<Object> setex(String key, Object value, Long lifespan);
 	
-	CompletableFuture<V> set(K key, V value, Long maxIdle);
-	
 	CompletableFuture<Integer> del(K key);
 	
 	CompletableFuture<Integer> del(@SuppressWarnings("unchecked") K... keys);
@@ -32,8 +30,6 @@ public interface Cache<K, V> {
 	
 	CompletableFuture<Boolean> expireInSecs(K key, Long seconds);
 	
-	CompletableFuture<Boolean> invalidateInSecs(K key, Long seconds);
-	
 	CompletableFuture<CacheEntryType> type(K key);
 
 
@@ -41,7 +37,7 @@ public interface Cache<K, V> {
 
 	CompletableFuture<Integer> slength(K key);
 
-	CompletableFuture<?> sget(K key, Function<V, CompletableFuture<?>> consumer);
+	CompletableFuture<Void> sget(K key, Function<V, CompletableFuture<Void>> consumer);
 
 	CompletableFuture<Integer> sadd(K key, List<V> elements);
 
@@ -61,9 +57,7 @@ public interface Cache<K, V> {
 
 	CompletableFuture<Integer> hdel(K key, @SuppressWarnings("unchecked") K... fields);
 
-	CompletableFuture<?> hkeys(K key, Function<String, CompletableFuture<?>> consumer);
-
-	CompletableFuture<List<K>> hkeys(K key);
+	CompletableFuture<Void> hkeys(K key, Function<K, CompletableFuture<Void>> consumer);
 
 	CompletableFuture<Integer> hincrby(K key, K field, Integer amount);
 

@@ -16,7 +16,7 @@ public class FileSystemAdapterDelegate extends AbstractFileSystemAdapterDelegate
 
 		// Update file system provider
 
-		FileSystem fs = getAdapter().fileSystem(getConfig().getFields());
+		FileSystem fs = getAdapter().getResource(getConfig().getFields());
 
 		FileSystemProviderImpl.setFileSystem(fs);
 		
