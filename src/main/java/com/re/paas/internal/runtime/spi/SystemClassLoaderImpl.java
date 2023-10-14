@@ -2,8 +2,8 @@ package com.re.paas.internal.runtime.spi;
 
 import java.net.URL;
 
-import com.re.paas.api.Platform;
 import com.re.paas.api.runtime.SystemClassLoader;
+import com.re.paas.internal.infra.filesystem.FileSystemWrapper;
 
 public class SystemClassLoaderImpl extends ClassLoader implements SystemClassLoader {
 
@@ -19,8 +19,6 @@ public class SystemClassLoaderImpl extends ClassLoader implements SystemClassLoa
 
 	private void createClassLoader() {
 		this.cl = new CustomClassLoader(false);
-
-		FusionClassloaders.init();
 	}
 
 	void setClassLoader(CustomClassLoader cl) {
@@ -30,8 +28,19 @@ public class SystemClassLoaderImpl extends ClassLoader implements SystemClassLoa
 		}
 
 		this.cl = cl;
+		this.sealed = true;
 	}
-	
+
+	static void configureCustomClassloader() {
+		
+		CustomClassLoader.addSystemClasses(new String[] { Application.class.getName(), CustomClassLoader.class.getName(),
+				SystemClassLoader.class.getName(), SystemClassLoaderImpl.class.getName(),
+				FileSystemWrapper.class.getName() 
+				});
+		
+		FusionClassloaders.configureCustomClassloader();
+	}
+
 	void appendToClassPathForInstrumentation(String p) {
 		cl.appendToClassPathForInstrumentation(p);
 	}
@@ -42,8 +51,8 @@ public class SystemClassLoaderImpl extends ClassLoader implements SystemClassLoa
 		if (this.cl == null) {
 			createClassLoader();
 		}
-		
-		if (name.startsWith(Platform.getComponentBasePkg() + ".")) {
+
+		if (name.startsWith(FusionClassloaders.getComponentBasePkg() + ".")) {
 			// If this is a component class, load it specially
 			return FusionClassloaders.loadComponentClass(name);
 		}
@@ -65,21 +74,17 @@ public class SystemClassLoaderImpl extends ClassLoader implements SystemClassLoa
 		return this.cl;
 	}
 
-	void seal() {
-		sealed = true;
-	}
-
 	@Override
 	public URL getResource(String name) {
 		return CustomClassLoader.getJvmAppClassLoader().getResource(name);
 	}
 
 	public Boolean isPlatformClass(Class<?> clazz) {
-		return 
-				// Pre transformation
-				clazz.getClassLoader() == CustomClassLoader.getJvmAppClassLoader() ||
-				// Post transformation
+		return
+		// Pre transformation
+		clazz.getClassLoader() == CustomClassLoader.getJvmAppClassLoader() ||
+		// Post transformation
 				clazz.getClassLoader().getClass() == CustomClassLoader.class;
 	}
-	
+
 }

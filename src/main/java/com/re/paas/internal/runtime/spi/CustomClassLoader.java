@@ -12,27 +12,20 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.security.ProtectionDomain;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.BiConsumer;
 
-import com.re.paas.api.Platform;
 import com.re.paas.api.classes.Exceptions;
-import com.re.paas.api.fusion.BaseComponent;
 import com.re.paas.api.runtime.RuntimeIdentity;
-import com.re.paas.api.runtime.SystemClassLoader;
 import com.re.paas.api.utils.ClassUtils;
-import com.re.paas.internal.infra.filesystem.FileSystemWrapper;
 
 public class CustomClassLoader extends ClassLoader {
 
-	// These are classes that we should always delegate to the jvm classloader
-	private static List<String> extrinsicClasses = new ArrayList<>();
+	private static List<String> systemClasses = new ArrayList<>();
 
-	// These are packages that should be treated specially. If enableForwarding is
-	// true, loading of classes in these packages will delegated back to the system
-	// classloader. This is needed for components to be able to load other components
 	private static List<String> metaPackages = new ArrayList<>();
 
 	private boolean enableForwarding = true;
@@ -86,6 +79,22 @@ public class CustomClassLoader extends ClassLoader {
 		return this;
 	}
 
+	/**
+	 * These are classes that we should always delegate to the jvm classloader
+	 */
+	static void addSystemClasses(String... classes) {
+		systemClasses.addAll(Arrays.asList(classes));
+	}
+
+	/**
+	 * These are packages that should be treated specially. If enableForwarding is
+	 * true, loading of classes in these packages will delegated back to the system
+	 * classloader. This is needed for components to be able to load other components
+	 */
+	static void addMetaPackages(String... classes) {
+		metaPackages.addAll(Arrays.asList(classes));
+	}
+
 	void appendToClassPathForInstrumentation(String p) {
 		URL url = null;
 		try {
@@ -110,7 +119,7 @@ public class CustomClassLoader extends ClassLoader {
 	@Override
 	public final Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
 
-		if (extrinsicClasses.contains(name)) {
+		if (systemClasses.contains(name)) {
 			return getParent().loadClass(name);
 		}
 
@@ -285,16 +294,8 @@ public class CustomClassLoader extends ClassLoader {
 			return null;
 		}
 	}
-
+	
 	static {
-
-		extrinsicClasses.add(ClassUtils.getName(Application.class));
-		extrinsicClasses.add(ClassUtils.getName(CustomClassLoader.class));
-		extrinsicClasses.add(ClassUtils.getName(SystemClassLoader.class));
-		extrinsicClasses.add(ClassUtils.getName(SystemClassLoaderImpl.class));
-		extrinsicClasses.add(ClassUtils.getName(FileSystemWrapper.class));
-		extrinsicClasses.add(ClassUtils.getName(BaseComponent.class));
-
-		metaPackages.add(Platform.getComponentBasePkg());
+		SystemClassLoaderImpl.configureCustomClassloader();
 	}
 }

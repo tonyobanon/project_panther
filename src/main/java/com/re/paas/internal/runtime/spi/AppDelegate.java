@@ -19,8 +19,8 @@ import com.re.paas.api.Singleton;
 import com.re.paas.api.annotations.develop.PlatformInternal;
 import com.re.paas.api.classes.ObjectSerializer;
 import com.re.paas.api.clustering.ClusteringServices;
-import com.re.paas.api.fusion.DataNodeDelegate;
 import com.re.paas.api.fusion.MimeTypeDetector;
+import com.re.paas.api.fusion.components.WebClientConnector;
 import com.re.paas.api.infra.filesystem.NativeFileSystem;
 import com.re.paas.api.logging.LogPipeline;
 import com.re.paas.api.logging.LoggerFactory;
@@ -36,7 +36,7 @@ import com.re.paas.api.utils.JsonParser;
 import com.re.paas.internal.clustering.ClusteringServicesImpl;
 import com.re.paas.internal.fusion.MimeTypeDetectorImpl;
 import com.re.paas.internal.fusion.WebSocketServer;
-import com.re.paas.internal.fusion.DataNodeDelegateImpl;
+import com.re.paas.internal.fusion.components.WebClientConnectorImpl;
 import com.re.paas.internal.fusion.HttpServer;
 import com.re.paas.internal.infra.filesystem.FileSystemProviders;
 import com.re.paas.internal.infra.filesystem.NativeFileSystemImpl;
@@ -88,8 +88,11 @@ public class AppDelegate implements Callable<Void> {
 
 		Singleton.register(ObjectSerializer.class, new DefaultObjectSerializer());
 		Singleton.register(MimeTypeDetector.class, new MimeTypeDetectorImpl());
-		Singleton.register(DataNodeDelegate.class, new DataNodeDelegateImpl());
+		
+		// Todo: Make ComponentsDelegate an actual Delegate, instead of a Singleton
+		Singleton.register(WebClientConnector.class, new WebClientConnectorImpl());
 
+		
 		// Register factories
 		Factory.register(ExecutorFactory.class,
 				p -> new ExecutorFactoryImpl((String) p[0], (ExecutorFactoryConfig) p[1]));
@@ -154,8 +157,8 @@ public class AppDelegate implements Callable<Void> {
 
 		}
 
-		System.setProperty("org.slf4j.spi.SLF4JServiceProvider", "org.slf4j.helpers.NOP_FallbackServiceProvider");
-
+		FusionClassloaders.loadFusionClient();
+		
 		// Start http server
 		HttpServer.start();
 		

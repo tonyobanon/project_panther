@@ -38,7 +38,7 @@ class ClientSessionSocketHandler {
 			init(sessionId, session);
 			break;
 		case SYNC: 
-			DataNodeDelegateImpl.updateClientData(sessionId, data);
+			
 			break;
 		}
     }
@@ -59,7 +59,7 @@ class ClientSessionSocketHandler {
         
         assert sess == session;
         
-        DataNodeDelegateImpl.clearClientData(sessionId);
+        
     }
      
     static Session getSession(String id) {

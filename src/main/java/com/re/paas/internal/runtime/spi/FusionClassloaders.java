@@ -5,6 +5,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.management.ManagementFactory;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystem;
@@ -16,6 +18,7 @@ import java.nio.file.WatchKey;
 import java.nio.file.WatchService;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -30,6 +33,10 @@ import com.re.paas.internal.utils.FileUtils;
 
 public class FusionClassloaders {
 
+	private static final String FUSION_CLIENT_JARNAME = "fusion-ui.jar";
+
+	public static final String COMPONENT_BASE_PKG = Platform.getApiPackage() + ".fusion.components";
+
 	public static String APP_ID_COOKIE = "appId";
 
 	private static final Map<String, ClassLoader> fusionClassloaders = new HashMap<>();
@@ -37,8 +44,28 @@ public class FusionClassloaders {
 
 	private static final Map<String, byte[]> fileCache = new HashMap<>();
 
-	static void init() {
+	/**
+	 * Among other things, this method:<br>
+	 * - Registers any classes found in the package -
+	 * {@code FusionClassloaders#getComponentBasePkg()} as system classes so that
+	 * the system classloader can delegate to the jvm class loader when loading
+	 * these classes. This is necessary because the system classloader assumes that
+	 * classes in the above package are component classes that have been generated
+	 * using the component compiler SDK, but actually we have other API classes
+	 * there as well which are part of the core platform API
+	 * 
+	 * @return
+	 */
+	static void configureCustomClassloader() {
 
+		getClassesInPackage(getComponentBasePkg()).forEach(n -> {
+			CustomClassLoader.addSystemClasses(n);
+		});
+		
+		CustomClassLoader.addMetaPackages(getComponentBasePkg());
+	}
+	
+	static void loadFusionClient() {
 		Path fusionClient = getPlatformFusionClient();
 
 		if (fusionClient != null) {
@@ -47,11 +74,46 @@ public class FusionClassloaders {
 		}
 	}
 
+	public static String getFusionClientJarname() {
+		return FUSION_CLIENT_JARNAME;
+	}
+
+	public static String getComponentBasePkg() {
+		return COMPONENT_BASE_PKG;
+	}
+
+	static List<String> getClassesInPackage(String pkgName) {
+		var names = new ArrayList<String>();
+
+		URI classesDir = null;
+		URI packageDir = null;
+
+		try {
+			classesDir = FusionClassloaders.class.getProtectionDomain().getCodeSource().getLocation().toURI();
+
+			packageDir = classesDir.resolve(pkgName.replace(".", File.separator));
+
+		} catch (URISyntaxException e) {
+			Exceptions.throwRuntime(e);
+		}
+
+		for (File f : new File(packageDir).listFiles()) {
+			assert f.isFile();
+			var className = classesDir.relativize(f.toURI()).getPath().replace(File.separator, ".")
+					.replaceAll("\\.class$", "");
+
+			names.add(className);
+		}
+
+		return names;
+	}
+
 	static void addFusionClient(String appId, Path jarFile) {
 
 		processFusionClientJar(appId, jarFile);
 
 		if (Platform.isDevMode()) {
+			// Watch for changes and reload
 
 			new Thread(() -> {
 
@@ -68,7 +130,7 @@ public class FusionClassloaders {
 							if (event.context().toString().equals(jarFile.getFileName().toString())) {
 
 								processFusionClientJar(appId, jarFile);
-								
+
 							}
 						}
 						key.reset();
@@ -120,12 +182,11 @@ public class FusionClassloaders {
 	private static void processFusionClientJar(String appId, Path jarFile) {
 
 		// Read "Application-Name" property from META-INF file to get appId
-		
-		
+
 		if (!Files.exists(jarFile)) {
 			return;
 		}
-		
+
 		// Indicate that this appId is being updated
 		appIdLock = appId;
 
@@ -140,7 +201,7 @@ public class FusionClassloaders {
 		// accross all apps are namespaced in this way, so that
 		// FusionClassloaders.loadComponentClass(...)
 		// will work properly
-		String allowedPkgName = Platform.getComponentBasePkg() + "." + appId;
+		String allowedPkgName = FusionClassloaders.getComponentBasePkg() + "." + appId;
 
 		try (var fileIn = Files.newInputStream(jarFile)) {
 
@@ -155,18 +216,18 @@ public class FusionClassloaders {
 				Path p = null;
 
 				if (entry.getName().startsWith("resources/")) {
-					
+
 					if (entry.getName().endsWith(".mainClass")) {
 						componentClassNames.add(new String(zip.readAllBytes(), StandardCharsets.UTF_8));
 						continue;
 					}
-					
+
 					p = staticDir.resolve(entry.getName().replaceFirst("resources/", ""));
 				} else {
 
 					if (!entry.getName().startsWith(allowedPkgName.replace('.', File.separatorChar))) {
-						Exceptions.throwRuntime(
-								"Unknown class file: " + entry.getName() + " in " + Platform.getFusionClientJarname());
+						Exceptions.throwRuntime("Unknown class file: " + entry.getName() + " in "
+								+ FusionClassloaders.getFusionClientJarname());
 					}
 
 					p = classesDir.resolve(entry.getName());
@@ -180,20 +241,21 @@ public class FusionClassloaders {
 		} catch (IOException e) {
 			Exceptions.throwRuntime(e);
 		}
-		
+
 		CustomClassLoader cl = new CustomClassLoader(false, appId).disableForwarding().setPath(classesDir.toUri());
 
 		// Allow deep reflection
-		// SystemClassLoaderImpl scl = (SystemClassLoaderImpl) ClassLoader.getSystemClassLoader();
-		// cl.getUnnamedModule().addOpens(allowedPkgName, scl.getClassLoader().getUnnamedModule());
+		// SystemClassLoaderImpl scl = (SystemClassLoaderImpl)
+		// ClassLoader.getSystemClassLoader();
+		// cl.getUnnamedModule().addOpens(allowedPkgName,
+		// scl.getClassLoader().getUnnamedModule());
 
 		fusionClassloaders.put(appId, cl);
 
 		appIdLock = null;
-		
 
 		fileCache.clear();
-		
+
 		System.out.println("Processed fusion client jar: " + jarFile);
 	}
 
@@ -208,7 +270,7 @@ public class FusionClassloaders {
 			String[] arr = e.split(File.separator);
 			String jarName = arr[arr.length - 1];
 
-			if (jarName.equals(Platform.getFusionClientJarname())) {
+			if (jarName.equals(FusionClassloaders.getFusionClientJarname())) {
 				return fs.getPath(e);
 			}
 		}
@@ -242,7 +304,7 @@ public class FusionClassloaders {
 
 		String appId = null;
 
-		name = name.replace(Platform.getComponentBasePkg() + ".", "");
+		name = name.replace(FusionClassloaders.getComponentBasePkg() + ".", "");
 
 		String[] arr = name.split("\\Q.\\E");
 
@@ -270,8 +332,9 @@ public class FusionClassloaders {
 		}
 	}
 
-	public static String getComponentHtmlClient(String appId, String assetId) {
-		byte[] b = getStaticAsset(appId, "components" + File.separator + assetId + File.separator + "client.html");
+	public static String getComponentResourceFile(String appId, String assetId, String fileName) {
+
+		byte[] b = getStaticAsset(appId, "components" + File.separator + assetId + File.separator + fileName);
 
 		if (b == null) {
 			Exceptions.throwRuntime("Cannot find html client; appId=" + appId + ", assetId=" + assetId);

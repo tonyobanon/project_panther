@@ -21,7 +21,7 @@ public class DefaultObjectSerializer implements ObjectSerializer {
 
 		// If this is primitive, then convert to String
 
-		if (o != null && Primitives.isWrapperType(o.getClass())) {
+		if (o != null && com.re.paas.api.utils.Primitives.isWrapperType(o.getClass())) {
 			o = Primitives.toString(o);
 		}
 
