@@ -46,8 +46,6 @@ public class ServiceDelegate extends AbstractServiceDelegate {
 
 	public static Pattern uriPattern = Pattern.compile("\\A(\\Q/\\E[\\w]+([-]{1}[\\w]+)*)+\\z");
 
-	private static final boolean enableNativeLoadBalancing = true;
-
 	private static final String SERVICE_DESCRIPTOR_RESOURCE_PREFIX = "svdsc-rp_";
 	private static final String SERVICE_DESCRIPTOR_KEYS = "svdsck";
 

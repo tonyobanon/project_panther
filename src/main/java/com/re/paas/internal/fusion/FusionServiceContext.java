@@ -5,7 +5,7 @@ import java.lang.reflect.Method;
 import com.re.paas.api.fusion.Endpoint;
 import com.re.paas.api.fusion.services.BaseService;
 
-public class FusionServiceContext {
+class FusionServiceContext {
 
 	private final BaseService service;
 	private final Endpoint endpoint;

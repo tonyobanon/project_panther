@@ -13,7 +13,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import com.re.paas.api.Platform;
 import com.re.paas.api.annotations.develop.Todo;
 import com.re.paas.api.apps.AppClassLoader;
 import com.re.paas.api.classes.Exceptions;
@@ -62,7 +61,7 @@ public class AppClassLoaderImpl extends AppClassLoader {
 					return;
 				}
 
-				if (f.getFileName().toString().equals(Platform.getFusionClientJarname())) {
+				if (f.getFileName().toString().equals(FusionClassloaders.getFusionClientJarname())) {
 
 					FusionClassloaders.addFusionClient(appId, f);
 

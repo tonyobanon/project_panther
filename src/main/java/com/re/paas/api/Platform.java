@@ -23,10 +23,6 @@ public class Platform {
 
 	private static final String[] JVM_PACKAGES = new String[] { "sun", "com.sun", "jdk.internal", "java", "javax",
 			"jdk" };
-	
-	private static final String FUSION_CLIENT_JARNAME = "fusion-ui.jar";
-	
-	public static final String COMPONENT_BASE_PKG = API_PACKAGE + ".fusion.components";
 
 
 	private static boolean IS_DEV_MODE = true;
@@ -123,14 +119,10 @@ public class Platform {
 		return JVM_PACKAGES;
 	}
 	
-	public static String getFusionClientJarname() {
-		return FUSION_CLIENT_JARNAME;
+	public static String getApiPackage() {
+		return API_PACKAGE;
 	}
 	
-	public static String getComponentBasePkg() {
-		return COMPONENT_BASE_PKG;
-	}
-
 	public static enum State {
 
 		STARTING, STOPPING, INSTALLING, UNINSTALLING, RUNNING;

@@ -1,14 +1,9 @@
 package com.re.paas.internal.serialization;
 
-import java.util.HashSet;
-import java.util.Set;
-
 import com.re.paas.api.classes.Exceptions;
 
 public class Primitives {
-
-	private static final Set<Class<?>> WRAPPER_TYPES = getWrapperTypes();
-
+	
 	private static final String PREFIX = "^*";
 	private static final Integer PREFIX_LENGTH = 4;
 
@@ -20,28 +15,7 @@ public class Primitives {
 	private static final String LONG = PREFIX + "LN";
 	private static final String FLOAT = PREFIX + "FL";
 	private static final String DOUBLE = PREFIX + "DB";
-
-	public static Boolean isWrapperType(Object o) {
-		return isWrapperType(o.getClass());
-	}
 	
-	public static Boolean isWrapperType(Class<?> clazz) {
-		return WRAPPER_TYPES.contains(clazz);
-	}
-
-	private static Set<Class<?>> getWrapperTypes() {
-		Set<Class<?>> ret = new HashSet<Class<?>>();
-		ret.add(Boolean.class);
-		ret.add(Character.class);
-		ret.add(Byte.class);
-		ret.add(Short.class);
-		ret.add(Integer.class);
-		ret.add(Long.class);
-		ret.add(Float.class);
-		ret.add(Double.class);
-		return ret;
-	}
-
 	/**
 	 * This returns a string representation for the specified object. The object
 	 * passed in must be a primitive (an instance of a primitive class wrapper)

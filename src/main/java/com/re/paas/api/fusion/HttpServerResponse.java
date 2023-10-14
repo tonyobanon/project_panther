@@ -6,6 +6,8 @@ import java.io.Serializable;
 import java.util.Collection;
 import java.util.Locale;
 
+import com.re.paas.api.fusion.components.BaseComponent;
+
 public interface HttpServerResponse extends Cloneable, Serializable {
 	
 	void addCookie(Cookie cookie);
@@ -26,9 +28,9 @@ public interface HttpServerResponse extends Cloneable, Serializable {
 	
 	HttpServerResponse write(String contentType, byte[] contents);
 	
-	HttpServerResponse render(BaseComponent component, Boolean testMode);
+	HttpServerResponse render(BaseComponent<?> component, Boolean testMode);
 	
-	HttpServerResponse render(BaseComponent component);
+	HttpServerResponse render(BaseComponent<?> component);
 
 	boolean isCommited();
 

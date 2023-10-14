@@ -1,4 +1,4 @@
-package com.re.paas.internal.components;
+package com.re.paas.internal.fusion.components;
 
 import java.beans.IntrospectionException;
 import java.beans.Introspector;

@@ -3,15 +3,32 @@ package com.re.paas.internal.fusion;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintWriter;
+import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import com.google.gson.JsonPrimitive;
+import com.google.gson.JsonSerializationContext;
+import com.google.gson.JsonSerializer;
 import com.re.paas.api.classes.Exceptions;
-import com.re.paas.api.fusion.BaseComponent;
+import com.re.paas.api.classes.ObjectWrapper;
 import com.re.paas.api.fusion.Cookie;
 import com.re.paas.api.fusion.HttpServerResponse;
-import com.re.paas.internal.components.Marshaller;
+import com.re.paas.api.fusion.components.BaseComponent;
+import com.re.paas.api.fusion.components.NodeUtil;
+import com.re.paas.api.fusion.components.RecordNode;
+import com.re.paas.api.fusion.components.ScalarNode;
+import com.re.paas.api.utils.SerializationUtil;
+import com.re.paas.internal.fusion.components.EnumAdapterFactory;
 import com.re.paas.internal.runtime.spi.CustomClassLoader;
 import com.re.paas.internal.runtime.spi.FusionClassloaders;
 
@@ -189,15 +206,13 @@ public class HttpServerResponseImpl implements HttpServerResponse {
 		}
 	}
 
-
 	private static Boolean isRtlLocale(Locale l) {
 		// Todo
 		return false;
 	}
-	
 
 	@Override
-	public HttpServerResponse render(BaseComponent component, Boolean testMode) {
+	public HttpServerResponse render(BaseComponent<?> component, Boolean testMode) {
 
 		CustomClassLoader cl = (CustomClassLoader) component.getClass().getClassLoader();
 
@@ -207,7 +222,7 @@ public class HttpServerResponseImpl implements HttpServerResponse {
 
 		Boolean rtl = isRtlLocale(req.getLocale());
 
-		String contents = FusionClassloaders.getComponentHtmlClient(appId, assetId);
+		String contents = FusionClassloaders.getComponentResourceFile(appId, assetId, "client.html");
 
 		// Add RTL setting
 		contents = contents.replace("\"{{rtl}}\"", Boolean.toString(rtl));
@@ -217,12 +232,15 @@ public class HttpServerResponseImpl implements HttpServerResponse {
 
 		if (!testMode) {
 
-			String data = Marshaller.serialize(component);
+			component.setSessionId(req.getSession().getId());
+
+			String data = HttpServerResponseImpl.serializeComponent(appId, component);
 
 			contents = contents.replace("\"{{data}}\"", "() => (" + data + ")");
 		}
 
-		// This is required to load assets URL since they are not contextualized with appId
+		// This is required to load assets URL since they are not contextualized with
+		// appId
 		addCookie(new CookieImpl(FusionClassloaders.APP_ID_COOKIE, appId).setPath("/").setMaxAge(84900));
 
 		writeHtml(contents);
@@ -231,7 +249,7 @@ public class HttpServerResponseImpl implements HttpServerResponse {
 	}
 
 	@Override
-	public HttpServerResponse render(BaseComponent component) {
+	public HttpServerResponse render(BaseComponent<?> component) {
 		return render(component, false);
 	}
 
@@ -239,5 +257,92 @@ public class HttpServerResponseImpl implements HttpServerResponse {
 		if (this.resp.isCommitted()) {
 			throw new IllegalStateException("The response has already been committed, and cannot be written to");
 		}
+	}
+
+	private static String serializeComponent(String appId, BaseComponent<?> component) {
+
+		final List<BaseComponent<?>> componentList = new ArrayList<>();
+
+		GsonBuilder gsonBuilder = new GsonBuilder();
+		ObjectWrapper<Gson> gson = new ObjectWrapper<>();
+
+		gsonBuilder.registerTypeAdapter(Date.class, new JsonSerializer<Date>() {
+			@Override
+			public JsonElement serialize(Date src, Type typeOfSrc, JsonSerializationContext context) {
+				return context.serialize(SerializationUtil.toDateString(src));
+			}
+		});
+
+		gsonBuilder.registerTypeAdapter(BaseComponent.class, new JsonSerializer<BaseComponent<?>>() {
+			@Override
+			public JsonElement serialize(BaseComponent<?> src, Type typeOfSrc, JsonSerializationContext context) {
+
+				if (componentList.contains(src)) {
+					return new JsonPrimitive("""
+							%% BaseRenderer.getComponent("$id")%%""".replace("$id", src.getId()));
+				} else {
+					componentList.add(src);
+
+					String input = gson.get().toJson(context.serialize(src, RecordNode.class));
+					String config = gson.get().toJson(context.serialize(src.getConfig()));
+
+					return new JsonPrimitive("""
+							%% new components["$type"]({ id: "$id", input: $input, config: $config })%%"""
+							.replace("$type", src.getClass().getSimpleName()).replace("$id", src.getId())
+							.replace("$input", input).replace("$config", config));
+				}
+			}
+
+		});
+
+		gsonBuilder.registerTypeAdapter(RecordNode.class, new JsonSerializer<RecordNode<?>>() {
+			@Override
+			public JsonElement serialize(RecordNode<?> src, Type typeOfSrc, JsonSerializationContext context) {
+
+				JsonObject o = new JsonObject();
+
+				src.getChildren().forEach(field -> {
+					
+					var key = field.getKey();
+					var value = field.getValue();
+
+					if (value instanceof BaseComponent) {
+
+						var component = ((BaseComponent<?>) value);
+
+						JsonObject componentConfig = new JsonParser().parse(FusionClassloaders
+								.getComponentResourceFile(appId, NodeUtil.getComponent(src).getAssetId(), "config.json"))
+								.getAsJsonObject();
+
+						JsonElement pathConfig = componentConfig.get("scalars").getAsJsonObject().get(key)
+								.getAsJsonObject().get("config");
+
+						if (!pathConfig.isJsonNull()) {
+							pathConfig.getAsJsonObject().entrySet().forEach(e2 -> {
+								component.addConfig(e2.getKey(), e2.getValue());
+							});
+						}
+					}
+
+					o.add(key, context.serialize(value));
+				});
+
+				return o;
+			}
+		});
+
+		gsonBuilder.registerTypeAdapter(ScalarNode.class, new JsonSerializer<ScalarNode<?>>() {
+			@Override
+			public JsonElement serialize(ScalarNode<?> src, Type typeOfSrc, JsonSerializationContext context) {
+				return context.serialize(src.getValue());
+			}
+		});
+
+		gsonBuilder.registerTypeAdapterFactory(new EnumAdapterFactory());
+
+		gson.set(gsonBuilder.create());
+
+		return gson.get().toJson(component).replaceAll("\\\\\"", "\"").replaceAll("\"\\s*%%", "")
+				.replaceAll("%%\\s*\"", "").replaceAll("\\n", "");
 	}
 }
